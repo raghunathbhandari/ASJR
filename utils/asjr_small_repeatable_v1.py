@@ -589,6 +589,7 @@ def test_small_repeatable_range_summary(
     max_hold_bars=40,
     sl_multiplier=1.0,
     max_sl_pct=None,
+    use_sl=True,
     print_signals=False,
     plot=False,
     max_plots=12,
@@ -638,6 +639,7 @@ def test_small_repeatable_range_summary(
         max_hold_bars=max_hold_bars,
         sl_multiplier=sl_multiplier,
         max_sl_pct=max_sl_pct,
+        use_sl=use_sl,
         print_trades=False,
     )
 
@@ -699,6 +701,7 @@ def evaluate_rr_backtest(
     max_hold_bars=40,
     sl_multiplier=1.0,
     max_sl_pct=None,
+    use_sl=True,
 ):
     if signals is None or signals.empty:
         return pd.DataFrame()
@@ -751,10 +754,10 @@ def evaluate_rr_backtest(
             low = float(bar["Low"])
 
             if side == "LONG":
-                sl_hit = low <= sl
+                sl_hit = use_sl and low <= sl
                 tp_hit = high >= tp
             else:
-                sl_hit = high >= sl
+                sl_hit = use_sl and high >= sl
                 tp_hit = low <= tp
 
             # Conservative 5m OHLC rule:
@@ -816,6 +819,7 @@ def evaluate_rr_backtest(
             "ActualSLPct": round(actual_sl_pct, 3),
             "SLMultiplier": float(sl_multiplier),
             "MaxSLPct": max_sl_pct,
+            "UseSL": bool(use_sl),
             "TP": round(tp, 4),
             "RR_Target": rr,
             "MaxHoldBars": int(max_hold_bars),
@@ -890,6 +894,7 @@ def compare_rr_targets(
     max_hold_bars=40,
     sl_multiplier=1.0,
     max_sl_pct=None,
+    use_sl=True,
     print_trades=False,
 ):
     rows = []
@@ -903,12 +908,14 @@ def compare_rr_targets(
             max_hold_bars=max_hold_bars,
             sl_multiplier=sl_multiplier,
             max_sl_pct=max_sl_pct,
+            use_sl=use_sl,
         )
         trade_sets[rr] = trades
 
         summary = summarize_rr_results(trades)
         rows.append({
             "RR": rr,
+            "UseSL": bool(use_sl),
             "SLMult": sl_multiplier,
             "MaxSLPct": max_sl_pct,
             "MaxHoldBars": max_hold_bars,
