@@ -69,6 +69,45 @@ def get_5m(ticker, period="30d"):
     return df.dropna()
 
 
+
+def get_5m_range(ticker, start_date, end_date):
+    start = pd.Timestamp(start_date)
+    end = pd.Timestamp(end_date) + pd.Timedelta(days=1)  # make end_date inclusive
+
+    df = yf.download(
+        ticker,
+        start=start.strftime("%Y-%m-%d"),
+        end=end.strftime("%Y-%m-%d"),
+        interval="5m",
+        auto_adjust=False,
+        progress=False,
+        prepost=False,
+    )
+
+    if df is None or df.empty:
+        return pd.DataFrame()
+
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.get_level_values(0)
+
+    wanted = ["Open", "High", "Low", "Close", "Volume"]
+    if not all(col in df.columns for col in wanted):
+        return pd.DataFrame()
+
+    df = df[wanted].copy()
+
+    if df.index.tz is None:
+        df.index = df.index.tz_localize("UTC")
+
+    df.index = df.index.tz_convert("America/New_York")
+
+    try:
+        df = df.between_time("09:30", "16:00", inclusive="left")
+    except TypeError:
+        df = df.between_time("09:30", "16:00", include_start=True, include_end=False)
+
+    return df.dropna()
+
 def add_sr_indicators(df):
     d = df.copy()
 
@@ -485,6 +524,60 @@ def test_small_repeatable(
 
     return signals
 
+
+
+def test_small_repeatable_range(
+    ticker,
+    start_date,
+    end_date,
+    cfg=None,
+    print_signals=True,
+    plot=True,
+    bars_before=20,
+    bars_after=40,
+    max_plots=12,
+):
+    if cfg is None:
+        cfg = make_config()
+
+    print(f"\nTesting {ticker} | {start_date} -> {end_date}")
+
+    df = get_5m_range(
+        ticker=ticker,
+        start_date=start_date,
+        end_date=end_date,
+    )
+
+    if df.empty:
+        print(ticker, "NO DATA")
+        return pd.DataFrame()
+
+    print(f"Rows : {len(df)}")
+    print(f"From : {df.index.min()}")
+    print(f"To   : {df.index.max()}")
+
+    signals = detect_small_repeatable_signals(
+        df=df,
+        ticker=ticker,
+        cfg=cfg,
+    )
+
+    print(f"{ticker}: {len(signals)} signals")
+
+    if print_signals:
+        print_small_repeatable_signals(signals)
+
+    if plot and not signals.empty:
+        plot_small_repeatable_signals(
+            df=df,
+            signals=signals,
+            ticker=ticker,
+            bars_before=bars_before,
+            bars_after=bars_after,
+            max_plots=max_plots,
+        )
+
+    return signals
 
 def test_small_repeatable_batch(
     tickers=DEFAULT_TICKERS,
