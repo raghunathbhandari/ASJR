@@ -1,4 +1,4 @@
-print("Thank you Cornor and AI !")
+print("Thank you  Everyone !")
 
 import numpy as np
 import pandas as pd
