@@ -60,7 +60,11 @@ def get_5m(ticker, period="30d"):
         df.index = df.index.tz_localize("UTC")
 
     df.index = df.index.tz_convert("America/New_York")
-    df = df.between_time("09:30", "16:00", inclusive="left")
+
+    try:
+        df = df.between_time("09:30", "16:00", inclusive="left")
+    except TypeError:
+        df = df.between_time("09:30", "16:00", include_start=True, include_end=False)
 
     return df.dropna()
 
