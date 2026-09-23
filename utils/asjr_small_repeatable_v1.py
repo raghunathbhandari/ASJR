@@ -532,7 +532,14 @@ def test_small_repeatable_batch(
     return result
 
 
-def evaluate_rr_backtest(df, signals, rr=1.0, max_hold_bars=40):
+def evaluate_rr_backtest(
+    df,
+    signals,
+    rr=1.5,
+    max_hold_bars=40,
+    sl_multiplier=1.0,
+    max_sl_pct=None,
+):
     if signals is None or signals.empty:
         return pd.DataFrame()
 
@@ -546,12 +553,21 @@ def evaluate_rr_backtest(df, signals, rr=1.0, max_hold_bars=40):
 
         side = s["Side"]
         entry = float(s["Entry"])
-        sl = float(s["SL"])
-        risk = abs(entry - sl)
+        base_sl = float(s["SL"])
+        base_risk = abs(entry - base_sl)
+
+        if base_risk <= 0:
+            continue
+
+        risk = base_risk * float(sl_multiplier)
+
+        if max_sl_pct is not None:
+            risk = min(risk, entry * (float(max_sl_pct) / 100.0))
 
         if risk <= 0:
             continue
 
+        sl = entry - risk if side == "LONG" else entry + risk
         tp = entry + (risk * rr) if side == "LONG" else entry - (risk * rr)
 
         entry_pos = d.index.get_loc(entry_time)
@@ -561,8 +577,9 @@ def evaluate_rr_backtest(df, signals, rr=1.0, max_hold_bars=40):
         exit_price = entry
         exit_reason = "TIME"
         r_result = 0.0
+        exit_pos = entry_pos
 
-        last_pos = min(len(d) - 1, entry_pos + max_hold_bars)
+        last_pos = min(len(d) - 1, entry_pos + int(max_hold_bars))
 
         for j in range(entry_pos, last_pos + 1):
             if d.index[j].date() != day:
@@ -583,18 +600,21 @@ def evaluate_rr_backtest(df, signals, rr=1.0, max_hold_bars=40):
             # Conservative 5m OHLC rule:
             # if both TP and SL are touched in the same candle, count SL first.
             if sl_hit and tp_hit:
+                exit_pos = j
                 exit_time = d.index[j]
                 exit_price = sl
                 exit_reason = "SL_AMBIGUOUS"
                 r_result = -1.0
                 break
             elif sl_hit:
+                exit_pos = j
                 exit_time = d.index[j]
                 exit_price = sl
                 exit_reason = "SL"
                 r_result = -1.0
                 break
             elif tp_hit:
+                exit_pos = j
                 exit_time = d.index[j]
                 exit_price = tp
                 exit_reason = "TP"
@@ -605,6 +625,7 @@ def evaluate_rr_backtest(df, signals, rr=1.0, max_hold_bars=40):
 
         if exit_reason == "TIME":
             last_pos = max(entry_pos, last_pos)
+            exit_pos = last_pos
             exit_time = d.index[last_pos]
             exit_price = float(d.iloc[last_pos]["Close"])
 
@@ -618,6 +639,10 @@ def evaluate_rr_backtest(df, signals, rr=1.0, max_hold_bars=40):
         else:
             return_pct = ((entry - exit_price) / entry) * 100
 
+        hold_bars = max(0, int(exit_pos - entry_pos))
+        hold_minutes = hold_bars * 5
+        actual_sl_pct = (risk / entry) * 100
+
         trades.append({
             "Ticker": s["Ticker"],
             "Side": side,
@@ -626,9 +651,16 @@ def evaluate_rr_backtest(df, signals, rr=1.0, max_hold_bars=40):
             "EntryTime": entry_time,
             "ExitTime": exit_time,
             "Entry": round(entry, 4),
+            "BaseSL": round(base_sl, 4),
             "SL": round(sl, 4),
+            "ActualSLPct": round(actual_sl_pct, 3),
+            "SLMultiplier": float(sl_multiplier),
+            "MaxSLPct": max_sl_pct,
             "TP": round(tp, 4),
             "RR_Target": rr,
+            "MaxHoldBars": int(max_hold_bars),
+            "HoldBars": hold_bars,
+            "HoldMinutes": hold_minutes,
             "ExitPrice": round(exit_price, 4),
             "ExitReason": exit_reason,
             "R": round(float(r_result), 3),
@@ -654,6 +686,8 @@ def summarize_rr_results(trades):
             "AvgPct": 0.0,
             "ProfitFactor": 0.0,
             "MaxDD_R": 0.0,
+            "AvgHoldMin": 0.0,
+            "MaxHoldMin": 0,
         }
 
     wins = int((trades["R"] > 0).sum())
@@ -684,10 +718,20 @@ def summarize_rr_results(trades):
         "AvgPct": round(float(trades["ReturnPct"].mean()), 3),
         "ProfitFactor": round(float(profit_factor), 3) if np.isfinite(profit_factor) else np.inf,
         "MaxDD_R": round(max_dd_r, 3),
+        "AvgHoldMin": round(float(trades["HoldMinutes"].mean()), 1),
+        "MaxHoldMin": int(trades["HoldMinutes"].max()),
     }
 
 
-def compare_rr_targets(df, signals, rr_targets=(1.0, 1.5, 2.0), max_hold_bars=40, print_trades=False):
+def compare_rr_targets(
+    df,
+    signals,
+    rr_targets=(1.0, 1.5, 2.0),
+    max_hold_bars=40,
+    sl_multiplier=1.0,
+    max_sl_pct=None,
+    print_trades=False,
+):
     rows = []
     trade_sets = {}
 
@@ -697,27 +741,75 @@ def compare_rr_targets(df, signals, rr_targets=(1.0, 1.5, 2.0), max_hold_bars=40
             signals=signals,
             rr=rr,
             max_hold_bars=max_hold_bars,
+            sl_multiplier=sl_multiplier,
+            max_sl_pct=max_sl_pct,
         )
         trade_sets[rr] = trades
 
         summary = summarize_rr_results(trades)
         rows.append({
             "RR": rr,
+            "SLMult": sl_multiplier,
+            "MaxSLPct": max_sl_pct,
+            "MaxHoldBars": max_hold_bars,
+            "MaxHoldMin": max_hold_bars * 5,
             **summary,
         })
 
     summary_df = pd.DataFrame(rows)
 
-    print("\n" + "=" * 92)
+    print("\n" + "=" * 120)
     print("ASJR SMALL REPEATABLE V1 — RR EXIT COMPARISON")
-    print("=" * 92)
+    print("=" * 120)
     print(summary_df.to_string(index=False))
 
     if print_trades:
         for rr, trades in trade_sets.items():
-            print("\n" + "-" * 92)
+            print("\n" + "-" * 120)
             print(f"RR {rr}:1 TRADES")
-            print("-" * 92)
+            print("-" * 120)
             print(trades.to_string(index=False))
 
     return summary_df, trade_sets
+
+
+def compare_sl_holding_grid(
+    df,
+    signals,
+    rr=1.5,
+    sl_multipliers=(0.75, 1.0, 1.25, 1.5),
+    max_sl_pcts=(None, 0.25, 0.50),
+    hold_bars=(12, 24, 40),
+):
+    rows = []
+
+    for sl_mult in sl_multipliers:
+        for max_sl_pct in max_sl_pcts:
+            for bars in hold_bars:
+                trades = evaluate_rr_backtest(
+                    df=df,
+                    signals=signals,
+                    rr=rr,
+                    max_hold_bars=bars,
+                    sl_multiplier=sl_mult,
+                    max_sl_pct=max_sl_pct,
+                )
+                summary = summarize_rr_results(trades)
+
+                rows.append({
+                    "RR": rr,
+                    "SLMult": sl_mult,
+                    "MaxSLPct": max_sl_pct,
+                    "MaxHoldBars": bars,
+                    "MaxHoldMin": bars * 5,
+                    **summary,
+                })
+
+    result = pd.DataFrame(rows)
+
+    print("\n" + "=" * 140)
+    print("ASJR SMALL REPEATABLE V1 — SL / MAX SL / HOLDING TEST")
+    print("=" * 140)
+    print(result.to_string(index=False))
+
+    return result
