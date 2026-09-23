@@ -589,6 +589,7 @@ def test_small_repeatable_range_summary(
     max_hold_bars=40,
     sl_multiplier=1.0,
     max_sl_pct=None,
+    fixed_sl_pct=None,
     use_sl=True,
     print_signals=False,
     plot=False,
@@ -639,6 +640,7 @@ def test_small_repeatable_range_summary(
         max_hold_bars=max_hold_bars,
         sl_multiplier=sl_multiplier,
         max_sl_pct=max_sl_pct,
+        fixed_sl_pct=fixed_sl_pct,
         use_sl=use_sl,
         print_trades=False,
     )
@@ -701,6 +703,7 @@ def evaluate_rr_backtest(
     max_hold_bars=40,
     sl_multiplier=1.0,
     max_sl_pct=None,
+    fixed_sl_pct=None,
     use_sl=True,
 ):
     if signals is None or signals.empty:
@@ -722,10 +725,12 @@ def evaluate_rr_backtest(
         if base_risk <= 0:
             continue
 
-        risk = base_risk * float(sl_multiplier)
-
-        if max_sl_pct is not None:
-            risk = min(risk, entry * (float(max_sl_pct) / 100.0))
+        if fixed_sl_pct is not None:
+            risk = entry * (float(fixed_sl_pct) / 100.0)
+        else:
+            risk = base_risk * float(sl_multiplier)
+            if max_sl_pct is not None:
+                risk = min(risk, entry * (float(max_sl_pct) / 100.0))
 
         if risk <= 0:
             continue
@@ -819,6 +824,7 @@ def evaluate_rr_backtest(
             "ActualSLPct": round(actual_sl_pct, 3),
             "SLMultiplier": float(sl_multiplier),
             "MaxSLPct": max_sl_pct,
+            "FixedSLPct": fixed_sl_pct,
             "UseSL": bool(use_sl),
             "TP": round(tp, 4),
             "RR_Target": rr,
@@ -894,6 +900,7 @@ def compare_rr_targets(
     max_hold_bars=40,
     sl_multiplier=1.0,
     max_sl_pct=None,
+    fixed_sl_pct=None,
     use_sl=True,
     print_trades=False,
 ):
@@ -908,6 +915,7 @@ def compare_rr_targets(
             max_hold_bars=max_hold_bars,
             sl_multiplier=sl_multiplier,
             max_sl_pct=max_sl_pct,
+            fixed_sl_pct=fixed_sl_pct,
             use_sl=use_sl,
         )
         trade_sets[rr] = trades
@@ -918,6 +926,7 @@ def compare_rr_targets(
             "UseSL": bool(use_sl),
             "SLMult": sl_multiplier,
             "MaxSLPct": max_sl_pct,
+            "FixedSLPct": fixed_sl_pct,
             "MaxHoldBars": max_hold_bars,
             "MaxHoldMin": max_hold_bars * 5,
             **summary,
