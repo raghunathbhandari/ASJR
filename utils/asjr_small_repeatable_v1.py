@@ -579,6 +579,73 @@ def test_small_repeatable_range(
 
     return signals
 
+
+def test_small_repeatable_range_summary(
+    ticker,
+    start_date,
+    end_date,
+    cfg=None,
+    rr_targets=(1.0, 1.5, 2.0),
+    max_hold_bars=40,
+    sl_multiplier=1.0,
+    max_sl_pct=None,
+    print_signals=False,
+    plot=False,
+    max_plots=12,
+):
+    if cfg is None:
+        cfg = make_config()
+
+    print(f"\nTesting {ticker} | {start_date} -> {end_date}")
+
+    df = get_5m_range(
+        ticker=ticker,
+        start_date=start_date,
+        end_date=end_date,
+    )
+
+    if df.empty:
+        print(ticker, "NO DATA")
+        return pd.DataFrame(), pd.DataFrame(), {}
+
+    print(f"Rows : {len(df)}")
+    print(f"From : {df.index.min()}")
+    print(f"To   : {df.index.max()}")
+
+    signals = detect_small_repeatable_signals(
+        df=df,
+        ticker=ticker,
+        cfg=cfg,
+    )
+
+    print(f"Signals: {len(signals)}")
+
+    if print_signals:
+        print_small_repeatable_signals(signals)
+
+    if plot and not signals.empty:
+        plot_small_repeatable_signals(
+            df=df,
+            signals=signals,
+            ticker=ticker,
+            max_plots=max_plots,
+        )
+
+    rr_summary, rr_trades = compare_rr_targets(
+        df=df,
+        signals=signals,
+        rr_targets=rr_targets,
+        max_hold_bars=max_hold_bars,
+        sl_multiplier=sl_multiplier,
+        max_sl_pct=max_sl_pct,
+        print_trades=False,
+    )
+
+    print("\nRR RESULT SUMMARY")
+    print(rr_summary.to_string(index=False))
+
+    return signals, rr_summary, rr_trades
+
 def test_small_repeatable_batch(
     tickers=DEFAULT_TICKERS,
     period="30d",
