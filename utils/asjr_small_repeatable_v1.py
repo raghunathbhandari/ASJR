@@ -644,6 +644,8 @@ def summarize_rr_results(trades):
             "Trades": 0,
             "Wins": 0,
             "Losses": 0,
+            "TPHits": 0,
+            "SLHits": 0,
             "Timeouts": 0,
             "WinRatePct": 0.0,
             "TotalR": 0.0,
@@ -657,6 +659,8 @@ def summarize_rr_results(trades):
     wins = int((trades["R"] > 0).sum())
     losses = int((trades["R"] < 0).sum())
     timeouts = int((trades["ExitReason"] == "TIME").sum())
+    tp_hits = int((trades["ExitReason"] == "TP").sum())
+    sl_hits = int(trades["ExitReason"].isin(["SL", "SL_AMBIGUOUS"]).sum())
 
     gross_profit = float(trades.loc[trades["R"] > 0, "R"].sum())
     gross_loss = abs(float(trades.loc[trades["R"] < 0, "R"].sum()))
@@ -670,6 +674,8 @@ def summarize_rr_results(trades):
         "Trades": len(trades),
         "Wins": wins,
         "Losses": losses,
+        "TPHits": tp_hits,
+        "SLHits": sl_hits,
         "Timeouts": timeouts,
         "WinRatePct": round((wins / len(trades)) * 100, 2),
         "TotalR": round(float(trades["R"].sum()), 3),
