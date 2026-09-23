@@ -1,4 +1,4 @@
-print("Thank you Cornor and AI !")
+print("Thank you  Everyone !")
 
 import importlib
 import utils.asjr_small_repeatable_v1 as sr
