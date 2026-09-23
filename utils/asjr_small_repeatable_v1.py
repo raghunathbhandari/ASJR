@@ -530,3 +530,188 @@ def test_small_repeatable_batch(
     print("\nTOTAL SIGNALS:", len(result))
 
     return result
+
+
+def evaluate_rr_backtest(df, signals, rr=1.0, max_hold_bars=40):
+    if signals is None or signals.empty:
+        return pd.DataFrame()
+
+    d = df.copy()
+    trades = []
+
+    for _, s in signals.sort_values("EntryTime").iterrows():
+        entry_time = pd.Timestamp(s["EntryTime"])
+        if entry_time not in d.index:
+            continue
+
+        side = s["Side"]
+        entry = float(s["Entry"])
+        sl = float(s["SL"])
+        risk = abs(entry - sl)
+
+        if risk <= 0:
+            continue
+
+        tp = entry + (risk * rr) if side == "LONG" else entry - (risk * rr)
+
+        entry_pos = d.index.get_loc(entry_time)
+        day = entry_time.date()
+
+        exit_time = entry_time
+        exit_price = entry
+        exit_reason = "TIME"
+        r_result = 0.0
+
+        last_pos = min(len(d) - 1, entry_pos + max_hold_bars)
+
+        for j in range(entry_pos, last_pos + 1):
+            if d.index[j].date() != day:
+                last_pos = j - 1
+                break
+
+            bar = d.iloc[j]
+            high = float(bar["High"])
+            low = float(bar["Low"])
+
+            if side == "LONG":
+                sl_hit = low <= sl
+                tp_hit = high >= tp
+            else:
+                sl_hit = high >= sl
+                tp_hit = low <= tp
+
+            # Conservative 5m OHLC rule:
+            # if both TP and SL are touched in the same candle, count SL first.
+            if sl_hit and tp_hit:
+                exit_time = d.index[j]
+                exit_price = sl
+                exit_reason = "SL_AMBIGUOUS"
+                r_result = -1.0
+                break
+            elif sl_hit:
+                exit_time = d.index[j]
+                exit_price = sl
+                exit_reason = "SL"
+                r_result = -1.0
+                break
+            elif tp_hit:
+                exit_time = d.index[j]
+                exit_price = tp
+                exit_reason = "TP"
+                r_result = float(rr)
+                break
+        else:
+            last_pos = min(last_pos, len(d) - 1)
+
+        if exit_reason == "TIME":
+            last_pos = max(entry_pos, last_pos)
+            exit_time = d.index[last_pos]
+            exit_price = float(d.iloc[last_pos]["Close"])
+
+            if side == "LONG":
+                r_result = (exit_price - entry) / risk
+            else:
+                r_result = (entry - exit_price) / risk
+
+        if side == "LONG":
+            return_pct = ((exit_price / entry) - 1) * 100
+        else:
+            return_pct = ((entry - exit_price) / entry) * 100
+
+        trades.append({
+            "Ticker": s["Ticker"],
+            "Side": side,
+            "Episode": int(s["Episode"]),
+            "EpisodeSignal": int(s["EpisodeSignal"]),
+            "EntryTime": entry_time,
+            "ExitTime": exit_time,
+            "Entry": round(entry, 4),
+            "SL": round(sl, 4),
+            "TP": round(tp, 4),
+            "RR_Target": rr,
+            "ExitPrice": round(exit_price, 4),
+            "ExitReason": exit_reason,
+            "R": round(float(r_result), 3),
+            "ReturnPct": round(float(return_pct), 3),
+        })
+
+    return pd.DataFrame(trades)
+
+
+def summarize_rr_results(trades):
+    if trades is None or trades.empty:
+        return {
+            "Trades": 0,
+            "Wins": 0,
+            "Losses": 0,
+            "Timeouts": 0,
+            "WinRatePct": 0.0,
+            "TotalR": 0.0,
+            "AvgR": 0.0,
+            "TotalPct": 0.0,
+            "AvgPct": 0.0,
+            "ProfitFactor": 0.0,
+            "MaxDD_R": 0.0,
+        }
+
+    wins = int((trades["R"] > 0).sum())
+    losses = int((trades["R"] < 0).sum())
+    timeouts = int((trades["ExitReason"] == "TIME").sum())
+
+    gross_profit = float(trades.loc[trades["R"] > 0, "R"].sum())
+    gross_loss = abs(float(trades.loc[trades["R"] < 0, "R"].sum()))
+    profit_factor = gross_profit / gross_loss if gross_loss > 0 else np.inf
+
+    equity_r = trades["R"].cumsum()
+    drawdown_r = equity_r.cummax() - equity_r
+    max_dd_r = float(drawdown_r.max()) if len(drawdown_r) else 0.0
+
+    return {
+        "Trades": len(trades),
+        "Wins": wins,
+        "Losses": losses,
+        "Timeouts": timeouts,
+        "WinRatePct": round((wins / len(trades)) * 100, 2),
+        "TotalR": round(float(trades["R"].sum()), 3),
+        "AvgR": round(float(trades["R"].mean()), 3),
+        "TotalPct": round(float(trades["ReturnPct"].sum()), 3),
+        "AvgPct": round(float(trades["ReturnPct"].mean()), 3),
+        "ProfitFactor": round(float(profit_factor), 3) if np.isfinite(profit_factor) else np.inf,
+        "MaxDD_R": round(max_dd_r, 3),
+    }
+
+
+def compare_rr_targets(df, signals, rr_targets=(1.0, 1.5, 2.0), max_hold_bars=40, print_trades=False):
+    rows = []
+    trade_sets = {}
+
+    for rr in rr_targets:
+        trades = evaluate_rr_backtest(
+            df=df,
+            signals=signals,
+            rr=rr,
+            max_hold_bars=max_hold_bars,
+        )
+        trade_sets[rr] = trades
+
+        summary = summarize_rr_results(trades)
+        rows.append({
+            "RR": rr,
+            **summary,
+        })
+
+    summary_df = pd.DataFrame(rows)
+
+    print("\n" + "=" * 92)
+    print("ASJR SMALL REPEATABLE V1 — RR EXIT COMPARISON")
+    print("=" * 92)
+    print(summary_df.to_string(index=False))
+
+    if print_trades:
+        for rr, trades in trade_sets.items():
+            print("\n" + "-" * 92)
+            print(f"RR {rr}:1 TRADES")
+            print("-" * 92)
+            print(trades.to_string(index=False))
+
+    return summary_df, trade_sets
