@@ -58,6 +58,21 @@ def run_asjr_manual_pipeline(
             gapup_df = ibkr.get_gapup_tickers(app)
             logger.info("GAPUP | Fetch completed | rows=%s", len(gapup_df))
 
+            gapup_tickers = (
+                gapup_df["ticker"]
+                .dropna()
+                .astype(str)
+                .str.upper()
+                .tolist()
+                if "ticker" in gapup_df.columns
+                else []
+            )
+
+            logger.info(
+                "GAPUP | Tickers | %s",
+                ", ".join(gapup_tickers) if gapup_tickers else "None",
+            )
+
         uni = universe.build_universe(trade_date, gapup_df=gapup_df)
         tickers = (
             uni["ticker"]
