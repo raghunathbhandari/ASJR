@@ -17,30 +17,63 @@ def add_intraday_features(df):
     volume_col = cols.get("volume", "Volume")
 
     out = out.rename(columns={
-        ticker_col:"ticker", date_col:"datetime", open_col:"open",
-        high_col:"high", low_col:"low", close_col:"close", volume_col:"volume"
+        ticker_col: "ticker",
+        date_col: "datetime",
+        open_col: "open",
+        high_col: "high",
+        low_col: "low",
+        close_col: "close",
+        volume_col: "volume",
     })
 
     out["ticker"] = out["ticker"].astype(str).str.upper().str.strip()
     out["datetime"] = pd.to_datetime(out["datetime"])
-    out = out.sort_values(["ticker","datetime"]).reset_index(drop=True)
+    out = out.sort_values(["ticker", "datetime"]).reset_index(drop=True)
 
+    # Full 3D history is intentionally retained for stable EMA20 calculation.
     g = out.groupby("ticker", group_keys=False)
-    out["ema20"] = g["close"].transform(lambda s: s.ewm(span=20, adjust=False).mean())
-    out["dist_ema20_pct"] = (out["close"] / out["ema20"] - 1.0) * 100.0
-    out["bar_range_pct"] = (out["high"] - out["low"]) / out["close"].replace(0, np.nan) * 100.0
+    out["ema20"] = g["close"].transform(
+        lambda s: s.ewm(span=20, adjust=False).mean()
+    )
+
+    out["dist_ema20_pct"] = (
+        (out["close"] / out["ema20"]) - 1.0
+    ) * 100.0
+
+    out["bar_range_pct"] = (
+        (out["high"] - out["low"])
+        / out["close"].replace(0, np.nan)
+        * 100.0
+    )
 
     prev_close = g["close"].shift(1)
     prev_ema = g["ema20"].shift(1)
-    out["cross_up"] = (prev_close <= prev_ema) & (out["close"] > out["ema20"])
-    out["cross_down"] = (prev_close >= prev_ema) & (out["close"] < out["ema20"])
 
-    out["session_high"] = g["high"].cummax()
-    out["session_low"] = g["low"].cummin()
+    out["cross_up"] = (
+        (prev_close <= prev_ema)
+        & (out["close"] > out["ema20"])
+    )
+
+    out["cross_down"] = (
+        (prev_close >= prev_ema)
+        & (out["close"] < out["ema20"])
+    )
+
+    # Session metrics must reset every trading day.
+    out["session_date"] = out["datetime"].dt.date
+    session_g = out.groupby(
+        ["ticker", "session_date"],
+        group_keys=False,
+    )
+
+    out["session_high"] = session_g["high"].cummax()
+    out["session_low"] = session_g["low"].cummin()
+    out["session_volume"] = session_g["volume"].cumsum()
 
     return out
 
-def classify_setup(latest_row, prior_rows):
+
+def classify_setup(latest_row, session_rows):
     if latest_row is None:
         return "NO_DATA"
 
@@ -48,8 +81,17 @@ def classify_setup(latest_row, prior_rows):
     ema = float(latest_row["ema20"])
     dist = float(latest_row.get("dist_ema20_pct", 0.0))
 
-    recent = prior_rows.tail(12) if prior_rows is not None else pd.DataFrame()
-    crossed_recently = bool(recent["cross_up"].any()) if not recent.empty and "cross_up" in recent.columns else False
+    recent = (
+        session_rows.tail(12)
+        if session_rows is not None
+        else pd.DataFrame()
+    )
+
+    crossed_recently = (
+        bool(recent["cross_up"].any())
+        if not recent.empty and "cross_up" in recent.columns
+        else False
+    )
 
     if close < ema:
         return "BELOW_EMA20"
@@ -66,18 +108,39 @@ def classify_setup(latest_row, prior_rows):
 
     return "ABOVE_EMA20"
 
+
 def latest_intraday_summary(df):
     if df is None or df.empty:
         return pd.DataFrame()
 
     rows = []
-    for ticker, g in df.groupby("ticker"):
-        g = g.sort_values("datetime")
-        last = g.iloc[-1]
-        first = g.iloc[0]
-        setup = classify_setup(last, g.iloc[:-1])
 
-        day_pct = (float(last["close"]) / float(first["open"]) - 1.0) * 100.0 if float(first["open"]) else None
+    for ticker, g in df.groupby("ticker"):
+        g = g.sort_values("datetime").copy()
+
+        latest_date = g["datetime"].iloc[-1].date()
+
+        # Current trading day only for today's statistics.
+        session = g[g["session_date"] == latest_date].copy()
+
+        if session.empty:
+            continue
+
+        last = session.iloc[-1]
+        first = session.iloc[0]
+
+        setup = classify_setup(
+            last,
+            session.iloc[:-1],
+        )
+
+        first_open = float(first["open"])
+
+        day_pct = (
+            (float(last["close"]) / first_open - 1.0) * 100.0
+            if first_open
+            else None
+        )
 
         rows.append({
             "ticker": ticker,
@@ -86,13 +149,20 @@ def latest_intraday_summary(df):
             "ema20": float(last["ema20"]),
             "dist_ema20_pct": float(last["dist_ema20_pct"]),
             "day_pct": day_pct,
-            "volume_so_far": float(g["volume"].sum()),
-            "session_high": float(g["session_high"].iloc[-1]),
-            "session_low": float(g["session_low"].iloc[-1]),
+            "volume_so_far": float(session["volume"].sum()),
+            "session_high": float(session["high"].max()),
+            "session_low": float(session["low"].min()),
             "setup_status": setup,
-            "cross_up_recent": bool(g.tail(12)["cross_up"].any()),
+            "cross_up_recent": bool(
+                session.tail(12)["cross_up"].any()
+            ),
         })
 
-    return pd.DataFrame(rows).sort_values(
-        ["setup_status","day_pct"], ascending=[True,False]
-    ).reset_index(drop=True)
+    return (
+        pd.DataFrame(rows)
+        .sort_values(
+            ["setup_status", "day_pct"],
+            ascending=[True, False],
+        )
+        .reset_index(drop=True)
+    )
