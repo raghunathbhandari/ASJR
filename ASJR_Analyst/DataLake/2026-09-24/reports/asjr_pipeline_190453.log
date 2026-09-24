@@ -16,3 +16,20 @@
 2026-09-24 19:04:58 | INFO | FILE | Saved asjr_snapshot | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-24/processed/asjr_snapshot.json
 2026-09-24 19:04:58 | INFO | RUN | DATA COMPLETE | universe=15 | intraday_rows=7528 | ticker_summary=15
 2026-09-24 19:04:58 | INFO | GIT | File verification started | count=5
+2026-09-24 19:04:59 | ERROR | RUN | FAILED
+Traceback (most recent call last):
+  File "/root/trading/ASJR/ASJR_Analyst/Tests/test_asjr_pipeline.py", line 239, in run_asjr_manual_pipeline
+    git_result = asjr_git.submit_datalake(
+  File "/root/trading/ASJR/ASJR_Analyst/Utils/asjr_git.py", line 113, in submit_datalake
+    push = _run_git(
+  File "/root/trading/ASJR/ASJR_Analyst/Utils/asjr_git.py", line 13, in _run_git
+    raise RuntimeError(
+RuntimeError: Git command failed: git push origin main
+STDOUT:
+
+STDERR:
+
+(gnome-ssh-askpass:1091169): Gtk-WARNING **: 19:04:59.595: cannot open display: 
+error: unable to read askpass response from '/usr/libexec/openssh/gnome-ssh-askpass'
+fatal: could not read Username for 'https://github.com': No such device or address
+
