@@ -17,10 +17,11 @@ import Utils.asjr_features as daily_features
 import Utils.asjr_intraday_features as intraday_features
 import Utils.asjr_market as market
 import Utils.asjr_snapshot as snapshot
+import Utils.asjr_git as asjr_git
 
 for m in (
     paths, storage, watchlist, universe, ibkr, yfd,
-    daily_features, intraday_features, market, snapshot
+    daily_features, intraday_features, market, snapshot, asjr_git
 ):
     importlib.reload(m)
 
@@ -30,6 +31,7 @@ def run_asjr_manual_pipeline(
     gapup_df=None,
     fetch_gapup_from_app=False,
     include_sector=True,
+    git_submit=True,
 ):
     print("Thank you IBKR, yfinance and AI !")
 
@@ -94,6 +96,34 @@ def run_asjr_manual_pipeline(
     print("Intraday Rows:", len(intraday_raw))
     print("Ticker Summary:", len(ticker_summary))
     print("Snapshot:", paths.processed_path("asjr_snapshot.json", trade_date))
+
+    # 7. Verify generated DataLake files and submit only this day's folder.
+    git_result = None
+
+    if git_submit:
+        required_files = [
+            paths.raw_path("daily_30d.csv", trade_date),
+            paths.raw_path("intraday_5m.csv", trade_date),
+            paths.processed_path("ticker_summary.csv", trade_date),
+            paths.processed_path("asjr_snapshot.json", trade_date),
+        ]
+
+        if include_sector:
+            required_files.append(
+                paths.raw_path("sector_market_daily.csv", trade_date)
+            )
+
+        if gapup_df is not None and not gapup_df.empty:
+            required_files.append(
+                paths.raw_path("ibkr_gapup.csv", trade_date)
+            )
+
+        git_result = asjr_git.submit_datalake(
+            trade_date=paths.trading_day(trade_date),
+            day_dir=paths.day_dir(trade_date),
+            required_files=required_files,
+        )
+
     return {
         "universe": uni,
         "daily": daily,
@@ -102,4 +132,5 @@ def run_asjr_manual_pipeline(
         "sector": sector,
         "ticker_summary": ticker_summary,
         "snapshot": snap,
+        "git": git_result,
     }
