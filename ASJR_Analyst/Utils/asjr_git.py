@@ -25,6 +25,7 @@ def submit_datalake(
     required_files,
     remote="origin",
     branch="main",
+    logger=None,
 ):
     """
     Verify required DataLake outputs, commit only this trading day's
