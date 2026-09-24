@@ -50,6 +50,41 @@ def parse_ibkr_bars(rows):
         .sort_index()
     )
 
+
+
+def normalize_gapup(df):
+    if df is None or len(df) == 0:
+        return pd.DataFrame(columns=["ticker"])
+
+    out = df.copy()
+    out.columns = [str(col).lower().strip() for col in out.columns]
+
+    if "symbol" in out.columns and "ticker" not in out.columns:
+        out = out.rename(columns={"symbol": "ticker"})
+
+    if "ticker" not in out.columns:
+        raise ValueError("Gap-up data must contain ticker or symbol.")
+
+    out["ticker"] = out["ticker"].astype(str).str.upper().str.strip()
+    return out[out["ticker"] != ""].drop_duplicates("ticker").reset_index(drop=True)
+
+def get_gapup_tickers(app):
+    """
+    Optional adapter for an existing working gap-up scanner on the ready app object.
+    We will replace/align this hook with the user's proven scanner method when supplied.
+    """
+    for name in ("get_gapup_scanner_results", "run_gapup_scanner", "get_gapup_tickers"):
+        fn = getattr(app, name, None)
+        if callable(fn):
+            result = fn()
+            if isinstance(result, pd.DataFrame):
+                return normalize_gapup(result)
+            return normalize_gapup(pd.DataFrame({"ticker": list(result or [])}))
+
+    raise NotImplementedError(
+        "Gap-up scanner hook is not connected yet. Pass gapup_df manually or wire the existing scanner method."
+    )
+
 def get_ibkr_5m_batch(
     app,
     tickers,
