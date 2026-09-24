@@ -1,0 +1,22 @@
+2026-09-24 22:07:13 | INFO | RUN | START | trade_date=2026-09-24
+2026-09-24 22:07:13 | INFO | RUN | OPTIONS | include_sector=True | git_submit=True | fetch_gapup_from_app=True
+2026-09-24 22:07:13 | INFO | GAPUP | Fetch started
+2026-09-24 22:07:14 | INFO | GAPUP | Fetch completed | rows=3
+2026-09-24 22:07:14 | INFO | GAPUP | Tickers | FRVO, SOXS, P
+2026-09-24 22:07:14 | INFO | UNIVERSE | Built | tickers=18
+2026-09-24 22:07:14 | INFO | FILE | Saved ibkr_gapup | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-24/raw/ibkr_gapup.csv
+2026-09-24 22:07:14 | INFO | YFINANCE | Daily 30D fetch started | tickers=18
+2026-09-24 22:07:15 | INFO | YFINANCE | Daily 30D fetch completed | rows=540
+2026-09-24 22:07:15 | INFO | FILE | Saved daily_30d | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-24/raw/daily_30d.csv
+2026-09-24 22:07:15 | INFO | FEATURES | Daily summary built | rows=18
+2026-09-24 22:07:15 | INFO | IBKR | 5m fetch started | tickers=18 | duration=3 D | batch_size=5
+2026-09-24 22:07:20 | INFO | IBKR | 5m fetch completed | rows=9688
+2026-09-24 22:07:20 | INFO | FILE | Saved intraday_5m | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-24/raw/intraday_5m.csv
+2026-09-24 22:07:20 | INFO | FEATURES | Intraday summary built | rows=18
+2026-09-24 22:07:20 | INFO | YFINANCE | Sector/market fetch started
+2026-09-24 22:07:20 | INFO | YFINANCE | Sector/market fetch completed | rows=15
+2026-09-24 22:07:20 | INFO | FILE | Saved sector_market_daily | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-24/raw/sector_market_daily.csv
+2026-09-24 22:07:20 | INFO | FILE | Saved ticker_summary | rows=18 | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-24/processed/ticker_summary.csv
+2026-09-24 22:07:20 | INFO | FILE | Saved asjr_snapshot | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-24/processed/asjr_snapshot.json
+2026-09-24 22:07:20 | INFO | RUN | DATA COMPLETE | universe=18 | intraday_rows=9688 | ticker_summary=18
+2026-09-24 22:07:20 | INFO | GIT | File verification started | count=6
