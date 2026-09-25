@@ -1,0 +1,22 @@
+2026-09-25 03:16:19 | INFO | RUN | START | trade_date=2026-09-25
+2026-09-25 03:16:19 | INFO | RUN | OPTIONS | include_sector=True | git_submit=True | fetch_gapup_from_app=True
+2026-09-25 03:16:19 | INFO | GAPUP | Fetch started
+2026-09-25 03:16:20 | INFO | GAPUP | Fetch completed | rows=15
+2026-09-25 03:16:20 | INFO | GAPUP | Tickers | FRVO, FSLR, AKAM, RUN, SOXS, U, FIGR, KORU, BULL, INTU, ALM, FSLY, ARM, TSEM, UEC
+2026-09-25 03:16:20 | INFO | UNIVERSE | Built | tickers=30
+2026-09-25 03:16:20 | INFO | FILE | Saved ibkr_gapup | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/raw/ibkr_gapup.csv
+2026-09-25 03:16:20 | INFO | YFINANCE | Daily 30D fetch started | tickers=30
+2026-09-25 03:16:21 | INFO | YFINANCE | Daily 30D fetch completed | rows=900
+2026-09-25 03:16:21 | INFO | FILE | Saved daily_30d | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/raw/daily_30d.csv
+2026-09-25 03:16:21 | INFO | FEATURES | Daily summary built | rows=30
+2026-09-25 03:16:21 | INFO | IBKR | 5m fetch started | tickers=30 | duration=3 D | batch_size=5
+2026-09-25 03:16:28 | INFO | IBKR | 5m fetch completed | rows=17255
+2026-09-25 03:16:28 | INFO | FILE | Saved intraday_5m | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/raw/intraday_5m.csv
+2026-09-25 03:16:28 | INFO | FEATURES | Intraday summary built | rows=30
+2026-09-25 03:16:28 | INFO | YFINANCE | Sector/market fetch started
+2026-09-25 03:16:28 | INFO | YFINANCE | Sector/market fetch completed | rows=15
+2026-09-25 03:16:28 | INFO | FILE | Saved sector_market_daily | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/raw/sector_market_daily.csv
+2026-09-25 03:16:28 | INFO | FILE | Saved ticker_summary | rows=30 | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/processed/ticker_summary.csv
+2026-09-25 03:16:28 | INFO | FILE | Saved asjr_snapshot | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/processed/asjr_snapshot.json
+2026-09-25 03:16:28 | INFO | RUN | DATA COMPLETE | universe=30 | intraday_rows=17255 | ticker_summary=30
+2026-09-25 03:16:28 | INFO | GIT | File verification started | count=6
