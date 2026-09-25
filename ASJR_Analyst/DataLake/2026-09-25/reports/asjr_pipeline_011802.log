@@ -1,0 +1,22 @@
+2026-09-25 01:18:02 | INFO | RUN | START | trade_date=2026-09-25
+2026-09-25 01:18:02 | INFO | RUN | OPTIONS | include_sector=True | git_submit=True | fetch_gapup_from_app=True
+2026-09-25 01:18:02 | INFO | GAPUP | Fetch started
+2026-09-25 01:18:03 | INFO | GAPUP | Fetch completed | rows=10
+2026-09-25 01:18:03 | INFO | GAPUP | Tickers | FSLR, AKAM, SOXS, U, KORU, BULL, INTU, ALM, FSLY, ARM
+2026-09-25 01:18:03 | INFO | UNIVERSE | Built | tickers=25
+2026-09-25 01:18:03 | INFO | FILE | Saved ibkr_gapup | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/raw/ibkr_gapup.csv
+2026-09-25 01:18:03 | INFO | YFINANCE | Daily 30D fetch started | tickers=25
+2026-09-25 01:18:04 | INFO | YFINANCE | Daily 30D fetch completed | rows=750
+2026-09-25 01:18:04 | INFO | FILE | Saved daily_30d | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/raw/daily_30d.csv
+2026-09-25 01:18:04 | INFO | FEATURES | Daily summary built | rows=25
+2026-09-25 01:18:04 | INFO | IBKR | 5m fetch started | tickers=25 | duration=3 D | batch_size=5
+2026-09-25 01:18:10 | INFO | IBKR | 5m fetch completed | rows=14375
+2026-09-25 01:18:10 | INFO | FILE | Saved intraday_5m | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/raw/intraday_5m.csv
+2026-09-25 01:18:10 | INFO | FEATURES | Intraday summary built | rows=25
+2026-09-25 01:18:10 | INFO | YFINANCE | Sector/market fetch started
+2026-09-25 01:18:10 | INFO | YFINANCE | Sector/market fetch completed | rows=15
+2026-09-25 01:18:10 | INFO | FILE | Saved sector_market_daily | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/raw/sector_market_daily.csv
+2026-09-25 01:18:10 | INFO | FILE | Saved ticker_summary | rows=25 | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/processed/ticker_summary.csv
+2026-09-25 01:18:10 | INFO | FILE | Saved asjr_snapshot | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/processed/asjr_snapshot.json
+2026-09-25 01:18:10 | INFO | RUN | DATA COMPLETE | universe=25 | intraday_rows=14375 | ticker_summary=25
+2026-09-25 01:18:10 | INFO | GIT | File verification started | count=6
