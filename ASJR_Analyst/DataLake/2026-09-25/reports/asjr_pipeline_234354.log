@@ -1,0 +1,22 @@
+2026-09-25 23:43:54 | INFO | RUN | START | trade_date=2026-09-25
+2026-09-25 23:43:54 | INFO | RUN | OPTIONS | include_sector=True | git_submit=True | fetch_gapup_from_app=True
+2026-09-25 23:43:54 | INFO | GAPUP | Fetch started
+2026-09-25 23:43:54 | INFO | GAPUP | Fetch completed | rows=12
+2026-09-25 23:43:54 | INFO | GAPUP | Tickers | AESI, AKAM, PPLI, GENI, KORU, FSLY, SNPS, FRVO, PGEN, MFG, MUFG, SNXX
+2026-09-25 23:43:54 | INFO | UNIVERSE | Built | tickers=32
+2026-09-25 23:43:54 | INFO | FILE | Saved ibkr_gapup | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/raw/ibkr_gapup.csv
+2026-09-25 23:43:54 | INFO | YFINANCE | Daily 30D fetch started | tickers=32
+2026-09-25 23:43:55 | INFO | YFINANCE | Daily 30D fetch completed | rows=960
+2026-09-25 23:43:55 | INFO | FILE | Saved daily_30d | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/raw/daily_30d.csv
+2026-09-25 23:43:55 | INFO | FEATURES | Daily summary built | rows=32
+2026-09-25 23:43:55 | INFO | IBKR | 5m fetch started | tickers=32 | duration=3 D | batch_size=5
+2026-09-25 23:44:03 | INFO | IBKR | 5m fetch completed | rows=17527
+2026-09-25 23:44:03 | INFO | FILE | Saved intraday_5m | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/raw/intraday_5m.csv
+2026-09-25 23:44:03 | INFO | FEATURES | Intraday summary built | rows=32
+2026-09-25 23:44:03 | INFO | YFINANCE | Sector/market fetch started
+2026-09-25 23:44:04 | INFO | YFINANCE | Sector/market fetch completed | rows=15
+2026-09-25 23:44:04 | INFO | FILE | Saved sector_market_daily | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/raw/sector_market_daily.csv
+2026-09-25 23:44:04 | INFO | FILE | Saved ticker_summary | rows=32 | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/processed/ticker_summary.csv
+2026-09-25 23:44:04 | INFO | FILE | Saved asjr_snapshot | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/processed/asjr_snapshot.json
+2026-09-25 23:44:04 | INFO | RUN | DATA COMPLETE | universe=32 | intraday_rows=17527 | ticker_summary=32
+2026-09-25 23:44:04 | INFO | GIT | File verification started | count=6
