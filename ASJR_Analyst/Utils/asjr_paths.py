@@ -3,6 +3,7 @@ from datetime import date
 
 ROOT = Path(__file__).resolve().parents[1]
 DATALAKE = ROOT / "DataLake"
+CONFIG = ROOT / "config"
 
 def trading_day(value=None):
     if value is None:
@@ -27,3 +28,6 @@ def report_path(filename, value=None):
 
 def config_path(filename, value=None):
     return day_dir(value) / "config" / filename
+
+def master_config_path(filename):
+    return CONFIG / filename
