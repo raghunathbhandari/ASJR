@@ -1,0 +1,22 @@
+2026-09-25 12:22:49 | INFO | RUN | START | trade_date=2026-09-25
+2026-09-25 12:22:49 | INFO | RUN | OPTIONS | include_sector=True | git_submit=True | fetch_gapup_from_app=True
+2026-09-25 12:22:49 | INFO | GAPUP | Fetch started
+2026-09-25 12:22:50 | INFO | GAPUP | Fetch completed | rows=18
+2026-09-25 12:22:50 | INFO | GAPUP | Tickers | AKAM, PPLI, AESI, GENI, MGNI, KORU, SHLS, WTTR, FRVO, SOXL, HESM, GDXU, FSLY, ARM, SBSW, RAM, SNXX, MSTU
+2026-09-25 12:22:50 | INFO | UNIVERSE | Built | tickers=33
+2026-09-25 12:22:50 | INFO | FILE | Saved ibkr_gapup | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/raw/ibkr_gapup.csv
+2026-09-25 12:22:50 | INFO | YFINANCE | Daily 30D fetch started | tickers=33
+2026-09-25 12:22:51 | INFO | YFINANCE | Daily 30D fetch completed | rows=990
+2026-09-25 12:22:51 | INFO | FILE | Saved daily_30d | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/raw/daily_30d.csv
+2026-09-25 12:22:51 | INFO | FEATURES | Daily summary built | rows=33
+2026-09-25 12:22:51 | INFO | IBKR | 5m fetch started | tickers=33 | duration=3 D | batch_size=5
+2026-09-25 12:22:59 | INFO | IBKR | 5m fetch completed | rows=13383
+2026-09-25 12:22:59 | INFO | FILE | Saved intraday_5m | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/raw/intraday_5m.csv
+2026-09-25 12:22:59 | INFO | FEATURES | Intraday summary built | rows=33
+2026-09-25 12:22:59 | INFO | YFINANCE | Sector/market fetch started
+2026-09-25 12:23:00 | INFO | YFINANCE | Sector/market fetch completed | rows=15
+2026-09-25 12:23:00 | INFO | FILE | Saved sector_market_daily | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/raw/sector_market_daily.csv
+2026-09-25 12:23:00 | INFO | FILE | Saved ticker_summary | rows=33 | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/processed/ticker_summary.csv
+2026-09-25 12:23:00 | INFO | FILE | Saved asjr_snapshot | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/processed/asjr_snapshot.json
+2026-09-25 12:23:00 | INFO | RUN | DATA COMPLETE | universe=33 | intraday_rows=13383 | ticker_summary=33
+2026-09-25 12:23:00 | INFO | GIT | File verification started | count=6
