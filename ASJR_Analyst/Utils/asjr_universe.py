@@ -6,27 +6,40 @@ def load_gapup_csv(path):
     df = pd.read_csv(path)
     return ibkr.normalize_gapup(df)
 
+def _align_columns(frames):
+    cols = []
+    for df in frames:
+        for col in df.columns:
+            if col not in cols:
+                cols.append(col)
+
+    aligned = []
+    for df in frames:
+        x = df.copy()
+        for col in cols:
+            if col not in x.columns:
+                x[col] = None
+        aligned.append(x[cols])
+
+    return aligned
+
 def build_universe(trade_date=None, gapup_df=None):
     fixed = watchlist.load_fixed_watchlist(trade_date).copy()
     fixed["source"] = "WATCHLIST"
 
-    if gapup_df is None or gapup_df.empty:
-        return fixed.reset_index(drop=True)
+    hot = watchlist.load_hot_sector_watchlist().copy()
+    hot["source"] = "HOT_SECTOR"
 
-    gap = ibkr.normalize_gapup(gapup_df).copy()
-    gap["source"] = "GAPUP"
+    frames = [fixed, hot]
 
-    for col in fixed.columns:
-        if col not in gap.columns:
-            gap[col] = None
-    for col in gap.columns:
-        if col not in fixed.columns:
-            fixed[col] = None
+    if gapup_df is not None and not gapup_df.empty:
+        gap = ibkr.normalize_gapup(gapup_df).copy()
+        gap["source"] = "GAPUP"
+        frames.append(gap)
 
-    cols = list(dict.fromkeys(list(fixed.columns) + list(gap.columns)))
-    out = pd.concat([fixed[cols], gap[cols]], ignore_index=True)
+    frames = _align_columns(frames)
+    out = pd.concat(frames, ignore_index=True)
 
-    # Prefer GAPUP label if ticker appears in both groups, but retain note.
     grouped = []
     for ticker, g in out.groupby("ticker", sort=False):
         row = g.iloc[0].copy()
