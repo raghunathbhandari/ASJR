@@ -1,0 +1,12 @@
+2026-09-25 06:15:47 | INFO | RUN | START | trade_date=2026-09-25
+2026-09-25 06:15:47 | INFO | RUN | OPTIONS | include_sector=True | git_submit=True | fetch_gapup_from_app=True
+2026-09-25 06:15:47 | INFO | GAPUP | Fetch started
+2026-09-25 06:15:47 | INFO | GAPUP | Fetch completed | rows=2
+2026-09-25 06:15:47 | INFO | GAPUP | Tickers | AKAM, WTTR
+2026-09-25 06:15:47 | INFO | UNIVERSE | Built | tickers=17
+2026-09-25 06:15:47 | INFO | FILE | Saved ibkr_gapup | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/raw/ibkr_gapup.csv
+2026-09-25 06:15:47 | INFO | YFINANCE | Daily 30D fetch started | tickers=17
+2026-09-25 06:15:48 | INFO | YFINANCE | Daily 30D fetch completed | rows=510
+2026-09-25 06:15:48 | INFO | FILE | Saved daily_30d | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/raw/daily_30d.csv
+2026-09-25 06:15:48 | INFO | FEATURES | Daily summary built | rows=17
+2026-09-25 06:15:48 | INFO | IBKR | 5m fetch started | tickers=17 | duration=3 D | batch_size=5
