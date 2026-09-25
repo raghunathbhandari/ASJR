@@ -20,3 +20,18 @@
 2026-09-25 06:06:06 | INFO | FILE | Saved asjr_snapshot | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-25/processed/asjr_snapshot.json
 2026-09-25 06:06:06 | INFO | RUN | DATA COMPLETE | universe=17 | intraday_rows=9663 | ticker_summary=17
 2026-09-25 06:06:06 | INFO | GIT | File verification started | count=6
+2026-09-25 06:06:06 | ERROR | RUN | FAILED
+Traceback (most recent call last):
+  File "/root/trading/ASJR/ASJR_Analyst/Tests/test_asjr_pipeline.py", line 254, in run_asjr_manual_pipeline
+    git_result = asjr_git.submit_datalake(
+  File "/root/trading/ASJR/ASJR_Analyst/Utils/asjr_git.py", line 105, in submit_datalake
+    _run_git(
+  File "/root/trading/ASJR/ASJR_Analyst/Utils/asjr_git.py", line 13, in _run_git
+    raise RuntimeError(
+RuntimeError: Git command failed: git pull --rebase origin main
+STDOUT:
+
+STDERR:
+error: cannot pull with rebase: You have unstaged changes.
+error: Please commit or stash them.
+
