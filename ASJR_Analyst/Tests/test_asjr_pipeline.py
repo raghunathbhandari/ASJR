@@ -284,7 +284,10 @@ def run_asjr_manual_pipeline(
                 logger=logger,
             )
 
-        logger.info("RUN | SUCCESS | log_file=%s", log_file)
+        # The day's folder was already committed above. Do not append to its
+        # tracked log after Git submit: a dirty prior-day log blocks the next
+        # session's pull --rebase when only the new day is staged.
+        print("RUN | SUCCESS | log_file:", log_file)
 
         return {
             "universe": uni,
