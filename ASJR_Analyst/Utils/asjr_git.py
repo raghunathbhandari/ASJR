@@ -24,12 +24,12 @@ def submit_datalake(
     day_dir,
     required_files,
     remote="origin",
-    branch=None,
+    branch="main",
     logger=None,
 ):
     """
     Verify required DataLake outputs, commit only this trading day's
-    DataLake folder, rebase on the checked-out branch, then push it.
+    DataLake folder, rebase on latest remote main, then push.
 
     No force-push is ever used.
     """
@@ -58,16 +58,6 @@ def submit_datalake(
         raise RuntimeError(
             f"Not inside a Git repository: {repo_root}"
         )
-
-    current_branch = _run_git(
-        repo_root, "symbolic-ref", "--quiet", "--short", "HEAD"
-    ).stdout.strip()
-    if branch is not None and branch != current_branch:
-        raise RuntimeError(
-            f"Refusing to submit DataLake from {current_branch} to {branch}. "
-            "Switch to the target branch first."
-        )
-    branch = current_branch
 
     relative_day_dir = day_dir.relative_to(repo_root)
 
@@ -110,13 +100,12 @@ def submit_datalake(
         message,
     )
 
-    # Rebase only onto the checked-out branch. Auto-stash unrelated local
-    # edits (such as a previous day's log) while preserving them afterward.
+    # Remote may contain newer ASJR code. Rebase the local DataLake
+    # commit safely before pushing. Never force-push.
     _run_git(
         repo_root,
         "pull",
         "--rebase",
-        "--autostash",
         remote,
         branch,
     )
@@ -125,7 +114,7 @@ def submit_datalake(
         repo_root,
         "push",
         remote,
-        f"HEAD:refs/heads/{branch}",
+        branch,
     )
 
     commit_sha = _run_git(
