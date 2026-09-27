@@ -8,6 +8,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 import Utils.asjr_paths as paths
+import Utils.asjr_day as asjr_day
 import Utils.asjr_storage as storage
 import Utils.asjr_watchlist as watchlist
 import Utils.asjr_universe as universe
@@ -22,7 +23,7 @@ import Utils.asjr_git as asjr_git
 import Utils.asjr_logger as asjr_logger
 
 for m in (
-    paths, storage, watchlist, universe, ibkr, yfd,
+    paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
     daily_features, intraday_features, alerts, market, snapshot,
     asjr_git, asjr_logger
 ):
@@ -39,12 +40,34 @@ def run_asjr_manual_pipeline(
 ):
     print("Thank you IBKR, yfinance and AI !")
 
+    if trade_date is None:
+        resolved_date = asjr_day.scheduled_date()
+        if resolved_date is None:
+            # A weekend run must not publish Friday bars as today's data.
+            print("ASJR Analyst skipped: US stock session closed")
+            return {
+                "universe": pd.DataFrame(), "daily": pd.DataFrame(),
+                "intraday_raw": pd.DataFrame(), "intraday": pd.DataFrame(),
+                "alert_data": [], "sector": pd.DataFrame(),
+                "ticker_summary": pd.DataFrame(),
+                "snapshot": {"trade_date": str(pd.Timestamp.now(tz=asjr_day.ET).date())},
+                "git": {"status": "SKIPPED_CLOSED_SESSION"}, "log_file": None,
+            }
+        trade_date = resolved_date
+
+    # paths.day_dir creates all local folders before any CSV or Git operation.
+    paths.day_dir(trade_date)
+    config_file, config_source = asjr_day.ensure_fixed_watchlist(
+        paths.DATALAKE, trade_date
+    )
+
     log_file = asjr_logger.run_log_path(
         paths.day_dir(trade_date) / "reports"
     )
     logger = asjr_logger.get_run_logger(log_file)
 
     logger.info("RUN | START | trade_date=%s", paths.trading_day(trade_date))
+    logger.info("WATCHLIST | %s | source=%s", config_file, config_source or "prepared")
     logger.info(
         "RUN | OPTIONS | include_sector=%s | git_submit=%s | fetch_gapup_from_app=%s",
         include_sector,
@@ -236,6 +259,7 @@ def run_asjr_manual_pipeline(
 
         if git_submit:
             required_files = [
+                config_file,
                 daily_file,
                 intraday_file,
                 summary_file,
