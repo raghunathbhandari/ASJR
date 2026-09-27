@@ -15,6 +15,7 @@ import Utils.asjr_ibkr as ibkr
 import Utils.asjr_yfinance as yfd
 import Utils.asjr_features as daily_features
 import Utils.asjr_intraday_features as intraday_features
+import Utils.asjr_alerts as alerts
 import Utils.asjr_market as market
 import Utils.asjr_snapshot as snapshot
 import Utils.asjr_git as asjr_git
@@ -22,7 +23,7 @@ import Utils.asjr_logger as asjr_logger
 
 for m in (
     paths, storage, watchlist, universe, ibkr, yfd,
-    daily_features, intraday_features, market, snapshot,
+    daily_features, intraday_features, alerts, market, snapshot,
     asjr_git, asjr_logger
 ):
     importlib.reload(m)
@@ -143,6 +144,7 @@ def run_asjr_manual_pipeline(
         logger.info("FILE | Saved intraday_5m | %s", intraday_file)
 
         intraday = intraday_features.add_intraday_features(intraday_raw)
+        alert_data = alerts.build_ema20_alerts(intraday, trade_date=trade_date)
         intraday_latest = intraday_features.latest_intraday_summary(
             intraday
         )
@@ -265,6 +267,7 @@ def run_asjr_manual_pipeline(
             "daily": daily,
             "intraday_raw": intraday_raw,
             "intraday": intraday,
+            "alert_data": alert_data,
             "sector": sector,
             "ticker_summary": ticker_summary,
             "snapshot": snap,
@@ -275,3 +278,8 @@ def run_asjr_manual_pipeline(
     except Exception:
         logger.exception("RUN | FAILED")
         raise
+
+
+def prepare_alert(result):
+    """Format fresh ticker events as one Discord message (at most 2000 chars)."""
+    return alerts.prepare_alert(result)
