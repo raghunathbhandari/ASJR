@@ -7,6 +7,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import pandas as pd
+from Utils.asjr_day import session_date
 
 
 ET = ZoneInfo("America/New_York")
@@ -31,7 +32,7 @@ def build_ema20_alerts(intraday, trade_date=None, now=None):
         frame = frame.sort_values("datetime").copy()
         dates = pd.to_datetime(frame["datetime"], utc=True).dt.tz_convert(ET)
         frame["bar_et"] = dates
-        frame = frame[(dates.dt.date.astype(str) == day) &
+        frame = frame[(dates.map(session_date).astype(str) == day) &
                       (dates + pd.Timedelta(minutes=5) <= now_et)].copy()
         if frame.empty:
             continue
