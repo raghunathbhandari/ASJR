@@ -24,3 +24,5 @@ ASJR_Analyst/
 ```
 
 Raw data is never edited after collection. Derived values belong in processed/.
+
+See [Operational handoff](OPERATIONAL_HANDOFF.md) for the Chakra/Git/Discord integration and current verification status.
