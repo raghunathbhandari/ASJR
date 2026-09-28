@@ -1,0 +1,23 @@
+2026-09-28 08:05:31 | INFO | RUN | START | trade_date=2026-09-28
+2026-09-28 08:05:31 | INFO | WATCHLIST | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-28/config/fixed_watchlist.csv | source=prepared
+2026-09-28 08:05:31 | INFO | RUN | OPTIONS | include_sector=True | git_submit=True | fetch_gapup_from_app=True
+2026-09-28 08:05:31 | INFO | GAPUP | Fetch started
+2026-09-28 08:05:32 | INFO | GAPUP | Fetch completed | rows=4
+2026-09-28 08:05:32 | INFO | GAPUP | Tickers | ULCC, BV, SOXS, GENI
+2026-09-28 08:05:32 | INFO | UNIVERSE | Built | tickers=21
+2026-09-28 08:05:32 | INFO | FILE | Saved ibkr_gapup | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-28/raw/ibkr_gapup.csv
+2026-09-28 08:05:32 | INFO | YFINANCE | Daily 30D fetch started | tickers=21
+2026-09-28 08:05:32 | INFO | YFINANCE | Daily 30D fetch completed | rows=630
+2026-09-28 08:05:32 | INFO | FILE | Saved daily_30d | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-28/raw/daily_30d.csv
+2026-09-28 08:05:32 | INFO | FEATURES | Daily summary built | rows=21
+2026-09-28 08:05:32 | INFO | IBKR | 5m fetch started | tickers=21 | duration=3 D | batch_size=5
+2026-09-28 08:05:38 | INFO | IBKR | 5m fetch completed | rows=11563
+2026-09-28 08:05:38 | INFO | FILE | Saved intraday_5m | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-28/raw/intraday_5m.csv
+2026-09-28 08:05:38 | INFO | FEATURES | Intraday summary built | rows=21
+2026-09-28 08:05:38 | INFO | YFINANCE | Sector/market fetch started
+2026-09-28 08:05:39 | INFO | YFINANCE | Sector/market fetch completed | rows=15
+2026-09-28 08:05:39 | INFO | FILE | Saved sector_market_daily | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-28/raw/sector_market_daily.csv
+2026-09-28 08:05:39 | INFO | FILE | Saved ticker_summary | rows=21 | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-28/processed/ticker_summary.csv
+2026-09-28 08:05:39 | INFO | FILE | Saved asjr_snapshot | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-28/processed/asjr_snapshot.json
+2026-09-28 08:05:39 | INFO | RUN | DATA COMPLETE | universe=21 | intraday_rows=11563 | ticker_summary=21
+2026-09-28 08:05:39 | INFO | GIT | File verification started | count=7
