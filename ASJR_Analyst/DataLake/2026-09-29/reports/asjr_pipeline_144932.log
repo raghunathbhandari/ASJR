@@ -1,0 +1,23 @@
+2026-09-29 14:49:32 | INFO | RUN | START | trade_date=2026-09-29
+2026-09-29 14:49:32 | INFO | WATCHLIST | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-29/config/fixed_watchlist.csv | source=prepared
+2026-09-29 14:49:32 | INFO | RUN | OPTIONS | include_sector=True | git_submit=True | fetch_gapup_from_app=True
+2026-09-29 14:49:32 | INFO | GAPUP | Fetch started
+2026-09-29 14:49:33 | INFO | GAPUP | Fetch completed | rows=28
+2026-09-29 14:49:33 | INFO | GAPUP | Tickers | SMMT, IOVA, CBOE, KMX, CCL, NVTS, FCEL, UEC, BLMN, ASTS, STAA, NCLH, BFLY, RCL, RAM, CONL, MSTU, EROC, MGNI, ETHU, SOXL, CRVS, KORU, MULL, XRP, MUU, AXTI, ALM
+2026-09-29 14:49:33 | INFO | UNIVERSE | Built | tickers=45
+2026-09-29 14:49:33 | INFO | FILE | Saved ibkr_gapup | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-29/raw/ibkr_gapup.csv
+2026-09-29 14:49:33 | INFO | YFINANCE | Daily 30D fetch started | tickers=45
+2026-09-29 14:49:35 | INFO | YFINANCE | Daily 30D fetch completed | rows=1350
+2026-09-29 14:49:35 | INFO | FILE | Saved daily_30d | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-29/raw/daily_30d.csv
+2026-09-29 14:49:35 | INFO | FEATURES | Daily summary built | rows=45
+2026-09-29 14:49:35 | INFO | IBKR | 5m fetch started | tickers=45 | duration=3 D | batch_size=5
+2026-09-29 14:49:45 | INFO | IBKR | 5m fetch completed | rows=19498
+2026-09-29 14:49:45 | INFO | FILE | Saved intraday_5m | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-29/raw/intraday_5m.csv
+2026-09-29 14:49:45 | INFO | FEATURES | Intraday summary built | rows=45
+2026-09-29 14:49:45 | INFO | YFINANCE | Sector/market fetch started
+2026-09-29 14:49:46 | INFO | YFINANCE | Sector/market fetch completed | rows=15
+2026-09-29 14:49:46 | INFO | FILE | Saved sector_market_daily | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-29/raw/sector_market_daily.csv
+2026-09-29 14:49:46 | INFO | FILE | Saved ticker_summary | rows=45 | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-29/processed/ticker_summary.csv
+2026-09-29 14:49:46 | INFO | FILE | Saved asjr_snapshot | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-29/processed/asjr_snapshot.json
+2026-09-29 14:49:46 | INFO | RUN | DATA COMPLETE | universe=45 | intraday_rows=19498 | ticker_summary=45
+2026-09-29 14:49:46 | INFO | GIT | File verification started | count=7
