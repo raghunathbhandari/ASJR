@@ -15,9 +15,14 @@ STATE_FILE = Path(__file__).resolve().parents[1] / "alert_state.json"
 CODE_FENCE = chr(96) * 3
 
 # Selective defaults so ordinary 5-minute candle noise does not flood Discord.
-WICK_MIN_RANGE_PCT = 0.20
-WICK_MIN_RANGE_SHARE = 0.40
-WICK_MIN_BODY_MULTIPLE = 1.20
+# A LONG-WICK alert must be visually/materially significant, not merely a
+# large percentage of a tiny candle.  The old 0.20% range rule incorrectly
+# flagged candles such as IOVA 2026-09-29 15:50 ET (only 0.31% price wick).
+WICK_MIN_RANGE_PCT = 0.50
+WICK_MIN_PRICE_PCT = 0.35
+WICK_MIN_RANGE_SHARE = 0.50
+WICK_MIN_BODY_MULTIPLE = 1.50
+WICK_MIN_PRIOR_MEDIAN_RANGE_MULTIPLE = 0.50
 
 
 def _volume_context(prior, volume):
@@ -45,15 +50,35 @@ def _long_lower_wick_event(ticker, frame, idx):
     lower_wick = min(open_price, close) - low
     range_pct = candle_range / close * 100.0
     wick_share = lower_wick / candle_range
+    wick_price_pct = lower_wick / close * 100.0
 
+    prior = frame.iloc[max(0, idx - 12):idx]
+    prior_ranges = (
+        pd.to_numeric(prior["high"], errors="coerce")
+        - pd.to_numeric(prior["low"], errors="coerce")
+    ).dropna()
+    prior_ranges = prior_ranges[prior_ranges > 0]
+    prior_median_range = (
+        float(prior_ranges.median()) if len(prior_ranges) >= 5 else None
+    )
+
+    # Reject tiny/noisy candles even when the wick is a high percentage of
+    # that candle.  Require material size versus price AND recent 5m ranges.
     if range_pct < WICK_MIN_RANGE_PCT:
+        return None
+    if wick_price_pct < WICK_MIN_PRICE_PCT:
         return None
     if wick_share < WICK_MIN_RANGE_SHARE:
         return None
     if lower_wick < max(body * WICK_MIN_BODY_MULTIPLE, 0.01):
         return None
+    if (
+        prior_median_range is not None
+        and lower_wick
+        < prior_median_range * WICK_MIN_PRIOR_MEDIAN_RANGE_MULTIPLE
+    ):
+        return None
 
-    prior = frame.iloc[max(0, idx - 12):idx]
     prior_low = pd.to_numeric(prior["low"], errors="coerce").min()
     swept_prior_low = (
         bool(low < prior_low and close > prior_low)
