@@ -472,10 +472,14 @@ def get_ibkr_5m_batch(
         )
 
     if tickers and total_rows == 0:
-        raise RuntimeError(
-            "IBKR 5m fetch returned ZERO rows after retry. "
-            "Possible temporary HMDS/IBKR connection state problem."
+        # A temporary empty HMDS/IBKR response is not a trading alert.
+        # Return the empty result normally so the pipeline produces no
+        # EMA20/wick events; keep the diagnostic in the local run output.
+        print(
+            "ASJR IBKR 5M | ZERO ROWS AFTER RETRY | "
+            "no EMA20/wick alert generated"
         )
+        return result
 
     return result
 
