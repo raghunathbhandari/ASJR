@@ -78,9 +78,9 @@ def run_asjr_manual_pipeline(
     try:
         # 1. Build universe
         if gapup_df is None and fetch_gapup_from_app:
-            logger.info("GAPUP | Fetch started")
+            logger.info("MOVERS | Fetch started")
             gapup_df = ibkr.get_gapup_tickers(app)
-            logger.info("GAPUP | Fetch completed | rows=%s", len(gapup_df))
+            logger.info("MOVERS | Fetch completed | rows=%s", len(gapup_df))
 
             gapup_tickers = (
                 gapup_df["ticker"]
@@ -93,7 +93,7 @@ def run_asjr_manual_pipeline(
             )
 
             logger.info(
-                "GAPUP | Tickers | %s",
+                "MOVERS | Tickers | %s",
                 ", ".join(gapup_tickers) if gapup_tickers else "None",
             )
 
@@ -108,14 +108,14 @@ def run_asjr_manual_pipeline(
         )
         logger.info("UNIVERSE | Built | tickers=%s", len(tickers))
 
-        # 2. Save gap-up raw file when supplied
+        # 2. Save scanner movers raw file when supplied (legacy filename retained)
         if gapup_df is not None and not gapup_df.empty:
             gapup_file = paths.raw_path("ibkr_gapup.csv", trade_date)
             storage.save_csv(
                 ibkr.normalize_gapup(gapup_df),
                 gapup_file,
             )
-            logger.info("FILE | Saved ibkr_gapup | %s", gapup_file)
+            logger.info("FILE | Saved ibkr_gapup (movers) | %s", gapup_file)
 
         # 3. 30-day daily OHLCV
         logger.info(
