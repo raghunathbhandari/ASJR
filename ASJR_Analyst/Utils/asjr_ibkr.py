@@ -1,8 +1,5 @@
 from __future__ import annotations
 import time
-from datetime import datetime
-from zoneinfo import ZoneInfo
-
 import pandas as pd
 from ibapi.contract import Contract
 from ibapi.scanner import ScannerSubscription
@@ -100,48 +97,17 @@ def normalize_gapup(df):
     )
 
 
-def get_api_tickers(
+def _run_scanner(
     app,
-    scan_code="AUTO",
+    scan_code,
+    percent_filter_tag=None,
+    percent_filter_value=None,
     wait_time=5,
     AvgVol="1000000",
     PriceAbove="5",
     marketCapAbove="500",
-    GapUpPcnt="4",
 ):
-    """
-    Working IBKR scanner used by ASJR Analyst.
-
-    Premarket:
-      TOP_PERC_GAIN + changePercAbove
-
-    Regular market:
-      HIGH_OPEN_GAP + openGapPercAbove
-
-    Default ASJR Analyst gap threshold: 4%.
-    """
-    now_et = datetime.now(
-        ZoneInfo("America/New_York")
-    )
-
-    premarket = (
-        now_et.hour,
-        now_et.minute,
-    ) < (9, 30)
-
-    if scan_code in (None, "AUTO"):
-        scan_code = (
-            "TOP_PERC_GAIN"
-            if premarket
-            else "HIGH_OPEN_GAP"
-        )
-
-    gap_filter = (
-        "changePercAbove"
-        if premarket
-        else "openGapPercAbove"
-    )
-
+    """Run one filtered IBKR US stock scanner and return unique tickers."""
     req_id = _next_req_id(app)
 
     app.scanner_results[req_id] = []
@@ -152,6 +118,8 @@ def get_api_tickers(
     sub.locationCode = "STK.US.MAJOR"
     sub.scanCode = scan_code
     sub.numberOfRows = 50
+    # Keep the discovery feed focused on operating companies rather than ETFs.
+    sub.stockTypeFilter = "CORP"
 
     filters = [
         TagValue(
@@ -166,11 +134,15 @@ def get_api_tickers(
             "avgVolumeAbove",
             AvgVol,
         ),
-        TagValue(
-            gap_filter,
-            str(GapUpPcnt),
-        ),
     ]
+
+    if percent_filter_tag and percent_filter_value is not None:
+        filters.append(
+            TagValue(
+                percent_filter_tag,
+                str(percent_filter_value),
+            )
+        )
 
     app.reqScannerSubscription(
         req_id,
@@ -195,14 +167,107 @@ def get_api_tickers(
         )
     )
 
+    app.scanner_results.pop(req_id, None)
+    app.scanner_done.pop(req_id, None)
+
+    filter_text = (
+        f"{percent_filter_tag}={percent_filter_value}"
+        if percent_filter_tag
+        else "no percent filter"
+    )
+
     print(
-        f"{'PREMARKET' if premarket else 'MARKET'} | "
-        f"{scan_code} | "
-        f"Gap >= {GapUpPcnt}% | "
+        f"ASJR MOVER | {scan_code} | "
+        f"{filter_text} | "
         f"Tickers: {len(tickers)}"
     )
 
     return tickers
+
+
+def get_api_tickers(
+    app,
+    scan_code="AUTO",
+    wait_time=5,
+    AvgVol="1000000",
+    PriceAbove="5",
+    marketCapAbove="500",
+    GapUpPcnt="4",
+):
+    """
+    ASJR market-wide percentage-mover scanner.
+
+    AUTO scans BOTH directions in every active session:
+      TOP_PERC_GAIN + changePercAbove >= threshold
+      TOP_PERC_LOSE + changePercBelow <= -threshold
+
+    This deliberately replaces the old RTH HIGH_OPEN_GAP behavior.
+    A stock does not need to gap 4% at the open; if it reaches +/-4%
+    versus the prior close during premarket or RTH, it can enter the
+    ASJR universe for 5-minute structure/EMA analysis.
+
+    GapUpPcnt is retained as the argument name for caller compatibility;
+    it now means the absolute percentage-move threshold.
+    """
+    threshold = str(GapUpPcnt).strip().lstrip("-")
+
+    if scan_code in (None, "AUTO"):
+        gainers = _run_scanner(
+            app=app,
+            scan_code="TOP_PERC_GAIN",
+            percent_filter_tag="changePercAbove",
+            percent_filter_value=threshold,
+            wait_time=wait_time,
+            AvgVol=AvgVol,
+            PriceAbove=PriceAbove,
+            marketCapAbove=marketCapAbove,
+        )
+
+        losers = _run_scanner(
+            app=app,
+            scan_code="TOP_PERC_LOSE",
+            percent_filter_tag="changePercBelow",
+            percent_filter_value=f"-{threshold}",
+            wait_time=wait_time,
+            AvgVol=AvgVol,
+            PriceAbove=PriceAbove,
+            marketCapAbove=marketCapAbove,
+        )
+
+        tickers = list(dict.fromkeys(gainers + losers))
+
+        print(
+            f"ASJR MOVER | AUTO | "
+            f"|change| >= {threshold}% | "
+            f"Gainers: {len(gainers)} | "
+            f"Losers: {len(losers)} | "
+            f"Unique: {len(tickers)}"
+        )
+
+        return tickers
+
+    filter_map = {
+        "TOP_PERC_GAIN": ("changePercAbove", threshold),
+        "TOP_PERC_LOSE": ("changePercBelow", f"-{threshold}"),
+        "HIGH_OPEN_GAP": ("openGapPercAbove", threshold),
+        "LOW_OPEN_GAP": ("openGapPercBelow", f"-{threshold}"),
+    }
+
+    filter_tag, filter_value = filter_map.get(
+        scan_code,
+        (None, None),
+    )
+
+    return _run_scanner(
+        app=app,
+        scan_code=scan_code,
+        percent_filter_tag=filter_tag,
+        percent_filter_value=filter_value,
+        wait_time=wait_time,
+        AvgVol=AvgVol,
+        PriceAbove=PriceAbove,
+        marketCapAbove=marketCapAbove,
+    )
 
 
 def get_gapup_tickers(
@@ -214,10 +279,12 @@ def get_gapup_tickers(
     wait_time=5,
 ):
     """
-    ASJR Analyst gap-up adapter.
+    Backward-compatible pipeline adapter.
 
-    Calls the proven get_api_tickers() scanner directly and
-    returns a normalized DataFrame for the pipeline.
+    Despite the legacy function name, this now returns liquid US stocks
+    moving at least +/- GapUpPcnt from the prior close, using both
+    TOP_PERC_GAIN and TOP_PERC_LOSE. This lets the DataLake discover
+    BE/FICO-style intraday movers even when they did not open with a 4% gap.
     """
     tickers = get_api_tickers(
         app=app,
