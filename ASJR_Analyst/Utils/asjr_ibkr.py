@@ -242,18 +242,6 @@ def get_ibkr_5m_batch(
     wait_time=20,
     batch_size=5,
 ):
-    """
-    ASJR V5.3 compatible historical 5-minute fetch.
-
-    Uses the existing ready IBKR app wrapper variables:
-      app.nextReqId
-      app.id_lock
-      app.data
-      app.hist_done
-
-    Returns:
-      dict[ticker] -> DataFrame indexed by America/New_York Date.
-    """
     result = {}
 
     tickers = [
@@ -262,15 +250,13 @@ def get_ibkr_5m_batch(
         if str(t).strip()
     ]
 
-    for start in range(
-        0,
-        len(tickers),
-        batch_size,
-    ):
-        batch = tickers[
-            start:start + batch_size
-        ]
+    def fetch_batch(batch, attempt=1):
         req_map = {}
+
+        print(
+            f"ASJR IBKR 5M | Batch start | "
+            f"attempt={attempt} | tickers={','.join(batch)}"
+        )
 
         for ticker in batch:
             try:
@@ -296,82 +282,135 @@ def get_ibkr_5m_batch(
             except Exception as exc:
                 print(
                     "ASJR ANALYST IBKR REQUEST ERROR | "
-                    f"{ticker} | {exc}"
+                    f"{ticker} | attempt={attempt} | {exc}"
                 )
 
         start_wait = time.time()
 
-        while (
-            req_map
-            and (
-                time.time() - start_wait
-            ) < wait_time
-        ):
+        while req_map and (time.time() - start_wait) < wait_time:
             if all(
-                app.hist_done.get(
-                    req_id,
-                    False,
-                )
+                app.hist_done.get(req_id, False)
                 for req_id in req_map
             ):
                 break
 
             time.sleep(0.10)
 
+        batch_result = {}
+        failed = []
+
         for req_id, ticker in req_map.items():
             try:
-                rows = app.data.get(
-                    req_id,
-                    [],
+                done = app.hist_done.get(req_id, False)
+                rows = app.data.get(req_id, [])
+
+                if not done:
+                    print(
+                        f"ASJR IBKR 5M | TIMEOUT | "
+                        f"{ticker} | reqId={req_id} | "
+                        f"rows_received={len(rows)}"
+                    )
+
+                    try:
+                        app.cancelHistoricalData(req_id)
+                    except Exception:
+                        pass
+
+                df = parse_ibkr_bars(rows)
+                batch_result[ticker] = df
+
+                print(
+                    f"ASJR IBKR 5M | RESULT | "
+                    f"{ticker} | attempt={attempt} | "
+                    f"done={done} | rows={len(df)}"
                 )
 
-                result[ticker] = (
-                    parse_ibkr_bars(rows)
-                )
+                if df.empty:
+                    failed.append(ticker)
 
             except Exception as exc:
                 print(
                     "ASJR ANALYST IBKR PARSE ERROR | "
-                    f"{ticker} | {exc}"
+                    f"{ticker} | attempt={attempt} | {exc}"
                 )
-
-                result[ticker] = (
-                    pd.DataFrame()
-                )
+                batch_result[ticker] = pd.DataFrame()
+                failed.append(ticker)
 
             finally:
                 app.data.pop(req_id, None)
                 app.hist_done.pop(req_id, None)
 
+        return batch_result, failed
+
+    for start in range(0, len(tickers), batch_size):
+        batch = tickers[start:start + batch_size]
+
+        batch_result, failed = fetch_batch(
+            batch,
+            attempt=1,
+        )
+        result.update(batch_result)
+
+        if failed:
+            print(
+                "ASJR IBKR 5M | RETRY | "
+                f"tickers={','.join(failed)}"
+            )
+            time.sleep(2)
+
+            retry_result, still_failed = fetch_batch(
+                failed,
+                attempt=2,
+            )
+            result.update(retry_result)
+
+            if still_failed:
+                print(
+                    "ASJR IBKR 5M | FAILED AFTER RETRY | "
+                    f"tickers={','.join(still_failed)}"
+                )
+
         time.sleep(0.5)
 
+    total_rows = sum(
+        len(df)
+        for df in result.values()
+        if df is not None
+    )
+
+    successful = [
+        ticker
+        for ticker, df in result.items()
+        if df is not None and not df.empty
+    ]
+
+    failed = [
+        ticker
+        for ticker in tickers
+        if ticker not in successful
+    ]
+
+    print(
+        f"ASJR IBKR 5M | COMPLETE | "
+        f"tickers={len(tickers)} | "
+        f"successful={len(successful)} | "
+        f"failed={len(failed)} | "
+        f"rows={total_rows}"
+    )
+
+    if failed:
+        print(
+            "ASJR IBKR 5M | MISSING | "
+            + ", ".join(failed)
+        )
+
+    if tickers and total_rows == 0:
+        raise RuntimeError(
+            "IBKR 5m fetch returned ZERO rows after retry. "
+            "Possible temporary HMDS/IBKR connection state problem."
+        )
+
     return result
-
-
-def completed_bars(df, now_et):
-    if df is None or df.empty:
-        return pd.DataFrame()
-
-    now_ts = pd.Timestamp(now_et)
-
-    return df[
-        (
-            df.index
-            + pd.Timedelta(minutes=5)
-        ) <= now_ts
-    ].copy()
-
-
-def historical_end_datetime(test_date):
-    next_day = (
-        pd.Timestamp(test_date)
-        + pd.Timedelta(days=1)
-    )
-
-    return next_day.strftime(
-        "%Y%m%d 00:00:00 US/Eastern"
-    )
-
 
 def combine_5m(result):
     """
