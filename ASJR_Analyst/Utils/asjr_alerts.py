@@ -18,7 +18,7 @@ CODE_FENCE = chr(96) * 3
 # A LONG-WICK alert must be visually/materially significant, not merely a
 # large percentage of a tiny candle.  The old 0.20% range rule incorrectly
 # flagged candles such as IOVA 2026-09-29 15:50 ET (only 0.31% price wick).
-WICK_MIN_RANGE_PCT = 0.50
+WICK_MIN_RANGE_PCT = 1.50
 WICK_MIN_PRICE_PCT = 0.35
 WICK_MIN_RANGE_SHARE = 0.50
 WICK_MIN_BODY_MULTIPLE = 1.50
