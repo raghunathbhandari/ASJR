@@ -22,6 +22,8 @@ import Utils.asjr_snapshot as snapshot
 import Utils.asjr_git as asjr_git
 import Utils.asjr_logger as asjr_logger
 
+ASJR_ANALYST_VERSION = "2026.09.29.1"
+
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
     daily_features, intraday_features, alerts, market, snapshot,
@@ -67,6 +69,8 @@ def run_asjr_manual_pipeline(
     logger = asjr_logger.get_run_logger(log_file)
 
     logger.info("RUN | START | trade_date=%s", paths.trading_day(trade_date))
+    logger.info("RUN | VERSION | %s", ASJR_ANALYST_VERSION)
+    print(f"ASJR Analyst Version: {ASJR_ANALYST_VERSION}")
     logger.info("WATCHLIST | %s | source=%s", config_file, config_source or "prepared")
     logger.info(
         "RUN | OPTIONS | include_sector=%s | git_submit=%s | fetch_gapup_from_app=%s",
