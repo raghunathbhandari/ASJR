@@ -68,8 +68,8 @@ def run_asjr_manual_pipeline(
     )
     logger = asjr_logger.get_run_logger(log_file)
 
-    logger.info("RUN | START | trade_date=%s", paths.trading_day(trade_date))
     logger.info("RUN | VERSION | %s", ASJR_ANALYST_VERSION)
+    logger.info("RUN | START | trade_date=%s", paths.trading_day(trade_date))
     print(f"ASJR Analyst Version: {ASJR_ANALYST_VERSION}")
     logger.info("WATCHLIST | %s | source=%s", config_file, config_source or "prepared")
     logger.info(
