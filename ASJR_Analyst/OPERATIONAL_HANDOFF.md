@@ -1,10 +1,18 @@
 # ASJR Analyst operational handoff
 
-Updated 2026-09-29 (UK). This records the implementation and observed state for Rudrakchhya and future ASJR sessions. Check the current Git branch, VPS logs and today's DataLake files before treating a run as live-verified.
+Updated 2026-09-30 (UK). This records the implementation and observed state for Rudrakchhya and future ASJR sessions. Check the current Git branch, VPS logs and today's DataLake files before treating a run as live-verified.
 
 ## Maintenance rule
 
 Update this handoff whenever ASJR Analyst/Chakra code, schedules, Git/DataLake behavior, Discord alerts, or live verification status changes. Record the date, affected methods, operational impact, and what was actually tested. Keep unverified assumptions marked as such, and update the README link if this document moves.
+
+## 2026-09-30 UK alert display
+
+- Code commit `cbe5a02`: `Utils/asjr_alerts.py::prepare_alert` now shows UK candle dates/times for both EMA20 and lower-wick alerts, with header `ASJR 5M ALERTS | candle times UK` and automatic BST/GMT suffix using `Europe/London`.
+- Example: `2026-09-29 19:35 ET` displays as `2026-09-30 00:35 BST`. Conversion handles date rollover and US/UK daylight-saving mismatch weeks.
+- Display-only change: event generation, US session labels/date logic, original `bar_time_et` data, and deduplication keys remain unchanged.
+- Local checks passed for EMA20/wick formatting, midnight rollover, summer/winter time, March/October DST mismatch weeks, and repeat suppression.
+- Pull the updated code and restart the Python BOT to load it. VPS activation and a live Discord message have not been verified from this session.
 
 ## Ownership and schedule
 
@@ -34,18 +42,18 @@ Update this handoff whenever ASJR Analyst/Chakra code, schedules, Git/DataLake b
 ## Five-minute Discord event
 
 - `result["alert_data"]` is a list of fresh ticker events from the existing in-memory `result["intraday"]` DataFrame. There is no second IBKR fetch or CSV read for the detector.
-- `Utils/asjr_alerts.py` examines up to the last two **completed** 5-minute candles per ticker, and emits only a cross above or below EMA20 from the relevant session within the freshness window. It includes timestamp ET, session label RTH/EXTENDED, close, EMA20 and distance, candle volume compared with the prior 12-bar median (only if at least five positive prior bars), EMA slope, and a prior-12-bar high break where present. Overnight Sunday evening bars map to Monday's session date.
+- `Utils/asjr_alerts.py` examines up to the last two **completed** 5-minute candles per ticker, and emits only a cross above or below EMA20 from the relevant session within the freshness window. It displays the timestamp in UK time (BST/GMT), session label RTH/EXTENDED, close, EMA20 and distance, candle volume compared with the prior 12-bar median (only if at least five positive prior bars), EMA slope, and a prior-12-bar high break where present. Overnight Sunday evening bars map to Monday's session date.
 - `tp.prepare_alert(result)` makes one Discord code block with ticker sections, stays below Discord's 2,000-character limit, and suppresses repeat event IDs using local `ASJR_Analyst/alert_state.json` (gitignored). It returns an empty string if there is no new event. This is chart context, **not** an entry signal; actual entries remain regular-session-only after 09:30 ET and need the user's separate confirmation rules.
 - Example:
 
   ```text
-  ASJR 5M EMA20 | candle times ET
+  ASJR 5M ALERTS | candle times UK
 
-  INTC [RTH] 2026-09-28 10:15 ET
+  INTC [RTH] 2026-09-28 15:15 BST
   EMA20: CROSSED ABOVE | Close $25.10 | EMA $25.00 (+0.40%)
   Vol: 250,000 (1.8x prior 12-bar median) | EMA: rising | 12-bar high break
 
-  AMD [RTH] 2026-09-28 10:15 ET
+  AMD [RTH] 2026-09-28 15:15 BST
   EMA20: CROSSED BELOW | Close $168.20 | EMA $168.50 (-0.18%)
   Vol: 410,000 (1.3x prior 12-bar median) | EMA: flat/falling
   ```
