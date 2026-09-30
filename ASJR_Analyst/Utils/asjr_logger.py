@@ -1,6 +1,16 @@
 import logging
 from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
+
+UK = ZoneInfo("Europe/London")
+
+
+class UKFormatter(logging.Formatter):
+    def formatTime(self, record, datefmt=None):
+        stamp = datetime.fromtimestamp(record.created, UK)
+        return stamp.strftime(datefmt or "%Y-%m-%d %H:%M:%S %Z")
+
 
 def get_run_logger(log_path):
     log_path = Path(log_path)
@@ -15,9 +25,9 @@ def get_run_logger(log_path):
         logger.removeHandler(handler)
         handler.close()
 
-    formatter = logging.Formatter(
+    formatter = UKFormatter(
         "%(asctime)s | %(levelname)s | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
+        datefmt="%Y-%m-%d %H:%M:%S %Z",
     )
 
     file_handler = logging.FileHandler(
@@ -37,5 +47,5 @@ def get_run_logger(log_path):
 
 
 def run_log_path(reports_dir):
-    stamp = datetime.now().strftime("%H%M%S")
+    stamp = datetime.now(UK).strftime("%Y%m%d_%H%M%S_%Z")
     return Path(reports_dir) / f"asjr_pipeline_{stamp}.log"
