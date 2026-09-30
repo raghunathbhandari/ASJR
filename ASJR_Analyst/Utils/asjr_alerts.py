@@ -11,6 +11,7 @@ from Utils.asjr_day import session_date
 
 
 ET = ZoneInfo("America/New_York")
+UK = ZoneInfo("Europe/London")
 STATE_FILE = Path(__file__).resolve().parents[1] / "alert_state.json"
 CODE_FENCE = chr(96) * 3
 
@@ -244,7 +245,7 @@ def prepare_alert(result, state_file=STATE_FILE):
     except (OSError, ValueError):
         sent = {}
 
-    header = "ASJR 5M ALERTS | candle times ET\n"
+    header = "ASJR 5M ALERTS | candle times UK\n"
     blocks = []
     added = []
 
@@ -255,6 +256,15 @@ def prepare_alert(result, state_file=STATE_FILE):
 
         if key in sent:
             continue
+
+        # Convert the candle's date as well as time; ZoneInfo handles BST/GMT
+        # and the weeks when US and UK daylight-saving dates differ.
+        bar_time_uk = (
+            datetime.strptime(e["bar_time_et"], "%Y-%m-%d %H:%M ET")
+            .replace(tzinfo=ET)
+            .astimezone(UK)
+            .strftime("%Y-%m-%d %H:%M %Z")
+        )
 
         volume = (
             f'{e["volume_x"]:.1f}x prior 12-bar median'
@@ -284,7 +294,7 @@ def prepare_alert(result, state_file=STATE_FILE):
                 )
 
             block = (
-                f'\n{ticker} LONG-WICK REVIEW [{e["session"]}] {e["bar_time_et"]}\n'
+                f'\n{ticker} LONG-WICK REVIEW [{e["session"]}] {bar_time_uk}\n'
                 f'O {e["open"]:.2f} H {e["high"]:.2f} L {e["low"]:.2f} C {e["price"]:.2f}\n'
                 f'Lower wick {e["lower_wick"]:.2f} '
                 f'({e["wick_pct"]:.2f}% price, {e["wick_share_pct"]:.0f}% candle) | '
@@ -309,7 +319,7 @@ def prepare_alert(result, state_file=STATE_FILE):
                 else ""
             )
             block = (
-                f'\n{ticker} [{e["session"]}] {e["bar_time_et"]}\n'
+                f'\n{ticker} [{e["session"]}] {bar_time_uk}\n'
                 f'EMA20: {e["event"]} | Close {e["price"]:.2f} | '
                 f'EMA {e["ema20"]:.2f} ({distance})\n'
                 f'Vol: {e["volume"]:,.0f} ({volume}) | EMA: {slope}{breakout}\n'
