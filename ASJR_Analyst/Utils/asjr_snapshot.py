@@ -1,4 +1,8 @@
 import pandas as pd
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+UK = ZoneInfo("Europe/London")
 
 def _safe_merge(left, right, on="ticker"):
     if left is None or left.empty:
@@ -35,11 +39,22 @@ def build_ticker_summary(universe_df, intraday_summary=None, daily_summary=None)
             lambda t: f"https://www.tradingview.com/chart/?symbol=NASDAQ:{t}"
         )
 
+    # Presentation timestamps in UK time; preserve the underlying instant.
+    if "datetime" in out.columns:
+        out["datetime"] = pd.to_datetime(
+            out["datetime"], utc=True
+        ).dt.tz_convert(UK)
+        out["datetime_uk"] = out["datetime"].dt.strftime(
+            "%Y-%m-%d %H:%M:%S %Z"
+        )
+
     return out.reset_index(drop=True)
 
 def build_snapshot_dict(trade_date, ticker_summary, sector_summary=None):
     return {
         "trade_date": str(trade_date),
+        "report_timezone": "Europe/London",
+        "generated_at_uk": datetime.now(UK).strftime("%Y-%m-%d %H:%M:%S %Z"),
         "ticker_count": int(len(ticker_summary)) if ticker_summary is not None else 0,
         "tickers": [] if ticker_summary is None else ticker_summary.where(pd.notna(ticker_summary), None).to_dict(orient="records"),
         "sectors": [] if sector_summary is None else sector_summary.where(pd.notna(sector_summary), None).to_dict(orient="records"),
