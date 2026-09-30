@@ -1,4 +1,4 @@
-"""Five-minute EMA20 and long-lower-wick events with compact Discord formatting."""
+"""Five-minute long-lower-wick alerts with compact Discord formatting."""
 
 import json
 import os
@@ -127,7 +127,7 @@ def _long_lower_wick_event(ticker, frame, idx):
 
 
 def build_ema20_alerts(intraday, trade_date=None, now=None):
-    """Return fresh EMA20 crosses and significant lower-wick events.
+    """Return significant lower-wick events only (legacy function name retained).
 
     The previous two completed 5-minute bars are checked so a slightly late
     Chakra run does not miss an event. Discord formatting deduplicates by
@@ -171,51 +171,6 @@ def build_ema20_alerts(intraday, trade_date=None, now=None):
             ):
                 continue
 
-            prior = frame.iloc[max(0, idx - 12):idx]
-            vol = float(row["volume"])
-
-            up = bool(row["cross_up"])
-            down = bool(row["cross_down"])
-
-            if up or down:
-                ema = float(row["ema20"])
-                close = float(row["close"])
-                prior_high = pd.to_numeric(
-                    prior["high"],
-                    errors="coerce",
-                ).max()
-
-                events.append({
-                    "type": "EMA20",
-                    "ticker": str(ticker),
-                    "bar_time_et": bar_time.strftime("%Y-%m-%d %H:%M ET"),
-                    "event": "CROSSED ABOVE" if up else "CROSSED BELOW",
-                    "price": close,
-                    "ema20": ema,
-                    "distance_pct": (
-                        (close / ema - 1) * 100
-                        if ema
-                        else None
-                    ),
-                    "volume": vol,
-                    "volume_x": _volume_context(prior, vol),
-                    "ema_rising": (
-                        bool(ema > float(frame.iloc[idx - 1]["ema20"]))
-                        if idx
-                        else None
-                    ),
-                    "prior_12_high_break": (
-                        bool(close > prior_high)
-                        if pd.notna(prior_high)
-                        else None
-                    ),
-                    "session": (
-                        "RTH"
-                        if (9, 30) <= (bar_time.hour, bar_time.minute) < (16, 0)
-                        else "EXTENDED"
-                    ),
-                })
-
             wick_event = _long_lower_wick_event(ticker, frame, idx)
             if wick_event is not None:
                 events.append(wick_event)
@@ -233,6 +188,8 @@ def build_ema20_alerts(intraday, trade_date=None, now=None):
 def prepare_alert(result, state_file=STATE_FILE):
     """Return one compact Discord code block and remember included events."""
     events = result.get("alert_data", []) if result else []
+    # Wick-only policy: also suppress legacy/cached EMA20-cross events.
+    events = [e for e in events if e.get("type") == "LOWER_WICK"]
     if not events:
         return ""
 
