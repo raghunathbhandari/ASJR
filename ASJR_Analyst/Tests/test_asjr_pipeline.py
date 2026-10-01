@@ -22,7 +22,7 @@ import Utils.asjr_snapshot as snapshot
 import Utils.asjr_git as asjr_git
 import Utils.asjr_logger as asjr_logger
 
-ASJR_ANALYST_VERSION = "2026.09.30.1"
+ASJR_ANALYST_VERSION = "2026.10.01.1"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -171,7 +171,7 @@ def run_asjr_manual_pipeline(
         logger.info("FILE | Saved intraday_5m | %s", intraday_file)
 
         intraday = intraday_features.add_intraday_features(intraday_raw)
-        alert_data = alerts.build_ema20_alerts(intraday, trade_date=trade_date)
+        alert_data = alerts.build_wick_alerts(intraday, trade_date=trade_date)
         intraday_latest = intraday_features.latest_intraday_summary(
             intraday
         )
