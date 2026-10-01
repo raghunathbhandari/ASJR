@@ -219,3 +219,36 @@ Do not call `tp.mark_alert_sent()` before Discord sending.
 - After a version-changing Python update: push to `main`, VPS `git pull`, then restart the running Python BOT. A successful pull without restart does not prove the new runtime version is active.
 - During every audit, check the newest DataLake report log first and compare its `RUN | VERSION` line with the current version documented here. If they differ, treat the running BOT as stale until restarted and re-verified.
 - Do not infer the runtime version only from Git HEAD. The run log version is the proof of what the Python process actually executed.
+
+
+## CRITICAL PRE-CODE-CHANGE CHECKLIST
+
+Before making any ASJR Analyst / Chakra / Rudrakchhya / Jaguar code change, always do these checks first:
+
+1. Read this canonical file: `ASJR_Analyst/OPERATIONAL_HANDOFF.md`.
+2. Check the current `main` Git version/commit and inspect the exact files/methods that will be changed.
+3. Check the newest DataLake run log and read its `RUN | VERSION | <version>` line.
+4. Compare the runtime log version with the current `ASJR_ANALYST_VERSION` documented in this handoff and present in the code.
+5. If Git/code version and runtime log version differ, treat the running BOT as stale. Do not assume current Git code is live until the BOT is restarted and a new log confirms the new version.
+6. Review the latest relevant audit findings in this handoff before altering behavior, especially alert state, DataLake, Discord delivery, scheduler, date/session, or IBKR timing logic.
+
+For every material code change:
+
+1. Increment `ASJR_ANALYST_VERSION`.
+2. Make the code change.
+3. Update this `OPERATIONAL_HANDOFF.md` in the same change cycle with:
+   - new version,
+   - date,
+   - files/methods changed,
+   - reason/root cause,
+   - behavior before/after,
+   - deployment steps,
+   - verification status,
+   - any remaining caveats.
+4. Commit/push to `main`.
+5. On VPS: `git pull`.
+6. Restart the Python BOT when Python/imported code changed.
+7. Verify the next DataLake log contains the new `RUN | VERSION | <version>` line.
+8. Only after that log appears should the new version be treated as live.
+
+The runtime log version is the primary proof of the code actually running on the VPS. Git HEAD alone is not sufficient.
