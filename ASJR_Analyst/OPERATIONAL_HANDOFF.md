@@ -208,3 +208,14 @@ Do not call `tp.mark_alert_sent()` before Discord sending.
 10. Verify `tp.mark_alert_sent()` removes only the successfully delivered prepared batch.
 11. Never reintroduce a short freshness cutoff that can discard delayed IBKR bars.
 12. Keep EMA-cross alert generation separate from this wick-only Chakra delivery path; current Discord policy is wick-only.
+
+
+## Mandatory version and log policy
+
+- Every material ASJR Analyst / Chakra Python code change must increment `ASJR_ANALYST_VERSION` before deployment.
+- Documentation-only edits do not require a runtime version bump unless they accompany a code change.
+- Every pipeline run must log the running version at startup using `RUN | VERSION | <version>`. This is the authoritative runtime evidence for which code generation the VPS process actually loaded.
+- The same version must be recorded in this `OPERATIONAL_HANDOFF.md` together with the date, affected methods/files, behavior change, deployment requirement, and verification status.
+- After a version-changing Python update: push to `main`, VPS `git pull`, then restart the running Python BOT. A successful pull without restart does not prove the new runtime version is active.
+- During every audit, check the newest DataLake report log first and compare its `RUN | VERSION` line with the current version documented here. If they differ, treat the running BOT as stale until restarted and re-verified.
+- Do not infer the runtime version only from Git HEAD. The run log version is the proof of what the Python process actually executed.
