@@ -22,7 +22,7 @@ import Utils.asjr_snapshot as snapshot
 import Utils.asjr_git as asjr_git
 import Utils.asjr_logger as asjr_logger
 
-ASJR_ANALYST_VERSION = "2026.10.01.1"
+ASJR_ANALYST_VERSION = "2026.10.01.2"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -314,3 +314,8 @@ def run_asjr_manual_pipeline(
 def prepare_alert(result):
     """Format fresh ticker events as one Discord message (at most 2000 chars)."""
     return alerts.prepare_alert(result)
+
+
+def mark_alert_sent():
+    """Acknowledge the prepared Discord wick batch after successful send."""
+    return alerts.mark_alert_sent()
