@@ -22,7 +22,7 @@ import Utils.asjr_snapshot as snapshot
 import Utils.asjr_git as asjr_git
 import Utils.asjr_logger as asjr_logger
 
-ASJR_ANALYST_VERSION = "2026.10.01.4"
+ASJR_ANALYST_VERSION = "2026.10.01.3"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
