@@ -8,7 +8,7 @@
       "side": "LOWER",
       "lookback_bars": 12,
       "min_prior_bars": 3,
-      "min_wick_pct": 2.0,
+      "min_wick_pct": 2,
       "require_reclaim": true
     },
     {
@@ -18,7 +18,7 @@
       "side": "UPPER",
       "lookback_bars": 12,
       "min_prior_bars": 3,
-      "min_wick_pct": 2.0,
+      "min_wick_pct": 2,
       "require_reclaim": true
     },
     {
@@ -28,9 +28,72 @@
       "side": "BOTH",
       "lookback_bars": 12,
       "min_prior_bars": 0,
-      "min_wick_pct": 2.0,
-      "max_body_pct": 1.0,
+      "min_wick_pct": 2,
+      "max_body_pct": 1,
       "require_reclaim": false
     }
-  ]
+  ],
+  "review_examples": {
+    "date": "2026-10-01",
+    "timezone": "Europe/London",
+    "accepted": [
+      {
+        "ticker": "LRCX",
+        "candle_time_uk": "09:00",
+        "setup_hint": "rejection_wick",
+        "side": "UPPER",
+        "note": "Validated clean rejection wick; long upper wick with very small body."
+      },
+      {
+        "ticker": "CNXC",
+        "candle_time_uk": "14:35",
+        "setup_hint": "upper_liquidity_sweep",
+        "side": "UPPER",
+        "note": "Validated upper sweep/rejection example."
+      },
+      {
+        "ticker": "AMAT",
+        "candle_time_uk": "14:35",
+        "setup_hint": "structure_rejection_candidate",
+        "side": "LOWER",
+        "note": "Validated by eye as a good wick even though it is below the original 2% threshold."
+      },
+      {
+        "ticker": "CNXC",
+        "candle_time_uk": "14:40",
+        "setup_hint": "structure_rejection_candidate",
+        "side": "UPPER",
+        "note": "Validated by eye as a good wick."
+      },
+      {
+        "ticker": "LQDA",
+        "candle_time_uk": "13:15",
+        "setup_hint": "lower_liquidity_sweep",
+        "side": "LOWER",
+        "note": "Validated lower liquidity sweep/reclaim; body larger than 1% but still a desired alert."
+      },
+      {
+        "ticker": "LQDA",
+        "candle_time_uk": "14:30",
+        "setup_hint": "lower_liquidity_sweep",
+        "side": "LOWER",
+        "note": "Validated strong lower liquidity sweep/reclaim with large volume; desired alert."
+      }
+    ],
+    "rejected": [
+      {
+        "ticker": "WOLF",
+        "candle_time_uk": "14:30",
+        "side": "UPPER",
+        "note": "Rejected by eye; body/candle structure does not look like the desired wick."
+      },
+      {
+        "ticker": "INOD",
+        "candle_time_uk": "17:55",
+        "side": "LOWER",
+        "note": "Rejected by eye; ignore for current wick logic."
+      }
+    ],
+    "lqda_policy_note": "For LQDA on 2026-10-01, 13:15 BST and 14:30 BST are validated; other reviewed LQDA wick candidates can be ignored for now."
+  }
 }
