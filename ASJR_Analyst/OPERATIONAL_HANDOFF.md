@@ -252,3 +252,26 @@ For every material code change:
 8. Only after that log appears should the new version be treated as live.
 
 The runtime log version is the primary proof of the code actually running on the VPS. Git HEAD alone is not sufficient.
+
+
+## 2026-10-01 locked liquidity-sweep wick filter
+
+- Runtime version: `2026.10.01.3`.
+- Files changed:
+  - `ASJR_Analyst/Utils/asjr_alerts.py`
+  - `ASJR_Analyst/Tests/test_asjr_pipeline.py`
+- Reason: the earlier detector produced too many ordinary wick events. User validated LRCX 09:00 BST and CNXC 14:35 BST as the type of real liquidity-sweep/rejection wick desired.
+- Locked immediate wick rule:
+  - upper or lower wick itself must be at least **2.0% of price**;
+  - real candle body must be at most **1.0% of price**;
+  - prior full-range, wick-share, body-multiple, and prior-median-range threshold gates were removed from qualification.
+- Alert formatting now includes both wick percent and body percent.
+- Old pending wick backlog is intentionally discarded on this detector schema change. `STATE_SCHEMA_VERSION = 3` causes the first run after deployment to seed each ticker's `last_processed` marker at the newest completed candle already present and emit no historical backlog. Subsequent runs evaluate only newly completed candles while retaining the stateful no-miss behavior for future delayed data/restarts.
+- Normal trading-day rollover does not use this deployment reset; a new session can still be processed from its first available completed candle.
+- The previously discussed optional “one biggest wick per hour” fallback is **not implemented in this version**. Version 2026.10.01.3 locks only the validated 2% wick / 1% body immediate filter so live behavior can be observed cleanly before adding another alert class.
+- Pre-change audit completed before edit:
+  - canonical handoff reviewed;
+  - Git code showed `ASJR_ANALYST_VERSION = "2026.10.01.2"`;
+  - newest inspected DataLake log `asjr_pipeline_20261001_172101_BST.log` confirmed `RUN | VERSION | 2026.10.01.2`.
+- Deployment required: VPS `git pull`, then restart the Python bot.
+- Live verification required after restart: newest DataLake report log must show `RUN | VERSION | 2026.10.01.3`. Until that appears, treat this change as pushed but not live-verified.
