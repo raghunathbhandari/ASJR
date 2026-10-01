@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "setups": [
+    {
+      "id": "liquidity_sweep_reclaim",
+      "enabled": true,
+      "label": "LIQUIDITY SWEEP",
+      "lookback_bars": 12,
+      "min_prior_bars": 3,
+      "min_wick_pct": 2.0,
+      "require_reclaim": true
+    },
+    {
+      "id": "rejection_wick",
+      "enabled": true,
+      "label": "REJECTION WICK",
+      "min_wick_pct": 2.0,
+      "max_body_pct": 1.0
+    }
+  ]
+}
