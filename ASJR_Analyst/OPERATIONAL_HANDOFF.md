@@ -120,3 +120,89 @@ Update this handoff whenever ASJR Analyst/Chakra code, schedules, Git/DataLake b
       tp.mark_alert_sent()
   ```
 - Pull + BOT restart required to load this version.
+
+
+## 2026-10-01 live wick audit findings and next-audit guide
+
+This section is the canonical audit record for the 2026-10-01 Chakra wick-alert investigation. Future Rudrakchhya/Chakra audits should read this before changing alert logic.
+
+### What was observed live
+
+- The external Chakra caller was confirmed to use the intended sequence:
+  - `result = tp.run_asjr_manual_pipeline(...)`
+  - `discord_message = tp.prepare_alert(result)`
+  - `if discord_message: SN.send_to_discord(discord_message)`
+- The caller already prints both `result` and `discord_message`, so the tmux console is the best place to inspect the final alert payload path.
+- A live tmux capture showed `result["alert_data"] == []`. Therefore the missing Discord wick alert was upstream of `prepare_alert` and `send_to_discord`; Discord was not the first failure point.
+- The Git/DataLake logs around 14:44-14:45 BST showed the pipeline running normally and fetching 5-minute data successfully.
+- Historical inspection of the exact DataLake commit from that run showed AMAT, CRDO, LRCX and WDC data only through 09:25 ET, even though the live clock was around 09:45 ET. This demonstrated an IBKR historical-data lag of roughly 15-20 minutes for those names on that run.
+- Later DataLake versions contained the 09:35 ET candles and those candles met the configured wick thresholds. Therefore the missing alerts were not because qualifying wicks never existed; they arrived in the fetched history later than the old alert freshness rule allowed.
+- The previous detector had an 11-minute freshness rejection. With IBKR history lagging by about 15-20 minutes, valid wick bars could be rejected as stale as soon as they finally became visible to the bot.
+- The prior implementation only detected lower wicks. The clean wick implementation now handles both upper and lower wicks.
+- The previous `prepare_alert` flow marked events as sent before the caller actually completed Discord delivery. That created a possible loss window if Discord sending failed after formatting.
+
+### Architecture after the audit
+
+- Data collection remains owned by `run_asjr_manual_pipeline()`. It imports the latest scanner universe, daily data, 3-day IBKR 5-minute history, features, sector context, snapshot and DataLake files.
+- Wick processing is a separate logical stage. The pipeline calls `alerts.build_wick_alerts(intraday, trade_date=trade_date)` after the latest IBKR import is complete.
+- `build_wick_alerts` uses a persistent per-ticker `last_processed` 5-minute candle marker instead of a freshness cutoff.
+- For each ticker, every completed session candle after `last_processed` is evaluated exactly once for wick/no-wick. After evaluation, the read/process marker advances to the latest completed candle available in the fetched history.
+- If the bot is stopped, delayed, restarted, or IBKR data arrives late, the next run resumes from the saved marker and processes the missing candles present in the newly imported history.
+- First run with no state file processes all completed candles from the current trading session. This intentionally allows the first stateful run to discover older qualifying wicks from the day.
+- Qualifying upper/lower wick events are persisted in a local pending queue. They remain pending until delivery is acknowledged.
+- `prepare_alert(result)` formats the oldest pending events into one Discord-safe message and records only the prepared batch IDs. It does not acknowledge delivery.
+- After a successful Discord send, the caller must execute `tp.mark_alert_sent()`. Only that prepared batch is then removed from the pending queue.
+- If Discord sending fails, the process stops, or acknowledgement is not reached, the events remain pending and are retried later.
+- If the backlog exceeds Discord's message-size limit, one batch is sent per scheduled run and the rest remain pending for subsequent runs. The design therefore favors delayed delivery over silently dropping an alert.
+- Local state files are intentionally gitignored:
+  - `ASJR_Analyst/wick_alert_state.json`
+  - `ASJR_Analyst/wick_alert_batch.json`
+  - matching temporary files.
+- Pipeline version after this redesign: `2026.10.01.2`.
+
+### Required caller contract
+
+The external VPS caller must use this order:
+
+```python
+result = tp.run_asjr_manual_pipeline(
+    app=app,
+    trade_date=None,
+    gapup_df=None,
+    fetch_gapup_from_app=True,
+    include_sector=True,
+    git_submit=True,
+)
+
+print(result)
+
+discord_message = tp.prepare_alert(result)
+print(discord_message)
+
+if discord_message:
+    SN.send_to_discord(discord_message)
+    tp.mark_alert_sent()
+```
+
+Do not call `tp.mark_alert_sent()` before Discord sending.
+
+### Important remaining delivery caveat
+
+- The current external `send_to_discord(message)` helper catches exceptions internally and does not return a success flag or re-raise the failure. Therefore the caller cannot currently distinguish a confirmed send from a swallowed Discord exception.
+- For a strict no-loss delivery guarantee, change `send_to_discord` later to return `True` on successful `webhook.send(message)` and `False` on failure, then call `tp.mark_alert_sent()` only when the return value is `True`.
+- Until that caller helper is improved, the stateful scan prevents candle-processing loss, but Discord acknowledgement is only as reliable as the current helper's success behavior.
+
+### Next audit checklist
+
+1. Check `ASJR_Analyst/OPERATIONAL_HANDOFF.md` first.
+2. Verify current `main` commit and pipeline version.
+3. Check the running tmux process was restarted after Python changes.
+4. Compare the latest fetched 5-minute candle timestamp with the actual clock to measure IBKR lag.
+5. Inspect `result["alert_data"]` in tmux output before investigating Discord.
+6. Inspect `wick_alert_state.json` for per-ticker `last_processed` and pending events.
+7. Inspect `wick_alert_batch.json` if a Discord message was prepared but not yet acknowledged.
+8. Verify `prepare_alert` returns non-empty text when pending events exist.
+9. Verify Discord send outcome.
+10. Verify `tp.mark_alert_sent()` removes only the successfully delivered prepared batch.
+11. Never reintroduce a short freshness cutoff that can discard delayed IBKR bars.
+12. Keep EMA-cross alert generation separate from this wick-only Chakra delivery path; current Discord policy is wick-only.
