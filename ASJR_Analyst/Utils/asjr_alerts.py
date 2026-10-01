@@ -17,11 +17,9 @@ STATE_FILE = ROOT / "wick_alert_state.json"
 BATCH_FILE = ROOT / "wick_alert_batch.json"
 CODE_FENCE = chr(96) * 3
 
-WICK_MIN_RANGE_PCT = 1.50
-WICK_MIN_PRICE_PCT = 0.35
-WICK_MIN_RANGE_SHARE = 0.50
-WICK_MIN_BODY_MULTIPLE = 1.50
-WICK_MIN_PRIOR_MEDIAN_RANGE_MULTIPLE = 0.50
+STATE_SCHEMA_VERSION = 3
+WICK_MIN_PRICE_PCT = 2.00
+WICK_MAX_BODY_PCT = 1.00
 
 
 def _read_json(path, default):
@@ -47,23 +45,35 @@ def _event_key(event):
     )
 
 
+def _new_state(day, seed_latest=False):
+    return {
+        "schema_version": STATE_SCHEMA_VERSION,
+        "session_date": day,
+        "last_processed": {},
+        "pending": [],
+        "seed_latest": bool(seed_latest),
+    }
+
+
 def _load_state(path, day):
-    state = _read_json(
-        path,
-        {
-            "session_date": day,
-            "last_processed": {},
-            "pending": [],
-        },
-    )
-    if not isinstance(state, dict) or state.get("session_date") != day:
-        state = {
-            "session_date": day,
-            "last_processed": {},
-            "pending": [],
-        }
+    state = _read_json(path, None)
+
+    # A detector-rule/schema change intentionally discards the old pending
+    # backlog and seeds processing from the newest completed candle.
+    if (
+        not isinstance(state, dict)
+        or state.get("schema_version") != STATE_SCHEMA_VERSION
+    ):
+        return _new_state(day, seed_latest=True)
+
+    # Normal new trading day: preserve no-miss behavior by allowing the
+    # session to be processed from its first available completed candle.
+    if state.get("session_date") != day:
+        return _new_state(day, seed_latest=False)
+
     state.setdefault("last_processed", {})
     state.setdefault("pending", [])
+    state.setdefault("seed_latest", False)
     return state
 
 
@@ -95,29 +105,16 @@ def _wick_event(ticker, frame, idx, side):
     range_pct = candle_range / close * 100.0
     wick_share = wick / candle_range
     wick_price_pct = wick / close * 100.0
+    body_pct = body / close * 100.0
 
     prior = frame.iloc[max(0, idx - 12):idx]
-    prior_ranges = (
-        pd.to_numeric(prior["high"], errors="coerce")
-        - pd.to_numeric(prior["low"], errors="coerce")
-    ).dropna()
-    prior_ranges = prior_ranges[prior_ranges > 0]
-    prior_median_range = (
-        float(prior_ranges.median()) if len(prior_ranges) >= 5 else None
-    )
 
-    if range_pct < WICK_MIN_RANGE_PCT:
-        return None
+    # Locked liquidity-sweep filter:
+    #   wick itself must be >= 2% of price
+    #   real body must be <= 1% of price
     if wick_price_pct < WICK_MIN_PRICE_PCT:
         return None
-    if wick_share < WICK_MIN_RANGE_SHARE:
-        return None
-    if wick < max(body * WICK_MIN_BODY_MULTIPLE, 0.01):
-        return None
-    if (
-        prior_median_range is not None
-        and wick < prior_median_range * WICK_MIN_PRIOR_MEDIAN_RANGE_MULTIPLE
-    ):
+    if body_pct > WICK_MAX_BODY_PCT:
         return None
 
     prior_low = pd.to_numeric(prior["low"], errors="coerce").min()
@@ -171,6 +168,7 @@ def _wick_event(ticker, frame, idx, side):
         "wick": wick,
         "wick_pct": wick_price_pct,
         "wick_share_pct": wick_share * 100.0,
+        "body_pct": body_pct,
         "range_pct": range_pct,
         "prior_level": prior_level,
         "swept_reclaimed": swept,
@@ -225,6 +223,12 @@ def build_wick_alerts(
         if frame.empty:
             continue
 
+        if state.get("seed_latest"):
+            state["last_processed"][str(ticker)] = (
+                frame.iloc[-1]["bar_et"].isoformat()
+            )
+            continue
+
         marker_text = state["last_processed"].get(str(ticker))
         marker = pd.Timestamp(marker_text) if marker_text else None
         if marker is not None:
@@ -247,6 +251,7 @@ def build_wick_alerts(
         latest_bar = frame.iloc[-1]["bar_et"]
         state["last_processed"][str(ticker)] = latest_bar.isoformat()
 
+    state["seed_latest"] = False
     state["pending"] = sorted(
         pending_by_key.values(),
         key=lambda e: (e["bar_time_et"], e["ticker"], e["type"]),
@@ -328,8 +333,8 @@ def prepare_alert(
             f'O {event["open"]:.2f} H {event["high"]:.2f} '
             f'L {event["low"]:.2f} C {event["price"]:.2f}\n'
             f'Wick {event["wick"]:.2f} '
-            f'({event["wick_pct"]:.2f}% price, '
-            f'{event["wick_share_pct"]:.0f}% candle) | '
+            f'({event["wick_pct"]:.2f}% price) | '
+            f'Body {event.get("body_pct", 0.0):.2f}% | '
             f'{level_name} {prior_level} swept/reclaimed: {sweep}\n'
             f'Vol {event["volume"]:,.0f} ({volume}) | Next: {next_state}\n'
         )
