@@ -275,3 +275,22 @@ The runtime log version is the primary proof of the code actually running on the
   - newest inspected DataLake log `asjr_pipeline_20261001_172101_BST.log` confirmed `RUN | VERSION | 2026.10.01.2`.
 - Deployment required: VPS `git pull`, then restart the Python bot.
 - Live verification required after restart: newest DataLake report log must show `RUN | VERSION | 2026.10.01.3`. Until that appears, treat this change as pushed but not live-verified.
+
+
+## 2026-10-01 dynamic wick setup configuration
+
+- Runtime version: `2026.10.01.4`.
+- `ASJR_Analyst/Utils/asjr_alerts.py` now reloads `ASJR_Analyst/config/wick_setups.json` on every pipeline run.
+- This requires one VPS pull + bot restart to load the JSON-aware code. After that, edits to `wick_setups.json` are picked up on the next scheduled pipeline run without a Python restart.
+- Current review setup definitions are:
+  1. `LOWER LIQUIDITY SWEEP`: lower wick >= 2.0% of price, current low breaks the prior 12-bar low, and close reclaims back above that prior low. No body-size cap.
+  2. `UPPER LIQUIDITY SWEEP`: upper wick >= 2.0% of price, current high breaks the prior 12-bar high, and close reclaims back below that prior high. No body-size cap.
+  3. `REJECTION WICK`: upper or lower wick >= 2.0% of price and candle body <= 1.0% of price; no sweep/reclaim requirement.
+- JSON order is priority order. One candle-side emits at most one setup label even if it matches more than one definition.
+- User validation examples:
+  - LRCX 2026-10-01 09:00 BST is a clean rejection wick.
+  - CNXC 2026-10-01 14:35 BST is a clean upper rejection/sweep candidate.
+  - LQDA 2026-10-01 13:15 BST and 14:30 BST are lower liquidity sweep/reclaim examples that must be supported despite bodies > 1%.
+- The latest pre-change runtime log checked was `asjr_pipeline_20261001_180959_BST.log`, which confirmed `RUN | VERSION | 2026.10.01.3`.
+- Deployment required now: VPS `git pull`, restart bot once, then verify a new DataLake log shows `RUN | VERSION | 2026.10.01.4`.
+- After that verification, future wick setup tuning can be performed by editing only `config/wick_setups.json`; no restart should be needed for JSON-only rule changes.
