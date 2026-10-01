@@ -4,6 +4,8 @@ Updated 2026-10-01 (UK). This records the implementation and observed state for 
 
 ## Maintenance rule
 
+- This file is the canonical AI/analyst handoff and must be updated after every material ASJR/Chakra/Rudrakchhya/Jaguar code, alert, schedule, DataLake, operational, audit, or deployment change so future sessions start from the latest verified state.
+
 Update this handoff whenever ASJR Analyst/Chakra code, schedules, Git/DataLake behavior, Discord alerts, or live verification status changes. Record the date, affected methods, operational impact, and what was actually tested. Keep unverified assumptions marked as such, and update the README link if this document moves.
 
 ## 2026-09-30 UK alert display
