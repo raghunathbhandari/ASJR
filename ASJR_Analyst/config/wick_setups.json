@@ -1,10 +1,21 @@
 {
-  "version": 1,
+  "version": 2,
   "setups": [
     {
-      "id": "liquidity_sweep_reclaim",
+      "id": "lower_liquidity_sweep",
       "enabled": true,
-      "label": "LIQUIDITY SWEEP",
+      "label": "LOWER LIQUIDITY SWEEP",
+      "side": "LOWER",
+      "lookback_bars": 12,
+      "min_prior_bars": 3,
+      "min_wick_pct": 2.0,
+      "require_reclaim": true
+    },
+    {
+      "id": "upper_liquidity_sweep",
+      "enabled": true,
+      "label": "UPPER LIQUIDITY SWEEP",
+      "side": "UPPER",
       "lookback_bars": 12,
       "min_prior_bars": 3,
       "min_wick_pct": 2.0,
@@ -14,8 +25,12 @@
       "id": "rejection_wick",
       "enabled": true,
       "label": "REJECTION WICK",
+      "side": "BOTH",
+      "lookback_bars": 12,
+      "min_prior_bars": 0,
       "min_wick_pct": 2.0,
-      "max_body_pct": 1.0
+      "max_body_pct": 1.0,
+      "require_reclaim": false
     }
   ]
 }
