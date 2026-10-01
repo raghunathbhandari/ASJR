@@ -294,3 +294,21 @@ The runtime log version is the primary proof of the code actually running on the
 - The latest pre-change runtime log checked was `asjr_pipeline_20261001_180959_BST.log`, which confirmed `RUN | VERSION | 2026.10.01.3`.
 - Deployment required now: VPS `git pull`, restart bot once, then verify a new DataLake log shows `RUN | VERSION | 2026.10.01.4`.
 - After that verification, future wick setup tuning can be performed by editing only `config/wick_setups.json`; no restart should be needed for JSON-only rule changes.
+
+
+## 2026-10-01 wick review training examples
+
+- `ASJR_Analyst/config/wick_setups.json` now also stores eye-validated review examples so future wick-rule tuning is grounded in candles the user actually accepted or rejected.
+- Accepted examples currently recorded:
+  - LRCX 09:00 BST upper rejection wick.
+  - CNXC 14:35 BST upper sweep/rejection.
+  - AMAT 14:35 BST lower structure/rejection candidate.
+  - CNXC 14:40 BST upper structure/rejection candidate.
+  - LQDA 13:15 BST lower liquidity sweep/reclaim.
+  - LQDA 14:30 BST lower liquidity sweep/reclaim.
+- Rejected examples currently recorded:
+  - WOLF 14:30 BST upper candidate — rejected by eye because body/candle structure was not the desired wick.
+  - INOD 17:55 BST lower candidate — rejected by eye.
+- LQDA note: for 2026-10-01, 13:15 BST and 14:30 BST are the validated LQDA examples; other reviewed LQDA wick candidates can be ignored for now.
+- These review examples are reference/training data only; they do not create a new active detector rule by themselves.
+- JSON commit containing the review examples: `6111f653067c37404c3f5a3c54ad283fdce02f34`.
