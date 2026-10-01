@@ -17,7 +17,7 @@ STATE_FILE = ROOT / "wick_alert_state.json"
 BATCH_FILE = ROOT / "wick_alert_batch.json"
 CODE_FENCE = chr(96) * 3
 
-STATE_SCHEMA_VERSION = 3
+STATE_SCHEMA_VERSION = 4
 WICK_MIN_PRICE_PCT = 2.00
 WICK_MAX_BODY_PCT = 1.00
 
@@ -58,12 +58,15 @@ def _new_state(day, seed_latest=False):
 def _load_state(path, day):
     state = _read_json(path, None)
 
-    # A detector-rule/schema change intentionally discards the old pending
-    # backlog and seeds processing from the newest completed candle.
-    if (
-        not isinstance(state, dict)
-        or state.get("schema_version") != STATE_SCHEMA_VERSION
-    ):
+    # One-time schema migration for 2026.10.01.4:
+    # discard the old pending batch and replay the current session from
+    # the first available completed candle using the locked wick rule.
+    if isinstance(state, dict) and state.get("schema_version") != STATE_SCHEMA_VERSION:
+        return _new_state(day, seed_latest=False)
+
+    # If state is genuinely missing/corrupt, start fresh from the latest
+    # completed candle to avoid accidental historical replay.
+    if not isinstance(state, dict):
         return _new_state(day, seed_latest=True)
 
     # Normal new trading day: preserve no-miss behavior by allowing the
