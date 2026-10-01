@@ -15,11 +15,10 @@ UK = ZoneInfo("Europe/London")
 ROOT = Path(__file__).resolve().parents[1]
 STATE_FILE = ROOT / "wick_alert_state.json"
 BATCH_FILE = ROOT / "wick_alert_batch.json"
+CONFIG_FILE = ROOT / "config" / "wick_setups.json"
 CODE_FENCE = chr(96) * 3
 
 STATE_SCHEMA_VERSION = 3
-WICK_MIN_PRICE_PCT = 2.00
-WICK_MAX_BODY_PCT = 1.00
 
 
 def _read_json(path, default):
@@ -36,6 +35,19 @@ def _write_json_atomic(path, value):
     temp = path.with_suffix(".tmp")
     temp.write_text(json.dumps(value, indent=2), encoding="utf-8")
     os.replace(temp, path)
+
+
+def _load_wick_setups(path=CONFIG_FILE):
+    """Load enabled wick setups fresh on every pipeline run."""
+    config = _read_json(path, {})
+    setups = config.get("setups", []) if isinstance(config, dict) else []
+    return [
+        setup
+        for setup in setups
+        if isinstance(setup, dict)
+        and setup.get("enabled", True)
+        and setup.get("id")
+    ]
 
 
 def _event_key(event):
@@ -84,7 +96,7 @@ def _volume_context(prior, volume):
     return round(volume_x, 2) if pd.notna(volume_x) else None
 
 
-def _wick_event(ticker, frame, idx, side):
+def _wick_event(ticker, frame, idx, side, setups):
     row = frame.iloc[idx]
     open_price = float(row["open"])
     high = float(row["high"])
@@ -102,42 +114,75 @@ def _wick_event(ticker, frame, idx, side):
         if side == "LOWER"
         else high - max(open_price, close)
     )
+    if wick <= 0:
+        return None
+
     range_pct = candle_range / close * 100.0
     wick_share = wick / candle_range
     wick_price_pct = wick / close * 100.0
     body_pct = body / close * 100.0
 
-    prior = frame.iloc[max(0, idx - 12):idx]
+    matched_setup = None
+    matched_prior = None
+    prior_level = None
+    swept = False
+    lookback_bars = 12
 
-    # Locked liquidity-sweep filter:
-    #   wick itself must be >= 2% of price
-    #   real body must be <= 1% of price
-    if wick_price_pct < WICK_MIN_PRICE_PCT:
+    # JSON order is priority order. One candle-side emits at most one setup.
+    for setup in setups:
+        setup_side = str(setup.get("side", "BOTH")).upper()
+        if setup_side not in {"BOTH", side}:
+            continue
+
+        try:
+            min_wick_pct = float(setup.get("min_wick_pct", 0.0))
+            max_body_pct = setup.get("max_body_pct")
+            max_body_pct = (
+                float(max_body_pct) if max_body_pct is not None else None
+            )
+            lookback_bars = max(1, int(setup.get("lookback_bars", 12)))
+            min_prior_bars = max(0, int(setup.get("min_prior_bars", 0)))
+        except (TypeError, ValueError):
+            continue
+
+        if wick_price_pct < min_wick_pct:
+            continue
+        if max_body_pct is not None and body_pct > max_body_pct:
+            continue
+
+        prior = frame.iloc[max(0, idx - lookback_bars):idx]
+        if len(prior) < min_prior_bars:
+            continue
+
+        prior_low = pd.to_numeric(prior["low"], errors="coerce").min()
+        prior_high = pd.to_numeric(prior["high"], errors="coerce").max()
+
+        if side == "LOWER":
+            level = float(prior_low) if pd.notna(prior_low) else None
+            is_sweep = (
+                bool(low < prior_low and close > prior_low)
+                if pd.notna(prior_low)
+                else False
+            )
+        else:
+            level = float(prior_high) if pd.notna(prior_high) else None
+            is_sweep = (
+                bool(high > prior_high and close < prior_high)
+                if pd.notna(prior_high)
+                else False
+            )
+
+        if setup.get("require_reclaim", False) and not is_sweep:
+            continue
+
+        matched_setup = setup
+        matched_prior = prior
+        prior_level = level
+        swept = is_sweep
+        break
+
+    if matched_setup is None:
         return None
-    if body_pct > WICK_MAX_BODY_PCT:
-        return None
-
-    prior_low = pd.to_numeric(prior["low"], errors="coerce").min()
-    prior_high = pd.to_numeric(prior["high"], errors="coerce").max()
-
-    if side == "LOWER":
-        prior_level = float(prior_low) if pd.notna(prior_low) else None
-        swept = (
-            bool(low < prior_low and close > prior_low)
-            if pd.notna(prior_low)
-            else False
-        )
-        event_type = "LOWER_WICK"
-        event_name = "LONG LOWER WICK"
-    else:
-        prior_level = float(prior_high) if pd.notna(prior_high) else None
-        swept = (
-            bool(high > prior_high and close < prior_high)
-            if pd.notna(prior_high)
-            else False
-        )
-        event_type = "UPPER_WICK"
-        event_name = "LONG UPPER WICK"
 
     next_row = frame.iloc[idx + 1] if idx + 1 < len(frame) else None
     next_confirmed = None
@@ -148,9 +193,15 @@ def _wick_event(ticker, frame, idx, side):
             else bool(float(next_row["high"]) < high)
         )
 
+    event_type = "LOWER_WICK" if side == "LOWER" else "UPPER_WICK"
+    setup_label = str(matched_setup.get("label", matched_setup["id"])).upper()
+    event_name = setup_label
+
     bar_time = row["bar_et"]
     return {
         "type": event_type,
+        "setup_id": str(matched_setup["id"]),
+        "setup_label": setup_label,
         "ticker": str(ticker),
         "bar_time_et": bar_time.strftime("%Y-%m-%d %H:%M ET"),
         "event": event_name,
@@ -164,12 +215,13 @@ def _wick_event(ticker, frame, idx, side):
         "low": low,
         "price": close,
         "volume": volume,
-        "volume_x": _volume_context(prior, volume),
+        "volume_x": _volume_context(matched_prior, volume),
         "wick": wick,
         "wick_pct": wick_price_pct,
         "wick_share_pct": wick_share * 100.0,
         "body_pct": body_pct,
         "range_pct": range_pct,
+        "lookback_bars": lookback_bars,
         "prior_level": prior_level,
         "swept_reclaimed": swept,
         "next_confirmed": next_confirmed,
@@ -181,6 +233,7 @@ def build_wick_alerts(
     trade_date=None,
     now=None,
     state_file=STATE_FILE,
+    config_file=CONFIG_FILE,
 ):
     """Scan every completed candle not yet processed and persist pending wicks.
 
@@ -190,6 +243,10 @@ def build_wick_alerts(
     explicitly acknowledged by mark_alert_sent().
     """
     if intraday is None or intraday.empty:
+        return []
+
+    setups = _load_wick_setups(config_file)
+    if not setups:
         return []
 
     now_et = pd.Timestamp(now if now is not None else datetime.now(ET))
@@ -244,7 +301,7 @@ def build_wick_alerts(
                 continue
 
             for side in ("LOWER", "UPPER"):
-                event = _wick_event(ticker, frame, idx, side)
+                event = _wick_event(ticker, frame, idx, side, setups)
                 if event is not None:
                     pending_by_key.setdefault(_event_key(event), event)
 
@@ -304,8 +361,8 @@ def prepare_alert(
         sweep = "YES" if event.get("swept_reclaimed") else "NO"
 
         if event["type"] == "LOWER_WICK":
-            label = "LONG LOWER WICK"
-            level_name = "12-bar low"
+            label = event.get("setup_label", "LOWER WICK")
+            level_name = f'{event.get("lookback_bars", 12)}-bar low'
             next_state = (
                 "waiting next candle"
                 if event.get("next_confirmed") is None
@@ -316,8 +373,8 @@ def prepare_alert(
                 )
             )
         else:
-            label = "LONG UPPER WICK"
-            level_name = "12-bar high"
+            label = event.get("setup_label", "UPPER WICK")
+            level_name = f'{event.get("lookback_bars", 12)}-bar high'
             next_state = (
                 "waiting next candle"
                 if event.get("next_confirmed") is None
