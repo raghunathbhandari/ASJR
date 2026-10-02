@@ -536,6 +536,177 @@ def run_backtest(
     }
 
 
+def load_cached_60m_csv(
+    ticker: str,
+    *,
+    cache_root: Optional[str | Path] = None,
+) -> pd.DataFrame:
+    """
+    Read cached 60m OHLCV data produced by the universal Yahoo/IBKR cache layer.
+    """
+    from Backtesting.DataLoader import (
+        DEFAULT_CACHE_ROOT,
+        cache_path_for,
+    )
+
+    root = Path(cache_root) if cache_root is not None else DEFAULT_CACHE_ROOT
+    path = cache_path_for(ticker=ticker, interval="60m", cache_root=root)
+
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Cached 60m CSV not found for {ticker.upper()}: {path}"
+        )
+
+    df = pd.read_csv(
+        path,
+        parse_dates=["Datetime"],
+        index_col="Datetime",
+    )
+
+    required = ["Open", "High", "Low", "Close", "Volume"]
+    missing = [col for col in required if col not in df.columns]
+    if missing:
+        raise ValueError(
+            f"Cached CSV for {ticker.upper()} is missing columns: {missing}"
+        )
+
+    df = df[required].copy()
+    df.index = pd.DatetimeIndex(df.index)
+    df.index.name = "Datetime"
+    df = df.sort_index()
+    df = df[~df.index.duplicated(keep="last")]
+    return df
+
+
+def run_backtest_from_csv(
+    ticker: str,
+    start,
+    end,
+    *,
+    bb_window: int = 20,
+    bb_std: float = 2.0,
+    plot: bool = True,
+    save_chart: Optional[str | Path] = None,
+    save_trades_csv: Optional[str | Path] = None,
+    cache_root: Optional[str | Path] = None,
+) -> dict:
+    """
+    Run the Plain BB Mean Reversion strategy from cached 60m CSV data.
+
+    Flow
+    ----
+    cached 60m CSV
+        -> build regular-session 4H candles
+        -> add BB(20,2) by default
+        -> BUY when completed 4H close < lower BB
+        -> EXIT when later completed 4H close > upper BB
+
+    No Yahoo request is made by this function.
+    """
+    config = BacktestConfig(
+        bb_window=bb_window,
+        bb_std=bb_std,
+    )
+
+    hourly = load_cached_60m_csv(
+        ticker=ticker,
+        cache_root=cache_root,
+    )
+
+    bars_4h = add_bollinger_bands(
+        build_4h_candles(hourly),
+        window=config.bb_window,
+        std_mult=config.bb_std,
+    )
+
+    trades = backtest_mean_reversal(
+        bars_4h,
+        start=start,
+        end=end,
+        config=config,
+    )
+
+    summary = print_summary(
+        ticker=ticker,
+        start=start,
+        end=end,
+        config=config,
+        trades=trades,
+    )
+
+    if save_trades_csv:
+        csv_path = Path(save_trades_csv)
+        csv_path.parent.mkdir(parents=True, exist_ok=True)
+        trades.to_csv(csv_path, index=False)
+        print(f"Saved trades: {csv_path}")
+
+    if plot:
+        plot_candles_with_trades(
+            ticker=ticker,
+            bars_4h=bars_4h,
+            trades=trades,
+            start=start,
+            end=end,
+            save_path=save_chart,
+            show=True,
+        )
+
+    return {
+        "ticker": ticker.upper(),
+        "source": "CSV_CACHE_60M",
+        "config": config,
+        "hourly": hourly,
+        "bars_4h": bars_4h,
+        "trades": trades,
+        "summary": summary,
+    }
+
+
+def run_batch_from_csv(
+    tickers: Iterable[str],
+    start,
+    end,
+    *,
+    bb_window: int = 20,
+    bb_std: float = 2.0,
+    cache_root: Optional[str | Path] = None,
+) -> pd.DataFrame:
+    """
+    Run the Plain BB strategy for many tickers using only cached 60m CSV files.
+    """
+    rows = []
+
+    for ticker in tickers:
+        try:
+            result = run_backtest_from_csv(
+                ticker=ticker,
+                start=start,
+                end=end,
+                bb_window=bb_window,
+                bb_std=bb_std,
+                plot=False,
+                cache_root=cache_root,
+            )
+            rows.append(
+                {
+                    "ticker": ticker.upper(),
+                    **result["summary"],
+                }
+            )
+        except Exception as exc:
+            rows.append(
+                {
+                    "ticker": ticker.upper(),
+                    "error": str(exc),
+                }
+            )
+
+    summary_df = pd.DataFrame(rows)
+    print("\nCSV CACHE BB BATCH SUMMARY")
+    print(summary_df.to_string(index=False))
+    return summary_df
+
+
 def run_batch(
     tickers: Iterable[str],
     start,
