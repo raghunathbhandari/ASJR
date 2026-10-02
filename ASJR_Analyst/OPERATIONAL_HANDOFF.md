@@ -390,3 +390,16 @@ The runtime log version is the primary proof of the code actually running on the
 - Batch helper `run_batch(...)` is included for comparing MU, AMAT, LRCX, INTC or other ticker sets.
 - Production deployment/restart is not required for this isolated research module.
 
+### Correction: BB Mean Reversion is separate from -4% Shock
+
+- The Bollinger Band mean-reversion research strategy is now fully separate from the ASJR -4% shock strategy.
+- Pure BB module: `Backtesting/MeanReversal/bb_mean_reversal_backtest.py`.
+- Current pure BB default:
+  1. 4H close <= lower Bollinger Band (20,2);
+  2. BUY on first later 4H close back above lower band;
+  3. SL 1%;
+  4. TP 3.5%.
+- No daily -4% shock condition is used in this BB strategy.
+- `Backtesting/MeanReversal/__init__.py` now points to the pure BB module.
+- This remains isolated research code; no live bot restart/runtime version change is required.
+
