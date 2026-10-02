@@ -334,24 +334,59 @@ def _download_chunk(
     auto_adjust: bool,
     prepost: bool,
 ) -> pd.DataFrame:
+    """
+    Download one ticker/date chunk.
+
+    Use Ticker.history() instead of yf.download() because concurrent
+    yf.download() calls can intermittently fail inside yfinance with errors
+    such as "No objects to concatenate". Each thread gets its own Ticker
+    object and request path.
+    """
     try:
+        import time
         import yfinance as yf
     except ImportError as exc:
         raise ImportError("Install yfinance: pip install yfinance") from exc
 
-    raw = yf.download(
-        tickers=ticker.upper(),
-        start=start.strftime("%Y-%m-%d"),
-        end=end_exclusive.strftime("%Y-%m-%d"),
-        interval=interval,
-        auto_adjust=auto_adjust,
-        progress=False,
-        threads=False,  # our loader owns concurrency
-        prepost=prepost,
-        actions=False,
-    )
+    last_exc = None
 
-    return _normalize_yf_columns(raw, ticker=ticker)
+    for attempt in range(3):
+        try:
+            tk = yf.Ticker(ticker.upper())
+            raw = tk.history(
+                start=start.strftime("%Y-%m-%d"),
+                end=end_exclusive.strftime("%Y-%m-%d"),
+                interval=interval,
+                auto_adjust=auto_adjust,
+                prepost=prepost,
+                actions=False,
+                repair=False,
+            )
+
+            normalized = _normalize_yf_columns(raw, ticker=ticker)
+
+            # Empty can be legitimate for a holiday-only chunk, but for our
+            # multi-month chunks it usually means Yahoo returned no data.
+            if normalized.empty:
+                if attempt < 2:
+                    time.sleep(1.0 + attempt)
+                    continue
+
+            return normalized
+
+        except Exception as exc:
+            last_exc = exc
+            if attempt < 2:
+                time.sleep(1.0 + attempt)
+                continue
+
+    if last_exc is not None:
+        raise RuntimeError(
+            f"Ticker.history failed after retries for {ticker} {interval} "
+            f"{start.date()} -> {end_exclusive.date()}: {last_exc}"
+        ) from last_exc
+
+    return pd.DataFrame(columns=["Open", "High", "Low", "Close", "Volume"])
 
 
 def _merge_frames(frames: Iterable[pd.DataFrame]) -> pd.DataFrame:
