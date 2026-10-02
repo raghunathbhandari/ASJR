@@ -413,3 +413,18 @@ The runtime log version is the primary proof of the code actually running on the
 - The notebook call remains backward-compatible: old stop/target arguments are accepted but ignored, so the user does not need to rewrite the notebook cell immediately.
 - Pure BB strategy remains separate from the -4% shock strategy.
 
+### 2026-10-02 second BB Mean Reversion method: ADX-filtered
+
+- Plain BB strategy remains unchanged in `Backtesting/MeanReversal/bb_mean_reversal_backtest.py`.
+- Added separate method `Backtesting/MeanReversal/bb_mean_reversal_adx_backtest.py`.
+- ADX method:
+  1. 4H Close < Lower BB(20,2);
+  2. ADX(14) < 25 at entry;
+  3. BUY on that completed 4H close;
+  4. EXIT when a later completed 4H Close > Upper BB.
+- No -4% shock logic and no fixed SL/TP in the ADX version.
+- Added default 14-ticker comparison universe:
+  MU, AMAT, LRCX, INTC, PLTR, CRWD, TSLA, NKE, JPM, COIN, CAT, UBER, FSLR, XOM.
+- Added `compare_plain_vs_adx(...)` to run both methods on the same date range and print side-by-side trades, win rate, compounded return, drawdown, profit factor and average return.
+- `Backtesting/MeanReversal/__init__.py` now exposes both plain and ADX methods without changing the existing `run_backtest` plain entry point.
+
