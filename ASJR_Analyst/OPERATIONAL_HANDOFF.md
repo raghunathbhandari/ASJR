@@ -338,3 +338,34 @@ The runtime log version is the primary proof of the code actually running on the
 - New runtime state files are gitignored: `mean_reversal_alert_state.json` and `mean_reversal_alert_batch.json` plus temp variants.
 - Pre-change runtime verification: newest inspected DataLake log `asjr_pipeline_20261002_121438_BST.log` showed `RUN | VERSION | 2026.10.01.4`. Therefore the new version is **not live yet**.
 - Deployment required: VPS `git pull`, restart the Python BOT, then verify a new DataLake log shows `RUN | VERSION | 2026.10.02.2` before treating the strategy as live.
+
+
+## 2026-10-02 ratio-based wick detector
+
+- Target runtime version: `2026.10.02.3`.
+- Files changed:
+  - `ASJR_Analyst/Utils/asjr_alerts.py`
+  - `ASJR_Analyst/config/wick_setups.json`
+  - `ASJR_Analyst/Tests/test_asjr_pipeline.py`
+- Reason: fixed wick percentage of stock price was too strict for high-priced stocks such as MSFT. User visually validated MSFT 14:40 BST and 14:45 BST as wicks that must alert.
+- Wick qualification is now ratio/structure based rather than requiring a fixed percent of stock price.
+- New JSON-supported metrics:
+  - `min_wick_share_pct`: wick / full candle range.
+  - `min_wick_body_ratio`: wick / real body.
+  - `min_wick_opposite_ratio`: primary wick / opposite wick.
+  - `min_range_vs_median`: candle range / median prior range.
+  - `min_volume_vs_median`: candle volume / median prior volume.
+  - `relative_context_optional`: permits strong shape-only rejection when relative context is unavailable, useful for the first extended-hours candle.
+- Current ratio setups:
+  1. LOWER LIQUIDITY SWEEP: lower wick >= 40% of candle, wick/body >= 1.2x, wick/opposite >= 1.2x, breaks prior 12-bar low and closes back above it.
+  2. UPPER LIQUIDITY SWEEP: upper wick >= 40% of candle, wick/body >= 1.2x, wick/opposite >= 1.2x, breaks prior 12-bar high and closes back below it.
+  3. STRONG REJECTION WICK: wick >= 60% of candle, wick/body >= 2.0x, wick/opposite >= 1.5x, range >= 1.25x prior median where context is available.
+  4. EXPANSION REJECTION WICK: wick >= 40% of candle, wick/body >= 1.2x, wick/opposite >= 1.5x, range >= 2.0x prior median, volume >= 2.0x prior median.
+- MSFT validation from 2026-10-02:
+  - 14:40 BST lower wick: ~72.5% of candle, ~5.5x body, range ~2.06x median, volume ~27.5x -> must alert.
+  - 14:45 BST lower wick: ~41.7% of candle, ~1.3x body, range ~3.14x median, volume ~34x -> must alert.
+- WOLF 2026-10-01 14:30 BST remains a rejected visual example. The primary/opposite-wick dominance gate helps reject two-sided candles that do not look like the desired one-sided wick.
+- Discord wick text now emphasizes shape: absolute wick, percent of candle, and wick/body ratio rather than stock-price percentage.
+- Pre-change runtime verification: newest inspected DataLake log `asjr_pipeline_20261002_172337_BST.log` showed `RUN | VERSION | 2026.10.01.4`; therefore `2026.10.02.3` is pushed but not live-verified.
+- Separate known issue remains: multiple 2026-10-02 runs returned `IBKR | 5m fetch completed | rows=0` and overwrote the current intraday CSV. This is not fixed by the ratio-wick change and should be addressed separately.
+- Deployment required: VPS `git pull`, restart bot, then verify the next DataLake log shows `RUN | VERSION | 2026.10.02.3`.
