@@ -1,0 +1,29 @@
+name: Backfill 1Y Daily Backtest Data
+
+on:
+  push:
+    paths:
+      - 'ASJR_Analyst/backtest_tools/run_daily_1y.trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install --quiet pandas yfinance
+      - name: Fetch one-year daily OHLCV
+        run: python ASJR_Analyst/backtest_tools/fetch_daily_1y.py
+      - name: Commit CSV
+        run: |
+          git config user.name "ASJR Backtest Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add ASJR_Analyst/BacktestData/daily_1y_10_tickers.csv
+          git diff --cached --quiet || git commit -m "data: add 1y daily backtest dataset"
+          git push
