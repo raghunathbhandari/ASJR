@@ -21,13 +21,14 @@ import Utils.asjr_market as market
 import Utils.asjr_snapshot as snapshot
 import Utils.asjr_git as asjr_git
 import Utils.asjr_logger as asjr_logger
+import Strategies.MeanReversal4Pct.mean_reversal as mean_reversal
 
-ASJR_ANALYST_VERSION = "2026.10.01.4"
+ASJR_ANALYST_VERSION = "2026.10.02.1"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
     daily_features, intraday_features, alerts, market, snapshot,
-    asjr_git, asjr_logger
+    asjr_git, asjr_logger, mean_reversal
 ):
     importlib.reload(m)
 
@@ -50,7 +51,7 @@ def run_asjr_manual_pipeline(
             return {
                 "universe": pd.DataFrame(), "daily": pd.DataFrame(),
                 "intraday_raw": pd.DataFrame(), "intraday": pd.DataFrame(),
-                "alert_data": [], "sector": pd.DataFrame(),
+                "alert_data": [], "mean_reversal_alerts": [], "sector": pd.DataFrame(),
                 "ticker_summary": pd.DataFrame(),
                 "snapshot": {"trade_date": str(pd.Timestamp.now(tz=asjr_day.ET).date())},
                 "git": {"status": "SKIPPED_CLOSED_SESSION"}, "log_file": None,
@@ -172,6 +173,11 @@ def run_asjr_manual_pipeline(
 
         intraday = intraday_features.add_intraday_features(intraday_raw)
         alert_data = alerts.build_wick_alerts(intraday, trade_date=trade_date)
+        mean_reversal_alerts = mean_reversal.build_mean_reversal_alerts(
+            daily,
+            intraday,
+            trade_date=trade_date,
+        )
         intraday_latest = intraday_features.latest_intraday_summary(
             intraday
         )
@@ -299,6 +305,7 @@ def run_asjr_manual_pipeline(
             "intraday_raw": intraday_raw,
             "intraday": intraday,
             "alert_data": alert_data,
+            "mean_reversal_alerts": mean_reversal_alerts,
             "sector": sector,
             "ticker_summary": ticker_summary,
             "snapshot": snap,
