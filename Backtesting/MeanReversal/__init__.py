@@ -7,6 +7,7 @@ Two separate Bollinger Mean Reversion methods are exposed:
 
 from .bb_mean_reversal_backtest import (
     BacktestConfig,
+    DEFAULT_BB_TICKERS,
     run_backtest,
     run_batch,
     load_cached_60m_csv,
@@ -23,6 +24,7 @@ from .bb_mean_reversal_adx_backtest import (
 
 __all__ = [
     "BacktestConfig",
+    "DEFAULT_BB_TICKERS",
     "ADXBacktestConfig",
     "DEFAULT_14_TICKERS",
     "run_backtest",
