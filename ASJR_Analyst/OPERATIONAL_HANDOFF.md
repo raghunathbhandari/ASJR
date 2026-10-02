@@ -403,3 +403,13 @@ The runtime log version is the primary proof of the code actually running on the
 - `Backtesting/MeanReversal/__init__.py` now points to the pure BB module.
 - This remains isolated research code; no live bot restart/runtime version change is required.
 
+### 2026-10-02 BB Mean Reversion rule correction
+
+- Pure BB research strategy corrected to match the referenced TradingView-style logic.
+- Entry: BUY when a completed 4H candle **closes below** the Lower Bollinger Band. A wick below the band is not sufficient.
+- Exit: close the long when a later completed 4H candle **closes above** the Upper Bollinger Band.
+- Removed the lower-band re-entry requirement from the BB strategy.
+- Removed fixed 1% SL / 3.5% TP from the default BB strategy logic.
+- The notebook call remains backward-compatible: old stop/target arguments are accepted but ignored, so the user does not need to rewrite the notebook cell immediately.
+- Pure BB strategy remains separate from the -4% shock strategy.
+
