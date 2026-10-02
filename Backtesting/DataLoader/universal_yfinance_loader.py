@@ -42,6 +42,10 @@ DEFAULT_CACHE_ROOT = Path(__file__).resolve().parents[1] / "BacktestData" / "Mar
 
 # Conservative Yahoo availability rules.
 # None means no practical historical lookback restriction for our loader.
+# Small safety buffer because Yahoo enforces intraday lookback using exact
+# timestamps; the nominal calendar-day boundary can be rejected by hours.
+PROVIDER_LIMIT_SAFETY_DAYS = 2
+
 INTERVAL_LIMIT_DAYS = {
     "1m": 7,
     "2m": 60,
@@ -215,7 +219,11 @@ def provider_earliest_start(
     if current.tzinfo is not None:
         current = current.tz_localize(None)
 
-    return current.normalize() - pd.Timedelta(days=limit)
+    return (
+        current.normalize()
+        - pd.Timedelta(days=limit)
+        + pd.Timedelta(days=PROVIDER_LIMIT_SAFETY_DAYS)
+    )
 
 
 def validate_requested_range(
