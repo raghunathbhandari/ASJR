@@ -557,11 +557,18 @@ def load_cached_60m_csv(
             f"Cached 60m CSV not found for {ticker.upper()}: {path}"
         )
 
-    df = pd.read_csv(
-        path,
-        parse_dates=["Datetime"],
-        index_col="Datetime",
-    )
+    df = pd.read_csv(path)
+
+    if "Datetime" not in df.columns:
+        raise ValueError(
+            f"Cached CSV for {ticker.upper()} has no Datetime column: {path}"
+        )
+
+    # Canonical cached timestamps are UTC. utc=True also repairs older files
+    # containing DST-dependent offsets such as -04:00 / -05:00.
+    dt = pd.to_datetime(df.pop("Datetime"), utc=True, errors="coerce")
+    df.index = dt
+    df = df[~df.index.isna()]
 
     required = ["Open", "High", "Low", "Close", "Volume"]
     missing = [col for col in required if col not in df.columns]
