@@ -23,7 +23,7 @@ import Utils.asjr_git as asjr_git
 import Utils.asjr_logger as asjr_logger
 import Strategies.MeanReversal4Pct.mean_reversal as mean_reversal
 
-ASJR_ANALYST_VERSION = "2026.10.02.1"
+ASJR_ANALYST_VERSION = "2026.10.02.2"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -31,6 +31,15 @@ for m in (
     asjr_git, asjr_logger, mean_reversal
 ):
     importlib.reload(m)
+
+
+def run_mean_reversal_strategy(daily, intraday, trade_date=None):
+    """Run the isolated 4% mean-reversal detector."""
+    return mean_reversal.build_mean_reversal_alerts(
+        daily=daily,
+        intraday=intraday,
+        trade_date=trade_date,
+    )
 
 
 def run_asjr_manual_pipeline(
@@ -173,9 +182,9 @@ def run_asjr_manual_pipeline(
 
         intraday = intraday_features.add_intraday_features(intraday_raw)
         alert_data = alerts.build_wick_alerts(intraday, trade_date=trade_date)
-        mean_reversal_alerts = mean_reversal.build_mean_reversal_alerts(
-            daily,
-            intraday,
+        mean_reversal_alerts = run_mean_reversal_strategy(
+            daily=daily,
+            intraday=intraday,
             trade_date=trade_date,
         )
         intraday_latest = intraday_features.latest_intraday_summary(
