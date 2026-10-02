@@ -1,12 +1,11 @@
-import os
 from pathlib import Path
 import pandas as pd
 import yfinance as yf
 
-TICKERS = ["QQQ","MSFT","NVDA","GOOG","INTC","MU","AMAT","QCOM","LRCX","WDC"]
+TICKERS = ["MU","AMAT","LRCX","INTC","PLTR","CRWD","TSLA","NKE","JPM","COIN","CAT","UBER","FSLR","XOM"]
 START = "2025-10-01"
 END = "2026-10-02"
-OUT = Path("ASJR_Analyst/BacktestData/daily_1y_10_tickers.csv")
+OUT = Path("ASJR_Analyst/BacktestData/daily_1y_diversified_14_tickers.csv")
 OUT.parent.mkdir(parents=True, exist_ok=True)
 
 frames = []
@@ -27,8 +26,6 @@ for ticker in TICKERS:
         df.columns = [c[0] for c in df.columns]
     df = df.reset_index()
     df.columns = [str(c).lower().replace(" ", "_") for c in df.columns]
-    rename = {"date":"date","open":"open","high":"high","low":"low","close":"close",
-              "adj_close":"adj_close","volume":"volume"}
     keep = ["date","open","high","low","close","adj_close","volume"]
     df = df[keep]
     df.insert(0, "ticker", ticker)
@@ -38,7 +35,6 @@ for ticker in TICKERS:
 out = pd.concat(frames, ignore_index=True)
 out = out.sort_values(["ticker","date"]).reset_index(drop=True)
 
-# Sanity checks: roughly one US trading year per ticker.
 counts = out.groupby("ticker").size()
 if (counts < 240).any():
     raise RuntimeError(f"Unexpectedly low row count: {counts.to_dict()}")
