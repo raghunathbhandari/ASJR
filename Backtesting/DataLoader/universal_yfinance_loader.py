@@ -219,7 +219,11 @@ def _normalize_yf_columns(
 
     normalized = normalized[canonical]
     normalized = normalized.dropna(subset=required)
-    normalized.index = pd.DatetimeIndex(normalized.index)
+
+    # Canonical cache timezone = UTC. yfinance can return UTC for yf.download()
+    # and America/New_York for Ticker.history(); normalizing here prevents
+    # mixed timestamp semantics across cached ticker files.
+    normalized.index = pd.to_datetime(normalized.index, utc=True)
     normalized.index.name = "Datetime"
     return normalized.sort_index()
 
@@ -229,7 +233,16 @@ def _read_cache(path: Path) -> pd.DataFrame:
         return pd.DataFrame(columns=["Open", "High", "Low", "Close", "Volume"])
 
     try:
-        df = pd.read_csv(path, parse_dates=["Datetime"], index_col="Datetime")
+        df = pd.read_csv(path)
+        if "Datetime" not in df.columns:
+            return pd.DataFrame(columns=["Open", "High", "Low", "Close", "Volume"])
+
+        # utc=True safely handles DST offsets and older cache files containing
+        # either UTC timestamps or timezone-aware New York timestamps.
+        dt = pd.to_datetime(df.pop("Datetime"), utc=True, errors="coerce")
+        df.index = dt
+        df = df[~df.index.isna()]
+        df.index.name = "Datetime"
     except Exception:
         return pd.DataFrame(columns=["Open", "High", "Low", "Close", "Volume"])
 
