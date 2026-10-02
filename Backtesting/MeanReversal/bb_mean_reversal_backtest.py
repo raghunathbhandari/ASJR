@@ -30,6 +30,12 @@ import numpy as np
 import pandas as pd
 
 
+DEFAULT_BB_TICKERS = [
+    "LRCX", "MU", "AMAT", "INTC", "PLTR", "XOM",
+    "GOOG", "SPY", "META", "NVDA",
+]
+
+
 @dataclass(frozen=True)
 class BacktestConfig:
     bb_window: int = 20
