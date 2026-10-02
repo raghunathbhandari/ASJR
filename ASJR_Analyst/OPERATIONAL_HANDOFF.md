@@ -312,3 +312,29 @@ The runtime log version is the primary proof of the code actually running on the
 - LQDA note: for 2026-10-01, 13:15 BST and 14:30 BST are the validated LQDA examples; other reviewed LQDA wick candidates can be ignored for now.
 - These review examples are reference/training data only; they do not create a new active detector rule by themselves.
 - JSON commit containing the review examples: `6111f653067c37404c3f5a3c54ad283fdce02f34`.
+
+## 2026-10-02 4% Mean Reversal strategy
+
+- Runtime version: `2026.10.02.2`.
+- New isolated strategy folder:
+  - `ASJR_Analyst/Strategies/MeanReversal4Pct/mean_reversal.py`
+  - `ASJR_Analyst/Strategies/MeanReversal4Pct/README.md`
+- Core strategy tickers: **MU, CAT, TSLA, AMAT, INTC, LRCX**.
+- Signal reference remains the **previous completed daily close** from the existing 30-day daily dataset.
+- Chakra evaluates newly completed 5-minute candles and triggers immediately on the **first completed 5-minute close that crosses to -4.00% or lower versus the previous daily close**.
+- One trigger per ticker per trading day. Local persistent state prevents repeated alerts on every five-minute run.
+- Alert levels are calculated from the detected 5-minute close: **SL = -1%**, **TP = +4%**.
+- Discord format:
+  ```text
+  4% Mean Reversal:
+  Ticker: MU
+  Detected Candle: YYYY-MM-DD HH:MM BST/GMT
+  SL: xx.xx
+  TP: xx.xx
+  ```
+- `ASJR_Analyst/Tests/test_asjr_pipeline.py::run_mean_reversal_strategy(daily, intraday, trade_date)` is the dedicated method entry point. The main pipeline calls this helper; mean-reversal detection is not embedded inside wick logic.
+- Existing wick detection remains separate and unchanged. `Utils/asjr_alerts.py::prepare_alert` gives pending mean-reversal messages priority over wick messages, and the existing caller continues to use the same `tp.prepare_alert(result)` / `tp.mark_alert_sent()` contract.
+- Today’s fixed watchlist was updated so MU, CAT, TSLA and INTC are added; AMAT and LRCX were already present.
+- New runtime state files are gitignored: `mean_reversal_alert_state.json` and `mean_reversal_alert_batch.json` plus temp variants.
+- Pre-change runtime verification: newest inspected DataLake log `asjr_pipeline_20261002_121438_BST.log` showed `RUN | VERSION | 2026.10.01.4`. Therefore the new version is **not live yet**.
+- Deployment required: VPS `git pull`, restart the Python BOT, then verify a new DataLake log shows `RUN | VERSION | 2026.10.02.2` before treating the strategy as live.
