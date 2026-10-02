@@ -524,6 +524,104 @@ def load_many_yfinance_cached(
     return results
 
 
+def download_data_yfinace_prepare_csv_cache(
+    tickers: Iterable[str],
+    start,
+    end,
+    *,
+    interval: str = "60m",
+    cache_root: str | Path = DEFAULT_CACHE_ROOT,
+    refresh: bool = False,
+    strict_history: bool = False,
+    ticker_workers: int = 4,
+    chunk_workers_per_ticker: int = 2,
+    auto_adjust: bool = False,
+    prepost: bool = False,
+) -> dict[str, LoadResult]:
+    """
+    User-facing universal Yahoo loader for backtesting.
+
+    Typical use
+    -----------
+    results = download_data_yfinace_prepare_csv_cache(
+        tickers=["LRCX", "MU", "AMAT", "INTC", "PLTR", "XOM"],
+        start="2025-10-02",
+        end="2026-10-02",
+        interval="60m",
+    )
+
+    Behaviour
+    ---------
+    - accepts multiple tickers;
+    - downloads tickers concurrently;
+    - splits each ticker's request into safe date chunks;
+    - downloads chunks concurrently;
+    - reads existing per-ticker CSV cache first;
+    - downloads only leading/trailing missing ranges unless refresh=True;
+    - merges, sorts and de-duplicates returned bars;
+    - saves the merged data back to CSV;
+    - returns a dict[ticker, LoadResult].
+
+    Notes
+    -----
+    strict_history defaults to False for this convenience method. If the
+    requested intraday start is older than Yahoo currently serves, the loader
+    clips the provider request to Yahoo's supported window and sets
+    result.clipped_by_provider_limit=True. Existing older cached data is never
+    deleted by this behaviour.
+
+    Re-running other date ranges is safe: new returned data is merged into the
+    same ticker/interval CSV cache.
+    """
+    results = load_many_yfinance_cached(
+        tickers=tickers,
+        start=start,
+        end=end,
+        interval=interval,
+        cache_root=cache_root,
+        refresh=refresh,
+        strict_history=strict_history,
+        ticker_workers=ticker_workers,
+        chunk_workers_per_ticker=chunk_workers_per_ticker,
+        auto_adjust=auto_adjust,
+        prepost=prepost,
+    )
+
+    print("\n" + "=" * 112)
+    print(
+        f"YFINANCE CSV CACHE | interval={_normalize_interval(interval)} | "
+        f"requested={_as_day(start).date()} -> {_as_day(end).date()}"
+    )
+    print("=" * 112)
+
+    for ticker in [str(t).upper() for t in tickers]:
+        result = results.get(ticker)
+        if result is None:
+            continue
+
+        actual_start = (
+            str(result.available_start)
+            if result.available_start is not None
+            else "NO DATA"
+        )
+        actual_end = (
+            str(result.available_end)
+            if result.available_end is not None
+            else "NO DATA"
+        )
+        source = "CACHE" if result.from_cache_only else "DOWNLOADED+MERGED"
+        clipped = " | PROVIDER_LIMIT_CLIPPED" if result.clipped_by_provider_limit else ""
+
+        print(
+            f"{ticker:7s} | rows={len(result.data):7d} | "
+            f"{actual_start} -> {actual_end} | {source}{clipped}"
+        )
+        print(f"         CSV: {result.cache_path}")
+
+    print("=" * 112)
+    return results
+
+
 def dataframes_from_results(
     results: dict[str, LoadResult],
 ) -> dict[str, pd.DataFrame]:
