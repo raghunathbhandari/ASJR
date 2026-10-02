@@ -145,37 +145,79 @@ def cache_path_for(
     return root / interval / f"{_safe_name(ticker)}_{interval}.csv"
 
 
-def _normalize_yf_columns(df: pd.DataFrame) -> pd.DataFrame:
+def _normalize_yf_columns(
+    df: pd.DataFrame,
+    ticker: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Normalize yfinance output to a single-ticker OHLCV dataframe.
+
+    yfinance may return:
+    - ordinary single-level OHLCV columns;
+    - MultiIndex columns such as (Price, Ticker);
+    - occasionally duplicate labels when several concurrent downloads finish
+      near the same time.
+
+    Select columns positionally so a duplicate label can never turn one field
+    into a 2-D dataframe.
+    """
+    canonical = ["Open", "High", "Low", "Close", "Volume"]
+
     if df is None or df.empty:
-        return pd.DataFrame(columns=["Open", "High", "Low", "Close", "Volume"])
+        return pd.DataFrame(columns=canonical)
 
     out = df.copy()
+    wanted = set(canonical)
+    ticker_upper = ticker.upper() if ticker else None
+    selected: dict[str, pd.Series] = {}
 
     if isinstance(out.columns, pd.MultiIndex):
-        wanted = {"Open", "High", "Low", "Close", "Volume"}
-        lvl0 = set(map(str, out.columns.get_level_values(0)))
-        out.columns = (
-            out.columns.get_level_values(0)
-            if wanted.intersection(lvl0)
-            else out.columns.get_level_values(-1)
-        )
+        # Prefer a column tuple that explicitly contains the requested ticker.
+        for field in canonical:
+            candidates: list[int] = []
 
-    columns = {}
-    for col in out.columns:
-        title = str(col).strip().title()
-        if title in {"Open", "High", "Low", "Close", "Volume"}:
-            columns[title] = out[col]
+            for pos, col in enumerate(out.columns):
+                parts = [str(x).strip() for x in col]
+                parts_upper = [x.upper() for x in parts]
 
-    normalized = pd.DataFrame(columns, index=out.index)
+                if field.upper() not in parts_upper:
+                    continue
+
+                if ticker_upper is not None and ticker_upper not in parts_upper:
+                    continue
+
+                candidates.append(pos)
+
+            # Fallback for a genuine single-ticker MultiIndex where ticker
+            # text is absent/unexpected but the OHLCV field is unambiguous.
+            if not candidates:
+                for pos, col in enumerate(out.columns):
+                    parts_upper = [str(x).strip().upper() for x in col]
+                    if field.upper() in parts_upper:
+                        candidates.append(pos)
+
+            if candidates:
+                selected[field] = out.iloc[:, candidates[0]]
+
+    else:
+        # Select by POSITION, not out[label], because duplicate labels make
+        # pandas return a dataframe rather than a Series.
+        for field in canonical:
+            for pos, col in enumerate(out.columns):
+                if str(col).strip().title() == field:
+                    selected[field] = out.iloc[:, pos]
+                    break
+
+    normalized = pd.DataFrame(selected, index=out.index)
 
     required = ["Open", "High", "Low", "Close"]
     if not all(col in normalized.columns for col in required):
-        return pd.DataFrame(columns=["Open", "High", "Low", "Close", "Volume"])
+        return pd.DataFrame(columns=canonical)
 
     if "Volume" not in normalized.columns:
         normalized["Volume"] = 0.0
 
-    normalized = normalized[["Open", "High", "Low", "Close", "Volume"]]
+    normalized = normalized[canonical]
     normalized = normalized.dropna(subset=required)
     normalized.index = pd.DatetimeIndex(normalized.index)
     normalized.index.name = "Datetime"
@@ -309,7 +351,7 @@ def _download_chunk(
         actions=False,
     )
 
-    return _normalize_yf_columns(raw)
+    return _normalize_yf_columns(raw, ticker=ticker)
 
 
 def _merge_frames(frames: Iterable[pd.DataFrame]) -> pd.DataFrame:
