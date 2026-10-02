@@ -110,18 +110,22 @@ def _wick_event(ticker, frame, idx, side, setups):
         return None
 
     body = abs(close - open_price)
-    wick = (
-        min(open_price, close) - low
-        if side == "LOWER"
-        else high - max(open_price, close)
-    )
+    lower_wick = min(open_price, close) - low
+    upper_wick = high - max(open_price, close)
+    wick = lower_wick if side == "LOWER" else upper_wick
+    opposite_wick = upper_wick if side == "LOWER" else lower_wick
     if wick <= 0:
         return None
 
     range_pct = candle_range / close * 100.0
     wick_share = wick / candle_range
+    wick_share_pct = wick_share * 100.0
     wick_price_pct = wick / close * 100.0
     body_pct = body / close * 100.0
+    wick_body_ratio = float("inf") if body <= 0 else wick / body
+    wick_opposite_ratio = (
+        float("inf") if opposite_wick <= 0 else wick / opposite_wick
+    )
 
     matched_setup = None
     matched_prior = None
@@ -137,16 +141,32 @@ def _wick_event(ticker, frame, idx, side, setups):
 
         try:
             min_wick_pct = float(setup.get("min_wick_pct", 0.0))
+            min_wick_share_pct = float(setup.get("min_wick_share_pct", 0.0))
+            min_wick_body_ratio = float(setup.get("min_wick_body_ratio", 0.0))
+            min_wick_opposite_ratio = float(
+                setup.get("min_wick_opposite_ratio", 0.0)
+            )
+            min_range_vs_median = float(setup.get("min_range_vs_median", 0.0))
+            min_volume_vs_median = float(setup.get("min_volume_vs_median", 0.0))
             max_body_pct = setup.get("max_body_pct")
             max_body_pct = (
                 float(max_body_pct) if max_body_pct is not None else None
             )
             lookback_bars = max(1, int(setup.get("lookback_bars", 12)))
             min_prior_bars = max(0, int(setup.get("min_prior_bars", 0)))
+            relative_context_optional = bool(
+                setup.get("relative_context_optional", False)
+            )
         except (TypeError, ValueError):
             continue
 
         if wick_price_pct < min_wick_pct:
+            continue
+        if wick_share_pct < min_wick_share_pct:
+            continue
+        if wick_body_ratio < min_wick_body_ratio:
+            continue
+        if wick_opposite_ratio < min_wick_opposite_ratio:
             continue
         if max_body_pct is not None and body_pct > max_body_pct:
             continue
@@ -157,6 +177,33 @@ def _wick_event(ticker, frame, idx, side, setups):
 
         prior_low = pd.to_numeric(prior["low"], errors="coerce").min()
         prior_high = pd.to_numeric(prior["high"], errors="coerce").max()
+
+        prior_ranges = (
+            pd.to_numeric(prior["high"], errors="coerce")
+            - pd.to_numeric(prior["low"], errors="coerce")
+        ).dropna()
+        prior_ranges = prior_ranges[prior_ranges > 0]
+        range_vs_median = None
+        if len(prior_ranges) >= 3:
+            median_range = prior_ranges.median()
+            if pd.notna(median_range) and median_range > 0:
+                range_vs_median = candle_range / float(median_range)
+
+        volume_x = _volume_context(prior, volume)
+
+        if min_range_vs_median > 0:
+            if range_vs_median is None:
+                if not relative_context_optional:
+                    continue
+            elif range_vs_median < min_range_vs_median:
+                continue
+
+        if min_volume_vs_median > 0:
+            if volume_x is None:
+                if not relative_context_optional:
+                    continue
+            elif volume_x < min_volume_vs_median:
+                continue
 
         if side == "LOWER":
             level = float(prior_low) if pd.notna(prior_low) else None
@@ -219,9 +266,12 @@ def _wick_event(ticker, frame, idx, side, setups):
         "volume_x": _volume_context(matched_prior, volume),
         "wick": wick,
         "wick_pct": wick_price_pct,
-        "wick_share_pct": wick_share * 100.0,
+        "wick_share_pct": wick_share_pct,
+        "wick_body_ratio": wick_body_ratio,
+        "wick_opposite_ratio": wick_opposite_ratio,
         "body_pct": body_pct,
         "range_pct": range_pct,
+        "range_vs_median": range_vs_median,
         "lookback_bars": lookback_bars,
         "prior_level": prior_level,
         "swept_reclaimed": swept,
@@ -394,9 +444,9 @@ def prepare_alert(
             f'\n{event["ticker"]} {label} [{event["session"]}] {bar_time_uk}\n'
             f'O {event["open"]:.2f} H {event["high"]:.2f} '
             f'L {event["low"]:.2f} C {event["price"]:.2f}\n'
-            f'Wick {event["wick"]:.2f} '
-            f'({event["wick_pct"]:.2f}% price) | '
-            f'Body {event.get("body_pct", 0.0):.2f}% | '
+            f'Wick {event["wick"]:.2f} | '
+            f'{event.get("wick_share_pct", 0.0):.0f}% candle | '
+            f'{event.get("wick_body_ratio", 0.0):.1f}x body | '
             f'{level_name} {prior_level} swept/reclaimed: {sweep}\n'
             f'Vol {event["volume"]:,.0f} ({volume}) | Next: {next_state}\n'
         )
