@@ -369,3 +369,24 @@ The runtime log version is the primary proof of the code actually running on the
 - Pre-change runtime verification: newest inspected DataLake log `asjr_pipeline_20261002_172337_BST.log` showed `RUN | VERSION | 2026.10.01.4`; therefore `2026.10.02.3` is pushed but not live-verified.
 - Separate known issue remains: multiple 2026-10-02 runs returned `IBKR | 5m fetch completed | rows=0` and overwrote the current intraday CSV. This is not fixed by the ratio-wick change and should be addressed separately.
 - Deployment required: VPS `git pull`, restart bot, then verify the next DataLake log shows `RUN | VERSION | 2026.10.02.3`.
+
+## 2026-10-02 isolated Mean Reversal Bollinger backtest
+
+- Added an isolated research-only backtesting package under `Backtesting/MeanReversal/`.
+- Main module: `Backtesting/MeanReversal/mean_reversal_bb_backtest.py`.
+- This does **not** modify the live Chakra/Rudrakchhya pipeline or runtime version.
+- Stable notebook entry point: `run_backtest(...)`; strategy internals can be changed later without repeatedly editing the VS Code notebook cell.
+- Data source: Yahoo Finance.
+  - Daily bars are used for the close-to-close shock calculation.
+  - Yahoo has no native 4H interval, so the module downloads 60m bars and aggregates regular US session bars into 4H-style candles.
+- Default research rule:
+  1. daily return <= -4%;
+  2. shock day has at least one 4H close at/below Bollinger lower band (20, 2);
+  3. after the shock-day close, BUY on the first 4H close back above the lower band after the prior 4H close was at/below the lower band;
+  4. SL = 1%;
+  5. TP = 3.5%;
+  6. when SL and TP are both touched inside the same 4H candle, assume SL first (conservative).
+- Supports explicit start/end dates, one-year Yahoo tests, candlestick + Bollinger chart, BUY/SELL markers, per-trade table, win/loss count, win rate, average/median/best/worst return, compounded return, profit factor, trade-equity max drawdown, and average 4H bars held.
+- Batch helper `run_batch(...)` is included for comparing MU, AMAT, LRCX, INTC or other ticker sets.
+- Production deployment/restart is not required for this isolated research module.
+
