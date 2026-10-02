@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 from Utils.asjr_day import session_date
+from Strategies.MeanReversal4Pct import mean_reversal
 
 
 ET = ZoneInfo("America/New_York")
@@ -327,7 +328,11 @@ def prepare_alert(
     state_file=STATE_FILE,
     batch_file=BATCH_FILE,
 ):
-    """Format the oldest pending wick batch; do not acknowledge it yet."""
+    """Format mean-reversal first; otherwise format oldest pending wick batch."""
+    mean_message = mean_reversal.prepare_alert(result)
+    if mean_message:
+        return mean_message
+
     events = result.get("alert_data", []) if result else []
     events = [
         event
@@ -415,6 +420,9 @@ def mark_alert_sent(
     batch_file=BATCH_FILE,
 ):
     """Acknowledge only the batch confirmed sent to Discord."""
+    if mean_reversal.has_prepared_batch():
+        return mean_reversal.mark_alert_sent()
+
     batch = _read_json(batch_file, {})
     keys = set(batch.get("event_keys", [])) if isinstance(batch, dict) else set()
     if not keys:
