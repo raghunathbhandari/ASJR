@@ -276,15 +276,16 @@ def backtest_mean_reversal(
         return pd.DataFrame()
 
     trades = []
-    next_allowed_index = 0
+    last_exit_time = None
 
     for _, setup in setups.sort_values("shock_date").iterrows():
-        after = bars_4h[bars_4h.index > setup["shock_last_4h_time"]]
-        if after.empty:
+        shock_last_bar = setup["shock_last_4h_time"]
+        if last_exit_time is not None and shock_last_bar <= last_exit_time:
             continue
 
-        # Prevent overlapping trades/setups.
-        after = after.iloc[next_allowed_index:] if next_allowed_index else after
+        after = bars_4h[bars_4h.index > shock_last_bar]
+        if after.empty:
+            continue
 
         # Find first lower-band re-entry within configured wait.
         window = after.head(config.max_entry_wait_4h_bars)
@@ -369,8 +370,9 @@ def backtest_mean_reversal(
             }
         )
 
-        # Skip any shock setups that occur while this trade is open.
-        setups = setups[setups["shock_date"] > pd.Timestamp(exit_time).tz_localize(None).normalize()]
+        # Do not allow overlapping positions. Later shock setups that occurred
+        # before this exit are skipped by the last_exit_time gate above.
+        last_exit_time = exit_time
 
     return pd.DataFrame(trades)
 
