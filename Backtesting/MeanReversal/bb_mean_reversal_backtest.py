@@ -7,14 +7,16 @@ Default rules
 -------------
 - Data: Yahoo Finance 60m bars, aggregated into 4H-style regular-session candles.
 - Bollinger Bands: 20-period SMA +/- 2 standard deviations.
-- BUY setup: 4H close <= lower Bollinger Band.
-- BUY trigger: first later 4H close back above the lower Bollinger Band.
-- Stop loss: 1%.
-- Target: 3.5%.
-- If SL and TP are both touched in the same 4H bar, assume SL first.
+- BUY: enter long when a completed 4H candle CLOSES BELOW the lower band.
+  A wick below the lower band is NOT enough.
+- EXIT: close the long position when a later completed 4H candle
+  CLOSES ABOVE the upper band.
+- BUY only.
+- No -4% shock condition.
+- No fixed stop-loss or fixed take-profit in this TradingView-style version.
 
-The public function run_backtest(...) is intended to remain stable so the
-VS Code notebook cell does not need to change when strategy internals evolve.
+The public function run_backtest(...) stays stable so the VS Code notebook
+cell does not need to change when strategy internals evolve.
 """
 
 from __future__ import annotations
@@ -32,10 +34,6 @@ import pandas as pd
 class BacktestConfig:
     bb_window: int = 20
     bb_std: float = 2.0
-    stop_pct: float = 1.0
-    target_pct: float = 3.5
-    max_entry_wait_4h_bars: int = 6
-    conservative_same_bar_exit: bool = True
 
 
 def _as_timestamp(value: str | date | datetime) -> pd.Timestamp:
@@ -137,6 +135,7 @@ def build_4h_candles(hourly: pd.DataFrame) -> pd.DataFrame:
         day_df = day_df.sort_index()
         if day_df.empty:
             continue
+
         bucket = np.arange(len(day_df)) // 4
         grouped = day_df.groupby(bucket)
         agg = grouped.agg(
@@ -178,10 +177,14 @@ def backtest_mean_reversal(
     config: BacktestConfig,
 ) -> pd.DataFrame:
     """
-    Pure BUY-only Bollinger mean reversion.
+    BUY-only Bollinger mean reversion.
 
-    Setup: candle closes at/below lower BB.
-    Entry: first later candle that closes back above lower BB.
+    Entry:
+        completed 4H candle close < lower BB
+    Exit:
+        later completed 4H candle close > upper BB
+
+    One long position at a time.
     """
     if bars_4h.empty:
         return pd.DataFrame()
@@ -189,101 +192,85 @@ def backtest_mean_reversal(
     start_ts = _as_timestamp(start)
     end_ts = _as_timestamp(end) + pd.Timedelta(days=1)
 
-    naive_index = bars_4h.index
-    if naive_index.tz is not None:
-        naive_index = naive_index.tz_convert("America/New_York").tz_localize(None)
-
-    in_test = (naive_index >= start_ts) & (naive_index < end_ts)
+    idx = bars_4h.index
+    if idx.tz is not None:
+        naive_idx = idx.tz_convert("America/New_York").tz_localize(None)
+    else:
+        naive_idx = idx
 
     trades = []
-    last_exit_loc = -1
-    i = max(config.bb_window - 1, 1)
+    in_position = False
+    entry_loc = None
+    entry_time = None
+    entry_price = None
+    entry_bb_lower = None
+    entry_bb_z = None
 
-    while i < len(bars_4h):
-        if i <= last_exit_loc or not in_test[i]:
-            i += 1
+    for i in range(max(config.bb_window - 1, 1), len(bars_4h)):
+        if naive_idx[i] < start_ts or naive_idx[i] >= end_ts:
             continue
 
-        setup_bar = bars_4h.iloc[i]
-        if pd.isna(setup_bar["BB_LOWER"]) or setup_bar["Close"] > setup_bar["BB_LOWER"]:
-            i += 1
+        bar = bars_4h.iloc[i]
+        if pd.isna(bar["BB_LOWER"]) or pd.isna(bar["BB_UPPER"]):
             continue
 
-        setup_time = bars_4h.index[i]
-        entry_loc = None
-        max_j = min(len(bars_4h), i + 1 + config.max_entry_wait_4h_bars)
-
-        for j in range(i + 1, max_j):
-            bar = bars_4h.iloc[j]
-            if pd.notna(bar["BB_LOWER"]) and bar["Close"] > bar["BB_LOWER"]:
-                entry_loc = j
-                break
-
-        if entry_loc is None:
-            i += 1
+        if not in_position:
+            # IMPORTANT: CLOSE must be below lower band; wick-only breaks do not qualify.
+            if float(bar["Close"]) < float(bar["BB_LOWER"]):
+                in_position = True
+                entry_loc = i
+                entry_time = bars_4h.index[i]
+                entry_price = float(bar["Close"])
+                entry_bb_lower = float(bar["BB_LOWER"])
+                entry_bb_z = float(bar["BB_Z"]) if pd.notna(bar["BB_Z"]) else np.nan
             continue
 
-        entry_bar = bars_4h.iloc[entry_loc]
-        entry_time = bars_4h.index[entry_loc]
-        entry_price = float(entry_bar["Close"])
-        stop_price = entry_price * (1 - config.stop_pct / 100.0)
-        target_price = entry_price * (1 + config.target_pct / 100.0)
+        if float(bar["Close"]) > float(bar["BB_UPPER"]):
+            exit_loc = i
+            exit_time = bars_4h.index[i]
+            exit_price = float(bar["Close"])
+            trades.append(
+                {
+                    "entry_time": entry_time,
+                    "entry_price": entry_price,
+                    "entry_bb_lower": entry_bb_lower,
+                    "entry_bb_z": entry_bb_z,
+                    "exit_time": exit_time,
+                    "exit_price": exit_price,
+                    "exit_bb_upper": float(bar["BB_UPPER"]),
+                    "exit_reason": "UPPER_BB_CLOSE",
+                    "return_pct": (exit_price / entry_price - 1.0) * 100.0,
+                    "bars_held": int(exit_loc - entry_loc),
+                }
+            )
+            in_position = False
+            entry_loc = None
+            entry_time = None
+            entry_price = None
+            entry_bb_lower = None
+            entry_bb_z = None
 
-        exit_loc = None
-        exit_time = None
-        exit_price = None
-        exit_reason = None
-
-        for j in range(entry_loc + 1, len(bars_4h)):
-            bar = bars_4h.iloc[j]
-            hit_stop = float(bar["Low"]) <= stop_price
-            hit_target = float(bar["High"]) >= target_price
-
-            if hit_stop and hit_target:
-                exit_reason = "SL" if config.conservative_same_bar_exit else "TP"
-                exit_price = stop_price if exit_reason == "SL" else target_price
-                exit_loc = j
-                exit_time = bars_4h.index[j]
-                break
-            if hit_stop:
-                exit_reason = "SL"
-                exit_price = stop_price
-                exit_loc = j
-                exit_time = bars_4h.index[j]
-                break
-            if hit_target:
-                exit_reason = "TP"
-                exit_price = target_price
-                exit_loc = j
-                exit_time = bars_4h.index[j]
-                break
-
-        if exit_loc is None:
-            exit_loc = len(bars_4h) - 1
-            exit_time = bars_4h.index[exit_loc]
-            exit_price = float(bars_4h.iloc[exit_loc]["Close"])
-            exit_reason = "DATA_END"
-
+    # Keep unfinished final trade visible for analysis, but mark it separately.
+    if in_position and entry_time is not None:
+        last_loc = len(bars_4h) - 1
+        last_time = bars_4h.index[last_loc]
+        last_price = float(bars_4h.iloc[last_loc]["Close"])
         trades.append(
             {
-                "setup_time": setup_time,
-                "setup_close": float(setup_bar["Close"]),
-                "setup_bb_lower": float(setup_bar["BB_LOWER"]),
-                "setup_bb_z": float(setup_bar["BB_Z"]) if pd.notna(setup_bar["BB_Z"]) else np.nan,
                 "entry_time": entry_time,
                 "entry_price": entry_price,
-                "stop_price": stop_price,
-                "target_price": target_price,
-                "exit_time": exit_time,
-                "exit_price": exit_price,
-                "exit_reason": exit_reason,
-                "return_pct": (exit_price / entry_price - 1.0) * 100.0,
-                "bars_held": int(exit_loc - entry_loc),
+                "entry_bb_lower": entry_bb_lower,
+                "entry_bb_z": entry_bb_z,
+                "exit_time": last_time,
+                "exit_price": last_price,
+                "exit_bb_upper": float(bars_4h.iloc[last_loc]["BB_UPPER"])
+                if pd.notna(bars_4h.iloc[last_loc]["BB_UPPER"])
+                else np.nan,
+                "exit_reason": "DATA_END",
+                "return_pct": (last_price / entry_price - 1.0) * 100.0,
+                "bars_held": int(last_loc - entry_loc),
             }
         )
-
-        last_exit_loc = exit_loc
-        i = exit_loc + 1
 
     return pd.DataFrame(trades)
 
@@ -292,66 +279,93 @@ def summarize_trades(trades: pd.DataFrame) -> dict:
     if trades is None or trades.empty:
         return {
             "trades": 0,
+            "closed_upper_bb": 0,
+            "data_end": 0,
             "wins": 0,
             "losses": 0,
             "win_rate_pct": 0.0,
             "avg_return_pct": 0.0,
             "median_return_pct": 0.0,
+            "best_trade_pct": 0.0,
+            "worst_trade_pct": 0.0,
             "compounded_return_pct": 0.0,
             "profit_factor": 0.0,
             "max_trade_equity_drawdown_pct": 0.0,
             "avg_bars_held": 0.0,
         }
 
-    rets = trades["return_pct"].astype(float)
-    tp = trades["exit_reason"].eq("TP")
-    sl = trades["exit_reason"].eq("SL")
+    closed = trades[trades["exit_reason"] == "UPPER_BB_CLOSE"].copy()
+    closed_rets = closed["return_pct"].astype(float)
 
-    equity = (1.0 + rets / 100.0).cumprod()
-    drawdown = (equity / equity.cummax() - 1.0) * 100.0
+    # Compounding includes only completed upper-band exits.
+    if closed.empty:
+        compounded = 0.0
+        max_dd = 0.0
+    else:
+        equity = (1.0 + closed_rets / 100.0).cumprod()
+        compounded = float((equity.iloc[-1] - 1.0) * 100.0)
+        max_dd = float((equity / equity.cummax() - 1.0).min() * 100.0)
 
-    gross_profit = rets[rets > 0].sum()
-    gross_loss = abs(rets[rets < 0].sum())
+    wins = closed_rets[closed_rets > 0]
+    losses = closed_rets[closed_rets <= 0]
+    gross_profit = float(wins.sum())
+    gross_loss = float(abs(losses.sum()))
 
     return {
         "trades": int(len(trades)),
-        "wins": int(tp.sum()),
-        "losses": int(sl.sum()),
+        "closed_upper_bb": int(len(closed)),
         "data_end": int(trades["exit_reason"].eq("DATA_END").sum()),
-        "win_rate_pct": float(tp.mean() * 100.0),
-        "avg_return_pct": float(rets.mean()),
-        "median_return_pct": float(rets.median()),
-        "best_trade_pct": float(rets.max()),
-        "worst_trade_pct": float(rets.min()),
-        "compounded_return_pct": float((equity.iloc[-1] - 1.0) * 100.0),
+        "wins": int((closed_rets > 0).sum()),
+        "losses": int((closed_rets <= 0).sum()),
+        "win_rate_pct": float((closed_rets > 0).mean() * 100.0) if len(closed_rets) else 0.0,
+        "avg_return_pct": float(closed_rets.mean()) if len(closed_rets) else 0.0,
+        "median_return_pct": float(closed_rets.median()) if len(closed_rets) else 0.0,
+        "best_trade_pct": float(closed_rets.max()) if len(closed_rets) else 0.0,
+        "worst_trade_pct": float(closed_rets.min()) if len(closed_rets) else 0.0,
+        "compounded_return_pct": compounded,
         "profit_factor": float(gross_profit / gross_loss) if gross_loss > 0 else float("inf"),
-        "max_trade_equity_drawdown_pct": float(drawdown.min()),
-        "avg_bars_held": float(trades["bars_held"].mean()),
+        "max_trade_equity_drawdown_pct": max_dd,
+        "avg_bars_held": float(closed["bars_held"].mean()) if len(closed) else 0.0,
     }
 
 
-def print_summary(ticker: str, start, end, config: BacktestConfig, trades: pd.DataFrame) -> dict:
+def print_summary(
+    ticker: str,
+    start,
+    end,
+    config: BacktestConfig,
+    trades: pd.DataFrame,
+) -> dict:
     summary = summarize_trades(trades)
-    print("=" * 72)
+
+    print("=" * 80)
     print(f"PURE BB MEAN REVERSION | {ticker.upper()} | {start} -> {end}")
     print(
         f"BB({config.bb_window},{config.bb_std}) | "
-        f"SL {config.stop_pct:.2f}% | TP {config.target_pct:.2f}%"
+        "BUY: close < Lower BB | EXIT: close > Upper BB"
     )
-    print("-" * 72)
+    print("-" * 80)
+
     for key, value in summary.items():
         if isinstance(value, float):
             print(f"{key:36s}: {value:10.2f}")
         else:
             print(f"{key:36s}: {value}")
-    print("=" * 72)
+
+    print("=" * 80)
 
     if trades is not None and not trades.empty:
         cols = [
-            "setup_time", "setup_close", "setup_bb_z",
-            "entry_time", "entry_price",
-            "exit_time", "exit_price", "exit_reason",
-            "return_pct", "bars_held",
+            "entry_time",
+            "entry_price",
+            "entry_bb_lower",
+            "entry_bb_z",
+            "exit_time",
+            "exit_price",
+            "exit_bb_upper",
+            "exit_reason",
+            "return_pct",
+            "bars_held",
         ]
         print(trades[cols].to_string(index=False))
 
@@ -383,10 +397,14 @@ def plot_candles_with_trades(
     plot_df.index = idx
     plot_df = plot_df[(plot_df.index >= start_ts) & (plot_df.index < end_ts)]
 
+    if plot_df.empty:
+        print("No 4H bars available in requested plotting range.")
+        return None
+
     addplots = [
-        mpf.make_addplot(plot_df["BB_UPPER"]),
-        mpf.make_addplot(plot_df["BB_MID"]),
-        mpf.make_addplot(plot_df["BB_LOWER"]),
+        mpf.make_addplot(plot_df["BB_UPPER"], width=0.8),
+        mpf.make_addplot(plot_df["BB_MID"], width=0.8),
+        mpf.make_addplot(plot_df["BB_LOWER"], width=0.8),
     ]
 
     if trades is not None and not trades.empty:
@@ -396,6 +414,7 @@ def plot_candles_with_trades(
         for _, trade in trades.iterrows():
             et = pd.Timestamp(trade["entry_time"])
             xt = pd.Timestamp(trade["exit_time"])
+
             if et.tzinfo is not None:
                 et = et.tz_convert("America/New_York").tz_localize(None)
             if xt.tzinfo is not None:
@@ -403,13 +422,29 @@ def plot_candles_with_trades(
 
             if et in buy.index:
                 buy.loc[et] = float(trade["entry_price"])
-            if xt in sell.index:
+
+            if trade["exit_reason"] == "UPPER_BB_CLOSE" and xt in sell.index:
                 sell.loc[xt] = float(trade["exit_price"])
 
         if buy.notna().any():
-            addplots.append(mpf.make_addplot(buy, type="scatter", marker="^", markersize=100))
+            addplots.append(
+                mpf.make_addplot(
+                    buy,
+                    type="scatter",
+                    marker="^",
+                    markersize=120,
+                )
+            )
+
         if sell.notna().any():
-            addplots.append(mpf.make_addplot(sell, type="scatter", marker="v", markersize=100))
+            addplots.append(
+                mpf.make_addplot(
+                    sell,
+                    type="scatter",
+                    marker="v",
+                    markersize=120,
+                )
+            )
 
     fig, _ = mpf.plot(
         plot_df,
@@ -446,19 +481,23 @@ def run_backtest(
     *,
     bb_window: int = 20,
     bb_std: float = 2.0,
-    stop_pct: float = 1.0,
-    target_pct: float = 3.5,
-    max_entry_wait_4h_bars: int = 6,
+    stop_pct: Optional[float] = None,
+    target_pct: Optional[float] = None,
+    max_entry_wait_4h_bars: Optional[int] = None,
     plot: bool = True,
     save_chart: Optional[str | Path] = None,
     save_trades_csv: Optional[str | Path] = None,
 ) -> dict:
+    """
+    Stable notebook entry point.
+
+    stop_pct, target_pct and max_entry_wait_4h_bars are accepted only for
+    backward compatibility with the earlier notebook cell. They are ignored
+    by the current pure BB strategy.
+    """
     config = BacktestConfig(
         bb_window=bb_window,
         bb_std=bb_std,
-        stop_pct=stop_pct,
-        target_pct=target_pct,
-        max_entry_wait_4h_bars=max_entry_wait_4h_bars,
     )
 
     hourly = download_hourly(ticker, start, end)
@@ -497,7 +536,12 @@ def run_backtest(
     }
 
 
-def run_batch(tickers: Iterable[str], start, end, **kwargs) -> pd.DataFrame:
+def run_batch(
+    tickers: Iterable[str],
+    start,
+    end,
+    **kwargs,
+) -> pd.DataFrame:
     rows = []
     local_kwargs = dict(kwargs)
     local_kwargs["plot"] = False
