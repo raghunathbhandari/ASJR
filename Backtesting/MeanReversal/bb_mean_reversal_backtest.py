@@ -419,6 +419,8 @@ def plot_candles_with_trades(
         title=f"{ticker.upper()} 4H | Pure Bollinger Mean Reversion",
         ylabel="Price",
         ylabel_lower="Volume",
+        figsize=(28, 12),
+        xrotation=20,
         tight_layout=True,
         warn_too_much_data=5000,
         returnfig=True,
