@@ -67,7 +67,7 @@ IBKR_CHUNK_DURATION = {
     "1h": "1 M",
     "2h": "1 M",
     "3h": "1 M",
-    "4h": "1 M",
+    "4h": "6 M",
     "8h": "1 M",
     "1d": "1 Y",
 }
@@ -257,7 +257,7 @@ async def download_data_ibkr_prepare_csv_cache(
     use_rth: bool = True,
     cache_root: str | Path = DEFAULT_IBKR_CACHE_ROOT,
     refresh: bool = False,
-    pacing_sleep_seconds: float = 0.35,
+    pacing_sleep_seconds: float = 0.0,
     ib=None,
     disconnect_when_done: Optional[bool] = None,
 ) -> pd.DataFrame:
@@ -316,6 +316,25 @@ async def download_data_ibkr_prepare_csv_cache(
     cached = _empty_df() if refresh else read_ibkr_cache(
         ticker, interval, cache_root=cache_root
     )
+
+    # Fast path: if the existing cache already covers the requested calendar
+    # range, return it immediately without making any IBKR requests.
+    if not refresh and not cached.empty:
+        cache_start_day = cached.index.min().tz_convert("UTC").normalize()
+        cache_end_day = cached.index.max().tz_convert("UTC").normalize()
+        request_start_day = start_ts.normalize()
+        request_end_day = end_ts.normalize()
+
+        if cache_start_day <= request_start_day and cache_end_day >= request_end_day:
+            requested = cached[
+                (cached.index >= start_ts) & (cached.index <= end_ts)
+            ].copy()
+            print(
+                f"{ticker} {interval} | CACHE COMPLETE | "
+                f"{requested.index.min()} -> {requested.index.max()} | "
+                f"rows={len(requested)}"
+            )
+            return requested
 
     created_connection = ib is None
     if created_connection:
