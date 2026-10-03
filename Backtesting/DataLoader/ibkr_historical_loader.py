@@ -27,7 +27,7 @@ from typing import Optional
 
 import pandas as pd
 
-from .universal_yfinance_loader import DEFAULT_CACHE_ROOT, cache_path_for
+from .universal_yfinance_loader import DEFAULT_CACHE_ROOT
 
 
 CANONICAL_COLUMNS = ["Open", "High", "Low", "Close", "Volume"]
@@ -107,6 +107,27 @@ def _as_utc(value) -> pd.Timestamp:
     return ts
 
 
+def _safe_name(ticker: str) -> str:
+    return (
+        ticker.upper()
+        .replace("^", "INDEX_")
+        .replace("=", "_")
+        .replace("/", "_")
+        .replace("\\", "_")
+        .replace(":", "_")
+    )
+
+
+def _cache_path_for_ibkr(
+    ticker: str,
+    interval: str,
+    cache_root: str | Path = DEFAULT_CACHE_ROOT,
+) -> Path:
+    interval = _normalize_interval(interval)
+    root = Path(cache_root)
+    return root / interval / f"{_safe_name(ticker)}_{interval}.csv"
+
+
 def _empty_df() -> pd.DataFrame:
     df = pd.DataFrame(columns=CANONICAL_COLUMNS)
     df.index = pd.DatetimeIndex([], tz="UTC", name="Datetime")
@@ -160,8 +181,7 @@ def read_ibkr_cache(
 ) -> pd.DataFrame:
     """Read the shared canonical OHLCV cache."""
     interval = _normalize_interval(interval)
-    cache_interval = "60m" if interval == "1h" else interval
-    path = cache_path_for(ticker, cache_interval, cache_root)
+    path = _cache_path_for_ibkr(ticker, interval, cache_root)
 
     if not path.exists():
         return _empty_df()
@@ -194,8 +214,7 @@ def _write_cache(
     cache_root: str | Path = DEFAULT_CACHE_ROOT,
 ) -> Path:
     interval = _normalize_interval(interval)
-    cache_interval = "60m" if interval == "1h" else interval
-    path = cache_path_for(ticker, cache_interval, cache_root)
+    path = _cache_path_for_ibkr(ticker, interval, cache_root)
     path.parent.mkdir(parents=True, exist_ok=True)
 
     out = df[CANONICAL_COLUMNS].copy().sort_index()
