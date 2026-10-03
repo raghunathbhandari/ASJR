@@ -65,7 +65,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--client-id", type=int, default=31)
     parser.add_argument("--start", default=None)
     parser.add_argument("--end", default=DEFAULT_END)
-        parser.add_argument(
+    parser.add_argument(
         "--interval",
         choices=SUPPORTED_INTERVALS,
         default=DEFAULT_INTERVAL,
