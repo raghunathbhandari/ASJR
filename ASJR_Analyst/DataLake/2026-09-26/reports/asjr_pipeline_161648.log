@@ -1,0 +1,24 @@
+2026-09-26 16:16:48 | INFO | RUN | START | trade_date=2026-09-26
+2026-09-26 16:16:48 | INFO | RUN | OPTIONS | include_sector=True | git_submit=True | fetch_gapup_from_app=True
+2026-09-26 16:16:48 | INFO | GAPUP | Fetch started
+2026-09-26 16:16:49 | INFO | GAPUP | Fetch completed | rows=12
+2026-09-26 16:16:49 | INFO | GAPUP | Tickers | AESI, AKAM, PPLI, GENI, KORU, FSLY, SNPS, FRVO, PGEN, MFG, MUFG, SNXX
+2026-09-26 16:16:49 | ERROR | RUN | FAILED
+Traceback (most recent call last):
+  File "/root/trading/ASJR/ASJR_Analyst/Tests/test_asjr_pipeline.py", line 76, in run_asjr_manual_pipeline
+    uni = universe.build_universe(trade_date, gapup_df=gapup_df)
+  File "/root/trading/ASJR/ASJR_Analyst/Utils/asjr_universe.py", line 27, in build_universe
+    fixed = watchlist.load_fixed_watchlist(trade_date).copy()
+  File "/root/trading/ASJR/ASJR_Analyst/Utils/asjr_watchlist.py", line 12, in load_fixed_watchlist
+    df = pd.read_csv(file)
+  File "/root/trading/venv_new/lib/python3.10/site-packages/pandas/io/parsers/readers.py", line 1026, in read_csv
+    return _read(filepath_or_buffer, kwds)
+  File "/root/trading/venv_new/lib/python3.10/site-packages/pandas/io/parsers/readers.py", line 620, in _read
+    parser = TextFileReader(filepath_or_buffer, **kwds)
+  File "/root/trading/venv_new/lib/python3.10/site-packages/pandas/io/parsers/readers.py", line 1620, in __init__
+    self._engine = self._make_engine(f, self.engine)
+  File "/root/trading/venv_new/lib/python3.10/site-packages/pandas/io/parsers/readers.py", line 1880, in _make_engine
+    self.handles = get_handle(
+  File "/root/trading/venv_new/lib/python3.10/site-packages/pandas/io/common.py", line 873, in get_handle
+    handle = open(
+FileNotFoundError: [Errno 2] No such file or directory: '/root/trading/ASJR/ASJR_Analyst/DataLake/2026-09-26/config/fixed_watchlist.csv'
