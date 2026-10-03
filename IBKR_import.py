@@ -5,8 +5,17 @@ Standalone IBKR historical data import.
 Purpose
 -------
 Download the finalized BB research universe directly from IB Gateway using
-ib_async, save native 4H OHLCV history into the completely separate IBKR
+ib_async, save native historical OHLCV into the completely separate IBKR
 research cache, then disconnect.
+
+Supported intervals:
+    5m, 15m, 1h, 4h
+
+Examples:
+    python IBKR_import.py --interval 1h --years 5
+    python IBKR_import.py --interval 15m --years 2
+    python IBKR_import.py --interval 5m --years 1
+    python IBKR_import.py --interval 4h --years 10
 
 Run from repository root:
     cd /root/trading/ASJR
@@ -21,6 +30,7 @@ import argparse
 import asyncio
 import sys
 from datetime import date
+from dateutil.relativedelta import relativedelta
 from pathlib import Path
 
 from ib_async import IB
@@ -41,8 +51,9 @@ DEFAULT_TICKERS = [
     "NVDA",
 ]
 
-DEFAULT_START = "2016-10-03"
 DEFAULT_END = "2026-10-02"
+DEFAULT_INTERVAL = "4h"
+SUPPORTED_INTERVALS = ["5m", "15m", "1h", "4h"]
 
 
 def parse_args() -> argparse.Namespace:
@@ -52,9 +63,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=4002)
     parser.add_argument("--client-id", type=int, default=31)
-    parser.add_argument("--start", default=DEFAULT_START)
+    parser.add_argument("--start", default=None)
     parser.add_argument("--end", default=DEFAULT_END)
-    parser.add_argument("--interval", default="4h")
+        parser.add_argument(
+        "--interval",
+        choices=SUPPORTED_INTERVALS,
+        default=DEFAULT_INTERVAL,
+        help="Native IBKR bar interval.",
+    )
+    parser.add_argument(
+        "--years",
+        type=int,
+        default=None,
+        help="Lookback years. Used only when --start is not supplied.",
+    )
     parser.add_argument(
         "--tickers",
         nargs="+",
@@ -89,11 +111,23 @@ def parse_args() -> argparse.Namespace:
 async def main() -> int:
     args = parse_args()
 
+    end_date = date.fromisoformat(args.end)
+    if args.start:
+        start_date = date.fromisoformat(args.start)
+    elif args.years:
+        start_date = end_date - relativedelta(years=args.years)
+    else:
+        default_years = {"5m": 1, "15m": 2, "1h": 5, "4h": 10}
+        start_date = end_date - relativedelta(years=default_years[args.interval])
+
+    start_value = start_date.isoformat()
+    end_value = end_date.isoformat()
+
     print("=" * 100)
     print("IBKR HISTORICAL RESEARCH IMPORT")
     print("=" * 100)
     print(f"Tickers : {', '.join(args.tickers)}")
-    print(f"Range   : {args.start} -> {args.end}")
+    print(f"Range   : {start_value} -> {end_value}")
     print(f"Interval: {args.interval}")
     print(f"Gateway : {args.host}:{args.port}")
     print(f"Client  : {args.client_id}")
@@ -125,15 +159,15 @@ async def main() -> int:
                 print("\n" + "#" * 100)
                 print(
                     f"[{number}/{len(args.tickers)}] {ticker} | "
-                    f"{args.interval} | {args.start} -> {args.end}"
+                    f"{args.interval} | {start_value} -> {end_value}"
                 )
                 print("#" * 100)
 
                 try:
                     df = await ibdl.download_data_ibkr_prepare_csv_cache(
                         ticker=ticker,
-                        start=args.start,
-                        end=args.end,
+                        start=start_value,
+                        end=end_value,
                         interval=args.interval,
                         use_rth=not args.all_hours,
                         refresh=args.refresh,
