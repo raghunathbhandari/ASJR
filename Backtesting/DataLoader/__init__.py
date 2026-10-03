@@ -25,3 +25,20 @@ __all__ = [
     "load_yfinance_cached",
     "provider_earliest_start",
 ]
+
+
+from .ibkr_historical_loader import (
+    IBKR_BAR_SIZE,
+    IBKR_CHUNK_DURATION,
+    download_data_ibkr_prepare_csv_cache,
+    get_ibkr_ohlcv_df,
+    read_ibkr_cache,
+)
+
+__all__ += [
+    "IBKR_BAR_SIZE",
+    "IBKR_CHUNK_DURATION",
+    "download_data_ibkr_prepare_csv_cache",
+    "get_ibkr_ohlcv_df",
+    "read_ibkr_cache",
+]
