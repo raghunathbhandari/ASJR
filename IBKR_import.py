@@ -74,8 +74,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--pacing-sleep",
         type=float,
-        default=0.5,
+        default=0.0,
         help="Pause between IBKR historical requests.",
+    )
+    parser.add_argument(
+        "--concurrency",
+        type=int,
+        default=3,
+        help="Number of tickers to download concurrently.",
     )
     return parser.parse_args()
 
@@ -91,6 +97,7 @@ async def main() -> int:
     print(f"Interval: {args.interval}")
     print(f"Gateway : {args.host}:{args.port}")
     print(f"Client  : {args.client_id}")
+    print(f"Concurrency: {args.concurrency}")
     print(f"RTH     : {not args.all_hours}")
     print(f"Cache   : {ibdl.DEFAULT_IBKR_CACHE_ROOT}")
     print("=" * 100)
@@ -109,44 +116,52 @@ async def main() -> int:
         )
         print("Connected:", ib.isConnected())
 
-        for number, ticker in enumerate(args.tickers, start=1):
+        semaphore = asyncio.Semaphore(max(1, args.concurrency))
+
+        async def download_one(number: int, ticker: str) -> None:
             ticker = ticker.upper().strip()
-            print("\n" + "#" * 100)
-            print(
-                f"[{number}/{len(args.tickers)}] {ticker} | "
-                f"{args.interval} | {args.start} -> {args.end}"
-            )
-            print("#" * 100)
 
-            try:
-                df = await ibdl.download_data_ibkr_prepare_csv_cache(
-                    ticker=ticker,
-                    start=args.start,
-                    end=args.end,
-                    interval=args.interval,
-                    use_rth=not args.all_hours,
-                    refresh=args.refresh,
-                    pacing_sleep_seconds=args.pacing_sleep,
-                    ib=ib,
-                    disconnect_when_done=False,
+            async with semaphore:
+                print("\n" + "#" * 100)
+                print(
+                    f"[{number}/{len(args.tickers)}] {ticker} | "
+                    f"{args.interval} | {args.start} -> {args.end}"
                 )
+                print("#" * 100)
 
-                results[ticker] = len(df)
-
-                if df.empty:
-                    print(f"{ticker}: completed but no rows returned.")
-                else:
-                    print(
-                        f"{ticker}: COMPLETE | rows={len(df)} | "
-                        f"{df.index.min()} -> {df.index.max()}"
+                try:
+                    df = await ibdl.download_data_ibkr_prepare_csv_cache(
+                        ticker=ticker,
+                        start=args.start,
+                        end=args.end,
+                        interval=args.interval,
+                        use_rth=not args.all_hours,
+                        refresh=args.refresh,
+                        pacing_sleep_seconds=args.pacing_sleep,
+                        ib=ib,
+                        disconnect_when_done=False,
                     )
 
-            except Exception as exc:
-                failures[ticker] = f"{type(exc).__name__}: {exc}"
-                print(f"{ticker}: FAILED | {failures[ticker]}", file=sys.stderr)
-                # Continue with the remaining tickers instead of losing a
-                # long multi-ticker import because one symbol failed.
-                await asyncio.sleep(2.0)
+                    results[ticker] = len(df)
+
+                    if df.empty:
+                        print(f"{ticker}: completed but no rows returned.")
+                    else:
+                        print(
+                            f"{ticker}: COMPLETE | rows={len(df)} | "
+                            f"{df.index.min()} -> {df.index.max()}"
+                        )
+
+                except Exception as exc:
+                    failures[ticker] = f"{type(exc).__name__}: {exc}"
+                    print(f"{ticker}: FAILED | {failures[ticker]}", file=sys.stderr)
+
+        await asyncio.gather(
+            *[
+                download_one(number, ticker)
+                for number, ticker in enumerate(args.tickers, start=1)
+            ]
+        )
 
     finally:
         if ib.isConnected():
