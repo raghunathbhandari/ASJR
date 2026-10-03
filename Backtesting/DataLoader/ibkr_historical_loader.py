@@ -13,10 +13,10 @@ Canonical CSV
 -------------
 Datetime,Open,High,Low,Close,Volume
 
-The cache path is shared with the Yahoo loader:
-Backtesting/BacktestData/MarketData/<interval>/<TICKER>_<interval>.csv
+IBKR uses its own cache root, separate from Yahoo and the live trading pipeline:
+Backtesting/BacktestData/IBKR/MarketData/<interval>/<TICKER>_<interval>.csv
 
-This lets strategy code remain provider-independent.
+The CSV schema remains canonical so strategy code can stay provider-independent.
 """
 
 from __future__ import annotations
@@ -27,7 +27,9 @@ from typing import Optional
 
 import pandas as pd
 
-from .universal_yfinance_loader import DEFAULT_CACHE_ROOT
+
+DEFAULT_IBKR_CACHE_ROOT = Path(__file__).resolve().parents[1] / "BacktestData" / "IBKR" / "MarketData"
+
 
 
 CANONICAL_COLUMNS = ["Open", "High", "Low", "Close", "Volume"]
@@ -121,7 +123,7 @@ def _safe_name(ticker: str) -> str:
 def _cache_path_for_ibkr(
     ticker: str,
     interval: str,
-    cache_root: str | Path = DEFAULT_CACHE_ROOT,
+    cache_root: str | Path = DEFAULT_IBKR_CACHE_ROOT,
 ) -> Path:
     interval = _normalize_interval(interval)
     root = Path(cache_root)
@@ -177,7 +179,7 @@ def read_ibkr_cache(
     ticker: str,
     interval: str,
     *,
-    cache_root: str | Path = DEFAULT_CACHE_ROOT,
+    cache_root: str | Path = DEFAULT_IBKR_CACHE_ROOT,
 ) -> pd.DataFrame:
     """Read the shared canonical OHLCV cache."""
     interval = _normalize_interval(interval)
@@ -211,7 +213,7 @@ def _write_cache(
     interval: str,
     df: pd.DataFrame,
     *,
-    cache_root: str | Path = DEFAULT_CACHE_ROOT,
+    cache_root: str | Path = DEFAULT_IBKR_CACHE_ROOT,
 ) -> Path:
     interval = _normalize_interval(interval)
     path = _cache_path_for_ibkr(ticker, interval, cache_root)
@@ -253,7 +255,7 @@ async def download_data_ibkr_prepare_csv_cache(
     primary_exchange: Optional[str] = None,
     what_to_show: str = "TRADES",
     use_rth: bool = True,
-    cache_root: str | Path = DEFAULT_CACHE_ROOT,
+    cache_root: str | Path = DEFAULT_IBKR_CACHE_ROOT,
     refresh: bool = False,
     pacing_sleep_seconds: float = 0.35,
     ib=None,
