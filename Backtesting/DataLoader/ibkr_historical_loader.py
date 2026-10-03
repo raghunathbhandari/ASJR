@@ -21,6 +21,7 @@ This lets strategy code remain provider-independent.
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from typing import Optional
 
@@ -374,7 +375,7 @@ async def download_data_ibkr_prepare_csv_cache(
             cursor_end = earliest - pd.Timedelta(seconds=1)
 
             if pacing_sleep_seconds > 0:
-                await ib.sleep(pacing_sleep_seconds)
+                await asyncio.sleep(pacing_sleep_seconds)
 
         downloaded = _merge(*frames)
 
