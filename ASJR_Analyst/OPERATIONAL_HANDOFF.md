@@ -458,3 +458,16 @@ The runtime log version is the primary proof of the code actually running on the
 - Pre-change audit: main `a0de02b687367764ecaa1cf956f832a0962003ea` has code version 2026.10.04.1. Latest available Friday log still confirms 2026.10.02.3; no evidence of VPS activation of Sunday's edits.
 - Validation passed: nine regression checks, syntax compilation, and Friday MSFT replay (one retained candle, 14:40 BST). Live activation remains unverified.
 - Deployment: VPS git pull and user-controlled bot restart; verify RUN | VERSION | 2026.10.04.2 in a new log. No automatic restart.
+
+## 2026-10-04 INTC user-reviewed wick correction
+
+- Target runtime version `2026.10.04.3`; config/state schema 6.
+- User rejected INTC 13:35 BST as an ordinary candle inside an advancing move. User requested alerts for INTC 14:25 (upper wick) and 14:30 (large two-sided wick); 14:35 desirable but not required in this change.
+- Sweep setup relative range threshold adjusted from 1.5x to 1.4x, allowing the genuine upper sweep at 14:25 (1.47x median). Wick/body >=2.5x and H-L >=0.25% remain mandatory.
+- Ordinary strong rejection now requires a matching-side sweep/reclaim; volume alone no longer allows the rejected INTC 13:35 lower wick. Strong expansion exception retains mandatory >=2x range AND >=2x volume with all existing shape/body gates.
+- Added TWO-SIDED EXPANSION WICK: each wick >=40% of range, selected-side wick/body >=2.5x, H-L >=0.25%, relative range >=2x and volume >=2x, at least five prior bars. One event per candle remains mandatory. Alert label BOTH and explicit direction unconfirmed avoid presenting a two-sided candle as a directional rejection. Internal event type remains upper/lower for delivery compatibility; both wick sizes are recorded.
+- Friday replay: INTC retains 14:25 upper liquidity sweep and 14:30 two-sided expansion; excludes 13:35. MSFT remains one event at 14:40 lower sweep. INTC 14:35 remains excluded because wick/body 2.03x is below the retained 2.5x gate.
+- Files changed: wick detector/config, pipeline version, regression tests, this handoff.
+- Validation passed: eleven regression tests including recorded 12-bar Friday windows for three INTC examples and MSFT 14:40; neutral two-sided alert formatting; syntax compilation. These are recognition tests, not trading-performance evidence.
+- Pre-change audit: main 4015399169831dc223eae57a661b8023be8b5cbd has code 2026.10.04.2; latest available Friday log remains 2026.10.02.3. No Sunday live activation evidence. Prior handoff and changed methods reviewed.
+- Schema upgrade clears old pending candidates and seeds newest completed bar. VPS git pull + user-controlled bot restart required. Verify RUN | VERSION | 2026.10.04.3 before treating live.

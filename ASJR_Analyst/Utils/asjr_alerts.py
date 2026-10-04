@@ -20,7 +20,7 @@ BATCH_FILE = ROOT / "wick_alert_batch.json"
 CONFIG_FILE = ROOT / "config" / "wick_setups.json"
 CODE_FENCE = chr(96) * 3
 
-STATE_SCHEMA_VERSION = 5
+STATE_SCHEMA_VERSION = 6
 
 
 def _read_json(path, default):
@@ -149,6 +149,7 @@ def _wick_event(ticker, frame, idx, side, setups):
             min_range_pct = float(setup.get("min_range_pct", 0.0))
             min_wick_pct = float(setup.get("min_wick_pct", 0.0))
             min_wick_share_pct = float(setup.get("min_wick_share_pct", 0.0))
+            min_opposite_share_pct = float(setup.get("min_opposite_wick_share_pct", 0.0))
             min_wick_body_ratio = float(setup.get("min_wick_body_ratio", 0.0))
             min_wick_opposite_ratio = float(
                 setup.get("min_wick_opposite_ratio", 0.0)
@@ -172,6 +173,8 @@ def _wick_event(ticker, frame, idx, side, setups):
         if wick_price_pct < min_wick_pct:
             continue
         if wick_share_pct < min_wick_share_pct:
+            continue
+        if opposite_wick / candle_range * 100.0 < min_opposite_share_pct:
             continue
         if wick_body_ratio < min_wick_body_ratio:
             continue
@@ -271,6 +274,9 @@ def _wick_event(ticker, frame, idx, side, setups):
         "price": close,
         "volume": volume,
         "volume_x": _volume_context(matched_prior, volume),
+        "two_sided": bool(matched_setup.get("two_sided", False)),
+        "lower_wick": lower_wick,
+        "upper_wick": upper_wick,
         "wick": wick,
         "wick_pct": wick_price_pct,
         "wick_share_pct": wick_share_pct,
@@ -464,6 +470,10 @@ def prepare_alert(
         range_x = event.get("range_vs_median")
         range_text = f"{range_x:.2f}x median range" if range_x is not None else "range unavailable"
         side_label = "LOWER" if event["type"] == "LOWER_WICK" else "UPPER"
+
+        if event.get("two_sided"):
+            side_label = "BOTH"
+            next_state = "two-sided volatility; direction unconfirmed"
 
         block = (
             f'\n{event["ticker"]} {label} ({side_label}) [{event["session"]}] {bar_time_uk}\n'
