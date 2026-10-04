@@ -15,6 +15,7 @@ Examples:
     python IBKR_import.py --interval 1h --years 5
     python IBKR_import.py --interval 15m --years 2
     python IBKR_import.py --interval 5m --years 1
+    python IBKR_import.py --24h --tickers MU --interval 5m --start 2026-10-02 --end 2026-10-02
     python IBKR_import.py --interval 4h --years 10
 
 Run from repository root:
@@ -36,6 +37,7 @@ from pathlib import Path
 from ib_async import IB
 
 import Backtesting.DataLoader.ibkr_historical_loader as ibdl
+import Backtesting.DataLoader.ibkr_24h_loader as ib24
 
 
 DEFAULT_TICKERS = [
@@ -88,6 +90,8 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Include extended hours. Default is regular trading hours only.",
     )
+    parser.add_argument("--24h", dest="full_day", action="store_true",
+                        help="Request SMART plus OVERNIGHT history; save separately in MarketData24h.")
     parser.add_argument(
         "--refresh",
         action="store_true",
@@ -132,11 +136,16 @@ async def main() -> int:
     print(f"Gateway : {args.host}:{args.port}")
     print(f"Client  : {args.client_id}")
     print(f"Concurrency: {args.concurrency}")
-    print(f"RTH     : {not args.all_hours}")
-    print(f"Cache   : {ibdl.DEFAULT_IBKR_CACHE_ROOT}")
+    print(f"RTH     : {not (args.all_hours or args.full_day)}")
+    cache_root = ib24.DEFAULT_24H_CACHE_ROOT if args.full_day else ibdl.DEFAULT_IBKR_CACHE_ROOT
+    if args.full_day:
+        print("24H mode: SMART + OVERNIGHT; fresh requests for both sources")
+    print(f"Cache   : {cache_root}")
     print("=" * 100)
 
     ib = IB()
+    if args.full_day:
+        ib.RaiseRequestErrors = True
     results: dict[str, int] = {}
     failures: dict[str, str] = {}
 
@@ -164,17 +173,24 @@ async def main() -> int:
                 print("#" * 100)
 
                 try:
-                    df = await ibdl.download_data_ibkr_prepare_csv_cache(
-                        ticker=ticker,
-                        start=start_value,
-                        end=end_value,
-                        interval=args.interval,
-                        use_rth=not args.all_hours,
-                        refresh=args.refresh,
-                        pacing_sleep_seconds=args.pacing_sleep,
-                        ib=ib,
-                        disconnect_when_done=False,
-                    )
+                    if args.full_day:
+                        df = await ib24.download_24h_data(
+                            ticker, start_value, end_value, ib=ib,
+                            interval=args.interval,
+                            pacing_sleep_seconds=args.pacing_sleep,
+                        )
+                    else:
+                        df = await ibdl.download_data_ibkr_prepare_csv_cache(
+                            ticker=ticker,
+                            start=start_value,
+                            end=end_value,
+                            interval=args.interval,
+                            use_rth=not args.all_hours,
+                            refresh=args.refresh,
+                            pacing_sleep_seconds=args.pacing_sleep,
+                            ib=ib,
+                            disconnect_when_done=False,
+                        )
 
                     results[ticker] = len(df)
 
@@ -214,7 +230,7 @@ async def main() -> int:
             print(f"{ticker:6s} | OK     | rows={results.get(ticker, 0)}")
 
     print("=" * 100)
-    print(f"CSV root: {ibdl.DEFAULT_IBKR_CACHE_ROOT}")
+    print(f"CSV root: {cache_root}")
 
     if failures:
         print(
@@ -229,3 +245,4 @@ async def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(asyncio.run(main()))
+
