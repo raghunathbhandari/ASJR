@@ -3,10 +3,12 @@
 Initial research detector, kept separate from live ASJR alerts.
 
 Rules (all signals are evaluated at candle close):
-* Candidate: RTH green candle closes above RTH VWAP and EMA9 after being below
-  at least one of them; EMA9 is rising; volume is at least the configured
+* Buy candidates only; below VWAP is no trade and shorts are not generated.
+* Candidate: RTH green candle closes above RTH VWAP and EMA9 after the previous
+  candle closed at/below VWAP; EMA9 is rising; volume is at least the configured
   multiple of the median volume for that same 5-minute time slot in up to the
   previous 20 sessions (at least 10 prior observations are required).
+  The signal candle's low must be above EMA9: any EMA9 touch is rejected.
 * Entry: next-bar break of the signal candle high (long) / low (short), with a
   one-cent trigger buffer. Stop is beyond the signal candle low/high. Target is
   3R. If stop and target both trade in the same 5-minute bar, count the stop
@@ -89,12 +91,11 @@ def _add_indicators(df: pd.DataFrame, rvol_lookback: int, ema_slope_bars: int) -
     df["RVOL"] = df["Volume"] / df["VolMedian"].replace(0, pd.NA)
     prev = df.groupby("Session")["Close"].shift(1)
     prev_vwap = df.groupby("Session")["VWAP"].shift(1)
-    prev_ema = df.groupby("Session")["EMA9"].shift(1)
     df["LongCross"] = df["RTH"] & (df["Close"] > df["VWAP"]) & (df["Close"] > df["EMA9"]) & (
-        (prev <= prev_vwap) | (prev <= prev_ema)
+        prev <= prev_vwap
     )
     df["ShortCross"] = df["RTH"] & (df["Close"] < df["VWAP"]) & (df["Close"] < df["EMA9"]) & (
-        (prev >= prev_vwap) | (prev >= prev_ema)
+        prev >= prev_vwap
     )
     df["EmaSlopePct"] = (df["EMA9"] / df.groupby("Session")["EMA9"].shift(ema_slope_bars) - 1.0)
     return df
@@ -169,7 +170,7 @@ def generate_signals(
     """Return the single source of truth for candle signals and filters.
 
     The returned rows retain OHLCV, VWAP, EMA9, RVOL, slope, and a `Signal`
-    column (LONG/SHORT/blank). Backtests and future plots should both consume
+    column (LONG/blank). Backtests and future plots should both consume
     this output so the plotted markers always match the tested logic.
     """
     df = _add_indicators(bars, rvol_lookback, ema_slope_bars)
@@ -177,19 +178,16 @@ def generate_signals(
     df["SignalReason"] = ""
     valid = df[["VWAP", "EMA9", "RVOL", "EmaSlopePct"]].notna().all(axis=1)
     long = valid & df["LongCross"] & (df["Close"] > df["Open"])
-    short = valid & df["ShortCross"] & (df["Close"] < df["Open"])
     long_slope_ok = df["EmaSlopePct"] >= flat_slope_pct
-    short_slope_ok = df["EmaSlopePct"] <= -flat_slope_pct
+    ema_clear = df["Low"] > df["EMA9"]
     volume_ok = df["RVOL"] >= min_rvol
-    df.loc[long & long_slope_ok & volume_ok, "Signal"] = "LONG"
-    df.loc[short & short_slope_ok & volume_ok, "Signal"] = "SHORT"
+    df.loc[long & long_slope_ok & volume_ok & ema_clear, "Signal"] = "LONG"
 
     # Keep skip explanations for review of near-miss candles like flat/quiet periods.
-    df.loc[(long | short) & ~volume_ok, "SignalReason"] = "NO TRADE: weak volume"
+    df.loc[long & ~volume_ok, "SignalReason"] = "NO TRADE: weak volume"
     df.loc[long & ~long_slope_ok, "SignalReason"] = "NO TRADE: EMA9 flat/not rising"
-    df.loc[short & ~short_slope_ok, "SignalReason"] = "NO TRADE: EMA9 flat/not falling"
+    df.loc[long & ~ema_clear, "SignalReason"] = "NO TRADE: candle touches/below EMA9"
     df.loc[df["Signal"] == "LONG", "SignalReason"] = "LONG: VWAP/EMA9 reclaim + volume + rising EMA9"
-    df.loc[df["Signal"] == "SHORT", "SignalReason"] = "SHORT: VWAP/EMA9 loss + volume + falling EMA9"
     return df
 
 
