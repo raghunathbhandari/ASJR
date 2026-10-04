@@ -12,7 +12,7 @@ import pandas as pd
 DEFAULT_DATA = Path(__file__).resolve().parents[1] / "BacktestData/IBKR/MarketData/5m/MU_5m.csv"
 
 
-def generate_buy_signals(bars, *, vwap_buffer_pct=0.5, trend_min_move_pct=0.2):
+def generate_buy_signals(bars, *, vwap_buffer_pct=0.5, trend_min_move_pct=0.2, require_range_break=True):
     """Return indicators and reusable candle markers, without future data."""
     if vwap_buffer_pct < 0 or trend_min_move_pct < 0:
         raise ValueError("VWAP buffer and trend threshold must be nonnegative")
@@ -48,7 +48,14 @@ def generate_buy_signals(bars, *, vwap_buffer_pct=0.5, trend_min_move_pct=0.2):
     five_rth = df.RTH.rolling(5, min_periods=5).sum().eq(5)
     df["Trend5"] = trend & consecutive & same_session & five_rth
     df["BaseBuy"] = df.RTH & (df.Close > df.EMA9) & (df.Close > df.VWAPEntryLevel) & df.EMA9Rising
+    # Exclude the signal candle itself: only already-completed highs form the range.
+    df["PriorHigh10"] = df.groupby("Session").High.transform(
+        lambda s: s.shift(1).rolling(10, min_periods=10).max()
+    )
+    df["RangeBreak"] = df.Close > df.PriorHigh10
     df["BuySignal"] = df.BaseBuy & df.Trend5
+    if require_range_break:
+        df["BuySignal"] &= df.RangeBreak
     return df
 
 
@@ -102,8 +109,9 @@ def main():
     parser.add_argument("--end-date", required=True)
     parser.add_argument("--vwap-buffer-pct", type=float, default=0.5)
     parser.add_argument("--trend-min-move-pct", type=float, default=0.2)
+    parser.add_argument("--allow-range-entries", action="store_true", help="Disable the previous-10-candle range breakout filter.")
     args = parser.parse_args()
-    signals = generate_buy_signals(pd.read_csv(args.csv), vwap_buffer_pct=args.vwap_buffer_pct, trend_min_move_pct=args.trend_min_move_pct)
+    signals = generate_buy_signals(pd.read_csv(args.csv), vwap_buffer_pct=args.vwap_buffer_pct, trend_min_move_pct=args.trend_min_move_pct, require_range_break=not args.allow_range_entries)
     trades = evaluate_buys(signals, start_date=args.start_date, end_date=args.end_date)
     good = trades.Status.eq("Good").sum()
     bad = trades.Status.eq("Bad").sum()
