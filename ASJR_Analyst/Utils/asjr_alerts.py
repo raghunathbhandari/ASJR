@@ -1,6 +1,7 @@
 """Stateful five-minute upper/lower wick alerts for Chakra."""
 
 import json
+import math
 import os
 from datetime import datetime
 from pathlib import Path
@@ -19,7 +20,7 @@ BATCH_FILE = ROOT / "wick_alert_batch.json"
 CONFIG_FILE = ROOT / "config" / "wick_setups.json"
 CODE_FENCE = chr(96) * 3
 
-STATE_SCHEMA_VERSION = 3
+STATE_SCHEMA_VERSION = 4
 
 
 def _read_json(path, default):
@@ -104,6 +105,11 @@ def _wick_event(ticker, frame, idx, side, setups):
     low = float(row["low"])
     close = float(row["close"])
     volume = float(row["volume"])
+
+    if not all(math.isfinite(v) for v in (open_price, high, low, close, volume)):
+        return None
+    if low > min(open_price, close) or high < max(open_price, close) or volume <= 0:
+        return None
 
     candle_range = high - low
     if candle_range <= 0 or close <= 0:
@@ -198,13 +204,6 @@ def _wick_event(ticker, frame, idx, side, setups):
             elif range_vs_median < min_range_vs_median:
                 continue
 
-        if min_volume_vs_median > 0:
-            if volume_x is None:
-                if not relative_context_optional:
-                    continue
-            elif volume_x < min_volume_vs_median:
-                continue
-
         if side == "LOWER":
             level = float(prior_low) if pd.notna(prior_low) else None
             is_sweep = (
@@ -219,6 +218,11 @@ def _wick_event(ticker, frame, idx, side, setups):
                 if pd.notna(prior_high)
                 else False
             )
+
+        if min_volume_vs_median > 0:
+            volume_ok = volume_x is not None and volume_x >= min_volume_vs_median
+            if not volume_ok and not (setup.get("volume_or_reclaim", False) and is_sweep):
+                continue
 
         if setup.get("require_reclaim", False) and not is_sweep:
             continue
@@ -351,10 +355,18 @@ def build_wick_alerts(
             if marker is not None and bar_time <= marker:
                 continue
 
-            for side in ("LOWER", "UPPER"):
-                event = _wick_event(ticker, frame, idx, side, setups)
-                if event is not None:
-                    pending_by_key.setdefault(_event_key(event), event)
+            candidates = [
+                _wick_event(ticker, frame, idx, side, setups)
+                for side in ("LOWER", "UPPER")
+            ]
+            candidates = [event for event in candidates if event is not None]
+            if candidates:
+                # Prefer a real sweep, then the most dominant wick. Only one
+                # side can enter the queue for this ticker/candle.
+                event = max(candidates, key=lambda e: (
+                    e["swept_reclaimed"], e["wick_share_pct"], e["wick"]
+                ))
+                pending_by_key.setdefault(_event_key(event), event)
 
         latest_bar = frame.iloc[-1]["bar_et"]
         state["last_processed"][str(ticker)] = latest_bar.isoformat()
@@ -440,13 +452,23 @@ def prepare_alert(
                 )
             )
 
+        body_ratio = event.get("wick_body_ratio")
+        body_text = (
+            "doji body" if body_ratio is not None and math.isinf(body_ratio)
+            else f"{body_ratio:.1f}x body" if body_ratio is not None
+            else "body ratio unavailable"
+        )
+        range_x = event.get("range_vs_median")
+        range_text = f"{range_x:.2f}x median range" if range_x is not None else "range unavailable"
+        side_label = "LOWER" if event["type"] == "LOWER_WICK" else "UPPER"
+
         block = (
-            f'\n{event["ticker"]} {label} [{event["session"]}] {bar_time_uk}\n'
+            f'\n{event["ticker"]} {label} ({side_label}) [{event["session"]}] {bar_time_uk}\n'
             f'O {event["open"]:.2f} H {event["high"]:.2f} '
             f'L {event["low"]:.2f} C {event["price"]:.2f}\n'
             f'Wick {event["wick"]:.2f} | '
             f'{event.get("wick_share_pct", 0.0):.0f}% candle | '
-            f'{event.get("wick_body_ratio", 0.0):.1f}x body | '
+            f'{body_text} | {range_text} | '
             f'{level_name} {prior_level} swept/reclaimed: {sweep}\n'
             f'Vol {event["volume"]:,.0f} ({volume}) | Next: {next_state}\n'
         )
@@ -497,3 +519,4 @@ def mark_alert_sent(
         pass
 
     return len(before) - len(after)
+

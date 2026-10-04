@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "setups": [
     {
       "id": "lower_liquidity_sweep_ratio",
@@ -7,11 +7,13 @@
       "label": "LOWER LIQUIDITY SWEEP",
       "side": "LOWER",
       "lookback_bars": 12,
-      "min_prior_bars": 3,
-      "min_wick_share_pct": 40,
-      "min_wick_body_ratio": 1.2,
-      "min_wick_opposite_ratio": 1.2,
-      "require_reclaim": true
+      "min_prior_bars": 5,
+      "min_wick_share_pct": 50,
+      "min_wick_body_ratio": 2,
+      "min_wick_opposite_ratio": 1.5,
+      "require_reclaim": true,
+      "relative_context_optional": false,
+      "min_range_vs_median": 1.5
     },
     {
       "id": "upper_liquidity_sweep_ratio",
@@ -19,11 +21,13 @@
       "label": "UPPER LIQUIDITY SWEEP",
       "side": "UPPER",
       "lookback_bars": 12,
-      "min_prior_bars": 3,
-      "min_wick_share_pct": 40,
-      "min_wick_body_ratio": 1.2,
-      "min_wick_opposite_ratio": 1.2,
-      "require_reclaim": true
+      "min_prior_bars": 5,
+      "min_wick_share_pct": 50,
+      "min_wick_body_ratio": 2,
+      "min_wick_opposite_ratio": 1.5,
+      "require_reclaim": true,
+      "relative_context_optional": false,
+      "min_range_vs_median": 1.5
     },
     {
       "id": "strong_rejection_ratio",
@@ -31,13 +35,15 @@
       "label": "STRONG REJECTION WICK",
       "side": "BOTH",
       "lookback_bars": 12,
-      "min_prior_bars": 0,
-      "min_wick_share_pct": 60,
+      "min_prior_bars": 5,
+      "min_wick_share_pct": 50,
       "min_wick_body_ratio": 2,
       "min_wick_opposite_ratio": 1.5,
-      "min_range_vs_median": 1.25,
-      "relative_context_optional": true,
-      "require_reclaim": false
+      "min_range_vs_median": 1.5,
+      "relative_context_optional": false,
+      "require_reclaim": false,
+      "min_volume_vs_median": 1.5,
+      "volume_or_reclaim": true
     },
     {
       "id": "expansion_rejection_ratio",
@@ -51,7 +57,8 @@
       "min_wick_opposite_ratio": 1.5,
       "min_range_vs_median": 2,
       "min_volume_vs_median": 2,
-      "require_reclaim": false
+      "require_reclaim": false,
+      "relative_context_optional": false
     }
   ],
   "review_examples": {
@@ -130,6 +137,6 @@
       }
     ],
     "lqda_policy_note": "For LQDA on 2026-10-01, 13:15 BST and 14:30 BST are validated; other reviewed LQDA wick candidates can be ignored for now.",
-    "ratio_policy_note": "Current wick detection is ratio-based rather than fixed percent-of-stock-price. Use candle shape, wick/body dominance, opposite-wick dominance, relative range/volume, and sweep/reclaim context."
+    "ratio_policy_note": "Relative-only qualification: mandatory recent range context; volume or sweep/reclaim; one strongest side per candle. Expansion exception retains the accepted MSFT 14:45 shape with >=2x range and volume."
   }
 }

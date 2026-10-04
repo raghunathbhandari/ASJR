@@ -428,3 +428,20 @@ The runtime log version is the primary proof of the code actually running on the
 - Added `compare_plain_vs_adx(...)` to run both methods on the same date range and print side-by-side trades, win rate, compounded return, drawdown, profit factor and average return.
 - `Backtesting/MeanReversal/__init__.py` now exposes both plain and ADX methods without changing the existing `run_backtest` plain entry point.
 
+
+
+## 2026-10-04 selective relative wick filter
+
+- Target runtime version: `2026.10.04.1`; wick config version 4; state schema 4.
+- User rejected the fixed 2% stock-price wick rule and requested relative detection with less noise.
+- Files: `Utils/asjr_alerts.py`, `config/wick_setups.json`, `Tests/test_asjr_pipeline.py`, new `Tests/test_relative_wicks.py`, this handoff.
+- Ordinary and liquidity-sweep wicks require >=50% candle share, >=2x real body, >=1.5x opposite wick, >=1.5x median prior range. At least five prior bars are mandatory; no shape-only fallback when recent context is unavailable. Baselines use up to 12 earlier completed candles, excluding the candidate.
+- Ordinary rejection additionally needs >=1.5x prior median volume OR a high/low sweep and close reclaim. Sweep setups require actual sweep/reclaim.
+- Preserved the previously accepted MSFT 14:45 expansion exception: >=40% candle share, >=1.2x body, >=1.5x opposite wick, >=2x median range AND >=2x median volume. This exception intentionally has a lower body ratio than ordinary wicks.
+- No active setup requires a percentage of stock price. Relative range rejects tiny candles even with high relative volume. Invalid OHLC/nonfinite/zero-volume candles are ignored.
+- Only one candidate side per ticker/candle is queued; prefer sweep/reclaim, then dominant wick. Existing pending retry and successful-send acknowledgement remain intact.
+- Alert text now includes side and relative range; zero-body candles display `doji body` instead of an infinite ratio. Missing legacy body ratios display unavailable rather than `0.0x`.
+- Schema migration intentionally clears the permissive detector's pending backlog and seeds at the newest completed candle on the first updated run. New-session catch-up remains intact. No time-based cooldown was added, preserving separately validated consecutive expansion candles.
+- Pre-change audit: main tree `c11b13af5912c87abe9fd9cc17dffadf34b3328f`; pipeline code `2026.10.02.3`; latest report `asjr_pipeline_20261002_205648_BST.log` confirms `RUN | VERSION | 2026.10.02.3` and 49,980 fetched rows. Current main intraday CSV is empty, so a complete historical replay could not be performed.
+- Verification: Python compilation and eight synthetic regression tests passed: price-scale invariance, tiny-range rejection, missing context, volume-or-sweep, accepted expansion shape, supplied noise shapes, one-side queue/retry/ack, and schema migration. These checks verify mechanics, not trading performance.
+- Deployment: commit to main, VPS git pull, then user-controlled bot restart. Confirm next DataLake `RUN | VERSION | 2026.10.04.1` before treating as live. VPS activation/Discord delivery remains unverified.

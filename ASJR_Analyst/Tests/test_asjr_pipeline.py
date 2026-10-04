@@ -23,7 +23,7 @@ import Utils.asjr_git as asjr_git
 import Utils.asjr_logger as asjr_logger
 import Strategies.MeanReversal4Pct.mean_reversal as mean_reversal
 
-ASJR_ANALYST_VERSION = "2026.10.02.3"
+ASJR_ANALYST_VERSION = "2026.10.04.1"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -335,3 +335,4 @@ def prepare_alert(result):
 def mark_alert_sent():
     """Acknowledge the prepared Discord wick batch after successful send."""
     return alerts.mark_alert_sent()
+
