@@ -1,0 +1,28 @@
+{
+  "rows": 71962,
+  "first_utc": "2025-10-02 00:05:00+00:00",
+  "last_utc": "2026-10-02 23:55:00+00:00",
+  "session_rows": {
+    "overnight": 23650,
+    "premarket": 16632,
+    "regular": 19656,
+    "afterhours": 12024
+  },
+  "uk_check_date": "2026-10-02",
+  "uk_check_date_rows": 286,
+  "uk_0800_present": true,
+  "uk_0845_present": true,
+  "uk_check_date_gaps_over_bar_interval": [
+    {
+      "after": "2026-10-02 08:45:00+01:00",
+      "before": "2026-10-02 09:00:00+01:00"
+    }
+  ],
+  "note": "Real returned bars only. Source availability does not prove every trading session is complete.",
+  "requested_start_utc": "2025-10-02 00:00:00+00:00",
+  "requested_end_utc": "2026-10-02 23:59:59+00:00",
+  "routing": [
+    "SMART",
+    "OVERNIGHT"
+  ]
+}
