@@ -20,7 +20,7 @@ BATCH_FILE = ROOT / "wick_alert_batch.json"
 CONFIG_FILE = ROOT / "config" / "wick_setups.json"
 CODE_FENCE = chr(96) * 3
 
-STATE_SCHEMA_VERSION = 4
+STATE_SCHEMA_VERSION = 5
 
 
 def _read_json(path, default):
@@ -146,6 +146,7 @@ def _wick_event(ticker, frame, idx, side, setups):
             continue
 
         try:
+            min_range_pct = float(setup.get("min_range_pct", 0.0))
             min_wick_pct = float(setup.get("min_wick_pct", 0.0))
             min_wick_share_pct = float(setup.get("min_wick_share_pct", 0.0))
             min_wick_body_ratio = float(setup.get("min_wick_body_ratio", 0.0))
@@ -166,6 +167,8 @@ def _wick_event(ticker, frame, idx, side, setups):
         except (TypeError, ValueError):
             continue
 
+        if range_pct < min_range_pct:
+            continue
         if wick_price_pct < min_wick_pct:
             continue
         if wick_share_pct < min_wick_share_pct:

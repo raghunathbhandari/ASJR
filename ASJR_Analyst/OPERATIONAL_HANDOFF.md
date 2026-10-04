@@ -445,3 +445,16 @@ The runtime log version is the primary proof of the code actually running on the
 - Pre-change audit: main tree `c11b13af5912c87abe9fd9cc17dffadf34b3328f`; pipeline code `2026.10.02.3`; latest report `asjr_pipeline_20261002_205648_BST.log` confirms `RUN | VERSION | 2026.10.02.3` and 49,980 fetched rows. Current main intraday CSV is empty, so a complete historical replay could not be performed.
 - Verification: Python compilation and eight synthetic regression tests passed: price-scale invariance, tiny-range rejection, missing context, volume-or-sweep, accepted expansion shape, supplied noise shapes, one-side queue/retry/ack, and schema migration. These checks verify mechanics, not trading performance.
 - Deployment: commit to main, VPS git pull, then user-controlled bot restart. Confirm next DataLake `RUN | VERSION | 2026.10.04.1` before treating as live. VPS activation/Discord delivery remains unverified.
+
+
+## 2026-10-04 minimum H-L range and 2.5x body ratio
+
+- Target runtime version `2026.10.04.2`, config version 5, state schema 5. Supersedes the earlier expansion exception's 1.2x body gate.
+- User preferred the MSFT 2.5x wick/body replay (four candles) but rejected the remaining premarket candles as too small. Requested a minimum high-low gate.
+- All four setups now require wick/body >=2.5x and `(high-low)/close*100 >=0.25`. Existing relative range, dominance and volume/sweep filters remain active. The 0.25% floor is an initial implementation choice, not an optimized trading threshold; it is not a 2.5% wick-size rule.
+- Friday MSFT sample: 10:00 H-L 0.0968%, 13:25 0.1935%, 13:35 0.1755% are rejected. 14:40 H-L 0.3229%, wick/body 5.5x remains. 14:45 is intentionally removed by the stricter body ratio despite its 0.5483% range. Prior visual acceptance records are historical references, not overrides.
+- Files changed: wick config, alert detector, pipeline version, regression tests and this handoff.
+- Schema migration clears old pending candidates and seeds at the newest completed bar to avoid old permissive alerts after deployment.
+- Pre-change audit: main `a0de02b687367764ecaa1cf956f832a0962003ea` has code version 2026.10.04.1. Latest available Friday log still confirms 2026.10.02.3; no evidence of VPS activation of Sunday's edits.
+- Validation passed: nine regression checks, syntax compilation, and Friday MSFT replay (one retained candle, 14:40 BST). Live activation remains unverified.
+- Deployment: VPS git pull and user-controlled bot restart; verify RUN | VERSION | 2026.10.04.2 in a new log. No automatic restart.

@@ -49,12 +49,18 @@ class RelativeWicks(unittest.TestCase):
         sweep = candles(dict(open=100, high=100.2, low=98.2, close=100.1, volume=100))
         self.assertIsNotNone(self.event(sweep))
 
-    def test_expansion_exception(self):
+    def test_expansion_requires_stricter_body_ratio(self):
         # Accepted MSFT-like 41.7% wick / 1.3x body with strong expansion.
         frame = candles(dict(open=99.57, high=100.82, low=97.9, close=100.5, volume=34000))
         event = self.event(frame)
-        self.assertIsNotNone(event)
-        self.assertEqual(event['setup_id'], 'expansion_rejection_ratio')
+        self.assertIsNone(event)
+
+    def test_small_premarket_range_rejected(self):
+        # Abnormal relative range and volume still cannot bypass the H-L floor.
+        frame = candles(dict(open=100, high=100.005, low=99.81, close=100.01, volume=10000))
+        frame.loc[:11, 'high'] = 100.02
+        frame.loc[:11, 'low'] = 99.98
+        self.assertIsNone(self.event(frame))
 
     def test_noise_sample_shapes(self):
         samples = [(19,19.2,18.97,19.01),(19.32,19.36,19.24,19.35),(91,91.15,90.69,90.72),(73.84,73.93,73.5,73.56)]
@@ -86,7 +92,7 @@ class RelativeWicks(unittest.TestCase):
             state.write_text(json.dumps({'schema_version':3,'pending':[{'bad':'legacy'}]}))
             events=alerts.build_wick_alerts(candles(),trade_date='2026-10-02',now='2026-10-02 16:00Z',state_file=state)
             self.assertEqual(events,[])
-            self.assertEqual(json.loads(state.read_text())['schema_version'],4)
+            self.assertEqual(json.loads(state.read_text())['schema_version'],5)
 
 
 if __name__ == '__main__':
