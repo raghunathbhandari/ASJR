@@ -471,3 +471,12 @@ The runtime log version is the primary proof of the code actually running on the
 - Validation passed: eleven regression tests including recorded 12-bar Friday windows for three INTC examples and MSFT 14:40; neutral two-sided alert formatting; syntax compilation. These are recognition tests, not trading-performance evidence.
 - Pre-change audit: main 4015399169831dc223eae57a661b8023be8b5cbd has code 2026.10.04.2; latest available Friday log remains 2026.10.02.3. No Sunday live activation evidence. Prior handoff and changed methods reviewed.
 - Schema upgrade clears old pending candidates and seeds newest completed bar. VPS git pull + user-controlled bot restart required. Verify RUN | VERSION | 2026.10.04.3 before treating live.
+
+## 2026-10-04 isolated Friday Discord replay
+
+- Added `Tests/replay_friday_wicks.py`; no live pipeline changes or runtime version bump.
+- Reads the verified nonempty Friday CSV from Git commit eea41cd8c9b83477b2dd2bdcce68877910137c1d using git show. Uses current wick config with explicit trade_date 2026-10-02 and temporary initialized schema state, bypassing live deployment seeding and weekend scheduling.
+- Leaves live logs, wick pending state, delivery batch state and mean-reversal state untouched. Default preview prints counts/times; --send explicitly sends historical-labelled Discord batches.
+- Sender resolution reads the actual top-level SN import from /root/trading/utils/trading_sudarsan_chakra.py and imports only that notification module, not the trading bot. If unavailable/unsupported, stops without sending and asks for import inspection. Existing helper may return None/swallow exceptions; script does not claim confirmed delivery or modify live acknowledgements. False return/raised errors stop sending.
+- Offline verification: current filter produced 130 candidate signals in 20 messages; largest labelled message 1945 characters. INTC 14:25 and 14:30 retained; MSFT only 14:40. Script compilation passed. VPS caller import and actual Discord delivery remain unverified.
+- Existing pending alerts can be retried by the normal alert formatter/sender; text log deletion does not reset last_processed or repopulate acknowledged candidates. Removing live state invokes seed_latest, not full historical replay. Normal Sunday scheduling skips the closed session until overnight opens.
