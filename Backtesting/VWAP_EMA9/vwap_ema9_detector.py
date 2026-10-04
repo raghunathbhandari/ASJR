@@ -3,15 +3,18 @@
 Initial research detector, kept separate from live ASJR alerts.
 
 Rules (all signals are evaluated at candle close):
-* Candidate: green candle closes above VWAP and EMA9 after being below at least
-  one of them; EMA9 is rising; volume is at least the configured multiple of
-  the median of the previous 20 bars in that session.
+* Candidate: RTH green candle closes above RTH VWAP and EMA9 after being below
+  at least one of them; EMA9 is rising; volume is at least the configured
+  multiple of the median volume for that same 5-minute time slot in up to the
+  previous 20 sessions (at least 10 prior observations are required).
 * Entry: next-bar break of the signal candle high (long) / low (short), with a
   one-cent trigger buffer. Stop is beyond the signal candle low/high. Target is
   3R. If stop and target both trade in the same 5-minute bar, count the stop
   first (conservative OHLC assumption).
 * A flat EMA9 or weak volume rejects the setup. The latest two months are
   measured back from the newest timestamp in the CSV, not today's system date.
+  Filled intraday trades are closed by the RTH close if neither the stop, target,
+  nor EMA9 exit has occurred by then.
 
 The defaults are research starting points, not a claim of profitability. Use
 --help to adjust the filters and CSV path.
