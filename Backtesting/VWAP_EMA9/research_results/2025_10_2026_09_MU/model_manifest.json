@@ -1,0 +1,48 @@
+{
+  "features": [
+    "RSI",
+    "ADX",
+    "DIRatio",
+    "DIPlus",
+    "DIMinus",
+    "Efficiency",
+    "EMASlopeATR",
+    "EMAGapATR",
+    "TrendMovePct5",
+    "CloseLocation",
+    "BodyFraction",
+    "UpperWickFraction",
+    "TimeRVOL",
+    "TimeRVOLMean",
+    "CumulativeRVOL",
+    "ATRpct",
+    "RangeATR",
+    "ATRExpansion",
+    "BBExpansion",
+    "EMAChopCount",
+    "HigherLowCount5",
+    "RSISlope3",
+    "CHOP14",
+    "CMF20",
+    "CMF5",
+    "MACDHistATR",
+    "VWAPGapATR",
+    "HighSlopeATR",
+    "LowSlopeATR",
+    "MinutesFromOpen"
+  ],
+  "training": "Expanding window; completed targets strictly earlier than test month",
+  "initial_training_months": [
+    "2025-10",
+    "2025-11",
+    "2025-12"
+  ],
+  "thresholds": [
+    0.5,
+    0.6,
+    0.7,
+    0.8
+  ],
+  "model": "HistGradientBoostingClassifier: depth3,150iterations,40 minimum leaf samples,rate0.05,L2=1,seed0",
+  "warning": "Scores uncalibrated; no live deployment; first 3 months cannot be OOS tested without earlier data"
+}

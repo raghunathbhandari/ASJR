@@ -1,0 +1,34 @@
+{
+  "mode": "break10",
+  "stop": "swing5",
+  "filters": [
+    [
+      "rsi",
+      [
+        60,
+        90
+      ]
+    ],
+    [
+      "macdhist",
+      0
+    ],
+    [
+      "rvolmean",
+      1
+    ],
+    [
+      "higherlows",
+      3
+    ],
+    [
+      "bbexpand",
+      0.8
+    ],
+    [
+      "rsislope",
+      0
+    ]
+  ],
+  "slope": 0
+}

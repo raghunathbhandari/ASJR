@@ -1,0 +1,24 @@
+{
+  "valid_from": "2025-10-01",
+  "valid_to": "2026-12-31",
+  "timezone": "America/New_York",
+  "normal_open_minutes": 570,
+  "normal_close_minutes": 960,
+  "closed_dates": [
+    "2025-11-27", "2025-12-25",
+    "2026-01-01", "2026-01-19", "2026-02-16", "2026-04-03",
+    "2026-05-25", "2026-06-19", "2026-07-03", "2026-09-07",
+    "2026-11-26", "2026-12-25"
+  ],
+  "early_close_minutes": {
+    "2025-11-28": 780,
+    "2025-12-24": 780,
+    "2026-11-27": 780,
+    "2026-12-24": 780
+  },
+  "sources": [
+    "https://www.nasdaqtrader.com/content/technicalsupport/2025tradingcalendar.pdf",
+    "https://www.nasdaqtrader.com/Trader.aspx?id=Calendar",
+    "https://www.nyse.com/trade/hours-calendars"
+  ]
+}

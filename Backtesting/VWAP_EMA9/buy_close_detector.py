@@ -9,6 +9,7 @@ Closing-price fills are research assumptions; fees/slippage are excluded.
 from pathlib import Path
 import argparse
 import pandas as pd
+from market_sessions import regular_session_mask
 
 DEFAULT_DATA = Path(__file__).resolve().parents[1] / "BacktestData/IBKR/MarketData24h/5m/MU_5m.csv"
 
@@ -23,8 +24,7 @@ def generate_buy_signals(bars, *, vwap_buffer_pct=0.0, trend_min_move_pct=0.2, r
     ny = df.Datetime.dt.tz_convert("America/New_York")
     df["Session"] = ny.dt.strftime("%Y-%m-%d")
     df["CandleTimeUK"] = df.Datetime.dt.tz_convert("Europe/London")
-    minutes = ny.dt.hour * 60 + ny.dt.minute
-    df["RTH"] = minutes.between(570, 959)
+    df["RTH"] = regular_session_mask(df.Datetime)
     df["EMA9"] = df.Close.ewm(span=9, adjust=False, min_periods=9).mean()
     pv = (df.High + df.Low + df.Close) / 3 * df.Volume
     df["VWAPSession"] = df.Datetime.dt.tz_convert(vwap_timezone).dt.strftime("%Y-%m-%d")

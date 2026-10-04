@@ -31,14 +31,25 @@ def indicators(bars):
             out[i] = (out[i-1]*(n-1)+a[i])/n
         return pd.Series(out, index=s.index)
     d['ATR'] = rma(tr)
+    # CHOP measures range efficiency, not bullish direction. Use it only
+    # alongside the existing above-VWAP, above-EMA BUY rules.
+    span14=(d.High.rolling(14).max()-d.Low.rolling(14).min()).replace(0,np.nan)
+    d['CHOP14']=100*np.log10(tr.rolling(14).sum()/span14)/np.log10(14)
+    money_multiplier=((2*d.Close-d.High-d.Low)/(d.High-d.Low).replace(0,np.nan)).fillna(0)
+    d['CMF20']=(money_multiplier*d.Volume).rolling(20).sum()/d.Volume.rolling(20).sum().replace(0,np.nan)
+    d['CMF5']=(money_multiplier*d.Volume).rolling(5).sum()/d.Volume.rolling(5).sum().replace(0,np.nan)
     change = d.Close.diff()
     gain, loss = rma(change.clip(lower=0)), rma(-change.clip(upper=0))
     d['RSI'] = 100-100/(1+gain/loss.replace(0, np.nan))
     d.loc[(loss==0)&(gain>0), 'RSI'] = 100
+    d['RSISlope3']=d.RSI-d.RSI.shift(3)
+    macd=d.Close.ewm(span=12,adjust=False,min_periods=26).mean()-d.Close.ewm(span=26,adjust=False,min_periods=26).mean()
+    d['MACDHistogram']=macd-macd.ewm(span=9,adjust=False,min_periods=9).mean()
     up, down = d.High.diff(), -d.Low.diff()
     plus = rma(up.where((up>down)&(up>0),0))/d.ATR*100
     minus = rma(down.where((down>up)&(down>0),0))/d.ATR*100
     d['DIPlus'], d['DIMinus'] = plus, minus
+    d['DIRatio']=plus/minus.replace(0,np.nan)
     d['ADX'] = rma((plus-minus).abs()/(plus+minus).replace(0,np.nan)*100)
     d['Efficiency'] = (d.Close-d.Close.shift(5))/d.Close.diff().abs().rolling(5).sum().replace(0,np.nan)
     d['EMASlopeATR'] = (d.EMA9-d.EMA9.shift(3))/d.ATR
@@ -47,6 +58,19 @@ def indicators(bars):
     d['RVOL'] = d.Volume/d.Volume.shift().rolling(20).median().replace(0,np.nan)
     d['Slot'] = d.Datetime.dt.tz_convert('America/New_York').dt.strftime('%H:%M')
     d['TimeRVOL'] = d.Volume/d.groupby('Slot').Volume.transform(lambda s:s.shift().rolling(20,min_periods=10).median()).replace(0,np.nan)
+    # Only regular-session observations belong in the regular-volume template;
+    # an early-close day's after-hours bars must not lower its historical mean.
+    regular_volume=d.Volume.where(d.RTH)
+    d['TimeRVOLMean']=d.Volume/regular_volume.groupby(d.Slot).transform(lambda s:s.shift().rolling(20,min_periods=10).mean()).replace(0,np.nan)
+    rth_volume=d.Volume.where(d.RTH,0).groupby(d.Session).cumsum()
+    d['CumulativeRVOL']=rth_volume/rth_volume.groupby(d.Slot).transform(lambda s:s.shift().rolling(20,min_periods=10).mean()).replace(0,np.nan)
+    d['ATRpct']=d.ATR/d.Close*100
+    d['RangeATR']=(d.High-d.Low)/d.ATR
+    d['ATRExpansion']=d.ATR/d.ATR.shift(5)
+    bb_width=d.Close.rolling(20).std(ddof=0)*4/d.Close.rolling(20).mean()
+    d['BBExpansion']=bb_width/bb_width.shift(3).replace(0,np.nan)
+    d['EMAChopCount']=(np.sign(d.Close-d.EMA9)!=np.sign(d.Close.shift()-d.EMA9.shift())).shift().rolling(12).sum()
+    d['HigherLowCount5']=(d.Low>d.Low.shift()).rolling(4).sum()
     d['SwingLow5'] = d.groupby('Session').Low.transform(lambda s:s.rolling(5).min())
     d['PriorHigh3'] = d.groupby('Session').High.transform(lambda s:s.shift().rolling(3).max())
     d['Reclaim'] = (d.Close.shift()<=d.EMA9.shift()) & (d.Close>d.EMA9)
@@ -107,6 +131,21 @@ def signal_mask(d, c):
         elif name=='bull': m &= d.Bull
         elif name=='body': m &= d.BodyFraction>=value
         elif name=='upperwick': m &= d.UpperWickFraction<=value
+        elif name=='chop': m &= d.CHOP14<=value
+        elif name=='cmf': m &= d.CMF20>=value
+        elif name=='di': m &= d.DIRatio>=value
+        elif name=='rvolmean': m &= d.TimeRVOLMean>=value
+        elif name=='cumvol': m &= d.CumulativeRVOL>=value
+        elif name=='atrpct': m &= d.ATRpct.between(*value)
+        elif name=='rangeatr': m &= d.RangeATR.between(*value)
+        elif name=='atrexpand': m &= d.ATRExpansion>=value
+        elif name=='bbexpand': m &= d.BBExpansion>=value
+        elif name=='emacrosses': m &= d.EMAChopCount<=value
+        elif name=='higherlows': m &= d.HigherLowCount5>=value
+        elif name=='cmf5': m &= d.CMF5>=value
+        elif name=='macdhist': m &= d.MACDHistogram>=value
+        elif name=='rsislope': m &= d.RSISlope3>=value
+        elif name=='dirange': m &= d.DIRatio.between(*value)
         else: raise ValueError(name)
     return m.fillna(False).to_numpy()
 
