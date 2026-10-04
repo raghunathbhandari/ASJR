@@ -1,6 +1,7 @@
 """Regular-hours buy research: entry at signal close, exit below EMA9.
 
-VWAP uses available full-session bars and a temporary 0.5% entry buffer.
+VWAP uses 24-hour bars and resets at midnight UTC, based on chart comparison.
+EMA9 is continuous across sessions and uses closing prices.
 Five consecutive RTH candles need positive high/low slopes and a meaningful
 overall midpoint rise; individual candles may pull back.
 Closing-price fills are research assumptions; fees/slippage are excluded.
@@ -9,10 +10,10 @@ from pathlib import Path
 import argparse
 import pandas as pd
 
-DEFAULT_DATA = Path(__file__).resolve().parents[1] / "BacktestData/IBKR/MarketData/5m/MU_5m.csv"
+DEFAULT_DATA = Path(__file__).resolve().parents[1] / "BacktestData/IBKR/MarketData24h/5m/MU_5m.csv"
 
 
-def generate_buy_signals(bars, *, vwap_buffer_pct=0.5, trend_min_move_pct=0.2, require_range_break=True):
+def generate_buy_signals(bars, *, vwap_buffer_pct=0.0, trend_min_move_pct=0.2, require_range_break=True, vwap_timezone="UTC"):
     """Return indicators and reusable candle markers, without future data."""
     if vwap_buffer_pct < 0 or trend_min_move_pct < 0:
         raise ValueError("VWAP buffer and trend threshold must be nonnegative")
@@ -26,8 +27,9 @@ def generate_buy_signals(bars, *, vwap_buffer_pct=0.5, trend_min_move_pct=0.2, r
     df["RTH"] = minutes.between(570, 959)
     df["EMA9"] = df.Close.ewm(span=9, adjust=False, min_periods=9).mean()
     pv = (df.High + df.Low + df.Close) / 3 * df.Volume
-    volume = df.Volume.groupby(df.Session).cumsum().replace(0, float("nan"))
-    df["VWAP"] = pv.groupby(df.Session).cumsum() / volume
+    df["VWAPSession"] = df.Datetime.dt.tz_convert(vwap_timezone).dt.strftime("%Y-%m-%d")
+    volume = df.Volume.groupby(df.VWAPSession).cumsum().replace(0, float("nan"))
+    df["VWAP"] = pv.groupby(df.VWAPSession).cumsum() / volume
     df["VWAPEntryLevel"] = df.VWAP * (1 + vwap_buffer_pct / 100)
     df["EMA9Rising"] = (
         (df.EMA9 > df.EMA9.shift(1))
@@ -107,11 +109,12 @@ def main():
     parser.add_argument("--csv", type=Path, default=DEFAULT_DATA)
     parser.add_argument("--start-date", required=True)
     parser.add_argument("--end-date", required=True)
-    parser.add_argument("--vwap-buffer-pct", type=float, default=0.5)
+    parser.add_argument("--vwap-buffer-pct", type=float, default=0.0)
+    parser.add_argument("--vwap-timezone", default="UTC", help="Timezone defining the VWAP daily reset; default matches the chart reference provisionally.")
     parser.add_argument("--trend-min-move-pct", type=float, default=0.2)
     parser.add_argument("--allow-range-entries", action="store_true", help="Disable the previous-10-candle range breakout filter.")
     args = parser.parse_args()
-    signals = generate_buy_signals(pd.read_csv(args.csv), vwap_buffer_pct=args.vwap_buffer_pct, trend_min_move_pct=args.trend_min_move_pct, require_range_break=not args.allow_range_entries)
+    signals = generate_buy_signals(pd.read_csv(args.csv), vwap_buffer_pct=args.vwap_buffer_pct, trend_min_move_pct=args.trend_min_move_pct, require_range_break=not args.allow_range_entries, vwap_timezone=args.vwap_timezone)
     trades = evaluate_buys(signals, start_date=args.start_date, end_date=args.end_date)
     good = trades.Status.eq("Good").sum()
     bad = trades.Status.eq("Bad").sum()
