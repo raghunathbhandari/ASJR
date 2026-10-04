@@ -1,0 +1,22 @@
+{
+  "mode": "break10",
+  "stop": "swing5",
+  "filters": [
+    [
+      "eff",
+      0.6
+    ],
+    [
+      "rvol",
+      1
+    ],
+    [
+      "rsi",
+      [
+        60,
+        90
+      ]
+    ]
+  ],
+  "slope": 0
+}

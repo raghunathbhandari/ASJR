@@ -1,0 +1,61 @@
+{
+  "data_sha256": "d83c0b716414564aed29d69412569d67d7d6b70f39640d11d956a0e207007406",
+  "bars": 71962,
+  "coverage": [
+    "2025-10-02 00:05:00+00:00",
+    "2026-10-02 23:55:00+00:00"
+  ],
+  "candidates": 2253,
+  "selection": "Highest September win rate, minimum 12 trades; net return tie breaker",
+  "selected_id": 915,
+  "selected_config": {
+    "mode": "trend",
+    "stop": "swing5",
+    "filters": [
+      [
+        "adxmax",
+        25
+      ],
+      [
+        "slope",
+        0.75
+      ]
+    ],
+    "slope": 0
+  },
+  "periods": {
+    "Development": [
+      "2026-09-01",
+      "2026-09-18"
+    ],
+    "SeptemberCheck": [
+      "2026-09-21",
+      "2026-09-30"
+    ],
+    "September": [
+      "2026-09-01",
+      "2026-09-30"
+    ],
+    "May": [
+      "2026-05-01",
+      "2026-05-31"
+    ],
+    "June": [
+      "2026-06-01",
+      "2026-06-30"
+    ],
+    "July": [
+      "2026-07-01",
+      "2026-07-31"
+    ],
+    "August": [
+      "2026-08-01",
+      "2026-08-31"
+    ],
+    "October": [
+      "2026-10-01",
+      "2026-10-02"
+    ]
+  },
+  "assumptions": "BUY RTH; signal-close hypothetical fills; signal low / swing stop; EMA9 close exit; no fixed target; raw and 10bp round-trip cost stress test; UTC midnight VWAP provisional; MFE/MAE include exit bar, whose intrabar sequence is unknown"
+}
