@@ -242,15 +242,6 @@ def _wick_event(ticker, frame, idx, side, setups):
     if matched_setup is None:
         return None
 
-    next_row = frame.iloc[idx + 1] if idx + 1 < len(frame) else None
-    next_confirmed = None
-    if next_row is not None:
-        next_confirmed = (
-            bool(float(next_row["low"]) > low)
-            if side == "LOWER"
-            else bool(float(next_row["high"]) < high)
-        )
-
     event_type = "LOWER_WICK" if side == "LOWER" else "UPPER_WICK"
     setup_label = str(matched_setup.get("label", matched_setup["id"])).upper()
     event_name = setup_label
@@ -288,7 +279,6 @@ def _wick_event(ticker, frame, idx, side, setups):
         "lookback_bars": lookback_bars,
         "prior_level": prior_level,
         "swept_reclaimed": swept,
-        "next_confirmed": next_confirmed,
     }
 
 
@@ -399,105 +389,93 @@ def prepare_alert(
     state_file=STATE_FILE,
     batch_file=BATCH_FILE,
 ):
-    """Format mean-reversal first; otherwise format oldest pending wick batch."""
-    mean_message = mean_reversal.prepare_alert(result)
-    if mean_message:
-        return mean_message
-
-    events = result.get("alert_data", []) if result else []
-    events = [
-        event
-        for event in events
-        if event.get("type") in {"LOWER_WICK", "UPPER_WICK"}
-    ]
-    if not events:
+    """Format simple wick lines; overflow is sent immediately in the same run."""
+    if result and result.get("alerts_dispatched"):
         return ""
+    events = result.get("alert_data", []) if result else []
+    events = [e for e in events if e.get("type") in {"LOWER_WICK", "UPPER_WICK"}]
+    if not events:
+        return mean_reversal.prepare_alert(result)
 
-    header = "ASJR 5M WICK ALERTS | candle times UK\n"
-    blocks = []
-    prepared_keys = []
-
+    uk_dates = {
+        datetime.strptime(e["bar_time_et"], "%Y-%m-%d %H:%M ET")
+        .replace(tzinfo=ET).astimezone(UK).strftime("%Y-%m-%d")
+        for e in events
+    }
+    single_date = len(uk_dates) == 1
+    header = f'WICKS | {next(iter(uk_dates))}\n' if single_date else "WICKS\n"
+    lines = []
+    keys = []
+    seen = set()
     for event in events:
-        bar_time_uk = (
+        key = _event_key(event)
+        if key in seen:
+            continue
+        seen.add(key)
+        uk_time = (
             datetime.strptime(event["bar_time_et"], "%Y-%m-%d %H:%M ET")
-            .replace(tzinfo=ET)
-            .astimezone(UK)
-            .strftime("%Y-%m-%d %H:%M %Z")
+            .replace(tzinfo=ET).astimezone(UK).strftime("%H:%M" if single_date else "%Y-%m-%d %H:%M")
         )
-        volume = (
-            f'{event["volume_x"]:.1f}x prior 12-bar median'
-            if event.get("volume_x") is not None
-            else "comparison unavailable"
+        side = "LOWER" if event["type"] == "LOWER_WICK" else "UPPER"
+        label = "TWO-SIDED WICK" if event.get("two_sided") else (
+            side + (" SWEEP" if event.get("swept_reclaimed") else " WICK")
         )
-        prior_level = (
-            f'{event["prior_level"]:.2f}'
-            if event.get("prior_level") is not None
-            else "n/a"
-        )
-        sweep = "YES" if event.get("swept_reclaimed") else "NO"
-
-        if event["type"] == "LOWER_WICK":
-            label = event.get("setup_label", "LOWER WICK")
-            level_name = f'{event.get("lookback_bars", 12)}-bar low'
-            next_state = (
-                "waiting next candle"
-                if event.get("next_confirmed") is None
-                else (
-                    "held low / higher low"
-                    if event.get("next_confirmed")
-                    else "low not confirmed"
-                )
-            )
-        else:
-            label = event.get("setup_label", "UPPER WICK")
-            level_name = f'{event.get("lookback_bars", 12)}-bar high'
-            next_state = (
-                "waiting next candle"
-                if event.get("next_confirmed") is None
-                else (
-                    "held high / lower high"
-                    if event.get("next_confirmed")
-                    else "high not confirmed"
-                )
-            )
-
-        body_ratio = event.get("wick_body_ratio")
-        body_text = (
-            "doji body" if body_ratio is not None and math.isinf(body_ratio)
-            else f"{body_ratio:.1f}x body" if body_ratio is not None
-            else "body ratio unavailable"
-        )
-        range_x = event.get("range_vs_median")
-        range_text = f"{range_x:.2f}x median range" if range_x is not None else "range unavailable"
-        side_label = "LOWER" if event["type"] == "LOWER_WICK" else "UPPER"
-
-        if event.get("two_sided"):
-            side_label = "BOTH"
-            next_state = "two-sided volatility; direction unconfirmed"
-
-        block = (
-            f'\n{event["ticker"]} {label} ({side_label}) [{event["session"]}] {bar_time_uk}\n'
-            f'O {event["open"]:.2f} H {event["high"]:.2f} '
-            f'L {event["low"]:.2f} C {event["price"]:.2f}\n'
-            f'Wick {event["wick"]:.2f} | '
-            f'{event.get("wick_share_pct", 0.0):.0f}% candle | '
-            f'{body_text} | {range_text} | '
-            f'{level_name} {prior_level} swept/reclaimed: {sweep}\n'
-            f'Vol {event["volume"]:,.0f} ({volume}) | Next: {next_state}\n'
-        )
-
-        candidate = CODE_FENCE + "\n" + header + "".join(blocks) + block + CODE_FENCE
+        line = f'{event["ticker"]} | {label} | {uk_time}\n'
+        candidate = CODE_FENCE + "\n" + header + "".join(lines) + line + CODE_FENCE
         if len(candidate) > 1900:
             break
+        lines.append(line)
+        keys.append(key)
 
-        blocks.append(block)
-        prepared_keys.append(_event_key(event))
+    if not lines:
+        raise ValueError("Wick line exceeds Discord limit; event retained")
+    message = CODE_FENCE + "\n" + header + "".join(lines) + CODE_FENCE
+    _write_json_atomic(batch_file, {"event_keys": keys})
+    return message
 
-    if not blocks:
-        return ""
 
-    _write_json_atomic(batch_file, {"event_keys": prepared_keys})
-    return CODE_FENCE + "\n" + header + "".join(blocks) + CODE_FENCE
+def send_alerts(result, sender, state_file=STATE_FILE, batch_file=BATCH_FILE):
+    """Send all wicks now; size overflow follows immediately, never next schedule.
+
+    The sender must raise or return False on failure. Legacy senders returning
+    None retain the existing caller contract, but cannot prove delivery.
+    The delivery file tracks acknowledgement of the current Discord message.
+    """
+    if not result or result.get("alerts_dispatched"):
+        return 0
+    sent_count = 0
+    remaining = list(result.get("alert_data", []))
+    while remaining:
+        message = prepare_alert({"alert_data": remaining}, state_file, batch_file)
+        if not message:
+            break
+        keys = set(_read_json(batch_file, {}).get("event_keys", []))
+        if not keys:
+            break
+        if sender(message) is False:
+            raise RuntimeError("Discord wick delivery failed; unsent events retained")
+        _mark_wick_alert_sent(state_file, batch_file)
+        remaining = [e for e in remaining if _event_key(e) not in keys]
+        result["alert_data"] = remaining
+        sent_count += len(keys)
+
+    # Preserve the independent mean-reversal strategy's existing notifications.
+    mean_remaining = list(result.get("mean_reversal_alerts", []))
+    while mean_remaining:
+        message = mean_reversal.prepare_alert({"mean_reversal_alerts": mean_remaining})
+        if not message:
+            break
+        keys = set(mean_reversal._read_json(mean_reversal.BATCH_FILE, {}).get("event_keys", []))
+        if not keys:
+            break
+        if sender(message) is False:
+            raise RuntimeError("Discord mean-reversal delivery failed; unsent events retained")
+        mean_reversal.mark_alert_sent()
+        mean_remaining = [e for e in mean_remaining if mean_reversal._event_key(e) not in keys]
+        result["mean_reversal_alerts"] = mean_remaining
+        sent_count += len(keys)
+    result["alerts_dispatched"] = not result.get("alert_data") and not mean_remaining
+    return sent_count
 
 
 def mark_alert_sent(
@@ -505,9 +483,17 @@ def mark_alert_sent(
     batch_file=BATCH_FILE,
 ):
     """Acknowledge only the batch confirmed sent to Discord."""
+    # Wick messages have priority. Do not let a stale mean batch acknowledge
+    # the wrong message after the formatter selects a wick batch.
+    batch = _read_json(batch_file, {})
+    if isinstance(batch, dict) and batch.get("event_keys"):
+        return _mark_wick_alert_sent(state_file, batch_file)
     if mean_reversal.has_prepared_batch():
         return mean_reversal.mark_alert_sent()
+    return 0
 
+
+def _mark_wick_alert_sent(state_file=STATE_FILE, batch_file=BATCH_FILE):
     batch = _read_json(batch_file, {})
     keys = set(batch.get("event_keys", [])) if isinstance(batch, dict) else set()
     if not keys:

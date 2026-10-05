@@ -493,3 +493,26 @@ The runtime log version is the primary proof of the code actually running on the
 - Eight offline routing/merge/failure/CLI tests and Python compilation passed. No Gateway access in development workspace: live request, year coverage and TradingView equivalence remain unverified.
 - Pre-change audit: main 2ecb6317321a9385c0d2fb928df72ce8fc8c44d6; canonical handoff/current importer/current loader reviewed. Latest DataLake log still 2026.10.02.3; Sunday user supplied console confirmed restart and closed-session skip, without runtime version line.
 - Isolated research importer only: live ASJR version remains 2026.10.04.3. Pull updated repository and run standalone SSH command; no bot restart needed for this research import. No automated CSV Git push added.
+
+## 2026-10-05 immediate compact wick delivery
+
+- Runtime version `2026.10.05.1`. Wick recognition config and state schema remain unchanged (schema 6); retain existing last_processed and undelivered events.
+- User request: wick found -> notify on the current five-minute run, no next-candle confirmation. One simple alert with every detected event; when Discord's size limit requires overflow, send the next message immediately in the same run.
+- Audit correction: prior detector did NOT gate wick generation on next_confirmed. It computed next-bar commentary for historical bars. Delivery formatted only one verbose <=1900-character batch per call, with mean reversal first; that could postpone wicks across schedules. The supplied 85-minute delay is not conclusively diagnosed without the actual external caller and runtime logs.
+- Removed all next-bar inspection/confirmation fields from the wick detector. Compact line: `TICKER | LOWER/UPPER SWEEP/WICK | HH:MM`, with the date once in the `WICKS | YYYY-MM-DD` header; ASJR/UK/BST/GMT words omitted at user request, London conversion retained (mixed-date catch-up includes line dates); two-sided candles say `TWO-SIDED WICK`.
+- Added `send_alerts(result, sender)`: send all wick lines, immediately drain size overflow, then send independent mean-reversal notifications. Acknowledge only completed sends. False return or raised exception stops delivery and retains unsent events. Internal delivery manifest files remain for failure recovery, not confirmation waiting.
+- Compatibility formatter now prioritizes wicks over mean reversal. A stale mean-reversal delivery manifest cannot acknowledge a newly prepared wick message.
+- Added optional `alert_sender` parameter to `run_asjr_manual_pipeline`. When supplied, send immediately after wick/mean detection, before sector fetch, reports and Git submission. Returned alert collections contain only unsent events; `alerts_dispatched` prevents the old post-pipeline formatter sending duplicates.
+- The external caller `/root/trading/utils/trading_sudarsan_chakra.py` is NOT tracked in this repository. Enable the callback once on the VPS with:
+
+```bash
+cd /root/trading/ASJR
+git pull
+/root/trading/venv_new/bin/python ASJR_Analyst/Tools/enable_immediate_wicks.py
+```
+
+- Installer validates exactly one existing `tp.run_asjr_manual_pipeline` call, adds `alert_sender=SN.send_to_discord`, keeps other caller code, saves a backup, and never restarts the bot. It stops without editing if the expected structure is absent. Re-running with the parameter present is a no-op.
+- After installation, use the existing Discord stop/start commands yourself. Check the next log for `RUN | VERSION | 2026.10.05.1` and `ALERTS | Immediate dispatch`. Without the caller callback, the legacy formatter still only prepares one size-limited message per run; pull/restart alone does not enable overflow draining or early delivery.
+- Existing sender caveat: a helper returning None and swallowing exceptions cannot prove delivery. For reliable acknowledgement it must raise on failure or return False, and return True on success. No notification helper source was available to change in this repository.
+- Timing remains limited by scheduler execution and actual IBKR data availability; this change does not guarantee a wall-clock five-minute SLA when the caller is stopped or fetching is delayed. Catch-up events keep their original UK candle times.
+- Validation: 17 wick regressions passed, including first completed candle without a following bar, all 80 events delivered once in one call with size overflow, failed overflow/retry, wick priority over mean reversal, stale acknowledgement isolation, caller patch idempotence, and the existing user-reviewed shape tests. Python compilation passed. VPS activation and Discord arrival are not verified from this workspace.

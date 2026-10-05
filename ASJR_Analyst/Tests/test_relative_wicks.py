@@ -90,8 +90,9 @@ class RelativeWicks(unittest.TestCase):
             self.assertEqual(len(events),1)
             self.assertEqual(events,alerts.build_wick_alerts(frame,trade_date='2026-10-02',now='2026-10-02 16:00Z',state_file=state,config_file=config))
             text = alerts.prepare_alert({'alert_data':events},state_file=state,batch_file=batch)
-            self.assertIn('BST',text)
-            self.assertIn('median range',text)
+            self.assertIn('16:00',text)
+            self.assertIn('LOWER SWEEP',text)
+            self.assertNotIn('Next:',text)
             self.assertEqual(alerts.mark_alert_sent(state_file=state,batch_file=batch),1)
             self.assertEqual(alerts.build_wick_alerts(frame,trade_date='2026-10-02',now='2026-10-02 16:00Z',state_file=state,config_file=config),[])
 
@@ -109,8 +110,8 @@ class RelativeWicks(unittest.TestCase):
                 if event and event.get('two_sided'):
                     with tempfile.TemporaryDirectory() as tmp:
                         message = alerts.prepare_alert({'alert_data':[event]}, batch_file=Path(tmp)/'batch.json')
-                        self.assertIn('(BOTH)', message)
-                        self.assertIn('direction unconfirmed', message)
+                        self.assertIn('TWO-SIDED WICK', message)
+                        self.assertNotIn('confirmation', message)
 
     def test_upgrade_discards_old_backlog(self):
         with tempfile.TemporaryDirectory() as tmp:

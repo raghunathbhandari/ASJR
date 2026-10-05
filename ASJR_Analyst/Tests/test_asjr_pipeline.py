@@ -23,7 +23,7 @@ import Utils.asjr_git as asjr_git
 import Utils.asjr_logger as asjr_logger
 import Strategies.MeanReversal4Pct.mean_reversal as mean_reversal
 
-ASJR_ANALYST_VERSION = "2026.10.04.3"
+ASJR_ANALYST_VERSION = "2026.10.05.1"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -49,6 +49,7 @@ def run_asjr_manual_pipeline(
     fetch_gapup_from_app=False,
     include_sector=True,
     git_submit=True,
+    alert_sender=None,
 ):
     print("Thank you IBKR, yfinance and AI !")
 
@@ -187,6 +188,13 @@ def run_asjr_manual_pipeline(
             intraday=intraday,
             trade_date=trade_date,
         )
+        # Deliver before sector research, report writing and Git submission.
+        delivery = {"alert_data": alert_data, "mean_reversal_alerts": mean_reversal_alerts}
+        if alert_sender is not None:
+            sent = alerts.send_alerts(delivery, alert_sender)
+            logger.info("ALERTS | Immediate dispatch | events=%s", sent)
+        alert_data = delivery["alert_data"]
+        mean_reversal_alerts = delivery["mean_reversal_alerts"]
         intraday_latest = intraday_features.latest_intraday_summary(
             intraday
         )
@@ -313,6 +321,7 @@ def run_asjr_manual_pipeline(
             "daily": daily,
             "intraday_raw": intraday_raw,
             "intraday": intraday,
+            "alerts_dispatched": delivery.get("alerts_dispatched", False),
             "alert_data": alert_data,
             "mean_reversal_alerts": mean_reversal_alerts,
             "sector": sector,
@@ -328,7 +337,7 @@ def run_asjr_manual_pipeline(
 
 
 def prepare_alert(result):
-    """Format fresh ticker events as one Discord message (at most 2000 chars)."""
+    """Compatibility formatter; use alert_sender to send every wick immediately."""
     return alerts.prepare_alert(result)
 
 
@@ -336,3 +345,8 @@ def mark_alert_sent():
     """Acknowledge the prepared Discord wick batch after successful send."""
     return alerts.mark_alert_sent()
 
+
+
+def send_alerts(result, sender):
+    """Send all wicks in one alert during this schedule, wicks first."""
+    return alerts.send_alerts(result, sender)
