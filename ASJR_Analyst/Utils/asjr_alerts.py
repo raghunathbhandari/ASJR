@@ -406,6 +406,7 @@ def prepare_alert(
     header = f'WICKS | {next(iter(uk_dates))}\n' if single_date else "WICKS\n"
     lines = []
     keys = []
+    tickers = []
     seen = set()
     for event in events:
         key = _event_key(event)
@@ -421,15 +422,26 @@ def prepare_alert(
             side + (" SWEEP" if event.get("swept_reclaimed") else " WICK")
         )
         line = f'{event["ticker"]} | {label} | {uk_time}\n'
-        candidate = CODE_FENCE + "\n" + header + "".join(lines) + line + CODE_FENCE
+        candidate_tickers = tickers + (
+            [event["ticker"]] if event["ticker"] not in tickers else []
+        )
+        footer = "\n" + ", ".join(candidate_tickers) + "\n"
+        candidate = (
+            CODE_FENCE + "\n" + header + "".join(lines) + line + footer + CODE_FENCE
+        )
         if len(candidate) > 1900:
             break
         lines.append(line)
         keys.append(key)
+        if event["ticker"] not in tickers:
+            tickers.append(event["ticker"])
 
     if not lines:
         raise ValueError("Wick line exceeds Discord limit; event retained")
-    message = CODE_FENCE + "\n" + header + "".join(lines) + CODE_FENCE
+    message = (
+        CODE_FENCE + "\n" + header + "".join(lines)
+        + "\n" + ", ".join(tickers) + "\n" + CODE_FENCE
+    )
     _write_json_atomic(batch_file, {"event_keys": keys})
     return message
 
