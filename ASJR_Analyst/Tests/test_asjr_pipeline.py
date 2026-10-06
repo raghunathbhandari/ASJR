@@ -107,21 +107,6 @@ def run_asjr_manual_pipeline(
         # Research import must never interrupt the production DataLake/Chakra run.
         logger.exception("FOREX | One-time downloader launch failed")
 
-    # One-time open-source NQ=F research import. Independent tmux job and
-    # independent completion marker; no IBKR connection is used.
-    try:
-        if launch_nq_download_once is None:
-            logger.warning("NQ | One-time launcher import unavailable")
-        else:
-            nq_launch = launch_nq_download_once()
-            logger.info(
-                "NQ | One-time downloader | ok=%s | started=%s | %s",
-                nq_launch.get("ok"),
-                nq_launch.get("started"),
-                nq_launch.get("message"),
-            )
-    except Exception:
-        logger.exception("NQ | One-time downloader launch failed")
 
     try:
         # 1. Build universe
