@@ -516,3 +516,13 @@ git pull
 - Existing sender caveat: a helper returning None and swallowing exceptions cannot prove delivery. For reliable acknowledgement it must raise on failure or return False, and return True on success. No notification helper source was available to change in this repository.
 - Timing remains limited by scheduler execution and actual IBKR data availability; this change does not guarantee a wall-clock five-minute SLA when the caller is stopped or fetching is delayed. Catch-up events keep their original UK candle times.
 - Validation: 17 wick regressions passed, including first completed candle without a following bar, all 80 events delivered once in one call with size overflow, failed overflow/retry, wick priority over mean reversal, stale acknowledgement isolation, caller patch idempotence, and the existing user-reviewed shape tests. Python compilation passed. VPS activation and Discord arrival are not verified from this workspace.
+
+
+## 2026-10-06 one-time EURUSD research import hook
+
+- Added `Backtesting/DataLoader/forex_historical_downloader.py` for IBKR spot FX MIDPOINT history. Default research scope is EURUSD, one year, native 1d/4h/1h bars, UTC timestamps, output under `Backtesting/BacktestData/IBKR/Forex/EURUSD/`.
+- Added `Backtesting/DataLoader/run_forex_download_tmux.sh` and `forex_download_hook.py`. The launcher starts detached tmux session `forex_download`, uses IBKR client ID 41, writes `Backtesting/BacktestData/IBKR/Forex/logs/EURUSD_1y_download.log`, creates a local .done marker after successful completion, and pushes the generated CSVs + tracked download log to main.
+- `ASJR_Analyst/Tests/test_asjr_pipeline.py::run_asjr_manual_pipeline` version `2026.10.06.1` now calls the one-time Forex hook near the start of every scheduled DataLake run. The launcher is idempotent: later cycles exit immediately if the tmux job is already running or the local completion marker exists.
+- The Forex hook is isolated with try/except. Failure to launch the research import is logged but must not interrupt the normal Chakra/DataLake pipeline.
+- Git operational chatter for the Forex push is kept in the local untracked state log `Backtesting/BacktestData/IBKR/Forex/.state/git_push.log`; the tracked research log is finalized before staging to avoid leaving the repository dirty after push.
+- External VPS caller `/root/trading/utils/trading_sudarsan_chakra.py` remains unchanged.
