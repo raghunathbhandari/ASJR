@@ -4,8 +4,11 @@ import importlib
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 import Utils.asjr_paths as paths
 import Utils.asjr_day as asjr_day
@@ -28,7 +31,12 @@ try:
 except Exception:
     launch_forex_download_once = None
 
-ASJR_ANALYST_VERSION = "2026.10.06.3"
+try:
+    from Backtesting.DataLoader.nq_download_hook import launch_nq_download_once
+except Exception:
+    launch_nq_download_once = None
+
+ASJR_ANALYST_VERSION = "2026.10.06.4"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -111,6 +119,22 @@ def run_asjr_manual_pipeline(
     except Exception:
         # Research import must never interrupt the production DataLake/Chakra run.
         logger.exception("FOREX | One-time downloader launch failed")
+
+    # One-time NQ=F Yahoo research import. Runs in detached tmux and must never
+    # block or break the production DataLake/Chakra cycle.
+    try:
+        if launch_nq_download_once is None:
+            logger.warning("NQ | One-time launcher import unavailable")
+        else:
+            nq_launch = launch_nq_download_once()
+            logger.info(
+                "NQ | One-time downloader | ok=%s | started=%s | %s",
+                nq_launch.get("ok"),
+                nq_launch.get("started"),
+                nq_launch.get("message"),
+            )
+    except Exception:
+        logger.exception("NQ | One-time downloader launch failed")
 
 
     try:
