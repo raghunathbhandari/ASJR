@@ -23,7 +23,7 @@ import Utils.asjr_git as asjr_git
 import Utils.asjr_logger as asjr_logger
 import Strategies.MeanReversal4Pct.mean_reversal as mean_reversal
 
-ASJR_ANALYST_VERSION = "2026.10.05.1"
+try:\n    from Backtesting.DataLoader.forex_download_hook import launch_forex_download_once\nexcept Exception:\n    launch_forex_download_once = None\n\nASJR_ANALYST_VERSION = "2026.10.06.1"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -89,6 +89,23 @@ def run_asjr_manual_pipeline(
         git_submit,
         fetch_gapup_from_app,
     )
+
+    # One-time EURUSD research import. Safe to call every scheduled DataLake run:
+    # the tmux launcher exits immediately when already running or completed.
+    try:
+        if launch_forex_download_once is None:
+            logger.warning("FOREX | One-time launcher import unavailable")
+        else:
+            forex_launch = launch_forex_download_once()
+            logger.info(
+                "FOREX | One-time downloader | ok=%s | started=%s | %s",
+                forex_launch.get("ok"),
+                forex_launch.get("started"),
+                forex_launch.get("message"),
+            )
+    except Exception:
+        # Research import must never interrupt the production DataLake/Chakra run.
+        logger.exception("FOREX | One-time downloader launch failed")
 
     try:
         # 1. Build universe
