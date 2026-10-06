@@ -23,7 +23,12 @@ import Utils.asjr_git as asjr_git
 import Utils.asjr_logger as asjr_logger
 import Strategies.MeanReversal4Pct.mean_reversal as mean_reversal
 
-try:\n    from Backtesting.DataLoader.forex_download_hook import launch_forex_download_once\nexcept Exception:\n    launch_forex_download_once = None\n\nASJR_ANALYST_VERSION = "2026.10.06.1"
+try:
+    from Backtesting.DataLoader.forex_download_hook import launch_forex_download_once
+except Exception:
+    launch_forex_download_once = None
+
+ASJR_ANALYST_VERSION = "2026.10.06.3"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
