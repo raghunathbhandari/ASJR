@@ -24,3 +24,21 @@
 2026-10-06 13:59:24 BST | INFO | FILE | Saved asjr_snapshot | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-06/processed/asjr_snapshot.json
 2026-10-06 13:59:24 BST | INFO | RUN | DATA COMPLETE | universe=35 | intraday_rows=14326 | ticker_summary=35
 2026-10-06 13:59:24 BST | INFO | GIT | File verification started | count=7
+2026-10-06 13:59:26 BST | ERROR | RUN | FAILED
+Traceback (most recent call last):
+  File "/root/trading/ASJR/ASJR_Analyst/Tests/test_asjr_pipeline.py", line 354, in run_asjr_manual_pipeline
+    git_result = asjr_git.submit_datalake(
+  File "/root/trading/ASJR/ASJR_Analyst/Utils/asjr_git.py", line 105, in submit_datalake
+    _run_git(
+  File "/root/trading/ASJR/ASJR_Analyst/Utils/asjr_git.py", line 13, in _run_git
+    raise RuntimeError(
+RuntimeError: Git command failed: git pull --rebase origin main
+STDOUT:
+
+STDERR:
+git@github.com: Permission denied (publickey).
+fatal: Could not read from remote repository.
+
+Please make sure you have the correct access rights
+and the repository exists.
+
