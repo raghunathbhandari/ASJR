@@ -20,8 +20,8 @@ BATCH_FILE = ROOT / "wick_alert_batch.json"
 CONFIG_FILE = ROOT / "config" / "wick_setups.json"
 CODE_FENCE = chr(96) * 3
 
-STATE_SCHEMA_VERSION = 7
-MAX_LIVE_ALERT_AGE_MINUTES = 10
+STATE_SCHEMA_VERSION = 8
+MAX_LIVE_ALERT_AGE_MINUTES = 7
 
 
 def _read_json(path, default):
@@ -368,11 +368,12 @@ def build_wick_alerts(
                 else marker.tz_convert(ET)
             )
 
-        for idx in range(len(frame)):
-            bar_time = frame.iloc[idx]["bar_et"]
-            if marker is not None and bar_time <= marker:
-                continue
-
+        # LIVE MODE: only evaluate the newest completed 5-minute candle.
+        # Historical candles remain available as context for wick calculations,
+        # but they can never become Discord alerts.
+        idx = len(frame) - 1
+        bar_time = frame.iloc[idx]["bar_et"]
+        if marker is None or bar_time > marker:
             candidates = [
                 _wick_event(ticker, frame, idx, side, setups)
                 for side in ("LOWER", "UPPER")
