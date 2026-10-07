@@ -86,15 +86,50 @@ class RelativeWicks(unittest.TestCase):
             config = Path(tmp)/'config.json'
             config.write_text(json.dumps({'setups':[dict(id='test',side='BOTH',min_prior_bars=12)]}))
             frame = candles()
-            events = alerts.build_wick_alerts(frame,trade_date='2026-10-02',now='2026-10-02 16:00Z',state_file=state,config_file=config)
+            events = alerts.build_wick_alerts(frame,trade_date='2026-10-02',now='2026-10-02 15:10Z',state_file=state,config_file=config)
             self.assertEqual(len(events),1)
-            self.assertEqual(events,alerts.build_wick_alerts(frame,trade_date='2026-10-02',now='2026-10-02 16:00Z',state_file=state,config_file=config))
+            self.assertEqual(events,alerts.build_wick_alerts(frame,trade_date='2026-10-02',now='2026-10-02 15:10Z',state_file=state,config_file=config))
             text = alerts.prepare_alert({'alert_data':events},state_file=state,batch_file=batch)
             self.assertIn('16:00',text)
             self.assertIn('LOWER SWEEP',text)
             self.assertNotIn('Next:',text)
             self.assertEqual(alerts.mark_alert_sent(state_file=state,batch_file=batch),1)
-            self.assertEqual(alerts.build_wick_alerts(frame,trade_date='2026-10-02',now='2026-10-02 16:00Z',state_file=state,config_file=config),[])
+            self.assertEqual(alerts.build_wick_alerts(frame,trade_date='2026-10-02',now='2026-10-02 15:10Z',state_file=state,config_file=config),[])
+
+    def test_old_wick_is_processed_but_not_alerted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            state = Path(tmp) / 'state.json'
+            alerts._write_json_atomic(state, alerts._new_state('2026-10-02'))
+            # TEST wick starts 15:00 UTC and closes 15:05 UTC. At 16:00 UTC
+            # it is historical and must never be replayed to Discord.
+            events = alerts.build_wick_alerts(
+                candles(),
+                trade_date='2026-10-02',
+                now='2026-10-02 16:00Z',
+                state_file=state,
+            )
+            self.assertEqual(events, [])
+            saved = json.loads(state.read_text())
+            self.assertEqual(saved['pending'], [])
+            self.assertIn('TEST', saved['last_processed'])
+
+    def test_stale_pending_retry_is_discarded(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            state = Path(tmp) / 'state.json'
+            old_event = alerts._wick_event(
+                'TEST', candles(), 12, 'LOWER', alerts._load_wick_setups(CONFIG)
+            )
+            saved = alerts._new_state('2026-10-02')
+            saved['pending'] = [old_event]
+            alerts._write_json_atomic(state, saved)
+            events = alerts.build_wick_alerts(
+                candles(),
+                trade_date='2026-10-02',
+                now='2026-10-02 16:00Z',
+                state_file=state,
+            )
+            self.assertEqual(events, [])
+            self.assertEqual(json.loads(state.read_text())['pending'], [])
 
     def test_friday_user_reviewed_candles(self):
         # Recorded IBKR windows for accepted/rejected chart examples.
@@ -117,9 +152,9 @@ class RelativeWicks(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             state=Path(tmp)/'state.json'
             state.write_text(json.dumps({'schema_version':3,'pending':[{'bad':'legacy'}]}))
-            events=alerts.build_wick_alerts(candles(),trade_date='2026-10-02',now='2026-10-02 16:00Z',state_file=state)
+            events=alerts.build_wick_alerts(candles(),trade_date='2026-10-02',now='2026-10-02 15:10Z',state_file=state)
             self.assertEqual(events,[])
-            self.assertEqual(json.loads(state.read_text())['schema_version'],6)
+            self.assertEqual(json.loads(state.read_text())['schema_version'],7)
 
 
 if __name__ == '__main__':
