@@ -1,7 +1,7 @@
 {
   "trade_date": "2026-10-07",
   "report_timezone": "Europe/London",
-  "generated_at_uk": "2026-10-07 02:31:52 BST",
+  "generated_at_uk": "2026-10-07 02:37:04 BST",
   "ticker_count": 26,
   "tickers": [
     {
@@ -52,11 +52,11 @@
       "session_low": 209.8,
       "setup_status": "BELOW_EMA20",
       "cross_up_recent": true,
-      "daily_close": NaN,
-      "daily_ema20": 195.88052148663562,
-      "daily_dist_ema20_pct": NaN,
+      "daily_close": 220.8300018310547,
+      "daily_ema20": 198.2566624718184,
+      "daily_dist_ema20_pct": 11.385917163033564,
       "atr14": 13.22671617780413,
-      "daily_volume": 7221753.0,
+      "daily_volume": 7216900.0,
       "tradingview_url": "https://www.tradingview.com/chart/?symbol=NASDAQ:CRDO",
       "datetime_uk": "2026-10-07 00:55:00 BST"
     },
@@ -332,11 +332,11 @@
       "session_low": 19.67,
       "setup_status": "AT_EMA20",
       "cross_up_recent": false,
-      "daily_close": NaN,
-      "daily_ema20": 19.94575279868768,
-      "daily_dist_ema20_pct": NaN,
-      "atr14": 0.8519998277936663,
-      "daily_volume": 1726326.0,
+      "daily_close": 19.989999771118164,
+      "daily_ema20": 19.94996679606201,
+      "daily_dist_ema20_pct": 0.2006668756163288,
+      "atr14": 0.8521427427019391,
+      "daily_volume": 1726300.0,
       "tradingview_url": "https://www.tradingview.com/chart/?symbol=NYSE:WTTR",
       "datetime_uk": "2026-10-07 00:55:00 BST"
     },
@@ -360,11 +360,11 @@
       "session_low": 7.33,
       "setup_status": "BELOW_EMA20",
       "cross_up_recent": true,
-      "daily_close": NaN,
-      "daily_ema20": 7.4747913482057236,
-      "daily_dist_ema20_pct": NaN,
+      "daily_close": 7.409999847412109,
+      "daily_ema20": 7.468620729082522,
+      "daily_dist_ema20_pct": -0.7848956828420128,
       "atr14": 0.37992862292698454,
-      "daily_volume": 48852770.0,
+      "daily_volume": 48786400.0,
       "tradingview_url": "https://www.tradingview.com/chart/?symbol=NASDAQ:ONDS",
       "datetime_uk": "2026-10-07 00:55:00 BST"
     },
@@ -612,11 +612,11 @@
       "session_low": 56.6,
       "setup_status": "NEAR_RETEST",
       "cross_up_recent": true,
-      "daily_close": NaN,
-      "daily_ema20": 54.47112302248729,
-      "daily_dist_ema20_pct": NaN,
+      "daily_close": 64.20999908447266,
+      "daily_ema20": 55.39863502839066,
+      "daily_dist_ema20_pct": 15.905381155269183,
       "atr14": 3.5179290771484375,
-      "daily_volume": 15549740.0,
+      "daily_volume": 15409400.0,
       "tradingview_url": "https://www.tradingview.com/chart/?symbol=NONE:PENG",
       "datetime_uk": "2026-10-07 00:55:00 BST"
     },
@@ -668,11 +668,11 @@
       "session_low": 51.95,
       "setup_status": "BELOW_EMA20",
       "cross_up_recent": false,
-      "daily_close": NaN,
-      "daily_ema20": 54.44472568476006,
-      "daily_dist_ema20_pct": NaN,
-      "atr14": 1.663571493966239,
-      "daily_volume": 1047980.0,
+      "daily_close": 52.90999984741211,
+      "daily_ema20": 54.29856131929835,
+      "daily_dist_ema20_pct": -2.5572712023085087,
+      "atr14": 1.6678573063441686,
+      "daily_volume": 1048000.0,
       "tradingview_url": "https://www.tradingview.com/chart/?symbol=NONE:MTDR",
       "datetime_uk": "2026-10-07 00:55:00 BST"
     },
@@ -772,6 +772,19 @@
       "rvol": 0.8775073178934586,
       "relative_to_spy_pct": 0.6275264635955624,
       "status": "STRONG_BOTH"
+    },
+    {
+      "name": "Real Estate",
+      "ticker": "XLRE",
+      "date": "2026-10-06",
+      "close": 41.099998474121094,
+      "today_pct": 1.0572911840063037,
+      "yesterday_pct": -0.34306101356157415,
+      "volume": 7385000.0,
+      "avg_volume": 7399600.0,
+      "rvol": 0.9980269203740743,
+      "relative_to_spy_pct": 0.5074919155648283,
+      "status": "IMPROVING"
     },
     {
       "name": "Consumer Staples",
@@ -878,6 +891,19 @@
       "status": "STRONG_BOTH"
     },
     {
+      "name": "Communication Services",
+      "ticker": "XLC",
+      "date": "2026-10-06",
+      "close": 111.6500015258789,
+      "today_pct": 0.03583990261499803,
+      "yesterday_pct": 1.1693264313776597,
+      "volume": 5814100.0,
+      "avg_volume": 6713920.0,
+      "rvol": 0.8659769553405462,
+      "relative_to_spy_pct": -0.5139593658264774,
+      "status": "STRONG_BOTH"
+    },
+    {
       "name": "Healthcare",
       "ticker": "XLV",
       "date": "2026-10-06",
@@ -902,32 +928,6 @@
       "rvol": 0.9478837969253574,
       "relative_to_spy_pct": -0.7706581357930897,
       "status": "WEAKENING"
-    },
-    {
-      "name": "Communication Services",
-      "ticker": "XLC",
-      "date": "2026-10-06",
-      "close": NaN,
-      "today_pct": NaN,
-      "yesterday_pct": 1.1693264313776597,
-      "volume": 5814099.0,
-      "avg_volume": 6713919.9,
-      "rvol": 0.8659768192944929,
-      "relative_to_spy_pct": NaN,
-      "status": "WEAK"
-    },
-    {
-      "name": "Real Estate",
-      "ticker": "XLRE",
-      "date": "2026-10-06",
-      "close": NaN,
-      "today_pct": NaN,
-      "yesterday_pct": -0.34306101356157415,
-      "volume": 7384955.0,
-      "avg_volume": 7399595.5,
-      "rvol": 0.9980214459020091,
-      "relative_to_spy_pct": NaN,
-      "status": "WEAK"
     }
   ]
 }
