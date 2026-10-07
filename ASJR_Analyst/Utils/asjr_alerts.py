@@ -20,8 +20,8 @@ BATCH_FILE = ROOT / "wick_alert_batch.json"
 CONFIG_FILE = ROOT / "config" / "wick_setups.json"
 CODE_FENCE = chr(96) * 3
 
-STATE_SCHEMA_VERSION = 8
-MAX_LIVE_ALERT_AGE_MINUTES = 7
+STATE_SCHEMA_VERSION = 9
+RECOVERY_GAP_MINUTES = 10
 
 
 def _read_json(path, default):
@@ -290,13 +290,18 @@ def build_wick_alerts(
     state_file=STATE_FILE,
     config_file=CONFIG_FILE,
 ):
-    """Scan completed candles but only queue live/recent wick alerts.
+    """Queue live wicks immediately and recover missed wicks after downtime.
 
-    Historical bars are still processed to advance per-ticker state and provide
-    context, but a wick is eligible for Discord only for a short live window
-    after its 5-minute candle closes. This prevents restarts, late IBKR data, or
-    a missing ticker marker from replaying hours-old candles as fresh alerts.
-    Pending delivery retries are subject to the same freshness window.
+    Normal live mode evaluates only the newest completed 5-minute candle for
+    every ticker, so all signals from the same run can be delivered together.
+
+    Recovery mode is entered per ticker only when its saved last_processed
+    marker is more than RECOVERY_GAP_MINUTES behind the newest completed bar.
+    In recovery mode every completed bar after last_processed is scanned so
+    signals missed while the server was down can be sent on the first run back.
+
+    A ticker with no marker is treated as live/new, never as historical
+    recovery, which prevents a newly-added ticker from replaying the whole day.
     """
     if intraday is None or intraday.empty:
         return []
@@ -319,29 +324,16 @@ def build_wick_alerts(
 
     state = _load_state(state_file, day)
 
-    def is_fresh(event):
-        try:
-            bar_start = pd.Timestamp(
-                datetime.strptime(event["bar_time_et"], "%Y-%m-%d %H:%M ET")
-                .replace(tzinfo=ET)
-            )
-        except (KeyError, TypeError, ValueError):
-            return False
-        bar_close = bar_start + pd.Timedelta(minutes=5)
-        age = now_et - bar_close
-        return pd.Timedelta(0) <= age <= pd.Timedelta(
-            minutes=MAX_LIVE_ALERT_AGE_MINUTES
-        )
-
-    # Never replay stale pending events. A failed Discord send may be retried
-    # briefly, but once the event is no longer live it is discarded.
+    # Pending means detected but not yet acknowledged by Discord. Preserve it
+    # until successful delivery; schema/day changes already clear stale state.
     pending_by_key = {
         _event_key(event): event
         for event in state.get("pending", [])
-        if isinstance(event, dict) and is_fresh(event)
+        if isinstance(event, dict)
     }
 
     for ticker, original in intraday.groupby("ticker"):
+        ticker = str(ticker)
         frame = original.sort_values("datetime").copy()
         dates = pd.to_datetime(frame["datetime"], utc=True).dt.tz_convert(ET)
         frame["bar_et"] = dates
@@ -353,13 +345,13 @@ def build_wick_alerts(
         if frame.empty:
             continue
 
+        latest_bar = frame.iloc[-1]["bar_et"]
+
         if state.get("seed_latest"):
-            state["last_processed"][str(ticker)] = (
-                frame.iloc[-1]["bar_et"].isoformat()
-            )
+            state["last_processed"][ticker] = latest_bar.isoformat()
             continue
 
-        marker_text = state["last_processed"].get(str(ticker))
+        marker_text = state["last_processed"].get(ticker)
         marker = pd.Timestamp(marker_text) if marker_text else None
         if marker is not None:
             marker = (
@@ -368,28 +360,43 @@ def build_wick_alerts(
                 else marker.tz_convert(ET)
             )
 
-        # LIVE MODE: only evaluate the newest completed 5-minute candle.
-        # Historical candles remain available as context for wick calculations,
-        # but they can never become Discord alerts.
-        idx = len(frame) - 1
-        bar_time = frame.iloc[idx]["bar_et"]
-        if marker is None or bar_time > marker:
+        if marker is not None and latest_bar <= marker:
+            state["last_processed"][ticker] = latest_bar.isoformat()
+            continue
+
+        # No marker = new/live ticker: only newest completed candle.
+        # Large marker gap = genuine recovery: scan every missed candle.
+        recovery_mode = (
+            marker is not None
+            and latest_bar - marker > pd.Timedelta(minutes=RECOVERY_GAP_MINUTES)
+        )
+        if recovery_mode:
+            indexes = [
+                idx for idx in range(len(frame))
+                if frame.iloc[idx]["bar_et"] > marker
+            ]
+        else:
+            indexes = [len(frame) - 1]
+
+        for idx in indexes:
             candidates = [
                 _wick_event(ticker, frame, idx, side, setups)
                 for side in ("LOWER", "UPPER")
             ]
             candidates = [event for event in candidates if event is not None]
-            if candidates:
-                # Prefer a real sweep, then the most dominant wick. Only one
-                # side can enter the queue for this ticker/candle.
-                event = max(candidates, key=lambda e: (
-                    e["swept_reclaimed"], e["wick_share_pct"], e["wick"]
-                ))
-                if is_fresh(event):
-                    pending_by_key.setdefault(_event_key(event), event)
+            if not candidates:
+                continue
 
-        latest_bar = frame.iloc[-1]["bar_et"]
-        state["last_processed"][str(ticker)] = latest_bar.isoformat()
+            # One event per ticker/candle: prefer a real sweep, then the most
+            # dominant wick. All tickers/events from this run stay in pending
+            # so send_alerts() can place them into one Discord message where
+            # size permits, with immediate overflow messages if necessary.
+            event = max(candidates, key=lambda e: (
+                e["swept_reclaimed"], e["wick_share_pct"], e["wick"]
+            ))
+            pending_by_key.setdefault(_event_key(event), event)
+
+        state["last_processed"][ticker] = latest_bar.isoformat()
 
     state["seed_latest"] = False
     state["pending"] = sorted(
