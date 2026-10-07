@@ -24,3 +24,22 @@
 2026-10-07 16:15:18 BST | INFO | FILE | Saved asjr_snapshot | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-07/processed/asjr_snapshot.json
 2026-10-07 16:15:18 BST | INFO | RUN | DATA COMPLETE | universe=77 | intraday_rows=33735 | ticker_summary=77
 2026-10-07 16:15:18 BST | INFO | GIT | File verification started | count=7
+2026-10-07 16:15:22 BST | ERROR | RUN | FAILED
+Traceback (most recent call last):
+  File "/root/trading/ASJR/ASJR_Analyst/Tests/test_asjr_pipeline.py", line 354, in run_asjr_manual_pipeline
+    git_result = asjr_git.submit_datalake(
+  File "/root/trading/ASJR/ASJR_Analyst/Utils/asjr_git.py", line 113, in submit_datalake
+    push = _run_git(
+  File "/root/trading/ASJR/ASJR_Analyst/Utils/asjr_git.py", line 13, in _run_git
+    raise RuntimeError(
+RuntimeError: Git command failed: git push origin main
+STDOUT:
+
+STDERR:
+remote: Internal Server Error        
+remote: Request ID A98E:2E3E0C:21E8D6:26532F:6AC66208        
+remote: Time 2026-10-07T15:15:22Z
+To github.com:raghunathbhandari/ASJR.git
+ ! [remote rejected]   main -> main (Internal Server Error)
+error: failed to push some refs to 'github.com:raghunathbhandari/ASJR.git'
+
