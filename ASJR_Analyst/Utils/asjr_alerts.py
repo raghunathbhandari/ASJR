@@ -20,7 +20,8 @@ BATCH_FILE = ROOT / "wick_alert_batch.json"
 CONFIG_FILE = ROOT / "config" / "wick_setups.json"
 CODE_FENCE = chr(96) * 3
 
-STATE_SCHEMA_VERSION = 6
+STATE_SCHEMA_VERSION = 7
+MAX_LIVE_ALERT_AGE_MINUTES = 10
 
 
 def _read_json(path, default):
@@ -289,12 +290,13 @@ def build_wick_alerts(
     state_file=STATE_FILE,
     config_file=CONFIG_FILE,
 ):
-    """Scan every completed candle not yet processed and persist pending wicks.
+    """Scan completed candles but only queue live/recent wick alerts.
 
-    The per-ticker last_processed marker survives bot restarts. If Chakra is
-    stopped, the next run loads IBKR history and catches up every completed bar
-    after the saved marker. Pending wick events survive until delivery is
-    explicitly acknowledged by mark_alert_sent().
+    Historical bars are still processed to advance per-ticker state and provide
+    context, but a wick is eligible for Discord only for a short live window
+    after its 5-minute candle closes. This prevents restarts, late IBKR data, or
+    a missing ticker marker from replaying hours-old candles as fresh alerts.
+    Pending delivery retries are subject to the same freshness window.
     """
     if intraday is None or intraday.empty:
         return []
@@ -316,10 +318,27 @@ def build_wick_alerts(
     )
 
     state = _load_state(state_file, day)
+
+    def is_fresh(event):
+        try:
+            bar_start = pd.Timestamp(
+                datetime.strptime(event["bar_time_et"], "%Y-%m-%d %H:%M ET")
+                .replace(tzinfo=ET)
+            )
+        except (KeyError, TypeError, ValueError):
+            return False
+        bar_close = bar_start + pd.Timedelta(minutes=5)
+        age = now_et - bar_close
+        return pd.Timedelta(0) <= age <= pd.Timedelta(
+            minutes=MAX_LIVE_ALERT_AGE_MINUTES
+        )
+
+    # Never replay stale pending events. A failed Discord send may be retried
+    # briefly, but once the event is no longer live it is discarded.
     pending_by_key = {
         _event_key(event): event
         for event in state.get("pending", [])
-        if isinstance(event, dict)
+        if isinstance(event, dict) and is_fresh(event)
     }
 
     for ticker, original in intraday.groupby("ticker"):
@@ -365,7 +384,8 @@ def build_wick_alerts(
                 event = max(candidates, key=lambda e: (
                     e["swept_reclaimed"], e["wick_share_pct"], e["wick"]
                 ))
-                pending_by_key.setdefault(_event_key(event), event)
+                if is_fresh(event):
+                    pending_by_key.setdefault(_event_key(event), event)
 
         latest_bar = frame.iloc[-1]["bar_et"]
         state["last_processed"][str(ticker)] = latest_bar.isoformat()
