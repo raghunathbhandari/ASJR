@@ -1,0 +1,26 @@
+2026-10-08 19:00:30 BST | INFO | RUN | VERSION | 2026.10.08.1
+2026-10-08 19:00:30 BST | INFO | RUN | START | trade_date=2026-10-08
+2026-10-08 19:00:30 BST | INFO | WATCHLIST | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-08/config/fixed_watchlist.csv | source=prepared
+2026-10-08 19:00:30 BST | INFO | RUN | OPTIONS | include_sector=True | git_submit=True | fetch_gapup_from_app=True
+2026-10-08 19:00:30 BST | INFO | FOREX | One-time downloader | ok=True | started=True | FOREX_DOWNLOAD | started | tmux=forex_download | log=/root/trading/ASJR/Backtesting/BacktestData/IBKR/Forex/logs/EURUSD_1y_download.log
+2026-10-08 19:00:30 BST | INFO | NQ | One-time downloader | ok=True | started=True | NQ_DOWNLOAD | started | tmux=nq_download | log=/root/trading/ASJR/Backtesting/BacktestData/OpenSource/NQ/logs/NQ_yfinance_download.log
+2026-10-08 19:00:30 BST | INFO | MOVERS | Fetch started
+2026-10-08 19:00:31 BST | INFO | MOVERS | Fetch completed | rows=91
+2026-10-08 19:00:31 BST | INFO | MOVERS | Tickers | SECZ, JMKE, COCO, RGNX, CMG, ERAS, CSGP, FLUT, DC, GDDY, DOCS, FRO, SKYD, ETSY, SM, ZG, FSM, Z, LQDA, PM, ROL, EXPE, MPC, CBOE, OI, SHAK, RPD, SG, VLO, PBF, SU, DHT, IT, BBY, BLMN, APA, BAH, LDOS, HAFN, ACI, LOW, EQPT, NN, SHAZ, AAOI, HUT, BRUN, RIOT, CIFR, MXL, BSP, CLSK, TSEM, AXTI, WYFI, EROC, IREN, COHR, FCEL, OKLO, BE, BTDR, RUM, RVMD, NNE, CRWV, ASTS, WULF, XE, SEI, ALAB, ABCL, POET, GLXY, NBIS, VSH, VST, INIO, CBRS, INTC, MLTX, FLNC, LWLG, STM, QMCO, LUNR, QNT, OUST, TTMI, LPTH, CORZ
+2026-10-08 19:00:31 BST | INFO | UNIVERSE | Built | tickers=110
+2026-10-08 19:00:31 BST | INFO | FILE | Saved ibkr_gapup (movers) | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-08/raw/ibkr_gapup.csv
+2026-10-08 19:00:31 BST | INFO | YFINANCE | Daily 30D fetch started | tickers=110
+2026-10-08 19:00:38 BST | INFO | YFINANCE | Daily 30D fetch completed | rows=3300
+2026-10-08 19:00:38 BST | INFO | FILE | Saved daily_30d | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-08/raw/daily_30d.csv
+2026-10-08 19:00:38 BST | INFO | FEATURES | Daily summary built | rows=110
+2026-10-08 19:00:38 BST | INFO | IBKR | 5m fetch started | tickers=110 | duration=3 D | batch_size=5
+2026-10-08 19:01:02 BST | INFO | IBKR | 5m fetch completed | rows=51530
+2026-10-08 19:01:02 BST | INFO | FILE | Saved intraday_5m | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-08/raw/intraday_5m.csv
+2026-10-08 19:01:05 BST | INFO | FEATURES | Intraday summary built | rows=110
+2026-10-08 19:01:05 BST | INFO | YFINANCE | Sector/market fetch started
+2026-10-08 19:01:06 BST | INFO | YFINANCE | Sector/market fetch completed | rows=15
+2026-10-08 19:01:06 BST | INFO | FILE | Saved sector_market_daily | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-08/raw/sector_market_daily.csv
+2026-10-08 19:01:06 BST | INFO | FILE | Saved ticker_summary | rows=110 | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-08/processed/ticker_summary.csv
+2026-10-08 19:01:06 BST | INFO | FILE | Saved asjr_snapshot | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-08/processed/asjr_snapshot.json
+2026-10-08 19:01:06 BST | INFO | RUN | DATA COMPLETE | universe=110 | intraday_rows=51530 | ticker_summary=110
+2026-10-08 19:01:06 BST | INFO | GIT | File verification started | count=7
