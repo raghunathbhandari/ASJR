@@ -208,6 +208,7 @@ def _accepted_entries(frame):
         ):
             event = {
                 "entry_i": i,
+                "entry_slot": len(active) + 1,
                 "datetime": row["datetime"],
                 "entry_price": float(row["close"]),
                 "depth_pct": float(row["depth"] * 100.0),
@@ -268,6 +269,7 @@ def build_rudra_reversal_alerts(
                 "ticker": str(ticker).upper(),
                 "bar_time_uk": bar_uk.strftime("%Y-%m-%d %H:%M"),
                 "entry_price": entry["entry_price"],
+                "entry_slot": entry["entry_slot"],
                 "depth_pct": entry["depth_pct"],
                 "touch_count": entry["touch_count"],
                 "bb_lower": entry["bb_lower"],
@@ -299,7 +301,7 @@ def prepare_alert(result, batch_file=BATCH_FILE):
 
     for event in events:
         line = (
-            f'{event["ticker"]} | BUY | {event["bar_time_uk"][-5:]} | '
+            f'{event["ticker"]} | BUY #{event["entry_slot"]} | {event["bar_time_uk"][-5:]} | '
             f'{event["entry_price"]:.2f} | DEPTH {event["depth_pct"]:.1f}%'
         )
         candidate = "\n".join(
