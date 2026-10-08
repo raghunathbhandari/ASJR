@@ -99,6 +99,9 @@ def _find_source(ticker, trade_date=None):
             raw / "intraday_1h.csv",
             raw / "hourly_1h.csv",
         ])
+        if raw.exists():
+            candidates.extend(sorted(raw.glob("*1h*.csv")))
+            candidates.extend(sorted(raw.glob("*hour*.csv")))
 
     candidates.append(CACHE_ROOT / f"{ticker}_1h.csv")
 
