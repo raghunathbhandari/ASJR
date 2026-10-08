@@ -228,9 +228,15 @@ def run_asjr_manual_pipeline(
 
         intraday = intraday_features.add_intraday_features(intraday_raw)
         alert_data = alerts.build_wick_alerts(intraday, trade_date=trade_date)
-        rudra_reversal_alerts = run_rudra_reversal_strategy(
-            trade_date=trade_date,
-        )
+        try:
+            rudra_reversal_alerts = run_rudra_reversal_strategy(
+                trade_date=trade_date,
+            )
+        except Exception:
+            # Rudra-Reversal is independent. Never block live WICKS delivery.
+            logger.exception("RUDRA REVERSAL 1H | scan failed")
+            rudra_reversal_alerts = []
+
         # Deliver before sector research, report writing and Git submission.
         # Delivery order is WICKS first, then Rudra-Reversal 1H.
         delivery = {
