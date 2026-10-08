@@ -28,6 +28,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import pandas as pd
+import yfinance as yf
 
 UK = ZoneInfo("Europe/London")
 
@@ -43,6 +44,15 @@ STATE_SCHEMA_VERSION = 1
 NEAR_TOL = 0.0015
 MIN_DEPTH = 0.20
 MAX_POSITIONS = 2
+
+NQ_YAHOO_PATH = (
+    REPO_ROOT
+    / "Backtesting"
+    / "BacktestData"
+    / "OpenSource"
+    / "NQ"
+    / "NQ_1h_1y.csv"
+)
 
 STRATEGY_TICKERS = (
     "NQ",
@@ -89,21 +99,59 @@ def _event_key(event):
     return f'{event["ticker"]}|{event["bar_time_uk"]}|RUDRA_REVERSAL_1H_ENTRY'
 
 
+def _refresh_nq_yahoo_if_stale(path=NQ_YAHOO_PATH):
+    """Refresh NQ=F 1H Yahoo data at most about once per hour."""
+    path = Path(path)
+    if path.exists():
+        age_seconds = max(0.0, pd.Timestamp.now(tz="UTC").timestamp() - path.stat().st_mtime)
+        if age_seconds < 45 * 60:
+            return path
+
+    frame = yf.download(
+        "NQ=F",
+        period="1y",
+        interval="1h",
+        auto_adjust=False,
+        progress=False,
+        threads=False,
+    )
+    if frame is None or frame.empty:
+        return path if path.exists() else None
+
+    if isinstance(frame.columns, pd.MultiIndex):
+        frame.columns = [col[0] for col in frame.columns]
+
+    out = frame.reset_index()
+    time_col = "Datetime" if "Datetime" in out.columns else "Date"
+    out = out.rename(columns={time_col: "Datetime"})
+    out["Datetime"] = pd.to_datetime(out["Datetime"], utc=True, errors="coerce")
+
+    keep = ["Datetime", "Open", "High", "Low", "Close", "Volume"]
+    for col in keep:
+        if col not in out.columns:
+            out[col] = 0.0 if col == "Volume" else pd.NA
+
+    out = (
+        out[keep]
+        .dropna(subset=["Datetime", "Open", "High", "Low", "Close"])
+        .sort_values("Datetime")
+        .drop_duplicates("Datetime", keep="last")
+    )
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp = path.with_suffix(path.suffix + ".tmp")
+    out.to_csv(temp, index=False)
+    os.replace(temp, path)
+    return path
+
+
 def _find_source(ticker, trade_date=None):
     ticker = str(ticker).upper()
     candidates = []
 
     if ticker == "NQ":
         # NQ is Yahoo Finance ONLY. Never fall through to the IBKR stock cache.
-        nq_path = (
-            REPO_ROOT
-            / "Backtesting"
-            / "BacktestData"
-            / "OpenSource"
-            / "NQ"
-            / "NQ_1h_1y.csv"
-        )
-        return nq_path if nq_path.exists() else None
+        return _refresh_nq_yahoo_if_stale()
 
     if trade_date is not None:
         day = str(trade_date)[:10]
