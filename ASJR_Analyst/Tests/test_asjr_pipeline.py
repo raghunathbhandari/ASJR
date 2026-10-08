@@ -24,7 +24,7 @@ import Utils.asjr_market as market
 import Utils.asjr_snapshot as snapshot
 import Utils.asjr_git as asjr_git
 import Utils.asjr_logger as asjr_logger
-import Strategies.MeanReversal4Pct.mean_reversal as mean_reversal
+import Strategies.RudraReversal1H.rudra_reversal as rudra_reversal
 
 try:
     from Backtesting.DataLoader.forex_download_hook import launch_forex_download_once
@@ -36,21 +36,19 @@ try:
 except Exception:
     launch_nq_download_once = None
 
-ASJR_ANALYST_VERSION = "2026.10.06.4"
+ASJR_ANALYST_VERSION = "2026.10.08.1"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
     daily_features, intraday_features, alerts, market, snapshot,
-    asjr_git, asjr_logger, mean_reversal
+    asjr_git, asjr_logger, rudra_reversal
 ):
     importlib.reload(m)
 
 
-def run_mean_reversal_strategy(daily, intraday, trade_date=None):
-    """Run the isolated 4% mean-reversal detector."""
-    return mean_reversal.build_mean_reversal_alerts(
-        daily=daily,
-        intraday=intraday,
+def run_rudra_reversal_strategy(trade_date=None):
+    """Run the isolated Rudra-Reversal 1H detector."""
+    return rudra_reversal.build_rudra_reversal_alerts(
         trade_date=trade_date,
     )
 
@@ -74,7 +72,7 @@ def run_asjr_manual_pipeline(
             return {
                 "universe": pd.DataFrame(), "daily": pd.DataFrame(),
                 "intraday_raw": pd.DataFrame(), "intraday": pd.DataFrame(),
-                "alert_data": [], "mean_reversal_alerts": [], "sector": pd.DataFrame(),
+                "alert_data": [], "rudra_reversal_alerts": [], "sector": pd.DataFrame(),
                 "ticker_summary": pd.DataFrame(),
                 "snapshot": {"trade_date": str(pd.Timestamp.now(tz=asjr_day.ET).date())},
                 "git": {"status": "SKIPPED_CLOSED_SESSION"}, "log_file": None,
@@ -230,18 +228,20 @@ def run_asjr_manual_pipeline(
 
         intraday = intraday_features.add_intraday_features(intraday_raw)
         alert_data = alerts.build_wick_alerts(intraday, trade_date=trade_date)
-        mean_reversal_alerts = run_mean_reversal_strategy(
-            daily=daily,
-            intraday=intraday,
+        rudra_reversal_alerts = run_rudra_reversal_strategy(
             trade_date=trade_date,
         )
         # Deliver before sector research, report writing and Git submission.
-        delivery = {"alert_data": alert_data, "mean_reversal_alerts": mean_reversal_alerts}
+        # Delivery order is WICKS first, then Rudra-Reversal 1H.
+        delivery = {
+            "alert_data": alert_data,
+            "rudra_reversal_alerts": rudra_reversal_alerts,
+        }
         if alert_sender is not None:
             sent = alerts.send_alerts(delivery, alert_sender)
             logger.info("ALERTS | Immediate dispatch | events=%s", sent)
         alert_data = delivery["alert_data"]
-        mean_reversal_alerts = delivery["mean_reversal_alerts"]
+        rudra_reversal_alerts = delivery["rudra_reversal_alerts"]
         intraday_latest = intraday_features.latest_intraday_summary(
             intraday
         )
@@ -370,7 +370,7 @@ def run_asjr_manual_pipeline(
             "intraday": intraday,
             "alerts_dispatched": delivery.get("alerts_dispatched", False),
             "alert_data": alert_data,
-            "mean_reversal_alerts": mean_reversal_alerts,
+            "rudra_reversal_alerts": rudra_reversal_alerts,
             "sector": sector,
             "ticker_summary": ticker_summary,
             "snapshot": snap,
@@ -395,5 +395,5 @@ def mark_alert_sent():
 
 
 def send_alerts(result, sender):
-    """Send all wicks in one alert during this schedule, wicks first."""
+    """Send WICKS first, then Rudra-Reversal 1H."""
     return alerts.send_alerts(result, sender)
