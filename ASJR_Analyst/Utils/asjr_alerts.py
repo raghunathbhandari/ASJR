@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 from Utils.asjr_day import session_date
-from Strategies.MeanReversal4Pct import mean_reversal
+from Strategies.RudraReversal1H import rudra_reversal
 
 
 ET = ZoneInfo("America/New_York")
@@ -423,7 +423,7 @@ def prepare_alert(
     events = result.get("alert_data", []) if result else []
     events = [e for e in events if e.get("type") in {"LOWER_WICK", "UPPER_WICK"}]
     if not events:
-        return mean_reversal.prepare_alert(result)
+        return rudra_reversal.prepare_alert(result)
 
     uk_dates = {
         datetime.strptime(e["bar_time_et"], "%Y-%m-%d %H:%M ET")
@@ -499,22 +499,36 @@ def send_alerts(result, sender, state_file=STATE_FILE, batch_file=BATCH_FILE):
         result["alert_data"] = remaining
         sent_count += len(keys)
 
-    # Preserve the independent mean-reversal strategy's existing notifications.
-    mean_remaining = list(result.get("mean_reversal_alerts", []))
-    while mean_remaining:
-        message = mean_reversal.prepare_alert({"mean_reversal_alerts": mean_remaining})
+    # Rudra-Reversal 1H is delivered after all wick messages.
+    rudra_remaining = list(result.get("rudra_reversal_alerts", []))
+    while rudra_remaining:
+        message = rudra_reversal.prepare_alert(
+            {"rudra_reversal_alerts": rudra_remaining}
+        )
         if not message:
             break
-        keys = set(mean_reversal._read_json(mean_reversal.BATCH_FILE, {}).get("event_keys", []))
+        keys = set(
+            rudra_reversal._read_json(
+                rudra_reversal.BATCH_FILE, {}
+            ).get("event_keys", [])
+        )
         if not keys:
             break
         if sender(message) is False:
-            raise RuntimeError("Discord mean-reversal delivery failed; unsent events retained")
-        mean_reversal.mark_alert_sent()
-        mean_remaining = [e for e in mean_remaining if mean_reversal._event_key(e) not in keys]
-        result["mean_reversal_alerts"] = mean_remaining
+            raise RuntimeError(
+                "Discord Rudra-Reversal delivery failed; unsent events retained"
+            )
+        rudra_reversal.mark_alert_sent()
+        rudra_remaining = [
+            e for e in rudra_remaining
+            if rudra_reversal._event_key(e) not in keys
+        ]
+        result["rudra_reversal_alerts"] = rudra_remaining
         sent_count += len(keys)
-    result["alerts_dispatched"] = not result.get("alert_data") and not mean_remaining
+
+    result["alerts_dispatched"] = (
+        not result.get("alert_data") and not rudra_remaining
+    )
     return sent_count
 
 
@@ -528,8 +542,8 @@ def mark_alert_sent(
     batch = _read_json(batch_file, {})
     if isinstance(batch, dict) and batch.get("event_keys"):
         return _mark_wick_alert_sent(state_file, batch_file)
-    if mean_reversal.has_prepared_batch():
-        return mean_reversal.mark_alert_sent()
+    if rudra_reversal.has_prepared_batch():
+        return rudra_reversal.mark_alert_sent()
     return 0
 
 
