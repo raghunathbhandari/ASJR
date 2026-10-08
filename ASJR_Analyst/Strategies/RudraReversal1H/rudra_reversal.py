@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import os
+from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -93,6 +94,7 @@ def _find_source(ticker, trade_date=None):
     candidates = []
 
     if ticker == "NQ":
+        # NQ is Yahoo Finance ONLY. Never fall through to the IBKR stock cache.
         nq_path = (
             REPO_ROOT
             / "Backtesting"
@@ -101,8 +103,7 @@ def _find_source(ticker, trade_date=None):
             / "NQ"
             / "NQ_1h_1y.csv"
         )
-        if nq_path.exists():
-            return nq_path
+        return nq_path if nq_path.exists() else None
 
     if trade_date is not None:
         day = str(trade_date)[:10]
@@ -161,12 +162,17 @@ def _load_ticker_1h(ticker, trade_date=None):
     for col in ("open", "high", "low", "close"):
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    return (
+    df = (
         df.dropna(subset=["datetime", "open", "high", "low", "close"])
         .sort_values("datetime")
         .drop_duplicates("datetime", keep="last")
         .reset_index(drop=True)
     )
+
+    # Never evaluate the still-forming latest 1H candle.
+    now_utc = pd.Timestamp.now(tz="UTC")
+    completed = df["datetime"] + pd.Timedelta(hours=1) <= now_utc
+    return df[completed].reset_index(drop=True)
 
 
 def _add_features(df):
