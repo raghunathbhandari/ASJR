@@ -44,6 +44,7 @@ MIN_DEPTH = 0.20
 MAX_POSITIONS = 2
 
 STRATEGY_TICKERS = (
+    "NQ",
     "INTC", "MU", "AMAT", "LRCX", "PLTR",
     "XOM", "GOOG", "SPY", "META", "NVDA",
 )
@@ -90,6 +91,18 @@ def _event_key(event):
 def _find_source(ticker, trade_date=None):
     ticker = str(ticker).upper()
     candidates = []
+
+    if ticker == "NQ":
+        nq_path = (
+            REPO_ROOT
+            / "Backtesting"
+            / "BacktestData"
+            / "OpenSource"
+            / "NQ"
+            / "NQ_1h_1y.csv"
+        )
+        if nq_path.exists():
+            return nq_path
 
     if trade_date is not None:
         day = str(trade_date)[:10]
