@@ -442,3 +442,66 @@ shared universe as a controlled deployment, retaining existing NQ Yahoo
 feed and locked BB rules. The complete tests for this extension have been
 committed but **not verified as executed on VPS**. Attempted isolated
 external checkout could not reach GitHub, so do not claim test success.
+
+## Locked shared-universe size — 2026-10-10 (user decision)
+
+**Maximum 30 DISTINCT US-stock tickers total** for the common
+RudraScanner + Rudra-Reversal workflow:
+
+| Source bucket | Maximum chosen unique tickers |
+|---|---:|
+| Existing daily FIXED list | 10 |
+| AI hourly research CSV | 10 |
+| IBKR multi-code scanners | 10 |
+| **Total** | **30** |
+
+- The cap is applied **before 5-minute and 1-hour IBKR historical imports**.
+  Discovery can return more source rows; do **not** import them all.
+- Source priority for avoiding duplicates is FIXED → AI → IBKR. If a
+  ticker appears in multiple sources, it is counted only once against
+  the earliest source bucket. Look farther down the *same* source for
+  the next distinct eligible name.
+- A source with fewer than 10 eligible nonduplicate names contributes
+  fewer: never borrow unused quota from another source.
+- Both strategies receive the exact same selected US-stock symbols.
+  Rudra-Reversal's existing separately fetched Yahoo `NQ` is a distinct
+  non-stock research instrument and remains outside this 30-stock cap.
+- Wicks/other legacy modules are not silently changed by the new cap
+  until integration is reviewed. This is the *new shared-scanner/reversal*
+  selection policy, not a claim that live legacy imports are already limited.
+- INTC's existing user-mandated permanent monitor is ranked first
+  within the fixed bucket when present. The existing fixed-list
+  OPEN POSITION notes are considered before general fixed names,
+  and remaining fixed candidates follow the user-supplied CSV order.
+- Initial deterministic **development ranking pending user confirmation**:
+  AI rows: smallest numerical `priority` (then research freshness);
+  IBKR: number of distinct scan codes (then best in-code rank).
+  These are observable selection orderings, not calculated success
+  probabilities or guarantees of fundamentals. They do not constitute
+  an independently validated 'most eligible' ranking.
+- The selected shared CSV exposes `selection_source` and full
+  `sources` provenance separately. `raw/scanner_status.json` now
+  records `selected_total`, per-source counts and unused quotas.
+- `RudraScanner/universe.py` now enforces the cap in
+  `merge_shared_universe()` and `load_shared_universe()`; it
+  refuses configurations greater than 10 per source.
+- `RudraScanner/storage.py` updated for the selection status and
+  selection source. New offline test file:
+  `RudraScanner/tests/test_selection_caps.py` tests 30-ticker cap,
+  duplicate slot handling, unused quota, mandatory fixed monitors,
+  and exclusions.
+
+**Current state:** new code committed on `main`, but offline
+tests have **not been executed in a verified runtime**. The live
+Reversal `STRATEGY_TICKERS`, 1H data importer and Chakra caller have
+**not been rewired**. Do not claim the live bot is limited to 30.
+
+**Open ranking decision:** user said 'most eligible' and 'do not
+assume'. Before activating, confirm whether these transparent
+source-order / AI-priority / IBKR-consensus tie-breakers are preferred,
+or whether a different eligibility/ranking rule should be used.
+Do not invent missing liquidity, fundamentals, spread or catalyst data.
+
+The 1H Reversal strategy needs >=150 completed 1H bars per included stock.
+Tickers with insufficient history must be labelled DATA NOT READY,
+not quietly dropped with a false no-signal claim.
