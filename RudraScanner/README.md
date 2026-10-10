@@ -250,3 +250,18 @@ then add indicators / RVOL and replay tests. Do not hook into production
 or restart the bot until the unresolved settings are confirmed and outputs
 are verified. Keep this README and `ASJR_Analyst/OPERATIONAL_HANDOFF.md`
 consistent after every material change.
+
+## Confirmed setting — 2026-10-10 (user decision)
+
+User explicitly approved retaining the inherited IBKR scanner discovery filters:
+
+- Stock price above USD 5 (`usdPriceAbove=5`).
+- Average volume above 1,000,000 (`avgVolumeAbove=1000000`).
+- Market capitalization above USD 500 million (`marketCapAbove1e6=500`).
+- 50 results per scanner code (`numberOfRows=50`).
+- Existing `STK.US.MAJOR` / corporate-stock-only scope stays as implemented.
+
+These are **discovery filters**, not a percentage-move threshold or entry rules.
+Do not re-ask this decision unless the user requests a change or real IBKR
+validation reveals a technical incompatibility. Production activation and
+live IBKR validation remain pending.
