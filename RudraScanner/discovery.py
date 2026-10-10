@@ -112,9 +112,14 @@ def read_ai_csv(filename, now=None):
         fresh = researched is not None and expires is not None and researched <= now < expires
         if not fresh:
             status["unverified"] += 1
-        # A stated catalyst without published evidence is research context only.
-        if source.get("catalyst") and (not published or not source.get("source_url")):
-            status["warnings"].append(f"{ticker}: catalyst lacks sourced publication")
+        # A source may verify the publication date but not expose an exact
+        # UTC publication time. Preserve the missing timestamp honestly.
+        if source.get("catalyst") and not source.get("source_url"):
+            status["warnings"].append(f"{ticker}: catalyst has no source URL")
+        elif source.get("catalyst") and not published:
+            status["warnings"].append(
+                f"{ticker}: source date verified; exact published_at_utc unavailable"
+            )
         row = {key: (source.get(key) or "").strip() for key in AI_FIELDS}
         row["ticker"], row["bias"] = ticker, bias
         row["freshness"] = "FRESH" if fresh else "UNVERIFIED"
