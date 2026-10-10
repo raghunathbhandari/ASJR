@@ -857,3 +857,49 @@ or Discord scanner alerts implemented. The user will
 directly run the offline replay first and supply its output.
 For chronological and priority checkpoints read
 `RudraScanner/README.md` section "LATEST UPDATE".
+
+## 2026-10-10 USER VPS CONFIRMATION — Friday replay 30/30; ALL 24 tests OK
+
+**This is the latest RudraScanner verification checkpoint, superseding
+prior “six new tests pending” notes.** User supplied actual SSH outputs
+from the same VPS, after `git push` = Everything up-to-date and
+`git pull` = Already up to date.
+
+1. `/root/trading/venv_new/bin/python RudraScanner/bot_test.py
+   --date 2026-10-09 --ibkr-source-date 2026-10-09`:
+   **HISTORICAL_NOT_LIVE**, source `LEGACY_GAPUP_REPLAY_NOT_LIVE`,
+   84 archival names passed limited price/volume checks,
+   exact **30 / 30 selected: 10 FIXED + 10 AI + 10 historical IBKR**,
+   no real Gateway requests, no save, and **0 real trade alerts**.
+   FIXED: AKAM, AMAT, CRDO, INTC, MSFT, ORCL, QCOM, SMCI,
+   WDC, WTTR; AI: AAPL, AMT, AMZN, HUM, JPM, LITE, NVDA, PLTR,
+   SPCX, TMUS; legacy IBKR: ASTS, AXTI, DDOG, DE, MRNA,
+   SNOW, SWKS, T, VZ, ZS.
+2. `/root/trading/venv_new/bin/python -m unittest discover
+   -s RudraScanner/tests -p 'test_*.py' -v`:
+   **Ran 24 tests in 0.170s; OK**, zero failures/errors,
+   including the six new shadow/replay bot-hook tests.
+
+**Verified:** the shared stock candidate cap, provenance, offline
+historical source fallback, and bot hook's isolated OFF/replay mechanics
+run correctly on the user's Python environment.
+
+**Not verified, not active:** connected four-code IBKR scanning,
+production `RUDRA_SCANNER_MODE=shadow` connected run,
+replacing the live import universe, 5M real WAP/VWAP,
+the five actual LONG/SHORT setup detectors, shared Reversal
+1H historical imports, scanner Discord alerts and hourly AI
+refresh. The bot integration method is *wired but defaults OFF*;
+existing Wicks and locked Rudra-Reversal logic unchanged.
+Historical source is ONLY a testing substitute; no current
+fundamentals/market cap inferred.
+
+**Next step:** controlled live-session **shadow discovery verification**
+using the existing IBKR app (only when user approves activation);
+check callback statuses and DataLake outputs before changing any
+live universes. Later implement real WAP capture, RTH VWAP,
+signals and alert delivery with tests and separate state.
+Do not invent signal thresholds or claim Sunday/weekend market data
+is live. AI news CSV expires Monday Oct 12 12:00 UTC
+(13:00 BST). Complete resumption checkpoint in
+`RudraScanner/README.md` section “VERIFIED VPS CHECKPOINT”.
