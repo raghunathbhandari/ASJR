@@ -996,3 +996,41 @@ failures; only after that consider controlled one-session
 SHADOW mode with the user's approval and user-controlled bot
 configuration/restart. Do not initiate live ACTIVE, Discord, or
 automated trading without source/pacing/threshold validation.
+
+## 2026-10-10 Phase 2 FINAL SOURCE TEST INVENTORY — 55 cases awaiting VPS
+
+Following the prior Phase 2 implementation handoff, the user requested
+complete setup detection and testing. Added
+`RudraScanner/tests/test_patterns.py` with 5 synthetic
+LONG+SHORT symmetric tests covering Hitchhiker, Back$ide,
+Rubberband, Second Chance and Fashionably Late.
+Improved optional IBKR historical WAP capture to scope sidecar
+storage to registered 5M request IDs only, avoiding retention
+of unrelated historic callbacks. Added an extra WAP timestamp
+ordering test. `RudraScanner/tests/test_features.py` now
+includes 9 feature/WAP tests. Current **source code count:
+55 unittest methods total**, comprising 24 previously VPS
+confirmed cases and **31 new, NOT YET VPS VERIFIED**.
+
+Source docs and exact safe SSH procedures updated at:
+
+- `RudraScanner/README.md` — newest Phase 2 checkpoint at top.
+- `RudraScanner/FULL_TEST.md` — full 55-test
+  runner and Friday read-only raw DataLake replay commands.
+
+Latest exact full test sequence:
+
+    cd /root/trading/ASJR
+    git status --short
+    git pull --ff-only origin main
+    /root/trading/venv_new/bin/python -m compileall -q RudraScanner ASJR_Analyst/Tests/test_asjr_pipeline.py ASJR_Analyst/Utils/asjr_ibkr.py
+    /root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+    /root/trading/venv_new/bin/python RudraScanner/bot_test.py --date 2026-10-09 --ibkr-source-date 2026-10-09
+    /root/trading/venv_new/bin/python RudraScanner/datalake_test.py --date 2026-10-09
+
+**No restart or broker connection required for these weekend tests.**
+`RUDRA_SCANNER_MODE` remains OFF by default; live SHADOW/ACTIVE
+and scanner Discord are NOT user-activated or verified.
+The user should send the 55-test output so failures can
+be fixed before any live test. Exact WAP VWAP and RVOL20
+correctly remain DATA NOT READY until real sources/history exist.
