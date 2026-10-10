@@ -685,3 +685,15 @@ its checkpoint + chronological change records and this operational handoff
 for each material change. Revalidate actual runtime behavior before claiming
 deployment. Latest user's next action is to run the existing offline tests
 and SSH preview and provide the result for review.
+
+## 2026-10-10 RudraScanner next phase queued
+
+User will run the existing SSH validation tests. **Next task after results
+are reviewed:** integrate RudraScanner within the existing Chakra bot
+five-minute method, not a new scheduler. The integration must use the
+shared DataLake and 10 FIXED + 10 AI + 10 IBKR universe, preserve
+existing Wicks and locked Rudra-Reversal, add the necessary verified
+IBKR WAP/5M/1H data flow, publish one authoritative result and use
+safe Git/Discord delivery. **No integration, deployment or restart
+is authorised as already complete**; the pending steps and acceptance
+gates are documented in `RudraScanner/README.md`.
