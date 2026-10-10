@@ -289,3 +289,33 @@ against the actual IBKR callback before live activation.
 
 The continuous EMA9 implementation belongs in the isolated scanner,
 not in legacy Wicks or the locked Rudra-Reversal modules.
+
+## Continuous EMA9 — implementation record (2026-10-10)
+
+- Added `RudraScanner/ema9.py` with `build_continuous_ema9(raw, now=...)`.
+  Accepts existing raw `Ticker,Date,Open,High,Low,Close,Volume` DataLake
+  frames or normalized equivalents. Converts timezone-aware US exchange bar
+  starts to UTC; exposes `Europe/London` time and session labels.
+- For each ticker: sort real available 5-minute candles, discard incomplete
+  or invalid bars, remove timestamp duplicates with a diagnostic count;
+  apply `ewm(span=9, adjust=False)` across **all** real observed
+  completed bars, including premarket, RTH, postmarket or overnight when
+  returned by IBKR. No new-session reset and **no synthetic gap fill**.
+- A valid EMA9 value requires at least nine observed completed bars for
+  `ema9_ready` to become true. Do not fire live signals on unready EMA9.
+  The existing 3-calendar-day IBKR historical request may supply fewer
+  prior bars following holidays/connection gaps; this must be checked in
+  live coverage tests. `prior_gap_minutes` exposes gaps in the actual feed.
+- Added `RudraScanner/tests/test_ema9.py` for prior-Friday to Monday
+  premarket/RTH carry, multi-ticker independence, real gap preservation,
+  duplicate/invalid/unfinished diagnostics and rejecting timezone-naive bars.
+- These are **committed source and test cases, not executed results**.
+  No connected IBKR/Gateway access or live Python/test runtime was used.
+  Nothing in the live ASJR pipeline or its EMA20/Wicks/Reversal logic changed.
+- VWAP remains RTH-reset and still requires independent source/volume
+  verification. This EMA module is not yet part of Chakra's execution.
+- Offline test command:
+  `/root/trading/venv_new/bin/python -m unittest RudraScanner.tests.test_ema9 -v`
+
+The former open decision about EMA9 session reset is **resolved** by the
+user: continuous, across days, including premarket. Do not re-ask.
