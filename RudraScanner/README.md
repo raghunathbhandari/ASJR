@@ -59,7 +59,13 @@ scanner codes have run live.
   for the intended live scanner.
 - Friday October 9 archived mover file **inspected in GitHub**:
   87 historical tickers; of those 84 qualify on saved 20-day
-  price/volume data. These figures are archival-source inspection,
+  price/volume data.
+  Based on the same archived inputs (independent data check, **not** an
+  executed VPS replay), the 10 historical IBKR-slot names are expected to
+  be **MRNA, SNOW, VZ, T, DE, DDOG, ASTS, SWKS, ZS, AXTI** after
+  removing fixed/AI overlaps. **Fundamentals have not been screened for
+  these names**, so they are test-only candidates and must not trigger
+  investment recommendations or live technical alerts. These figures are archival-source inspection,
   not observed execution of the new VPS replay command. 2026-10-09
   exact provenance is retained. **Historical market capitalization,
   company fundamentals, and realtime contract validity NOT verified**
