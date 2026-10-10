@@ -29,6 +29,7 @@ import Strategies.RudraReversal1H.rudra_reversal as rudra_reversal
 from RudraScanner.bot_hook import run_bot_shadow
 from RudraScanner.engine import evaluate_scanner, persist_features
 from RudraScanner.hourly import refresh_hourly_cache
+from RudraScanner.reversal_bridge import seed_new_symbols
 from RudraScanner.topdown import classify_topdown, ticker_etf_from_sources
 from RudraScanner.patterns import PatternSettings, detect_five_patterns
 from RudraScanner.delivery import deliver_scanner_alerts
@@ -44,7 +45,7 @@ try:
 except Exception:
     launch_nq_download_once = None
 
-ASJR_ANALYST_VERSION = "2026.10.10.4"
+ASJR_ANALYST_VERSION = "2026.10.10.5"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -334,6 +335,19 @@ def run_asjr_manual_pipeline(
                 rudra_scanner_hourly = {"state": "ERROR"}
 
         try:
+            if rudra_active:
+                # New symbols must NOT replay historical 1H entries.
+                # The locked BB detector and prior pending alerts remain
+                # unchanged. Seed only after complete 150-bar history.
+                seed_status = seed_new_symbols(
+                    trade_date, tickers + ["NQ"],
+                )
+                logger.info(
+                    "RUDRA SCANNER | reversal 1H first-use seed=%s | not_ready=%s",
+                    seed_status["seeded"],
+                    seed_status["not_ready_150h"],
+                )
+                rudra_scanner_hourly["reversal_seed"] = seed_status
             rudra_reversal_alerts = run_rudra_reversal_strategy(
                 trade_date=trade_date,
                 tickers=tickers + ["NQ"] if rudra_active else None,
