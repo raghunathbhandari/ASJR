@@ -1,12 +1,11 @@
-"""Feature-gated first-stage Chakra integration for RudraScanner.
+"""Feature-gated four-code discovery inside the existing Chakra loop.
 
-Default OFF. In 'shadow', fetch discovery-only IBKR scanners inside the
-already existing Chakra five-minute pipeline, combine the fixed/AI/IBKR
-candidates under the 10+10+10 cap, and save into the common day DataLake.
-
-It does NOT change the legacy import universe or the live Wicks/Reversal
-detectors, request 5M/1H historical bars, dispatch Discord messages, or
-create another scheduler. This is a deliberate integration test gate.
+From Monday 2026-10-12, the checked-in runtime config schedules SHADOW:
+the selected <=30 names are passed to the independent 5M/1H sidecar.
+The hook itself collects four new IBKR scanner lists using the same app.
+Actual Wicks/Reversal and their original imported ticker list are
+always preserved; no autonomous job or order executor is created.
+Scanner Discord remains double-gated and OFF until approved.
 """
 
 from __future__ import annotations
@@ -56,11 +55,11 @@ def scanner_runtime(repo_root, trade_date):
 def run_bot_shadow(app, trade_date, *, repo_root, mode=None, logger=None,
                    timeout=5.0, allow_replay=False,
                    save_replay=False, replay_source_date=None):
-    """Return a small structured status; only SHADOW contacts IBKR.
+    """Discover selected candidates in SHADOW or explicitly ACTIVE mode.
 
-    The caller of this hook must keep the legacy pipeline running even
-    if this isolated discovery step raises. Pass the existing connected
-    EClient/EWrapper app: no second IBKR connection may be started.
+    This is only the discovery stage, not an order or alert sender.
+    The caller must keep the existing Chakra pipeline running even if
+    an isolated scanner stage fails. Use its current connected app.
     """
     if mode is None:
         mode = scanner_runtime(repo_root, trade_date)["mode"]
