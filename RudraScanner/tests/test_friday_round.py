@@ -103,6 +103,22 @@ class FridayReplayTests(unittest.TestCase):
             self.assertGreater(
                 status["blocks"]["missing_sector_or_index"], 0)
 
+    def test_stale_five_minute_benchmark_bar_cannot_confirm_trade(self):
+        with tempfile.TemporaryDirectory() as root:
+            raw = fixture(root)
+            # Drop one QQQ candle at 10:30 ET. Reusing the earlier
+            # QQQ quote would falsely approve signals as-of 10:30.
+            missing = pd.Timestamp("2026-10-09T14:30:00Z").isoformat()
+            raw = raw[~(
+                (raw["Ticker"] == "QQQ") & (raw["Date"] == missing)
+            )].copy()
+            trades, state = replay_once(raw, root, TEST_DATE)
+            self.assertGreater(
+                state["blocks"]["missing_sector_or_index"], 0)
+            # A normal run with missing QQQ candle must not fabricate a
+            # current signal by using QQQ's stale last available price.
+            self.assertTrue(state["selection_hindsight"])
+
     def test_direction_wait_on_mixed(self):
         self.assertEqual(_direction(1, -1, 3, 1), "WAIT")
         self.assertEqual(_direction(1, 1, -1, 1), "WAIT")
