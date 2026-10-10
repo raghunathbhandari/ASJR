@@ -32,6 +32,79 @@ Updated: 10 October 2026, Europe/London.
   for the exact SSH commands. No new test PASS is claimed
   until the user shares actual VPS output.
 
+## VERIFIED VPS TEST — Saturday 2026-10-10, 55/55 PASSED
+
+**LATEST USER-OBSERVED TEST:** User ran the entire Phase 2 offline
+VPS test sequence. All **55 Python unit tests PASSED** in **0.531 s**
+with **zero failures/errors** and the `compileall` syntax check
+returned with no errors. These are actual user-supplied console results,
+not estimates.
+
+- Friday 2026-10-09 historical **bot-hook REPLAY**:
+  `LEGACY_GAPUP_REPLAY_NOT_LIVE`, **84** old mover-list
+  rows passed the replay's limited daily price/volume screen;
+  **30/30 candidates = 10 FIXED + 10 AI + 10 historical IBKR**.
+  Read-only: **no IBKR API calls, live alerts or saved reports**.
+- Friday shared raw DataLake **5-minute indicator replay**:
+  **56,027 completed bars**, **106 archived tickers**, continuous
+  EMA9 **OK**, exact IBKR-WAP VWAP **WAP_MISSING_OR_INCOMPLETE_RTH**
+  with **0 valid RTH VWAP bars**, RVOL20
+  **INSUFFICIENT_20_FULL_RTH_SESSIONS** with **0 ready rows**.
+  `TOP-DOWN context gate = 0 WAIT` is a count from the
+  **DISABLED** detector mode; **it does NOT mean SPY/QQQ
+  or any sector context was verified**. The five experimental
+  detectors were **DISABLED** and **0 trade signals** existed.
+  `Discord` was **DISABLED**, as intended.
+- Pandas printed only a nonfatal `FutureWarning` at
+  `RudraScanner/volume_history.py` for concatenating an
+  empty DataFrame. **Fixed in a new GitHub commit** by avoiding
+  empty inputs; a new unit regression test explicitly treats that
+  warning as an error. **This follow-up fix has not yet been
+  VPS-tested**: new source inventory is **56 unit tests**.
+- AI/FIXED status remain `PARTIAL` because some article timestamps
+  are unavailable and legacy `ONDS` is deliberately excluded;
+  neither caused a unit-test failure.
+- Production **`RUDRA_SCANNER_MODE=off`**, no observed real
+  connected 4-code IBKR scanner or historical WAP callback test,
+  no activated new 30-name imports, no real 1H coverage
+  confirmation or scanner Discord send.
+  **Do not restart/activate Chakra automatically.**
+
+### Small follow-up test after pulling warning fix
+
+```bash
+cd /root/trading/ASJR
+git status --short
+git pull --ff-only origin main
+/root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+/root/trading/venv_new/bin/python RudraScanner/datalake_test.py --date 2026-10-09
+```
+
+**Expected, not yet VPS-observed for the fix:** 56 tests, final OK,
+no `FutureWarning`; 5M quality results remain unchanged
+except warnings disappear. Keep actual WAP/RVOL20 shown as not
+ready until their required sources/history are present.
+
+### Next step after the 56-unit regression test
+
+Review the VPS external IBKR `EWrapper.historicalData`,
+`scannerData` and `scannerDataEnd` callback contracts;
+then conduct a **controlled one-session SHADOW scan** using the
+existing Chakra IBKR application only when the user enables it.
+Record actual scan-code states, selected source counts, WAP fields,
+bar timestamps, pacing and CSV output from the one common DataLake.
+SHADOW does **not** replace Wicks/Reversal ticker coverage.
+Do not promote the historical 30/30 replay as a live 30-stock scan.
+
+**Activation blockers:** fully verified live four-scanner callbacks,
+actual WAP VWAP and true time-matched RVOL20 historical readiness,
+hourly 1H Reversal coverage and first-use state, eligible stock
+contracts, research threshold approval, and Discord acknowledgements.
+The ten AI news candidates expire **2026-10-12 12:00 UTC /
+13:00 UK**; refresh before Monday US open.
+
+---
+
 ## PHASE 2 CODE CHECKPOINT — 2026-10-10: full gated Scanner / Reversal integration
 
 **AUTHORITATIVE LATEST STATE:** User's existing VPS evidence is
