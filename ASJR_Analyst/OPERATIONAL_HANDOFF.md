@@ -584,3 +584,19 @@ EMA9 is continuous across available 5-minute bars and days including
 premarket; VWAP is a separate RTH-reset indicator. The historical-bar WAP
 versus HLC3×volume VWAP source is still awaiting explicit confirmation.
 See `RudraScanner/README.md`. No live activation.
+
+## 2026-10-10 shared DataLake — Rudra-Reversal + RudraScanner
+
+User explicitly confirmed one common ASJR DataLake for both Rudra-Reversal
+and RudraScanner (and existing modules): `ASJR_Analyst/DataLake/YYYY-MM-DD/`.
+Reuse shared raw inputs and the existing five-minute Chakra collector;
+keep each strategy's processed results/alerts separate inside the same daily
+`processed/` and `reports/` subfolders. No second DataLake or scheduler.
+
+Current Reversal source code searches the common day's `raw/` for 1H CSV
+first, but can fall back to historical IBKR research cache; NQ 1H uses Yahoo
+Finance. This does not prove that fresh shared 1H ingestion exists. Align
+source publication over time without changing locked Reversal signal rules.
+User approved actual bar WAP as the scanner VWAP price source; upstream IBKR
+callback extension and runtime verification are still outstanding.
+Canonical details: `RudraScanner/README.md`. No live deployment yet.
