@@ -36,21 +36,27 @@ class ChakraBridgeTests(unittest.TestCase):
         self.assertEqual(mock.call_count,1)
 
     def test_scanner_batch_after_internal_wicks_reversal_dispatch(self):
-        with patch("RudraScanner.delivery.prepare_queued_alert",
-                   return_value="QUEUED RESEARCH") as queued:
-            result={"alert_data":[],"rudra_reversal_alerts":[],
-                    "alerts_dispatched":True}
-            message=alerts.prepare_alert(result)
+        # Explicitly authorize the fake scanner queue. The production
+        # gate is deliberately disabled until both user approvals.
+        with patch.object(alerts, "_scanner_queue_approved", return_value=True):
+            with patch("RudraScanner.delivery.prepare_queued_alert",
+                       return_value="QUEUED RESEARCH") as queued:
+                result={"alert_data":[],"rudra_reversal_alerts":[],
+                        "alerts_dispatched":True}
+                message=alerts.prepare_alert(result)
         self.assertEqual(message,"QUEUED RESEARCH")
         self.assertEqual(queued.call_count,1)
 
     def test_external_mark_sent_falls_through_to_scanner_ack(self):
-        with patch.object(alerts,"_read_json",return_value={}):
-            with patch.object(alerts.rudra_reversal,
-                              "has_prepared_batch",return_value=False):
-                with patch("RudraScanner.delivery.mark_queued_sent",
-                           return_value=1) as ack:
-                    count=alerts.mark_alert_sent()
+        # In production an unapproved or stale queue MUST NOT ACK.
+        # This branch test simulates explicit approved delivery.
+        with patch.object(alerts, "_scanner_queue_approved", return_value=True):
+            with patch.object(alerts,"_read_json",return_value={}):
+                with patch.object(alerts.rudra_reversal,
+                                  "has_prepared_batch",return_value=False):
+                    with patch("RudraScanner.delivery.mark_queued_sent",
+                               return_value=1) as ack:
+                        count=alerts.mark_alert_sent()
         self.assertEqual(count,1)
         self.assertEqual(ack.call_count,1)
 
