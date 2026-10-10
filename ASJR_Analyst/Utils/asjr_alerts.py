@@ -423,7 +423,18 @@ def prepare_alert(
     events = result.get("alert_data", []) if result else []
     events = [e for e in events if e.get("type") in {"LOWER_WICK", "UPPER_WICK"}]
     if not events:
-        return rudra_reversal.prepare_alert(result)
+        # Keep locked 1H Reversal priority. The existing external
+        # Chakra caller invokes prepare_alert() once per 5M cycle.
+        # Only when no Wick/Reversal message is present, deliver one
+        # independently queued and double-approved scanner batch.
+        reversal = rudra_reversal.prepare_alert(result)
+        if reversal:
+            return reversal
+        from RudraScanner.delivery import prepare_queued_alert
+        return prepare_queued_alert(
+            state_file=ROOT / "rudra_scanner_delivery_state.json",
+            batch_file=ROOT / "rudra_scanner_delivery_batch.json",
+        )
 
     uk_dates = {
         datetime.strptime(e["bar_time_et"], "%Y-%m-%d %H:%M ET")
@@ -526,6 +537,25 @@ def send_alerts(result, sender, state_file=STATE_FILE, batch_file=BATCH_FILE):
         result["rudra_reversal_alerts"] = rudra_remaining
         sent_count += len(keys)
 
+    # Scanner queue is separate from both locked alert strategies.
+    # It can emit several Discord-sized batches when an explicit sender
+    # was supplied, and ACKs ONLY after the actual sender call.
+    from RudraScanner.delivery import prepare_queued_alert, mark_queued_sent
+    scanner_state = ROOT / "rudra_scanner_delivery_state.json"
+    scanner_batch = ROOT / "rudra_scanner_delivery_batch.json"
+    while True:
+        message = prepare_queued_alert(
+            state_file=scanner_state, batch_file=scanner_batch)
+        if not message:
+            break
+        if sender(message) is False:
+            raise RuntimeError("Discord scanner delivery failed; events retained")
+        acknowledged = mark_queued_sent(
+            state_file=scanner_state, batch_file=scanner_batch)
+        if not acknowledged:
+            raise RuntimeError("Scanner queue acknowledgement missing")
+        sent_count += acknowledged
+
     result["alerts_dispatched"] = (
         not result.get("alert_data") and not rudra_remaining
     )
@@ -544,7 +574,11 @@ def mark_alert_sent(
         return _mark_wick_alert_sent(state_file, batch_file)
     if rudra_reversal.has_prepared_batch():
         return rudra_reversal.mark_alert_sent()
-    return 0
+    from RudraScanner.delivery import mark_queued_sent
+    return mark_queued_sent(
+        state_file=ROOT / "rudra_scanner_delivery_state.json",
+        batch_file=ROOT / "rudra_scanner_delivery_batch.json",
+    )
 
 
 def _mark_wick_alert_sent(state_file=STATE_FILE, batch_file=BATCH_FILE):
