@@ -20,10 +20,12 @@ from .universe import selection_summary
 MODE_ENV = "RUDRA_SCANNER_MODE"
 OFF = "off"
 SHADOW = "shadow"
+REPLAY = "replay"
 
 
 def run_bot_shadow(app, trade_date, *, repo_root, mode=None, logger=None,
-                   timeout=5.0):
+                   timeout=5.0, allow_replay=False,
+                   save_replay=False, replay_source_date=None):
     """Return a small structured status; only SHADOW contacts IBKR.
 
     The caller of this hook must keep the legacy pipeline running even
@@ -33,6 +35,17 @@ def run_bot_shadow(app, trade_date, *, repo_root, mode=None, logger=None,
     if mode is None:
         mode = os.environ.get(MODE_ENV, OFF)
     normalized_mode = str(mode).strip().lower()
+    if normalized_mode == REPLAY:
+        if not allow_replay:
+            return {"mode": REPLAY, "state": "REPLAY_NOT_ALLOWED_IN_LIVE_BOT",
+                    "selected_total": 0, "alert_delivery": "DISABLED"}
+        from .replay import build_replay, persist_replay
+        replay_result = build_replay(
+            repo_root, trade_date, source_date=replay_source_date,
+        )
+        if save_replay:
+            replay_result["report_path"] = persist_replay(repo_root, replay_result)
+        return replay_result
     if normalized_mode != SHADOW:
         state = "OFF" if normalized_mode in ("", OFF) else "INVALID_MODE"
         return {"mode": normalized_mode or OFF, "state": state,
