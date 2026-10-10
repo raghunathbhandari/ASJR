@@ -4,7 +4,7 @@ Updated: 10 October 2026, Europe/London.
 
 **Read this document first in every future session.** Repository: `raghunathbhandari/ASJR`, production branch `main`. Operational history: `ASJR_Analyst/OPERATIONAL_HANDOFF.md`.
 
-**START NEXT SESSION HERE — VERIFIED 10 Oct 2026, 12:46:59 UTC:**
+**LATEST MONDAY DEPLOYMENT PREP (code committed, VPS tests still pending):** See `RudraScanner/MONDAY_LIVE.md` and the `MONDAY 12 OCTOBER 2026` checkpoint below. **The verified 65-test Friday baseline is historical.**\n\n**PRIOR VERIFIED FRIDAY BASELINE — 10 Oct 2026 12:46:59 UTC:**
 User pulled GitHub `main` successfully to commit `368cf6d3`
 and ran the COMPLETE `RudraScanner/tests/` suite on their VPS:
 
@@ -90,7 +90,7 @@ preserved. **Real Monday execution is NOT yet verified.**
    `thresholds_approved=false`. Env
    `RUDRA_SCANNER_MODE` overrides this mode.
 2. Existing `ASJR_Analyst/Tests/test_asjr_pipeline.py`
-   version `2026.10.10.10` sets up PASSIVE WAP
+   version `2026.10.10.12` sets up PASSIVE WAP
    callback capture before existing 5M bars, then
    performs Wicks and locked 1H Reversal delivery
    BEFORE the new four-code IBKR discovery,
