@@ -26,7 +26,8 @@ import Utils.asjr_snapshot as snapshot
 import Utils.asjr_git as asjr_git
 import Utils.asjr_logger as asjr_logger
 import Strategies.RudraReversal1H.rudra_reversal as rudra_reversal
-from RudraScanner.bot_hook import run_bot_shadow
+from RudraScanner.bot_hook import run_bot_shadow, scanner_runtime
+from RudraScanner.live_round import run_live_scanner_round
 from RudraScanner.engine import evaluate_scanner, persist_features
 from RudraScanner.volume_history import apply_rolling_rvol20
 from RudraScanner.hourly import refresh_hourly_cache
@@ -46,7 +47,7 @@ try:
 except Exception:
     launch_nq_download_once = None
 
-ASJR_ANALYST_VERSION = "2026.10.10.5"
+ASJR_ANALYST_VERSION = "2026.10.10.6"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -203,17 +204,11 @@ def run_asjr_manual_pipeline(
                 ", ".join(gapup_tickers) if gapup_tickers else "None",
             )
 
-        if rudra_active:
-            # One bounded list shared by Scanner and Reversal (NQ remains
-            # a separate Yahoo instrument). No new IBKR app connection.
-            uni = pd.DataFrame([
-                {"ticker": item["ticker"],
-                 "source": "+".join(item["sources"]),
-                 "sector": item.get("fixed_sector", "")}
-                for item in rudra_scanner_shadow["candidates"]
-            ])
-        else:
-            uni = universe.build_universe(trade_date, gapup_df=gapup_df)
+        # LIVE SAFETY: Never replace the existing Wicks import universe.
+        # RudraScanner collects only its own missing stocks/ETFs later
+        # using the SAME Gateway app. Reversal locked ticker list and NQ
+        # remain unchanged even when Scanner config enables SHADOW.
+        uni = universe.build_universe(trade_date, gapup_df=gapup_df)
         tickers = (
             uni["ticker"]
             .dropna()
@@ -282,40 +277,30 @@ def run_asjr_manual_pipeline(
         storage.save_csv(intraday_raw, intraday_file)
         logger.info("FILE | Saved intraday_5m | %s", intraday_file)
 
-        # Scanner feature processing uses this SAME IBKR 5M collection.
-        # Only explicit shadow mode performs extra work and emits only
-        # saved diagnostic/research outputs, NEVER scanner Discord alerts.
+        # The scanner uses the existing app / already downloaded bar
+        # frames and requests only its missing 30-name/ETF symbols.
+        # SHADOW preserves the original Wicks and Reversal universe.
         rudra_scanner_features = {"state": "OFF", "alert_delivery": "DISABLED"}
-        if rudra_scanner_shadow.get("mode") in ("shadow", "active"):
+        if (rudra_scanner_shadow.get("mode") in ("shadow", "active")
+                and rudra_scanner_shadow.get("candidates")):
             try:
-                radar_bars, radar_result = evaluate_scanner(
-                    intraday_raw, enable_research=False,
+                rudra_scanner_features = run_live_scanner_round(
+                    app, REPO_ROOT, paths.trading_day(trade_date),
+                    rudra_scanner_shadow["candidates"],
+                    intraday_raw, fetch=ibkr.get_ibkr_5m_batch,
+                    research=scanner_runtime(
+                        REPO_ROOT, paths.trading_day(trade_date)
+                    )["research"],
                 )
-                radar_bars, rvol_history = apply_rolling_rvol20(
-                    radar_bars, REPO_ROOT, paths.trading_day(trade_date),
-                    save=True,
-                )
-                radar_result["feature_status"]["rvol_state"] = rvol_history["state"]
-                radar_result["feature_status"]["rvol20_ready_rows"] = rvol_history["ready_rows"]
-                radar_result["volume_history"] = rvol_history
-                radar_paths = persist_features(
-                    REPO_ROOT, paths.trading_day(trade_date),
-                    radar_bars, radar_result,
-                )
-                rudra_scanner_features = {
-                    "state": radar_result["state"],
-                    "quality": radar_result["feature_status"],
-                    "files": radar_paths,
-                    "alert_delivery": "DISABLED",
-                }
                 logger.info(
-                    "RUDRA SCANNER | indicators saved | mode=%s | wap=%s | rvol20=%s",
-                    radar_result["state"],
-                    radar_result["feature_status"].get("wap_state"),
-                    radar_result["feature_status"].get("rvol_state"),
+                    "RUDRA SCANNER | shadow 5M=%s | selected=%s | wap=%s | report=%s",
+                    rudra_scanner_features.get("state"),
+                    len(rudra_scanner_shadow["candidates"]),
+                    rudra_scanner_features.get("quality", {}).get("wap_state"),
+                    rudra_scanner_features.get("report"),
                 )
             except Exception:
-                logger.exception("RUDRA SCANNER | nonfatal feature stage failure")
+                logger.exception("RUDRA SCANNER | isolated 5M sidecar error")
                 rudra_scanner_features = {
                     "state": "ERROR", "alert_delivery": "DISABLED",
                 }
@@ -327,11 +312,12 @@ def run_asjr_manual_pipeline(
         # fetches and reuses a bounded 1H source for the same stock
         # candidates and preserves NQ on its independent Yahoo route.
         rudra_scanner_hourly = {"state": "OFF"}
-        if rudra_active:
+        if (rudra_scanner_shadow.get("mode") in ("shadow", "active")
+                and rudra_scanner_shadow.get("candidates")):
             try:
                 rudra_scanner_hourly = refresh_hourly_cache(
                     app, REPO_ROOT, paths.trading_day(trade_date),
-                    tickers,
+                    [c["ticker"] for c in rudra_scanner_shadow["candidates"]],
                 )
                 logger.info(
                     "RUDRA SCANNER | 1H history | state=%s | rows=%s",
@@ -343,22 +329,10 @@ def run_asjr_manual_pipeline(
                 rudra_scanner_hourly = {"state": "ERROR"}
 
         try:
-            if rudra_active:
-                # New symbols must NOT replay historical 1H entries.
-                # The locked BB detector and prior pending alerts remain
-                # unchanged. Seed only after complete 150-bar history.
-                seed_status = seed_new_symbols(
-                    trade_date, tickers + ["NQ"],
-                )
-                logger.info(
-                    "RUDRA SCANNER | reversal 1H first-use seed=%s | not_ready=%s",
-                    seed_status["seeded"],
-                    seed_status["not_ready_150h"],
-                )
-                rudra_scanner_hourly["reversal_seed"] = seed_status
+            # Never seed/change existing locked Reversal state in
+            # Monday SHADOW. New 1H bars are research cache only.
             rudra_reversal_alerts = run_rudra_reversal_strategy(
                 trade_date=trade_date,
-                tickers=tickers + ["NQ"] if rudra_active else None,
             )
         except Exception:
             # Rudra-Reversal is independent. Never block live WICKS delivery.
