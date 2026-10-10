@@ -5,7 +5,8 @@ import json
 import os
 from pathlib import Path
 
-from .discovery import AI_FIELDS, IBKR_FIELDS, merge_candidates, read_ai_csv, run_ibkr_scans, utc_text
+from .discovery import AI_FIELDS, IBKR_FIELDS, read_ai_csv, run_ibkr_scans, utc_text
+from .universe import load_shared_universe
 
 
 def _atomic(path, content):
@@ -46,17 +47,19 @@ def save_discovery(app, trade_date, *, repo_root, timeout=5.0, now=None):
             canonical.read_text(encoding="utf-8-sig") if canonical.is_file()
             else _csv_text(AI_FIELDS, []))
     ibkr_rows, scan_status = run_ibkr_scans(app, timeout=timeout, now=now)
-    candidates = merge_candidates(ai_rows, ibkr_rows)
+    candidates, fixed_status = load_shared_universe(root, trade_date, ai_rows, ibkr_rows)
     _atomic(raw / "ibkr_scanner_list.csv", _csv_text(IBKR_FIELDS, ibkr_rows))
     _atomic(raw / "scanner_status.json", json.dumps({
-        "generated_at_utc": utc_text(now), "ai": ai_status, "ibkr": scan_status,
+        "generated_at_utc": utc_text(now), "fixed": fixed_status,
+        "ai": ai_status, "ibkr": scan_status,
         "candidate_count": len(candidates)
     }, indent=2) + "\n")
     _atomic(processed / "scalp_radar_candidates.csv", _csv_text(
-        ("ticker", "sources", "scan_codes", "ai_bias", "ai_freshness"),
+        ("ticker", "sources", "scan_codes", "ai_bias", "ai_freshness", "fixed_sector"),
         [{**r, "sources": "+".join(r["sources"]),
           "scan_codes": "+".join(r["scan_codes"])} for r in candidates]))
-    return {"candidates": candidates, "ai": ai_status, "ibkr": scan_status}
+    return {"candidates": candidates, "fixed": fixed_status,
+            "ai": ai_status, "ibkr": scan_status}
 
 
 def read_saved_report(repo_root, trade_date):
