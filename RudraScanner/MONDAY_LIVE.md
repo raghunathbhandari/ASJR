@@ -1,5 +1,46 @@
 # RudraScanner Monday US Session — Live SHADOW Deployment
 
+## Added after 13:47 UTC 10 October: SSH scan_now.py request bridge
+
+The user explicitly asked to CREATE
+`RudraScanner/scan_now.py`, having attempted to
+run that previously nonexistent file. It is now
+committed together with
+`RudraScanner/manual_request.py`,
+`RudraScanner/tests/test_manual_ssh.py`
+(10 new unit tests), `.gitignore` and a
+small **existing Chakra bot pipeline** integration.
+See [`SCAN_NOW.md`](SCAN_NOW.md)
+and [`CURRENT_STATE.md`](CURRENT_STATE.md).
+
+**Key distinction:** SSH `scan_now.py` creates a
+local atomic **request for the next existing
+five-minute Chakra cycle** (and optionally waits).
+It does **not** connect to IBKR separately,
+create a new client ID, call new scanner requests
+from the SSH process, bypass Monday SHADOW, send
+Discord, modify Wicks or lock 1H Reversal, or
+provide an instant independent broker scan.
+
+**Pipeline version bumped to `2026.10.10.13`**.
+The previously verified **83/83 user-VPS pass**
+applies to version `2026.10.10.12` **BEFORE
+the new SSH bridge**. Expect **93 tests** on
+first VPS rerun; it is NOT yet verified.
+A user's bot reload is needed to consume pending
+SSH requests. Saturday SSH live requests safely
+return `MARKET SESSION CLOSED`.
+No standalone live SSH request has yet completed.
+
+```bash
+cd /root/trading/ASJR
+git pull --ff-only origin main
+/root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+/root/trading/venv_new/bin/python RudraScanner/scan_now.py --help
+# On Monday after the existing Chakra bot has reloaded:
+/root/trading/venv_new/bin/python RudraScanner/scan_now.py
+```
+
 **Prepared Saturday 10 Oct 2026. Intended next US session Monday
 12 Oct 2026. Timezone: Europe/London BST (UTC+1) for all bot alerts.**
 
