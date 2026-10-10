@@ -4,23 +4,42 @@ Updated: 10 October 2026, Europe/London.
 
 **Read this document first in every future session.** Repository: `raghunathbhandari/ASJR`, production branch `main`. Operational history: `ASJR_Analyst/OPERATIONAL_HANDOFF.md`.
 
-**START NEXT SESSION HERE (latest state — 10 Oct 2026):** Prior 56/56
-offline tests PASSED on user's VPS, and Friday Oct 9 30/30 historical
-ticker replay was verified. **NEW** Friday one-round technical replay
-code was committed (`RudraScanner/friday_round.py`), with 8 new
-UNVERIFIED unit tests (**64 total source**). Run the offline
-`friday_round.py --date 2026-10-09` first (expected
-DATA_NOT_READY due to missing actual WAP/ETF benchmarks). If the
-user's IBKR Gateway is available, optionally run its separate
-`--download-ibkr` read-only historical TRADES WAP/ETF backfill
-for a complete retrospective five-pattern session and sample
-30-minute forward-return assessment. **This is hindsight-biased
-research, not a fully causal Friday stock-discovery backtest.**
-Full command and limits:
-`RudraScanner/FRIDAY_REPLAY.md`. Production Chakra remains
-feature-gated OFF; no live alerts or bot restart performed.
-Older status notes below are historical and superseded by this line.
+**START NEXT SESSION HERE — VERIFIED 10 Oct 2026, 12:46:59 UTC:**
+User pulled GitHub `main` successfully to commit `368cf6d3`
+and ran the COMPLETE `RudraScanner/tests/` suite on their VPS:
 
+```text
+Ran 65 tests in 0.784s
+OK
+```
+
+**65/65 PASSED, zero failures/errors.** The previously failing Friday
+markout test, `test_markout_entry_next_bar_and_exit_after_six`,
+now passes with its mocked signal respecting the 15-RTH-bar
+detector warm-up. No real pattern logic needed changing.
+
+**Friday 2026-10-09 historical test VERIFIED in earlier VPS output:**
+40 IBKR instruments / 22,290 actual historical 5M WAP bars;
+9,360 RTH session-reset VWAP-ready bars; 11 tagged
+LONG research signals but 10 unique next-bar entry
+opportunities (4 positive, 6 negative), **40% positive and
++0.0147% average hypothetical 30-minute return before costs**.
+The saved IBKR backfill lives in the SAME dated ASJR DataLake;
+do not redownload it for a simple replay. This was a
+hindsight-selected retrospective cohort with overlapping
+possible positions, provisional setup thresholds and no
+slippage or fees: NOT a prospective or profitable live backtest.
+
+**Next stage:** audit live Chakra IBKR historical/scanner callbacks,
+then (with user-controlled restart and approval) test
+`RUDRA_SCANNER_MODE=shadow` during a genuine US session.
+The four live scanner code results, live WAP, per-stock
+1H warm-up, real-time technical signals and Discord delivery
+are NOT yet verified. Production remains **OFF**; Wicks
+and locked Rudra-Reversal are unchanged.
+Detailed Friday results: `RudraScanner/FRIDAY_REPLAY.md`.
+Older checkpoints later in this file are historical, superseded
+by this verified entry.
 
 
 ### Additional safety tests added after initial Phase 2 checkpoint
