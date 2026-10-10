@@ -62,7 +62,7 @@ class SymmetricPatternTests(unittest.TestCase):
 
     def test_rubberband_snapback_from_extension_both_sides(self):
         df = standard()
-        df.loc[18, ["close", "high", "low", "ema9"]] = [97, 97.5, 96.8, 100]
+        df.loc[18, ["open", "close", "high", "low", "ema9"]] = [97.2, 97, 97.5, 96.8, 100]
         df.loc[19, ["open", "close", "high", "low", "ema9", "vwap"]] = [
             98.0, 100.2, 100.4, 97.7, 99.8, 100.1
         ]
@@ -83,7 +83,7 @@ class SymmetricPatternTests(unittest.TestCase):
 
     def test_fashionably_late_ema_vwap_cross_both_sides(self):
         df = standard()
-        df.loc[18, ["close", "ema9", "vwap"]] = [100.5, 100.2, 100.8]
+        df.loc[18, ["open", "close", "high", "ema9", "vwap"]] = [100.1, 100.5, 100.8, 100.2, 100.8]
         df.loc[19, ["open", "close", "high", "low", "ema9", "vwap"]] = [
             100.7, 101.5, 101.7, 100.4, 101.1, 100.9
         ]
