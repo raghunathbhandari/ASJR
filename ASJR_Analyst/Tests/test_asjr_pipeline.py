@@ -26,6 +26,7 @@ import Utils.asjr_git as asjr_git
 import Utils.asjr_logger as asjr_logger
 import Strategies.RudraReversal1H.rudra_reversal as rudra_reversal
 from RudraScanner.bot_hook import run_bot_shadow
+from RudraScanner.engine import evaluate_scanner, persist_features
 
 try:
     from Backtesting.DataLoader.forex_download_hook import launch_forex_download_once
@@ -37,7 +38,7 @@ try:
 except Exception:
     launch_nq_download_once = None
 
-ASJR_ANALYST_VERSION = "2026.10.10.1"
+ASJR_ANALYST_VERSION = "2026.10.10.2"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -78,6 +79,7 @@ def run_asjr_manual_pipeline(
                 "snapshot": {"trade_date": str(pd.Timestamp.now(tz=asjr_day.ET).date())},
                 "git": {"status": "SKIPPED_CLOSED_SESSION"}, "log_file": None,
                 "rudra_scanner_shadow": {"state": "SKIPPED_CLOSED_SESSION"},
+                "rudra_scanner_features": {"state": "SKIPPED_CLOSED_SESSION"},
             }
         trade_date = resolved_date
 
@@ -250,6 +252,37 @@ def run_asjr_manual_pipeline(
         storage.save_csv(intraday_raw, intraday_file)
         logger.info("FILE | Saved intraday_5m | %s", intraday_file)
 
+        # Scanner feature processing uses this SAME IBKR 5M collection.
+        # Only explicit shadow mode performs extra work and emits only
+        # saved diagnostic/research outputs, NEVER scanner Discord alerts.
+        rudra_scanner_features = {"state": "OFF", "alert_delivery": "DISABLED"}
+        if rudra_scanner_shadow.get("mode") == "shadow":
+            try:
+                radar_bars, radar_result = evaluate_scanner(
+                    intraday_raw, enable_research=False,
+                )
+                radar_paths = persist_features(
+                    REPO_ROOT, paths.trading_day(trade_date),
+                    radar_bars, radar_result,
+                )
+                rudra_scanner_features = {
+                    "state": radar_result["state"],
+                    "quality": radar_result["feature_status"],
+                    "files": radar_paths,
+                    "alert_delivery": "DISABLED",
+                }
+                logger.info(
+                    "RUDRA SCANNER | indicators saved | mode=%s | wap=%s | rvol20=%s",
+                    radar_result["state"],
+                    radar_result["feature_status"].get("wap_state"),
+                    radar_result["feature_status"].get("rvol_state"),
+                )
+            except Exception:
+                logger.exception("RUDRA SCANNER | nonfatal feature stage failure")
+                rudra_scanner_features = {
+                    "state": "ERROR", "alert_delivery": "DISABLED",
+                }
+
         intraday = intraday_features.add_intraday_features(intraday_raw)
         alert_data = alerts.build_wick_alerts(intraday, trade_date=trade_date)
         try:
@@ -402,6 +435,7 @@ def run_asjr_manual_pipeline(
             "alert_data": alert_data,
             "rudra_reversal_alerts": rudra_reversal_alerts,
             "rudra_scanner_shadow": rudra_scanner_shadow,
+            "rudra_scanner_features": rudra_scanner_features,
             "sector": sector,
             "ticker_summary": ticker_summary,
             "snapshot": snap,
