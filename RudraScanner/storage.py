@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 
 from .discovery import AI_FIELDS, IBKR_FIELDS, read_ai_csv, run_ibkr_scans, utc_text
-from .universe import load_shared_universe
+from .universe import load_shared_universe, selection_summary
 
 
 def _atomic(path, content):
@@ -52,14 +52,15 @@ def save_discovery(app, trade_date, *, repo_root, timeout=5.0, now=None):
     _atomic(raw / "scanner_status.json", json.dumps({
         "generated_at_utc": utc_text(now), "fixed": fixed_status,
         "ai": ai_status, "ibkr": scan_status,
-        "candidate_count": len(candidates)
+        "candidate_count": len(candidates),
+        "selection": selection_summary(candidates)
     }, indent=2) + "\n")
     _atomic(processed / "scalp_radar_candidates.csv", _csv_text(
-        ("ticker", "sources", "scan_codes", "ai_bias", "ai_freshness", "fixed_sector"),
+        ("ticker", "selection_source", "sources", "scan_codes", "ai_bias", "ai_freshness", "fixed_sector"),
         [{**r, "sources": "+".join(r["sources"]),
           "scan_codes": "+".join(r["scan_codes"])} for r in candidates]))
-    return {"candidates": candidates, "fixed": fixed_status,
-            "ai": ai_status, "ibkr": scan_status}
+    return {"candidates": candidates, "selection": selection_summary(candidates),
+            "fixed": fixed_status, "ai": ai_status, "ibkr": scan_status}
 
 
 def read_saved_report(repo_root, trade_date):
