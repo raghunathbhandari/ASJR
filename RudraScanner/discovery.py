@@ -241,6 +241,6 @@ def merge_candidates(ai_rows, ibkr_rows):
         if "IBKR" not in item["sources"]:
             item["sources"].append("IBKR")
         code = row.get("scan_code", "")
-        if code in SCANNER_CODES and code not in item["scan_codes"]:
+        if (code in SCANNER_CODES or code == "LEGACY_GAPUP_REPLAY") and code not in item["scan_codes"]:
             item["scan_codes"].append(code)
     return [merged[t] for t in sorted(merged)]
