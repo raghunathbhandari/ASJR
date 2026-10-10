@@ -94,6 +94,51 @@ until explicit approval and evidence.
 
 ---
 
+## SSH scan_now.py IMPLEMENTED AFTER 13:47 UTC, 2026-10-10 — TEST/RELOAD PENDING
+
+The user ran a hypothetical CLI and got
+`No such file or directory`. At the user's request,
+created actual `RudraScanner/scan_now.py` and
+`RudraScanner/manual_request.py` plus
+`RudraScanner/tests/test_manual_ssh.py`
+(10 new isolated unit tests), ignored runtime IPC
+request JSON/lock/temp and integrated into existing
+Chakra
+`ASJR_Analyst/Tests/test_asjr_pipeline.py`
+version **2026.10.10.13**.
+
+Architecture: user runs
+`/root/trading/venv_new/bin/python RudraScanner/scan_now.py`
+during an open scheduled US/ET Chakra session.
+This writes an atomic local
+`ASJR_Analyst/rudra_scanner_manual_request.json`
+request and **waits for the next normal 5-minute
+Chakra scanner cycle** to acknowledge the result;
+`--no-wait` queues immediately, `--status`
+inspects without enqueue, and `--saved` reads
+the last saved common DataLake report. Requests
+are .gitignored; research reports still saved
+via normal DataLake and Git pipeline.
+**NOT an independently instantaneous broker API
+scan; NO new IBKR connection/client/Gateway,
+new scheduler, order function or scanner Discord.
+Original Wicks and locked Reversal still have
+priority.** It refuses weekend live requests;
+on Saturday, use `--help`, `--status` or
+`--saved --date`, not unqualified live mode.
+Full instructions: `RudraScanner/SCAN_NOW.md`.
+Other canonical next-session state:
+`RudraScanner/CURRENT_STATE.md`.
+
+**Verified status distinction:** user-confirmed
+original VPS 83/83 offline tests PASSED
+at 13:30 UTC *before this change*. The expanded
+**93 tests are committed, NOT YET run on the VPS**.
+No running Chakra process reload was observed.
+A new Git pull, 93-test check and controlled bot
+restart are required before live SSH request
+operation can be called verified.
+
 ## Maintenance rule
 
 - This file is the canonical AI/analyst handoff and must be updated after every material ASJR/Chakra/Rudrakchhya/Jaguar code, alert, schedule, DataLake, operational, audit, or deployment change so future sessions start from the latest verified state.
