@@ -41,7 +41,7 @@ def load_saved_ibkr_csv(root, day):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(
-        description="Read-only shared RudraScanner/Repeversal candidates preview")
+        description="Read-only shared RudraScanner/Reversal candidates preview")
     parser.add_argument("--date", default="2026-10-09",
                         help="existing US-session DataLake folder (YYYY-MM-DD)")
     parser.add_argument("--repo", default=str(Path(__file__).resolve().parents[1]))
