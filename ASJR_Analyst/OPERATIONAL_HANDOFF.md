@@ -534,3 +534,23 @@ git pull
 - One common `ASJR_Analyst/DataLake/YYYY-MM-DD/`; each existing five-minute Chakra job pulls Git inputs, collects/calculates, saves and pushes results. No second scanner DataLake or scheduler.
 - Required access: plain-list SSH script, same five-minute Discord result, hourly AI CSV refresh/review and on-demand AI reads. Five sections, LONG/SHORT, completed 5-minute candles, session VWAP, EMA9 and volume.
 - This instructions-first commit does not deploy runtime changes. Implementation drafts remain local/uncommitted at this checkpoint. No VPS restart, IBKR chart comparison, live notification verification or automation mutation has occurred.
+
+
+## 2026-10-10 RudraScanner phase 1 (development only)
+
+- Canonical scanner design and change log:
+  `RudraScanner/README.md`. User requested every subsequent discussion
+  and implementation change be recorded there.
+- Added an isolated discovery package with 4 IBKR scanner codes, AI CSV
+  schema/expiration handling, provenance-aware union, common DataLake
+  discovery output, offline tests and read-only SSH report viewer.
+  Seeded `ASJR_Analyst/config/ai_scanner_list.csv` with INTC as an
+  unverified user-required watch, not an AI news signal.
+- **No change to the live Chakra caller, Wicks, Rudra-Reversal or scheduling.**
+  The old 4% scanner remains active in the old pipeline until explicitly
+  replaced following tests and user confirmation. No live IBKR/Discord
+  verification or bot restart. The new tests have been committed but not run
+  in a verified environment.
+- Next: execute offline tests; validate actual callback/provenance and volume,
+  settle unconfirmed EMA9/threshold settings, implement pattern replay,
+  then add gated integration with safe Git sync and verified delivery.
