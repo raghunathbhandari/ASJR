@@ -36,10 +36,11 @@ Repo: `raghunathbhandari/ASJR`, branch `main`.
 | `RudraScanner/tests/test_features.py` | 9 additional WAP, exact VWAP, no-WAP, EMA continuity and detector gating checks |
 | `RudraScanner/tests/test_hourly.py` | 3 new fake Gateway 1H importer / cache / active fail-close checks |
 | `RudraScanner/tests/test_topdown.py` | 5 new benchmark/sector WAIT/LONG/SHORT checks |
+| `RudraScanner/tests/test_patterns.py` | 5 new fully mirrored LONG/SHORT scenario tests covering every pattern family; source-synthetic, not performance backtests |
 | `RudraScanner/tests/test_delivery.py` | 4 new Discord deduplication, approval and retry checks |
 
-**Expected test inventory:** **50 test methods** (24 previously verified +
-26 newly added). This is a SOURCE COUNT, not a claimed successful run.
+**Expected test inventory:** **55 test methods** (24 previously verified +
+31 newly added). This is a SOURCE COUNT, not a claimed successful run.
 
 ## Run NOW on Saturday — no live IBKR required
 
@@ -58,12 +59,12 @@ the running live-bot repo.
 
 No output and exit code 0 indicate Python parsing succeeded.
 
-### Step 3: Run ALL 50 unit tests
+### Step 3: Run ALL 55 unit tests
 
     /root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
 
 **Expected**: 45 tests; ending `OK`. Share the complete output. DO NOT
-claim 50/50 passed until the actual VPS output is reviewed.
+claim 55/55 passed until the actual VPS output is reviewed.
 
 ### Step 4: Test historical 30-stock input (read-only)
 
@@ -131,7 +132,7 @@ Wicks ticker-scope change have been reviewed.
 
 ## Controlled future US-market test — NOT on closed-market Saturday
 
-1. Confirm 48/50 unit tests and Friday offline raw-data report.
+1. Confirm 48/55 unit tests and Friday offline raw-data report.
 2. Audit the actual VPS external caller
    `/root/trading/utils/trading_sudarsan_chakra.py`,
    EWrapper.historicalData callback, timing and IBKR pacing.
