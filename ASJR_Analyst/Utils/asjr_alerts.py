@@ -419,7 +419,14 @@ def prepare_alert(
 ):
     """Format simple wick lines; overflow is sent immediately in the same run."""
     if result and result.get("alerts_dispatched"):
-        return ""
+        # Wicks/Reversal were already delivered by an internal sender.
+        # A scanner batch may have been queued afterward, so it must
+        # still reach the existing external Chakra formatter.
+        from RudraScanner.delivery import prepare_queued_alert
+        return prepare_queued_alert(
+            state_file=ROOT / "rudra_scanner_delivery_state.json",
+            batch_file=ROOT / "rudra_scanner_delivery_batch.json",
+        )
     events = result.get("alert_data", []) if result else []
     events = [e for e in events if e.get("type") in {"LOWER_WICK", "UPPER_WICK"}]
     if not events:
