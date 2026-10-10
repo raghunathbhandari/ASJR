@@ -382,10 +382,20 @@ def main(argv=None):
     try:
         if args.download_ibkr:
             print("IBKR HISTORICAL BACKFILL ONLY | read-only connection; no bot restart")
-            result = backfill_ibkr(
-                args.repo, args.date, host=args.host, port=args.port,
-                client_id=args.client_id, pause=args.pacing_sleep)
+            try:
+                result = backfill_ibkr(
+                    args.repo, args.date, host=args.host, port=args.port,
+                    client_id=args.client_id, pause=args.pacing_sleep)
+            except Exception as exc:
+                # A closed/weekend Gateway or denied market-data
+                # permission is not a fake backtest success.
+                print("IBKR HISTORICAL BACKFILL UNAVAILABLE:",
+                      f"{type(exc).__name__}: {exc}", file=sys.stderr)
+                return 2
             print(json.dumps(result, indent=2))
+            if result.get("state") == "NO_HISTORICAL_BARS":
+                print("No real IBKR WAP bars. No signal result is available.")
+                return 2
         file = _file(args.repo, args.date)
         if not file.is_file():
             file = _folder(args.repo, args.date) / "raw" / "intraday_5m.csv"
