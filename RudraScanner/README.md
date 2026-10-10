@@ -5,6 +5,88 @@ Updated: 10 October 2026, Europe/London.
 **Read this document first in every future session.** Repository: `raghunathbhandari/ASJR`, production branch `main`. Operational history: `ASJR_Analyst/OPERATIONAL_HANDOFF.md`.
 
 
+## VERIFIED VPS CHECKPOINT — 2026-10-10, Friday replay + 24/24 tests
+
+**LATEST OBSERVED STATE (supersedes older pending-test notes below):**
+The user executed and shared the actual SSH output after pulling the
+latest GitHub code; `git push` said `Everything up-to-date` and
+`git pull` said `Already up to date`. The new offline Chakra
+bot-hook replay and **all 24 offline tests passed**.
+
+### Exact output verified from the user's VPS
+
+Command:
+
+    /root/trading/venv_new/bin/python RudraScanner/bot_test.py --date 2026-10-09 --ibkr-source-date 2026-10-09
+
+Observed:
+
+| Check | Actual output |
+|---|---|
+| Mode | `BOT HOOK REPLAY | HISTORICAL DATA - NOT LIVE` |
+| DataLake and IBKR legacy source | `2026-10-09` |
+| AI and FIXED status | `PARTIAL` and `PARTIAL` (previously diagnosed publication-time/ONDS exceptions) |
+| IBKR source | `LEGACY_GAPUP_REPLAY_NOT_LIVE` |
+| Historical screened names | **84** |
+| Candidate selection | **30 / 30**, deduplicated |
+| Selected by source | **FIXED 10**, **AI 10**, **IBKR 10** |
+| Signals | `NOT IMPLEMENTED; 0 live alerts sent` |
+| Broker calls | **None**; source was archival DataLake, NOT four live scans |
+| Write mode | **Read-only**; `--save` was NOT passed; no replay files written by this command |
+
+**Exact selected lists observed:**
+
+- FIXED (10): `AKAM, AMAT, CRDO, INTC, MSFT, ORCL, QCOM, SMCI, WDC, WTTR`.
+- AI (10): `AAPL, AMT, AMZN, HUM, JPM, LITE, NVDA, PLTR, SPCX, TMUS`.
+- Historical IBKR replay (10): `ASTS, AXTI, DDOG, DE, MRNA, SNOW, SWKS, T, VZ, ZS`.
+- This is input provenance and weekend offline selection, **not verified
+  market-cap, financial-quality eligibility or a recommendation to trade**.
+
+Full test command observed:
+
+    /root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+
+**Actual result: `Ran 24 tests in 0.170s / OK`, 24 passed,
+0 failures, 0 errors.** The suite includes the previous 18 discovery,
+EMA9, fixed/AI/IBKR cap and storage tests plus the six
+`test_bot_hook.py` tests for OFF, gated SHADOW call, guarded REPLAY,
+non-lookahead and namespaced optional save. This verifies offline code
+on the user's VPS; it does **not** verify the connected live IBKR scan.
+
+### Exact implementation status and next step
+
+| Component | State after verified VPS run |
+|---|---|
+| Fixed + AI + historical IBKR candidate union/cap | **VPS VERIFIED** |
+| Bot method hook `run_asjr_manual_pipeline` call present in GitHub | **CODE COMMITTED**; feature gate defaults OFF |
+| Offline replay path `bot_test.py` | **VPS VERIFIED, READ-ONLY** |
+| New 4-code IBKR live scanner via connected Gateway | **NOT YET LIVE-VERIFIED** |
+| Actual WAP capture, RTH VWAP calculation and 5M indicator join | **NOT YET IMPLEMENTED/VERIFIED** |
+| Actual 5M five-pattern LONG/SHORT detectors | **NOT YET IMPLEMENTED** |
+| Shared 1H IBKR import for newly selected Reversal stocks | **NOT YET IMPLEMENTED** |
+| Scanner Discord output / dedup / ack; hourly AI automation | **NOT YET IMPLEMENTED/ACTIVATED** |
+| Wicks and locked 1H Reversal | **UNCHANGED BY THIS TEST** |
+
+**Next stage: connected scanner SHADOW verification inside the existing
+five-minute Chakra job**, then careful data integration, real WAP/VWAP
+and replay-tested detector implementation. SHADOW should be enabled
+only when the user approves a controlled live-session test and the
+existing IBKR app's scanner callbacks are checked. Historical
+`ibkr_gapup.csv` is only a weekend TEST substitute: do not continue
+using it as if it were Monday's current IBKR scanner output. The AI
+research expires **Monday Oct 12 at 12:00 UTC / 13:00 UK** and needs
+refresh before RTH.
+
+**Do not assume:** There is no evidence of a live market scan,
+correct live output delivery, or 5M/1H real pattern alerts yet.
+Production operation remains **feature-gated OFF** until validation.
+Older historical "tests pending"/"integration not started" paragraphs
+elsewhere in this README describe earlier checkpoints and are
+superseded by this verified update. Continue updating this latest
+checkpoint and `ASJR_Analyst/OPERATIONAL_HANDOFF.md` after changes.
+
+---
+
 ## LATEST UPDATE — 2026-10-10: Bot method wired, weekend historical replay ready
 
 **User decision:** after all 18 original offline tests passed on the VPS,
@@ -157,7 +239,7 @@ integration in safe stages.
 
 ## START HERE NEXT SESSION — latest checkpoint (2026-10-10 UK)
 
-**STATE: Phase 1 VPS VERIFIED (20/30 input preview; all 18 original offline tests PASSED). Initial feature-gated BOT METHOD CALL COMMITTED, default OFF; direct historical IBKR replay test and 6 new unit tests PENDING. Full live trading/alerts NOT implemented.** This is the main
+**STATE: Phase 1 VPS VERIFIED, including original 20/30 CSV preview, historical replay 30/30 candidate selection and 24/24 offline tests. Feature-gated bot method hook COMMITTED, default OFF. Live IBKR four-code scans, 1H/5M expanded imports, VWAP, five real detector families and scanner Discord alerts NOT yet implemented/verified.** This is the main
 resumption point for any future assistant session. Read this section
 before making code changes. Do not claim live scanner signals or successful
 VPS testing without observing real outputs.
