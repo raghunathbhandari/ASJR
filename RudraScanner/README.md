@@ -4,6 +4,75 @@ Updated: 10 October 2026, Europe/London.
 
 **Read this document first in every future session.** Repository: `raghunathbhandari/ASJR`, production branch `main`. Operational history: `ASJR_Analyst/OPERATIONAL_HANDOFF.md`.
 
+## Current implementation checkpoint — 2026-10-10
+
+This is the quick-start summary of **all decisions and implementation activity
+from the 10 October 2026 session**. Detailed chronological records and caveats
+follow below; amend this checklist after every subsequent change.
+
+| Topic | Confirmed rule | Implementation state |
+|---|---|---|
+| DataLake | **One** `ASJR_Analyst/DataLake/YYYY-MM-DD/` shared by RudraScanner, Rudra-Reversal and other ASJR modules | Existing root inspected; new scanner discovery writes there only when explicitly invoked; live Reversal shared 1H ingestion not complete |
+| Shared candidates | Fixed day watchlist + AI hourly research CSV + IBKR multi-scan CSV | `RudraScanner/universe.py` and `storage.py` committed |
+| Hard ticker limits | Max **10 fixed + 10 AI + 10 IBKR = 30 distinct US-stock symbols** for both strategies; duplicates consume one slot | Code enforces cap before future 5M/1H imports; live bot not connected |
+| Eligibility filters | US corporate stocks, price above $5, average volume above 1M, market cap above $500M, 50 returned per scanner code; **no ±4% entry/discovery gate** | Implemented in isolated `discovery.py`; live API filters not yet validated |
+| Scanner modes | TOP_PERC_GAIN, TOP_PERC_LOSE, HOT_BY_VOLUME, MOST_ACTIVE | Implemented but no live IBKR test |
+| Indicators | **Continuous EMA9** on completed 5M bars across premarket and dates; use **VWAP together with EMA9**, RTH-reset VWAP and volume/structure | Isolated `ema9.py` committed; exact VWAP calculation and IBKR WAP callback extension **not yet implemented** |
+| Strategies | 5M RudraScanner five setup types, LONG + SHORT; 1H Rudra-Reversal retains locked BB rules; NQ stays on its existing Yahoo route | Scanner setup detectors and Reversal's new common 1H import **not connected** |
+| Delivery | Existing five-minute Chakra job, Discord every cycle, AI hourly and read-only on-demand SSH; one Git pull/push cycle | Architecture approved, **not deployed** |
+| Alerts | Preserve live Wicks and Rudra-Reversal alerts; never automate trading orders | Existing production code left unchanged |
+| AI candidates | Friday 9 Oct source-linked web research, 10 candidate names + permanent INTC monitor, expiration Mon 12 Oct 12:00 UTC | `ASJR_Analyst/config/ai_scanner_list.csv` committed; **not automatically refreshed hourly** |
+| SSH test | Inspect AI CSV, dated fixed list, optional already-saved IBKR scanner CSV, exclusions and 10/10/10 selection | `RudraScanner/ssh_smoke_test.py` committed; **not run on VPS yet** |
+
+### Files changed during this implementation session
+
+- New `RudraScanner/__init__.py`, `discovery.py`, `universe.py`,
+  `storage.py`, `ema9.py`, `print_saved.py`, `ssh_smoke_test.py`.
+- New offline tests in `RudraScanner/tests/`:
+  `test_discovery.py`, `test_universe.py`, `test_selection_caps.py`,
+  `test_ema9.py`.
+- Updated `ASJR_Analyst/config/ai_scanner_list.csv`, this README,
+  and `ASJR_Analyst/OPERATIONAL_HANDOFF.md`.
+- The source snapshot covers **INTC, SPCX, PLTR, LITE, AMT, HUM,
+  AMZN, TMUS, AAPL, JPM, NVDA**. All research quality statuses are
+  `UNVERIFIED`; `SPCX` sector/underlying stock suitability must be
+  checked with the actual IBKR contract before treating it as an eligible
+  tradable US corporate stock. Do not infer successful research from a
+  historical article link alone.
+- Legacy October 9 fixed CSV includes **ONDS**, which conflicts with the
+  user's existing exclusion. The new universe reader reports and excludes it,
+  without editing old DataLake records.
+
+### Safe next VPS test
+
+```bash
+cd /root/trading/ASJR
+git status --short
+git pull --ff-only origin main
+/root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+/root/trading/venv_new/bin/python RudraScanner/ssh_smoke_test.py --date 2026-10-09
+```
+
+**This is read-only as far as the SSH preview is concerned.**
+The test suite uses temporary local fixtures; do not start or restart
+Chakra to run it. Review `git status --short` first: if it reports
+uncommitted changes, stop before pull and inspect rather than resetting
+working files. Paste the full test and preview output for review.
+
+**Verification boundary:** GitHub commits and file contents were
+confirmed. No VPS Python test output, IBKR callback/WAP sample, 1H data
+coverage, real five-pattern signals, hourly task or Discord alert has
+been verified in this session. The live five-minute job still follows
+its legacy discovery path and the locked Reversal stock universe has
+not yet been replaced. "Implemented" above means committed development
+code, not deployed/activated.
+
+**Open questions before activation:** approve the provisional per-source
+ranking tie-breakers; verify `SPCX` IBKR stock eligibility; resolve
+actual IBKR WAP callback and volume units; verify 1H warm-up data for
+the selected list; agree numerical thresholds for all five scanner
+setups. Do not guess or silently change these settings.
+
 ## Status
 
 The user approved the workflow below. This document is the first deliverable in the new `RudraScanner` folder. Implementation is being drafted and tested; do not treat it as deployed until a new VPS log and actual output verify it. No live restart or live IBKR validation has occurred in this development session. Record actual commits, tests, activation and remaining gaps here as work proceeds.
