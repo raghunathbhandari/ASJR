@@ -16,6 +16,7 @@ if __package__ in ("", None):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from RudraScanner.engine import evaluate_scanner, format_report, persist_features
+from RudraScanner.volume_history import apply_rolling_rvol20
 
 
 def main(argv=None):
