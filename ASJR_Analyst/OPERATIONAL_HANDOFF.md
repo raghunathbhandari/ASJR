@@ -663,3 +663,25 @@ Canonical details: `RudraScanner/README.md`.
   No new automatic hourly update task or production scanner integration
   is active. The existing Chakra/Reversal/Wicks modules remain unchanged.
   Full instructions in `RudraScanner/README.md`.
+
+## 2026-10-10 RudraScanner full-session documentation checkpoint
+
+User requested all current implementation activities and decisions be recorded
+in the Markdown handoff. `RudraScanner/README.md` now has a **Current
+implementation checkpoint** near its beginning, with a concise status matrix,
+all created/updated files, confirmed DataLake and 10+10+10 selection contracts,
+confirmed scanner filters, EMA9+VWAP/WAP design, AI research snapshot, the
+read-only SSH verification commands and outstanding activation blockers.
+
+The AI CSV has 11 lines of candidates (10 source-linked research names plus
+INTC permanent monitor) and expires October 12 at 12:00 UTC. The read-only
+SSH preview is `RudraScanner/ssh_smoke_test.py`; offline tests are in
+`RudraScanner/tests/`. **Only committed source was verified, not successful
+VPS tests or live IBKR, Discord, WAP, 1H import, 5-pattern detectors or
+hourly AI scheduling.** No live Chakra restart or locked strategy change.
+
+**Future sessions:** read `RudraScanner/README.md` first; continue to update
+its checkpoint + chronological change records and this operational handoff
+for each material change. Revalidate actual runtime behavior before claiming
+deployment. Latest user's next action is to run the existing offline tests
+and SSH preview and provide the result for review.
