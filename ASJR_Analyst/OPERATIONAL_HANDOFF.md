@@ -526,3 +526,11 @@ git pull
 - The Forex hook is isolated with try/except. Failure to launch the research import is logged but must not interrupt the normal Chakra/DataLake pipeline.
 - Git operational chatter for the Forex push is kept in the local untracked state log `Backtesting/BacktestData/IBKR/Forex/.state/git_push.log`; the tracked research log is finalized before staging to avoid leaving the repository dirty after push.
 - External VPS caller `/root/trading/utils/trading_sudarsan_chakra.py` remains unchanged.
+
+## 2026-10-10 RudraScanner instructions first
+
+- New canonical project instructions: `RudraScanner/README.md`. Read it before modifying this scanner.
+- User approved two candidate sources: hourly AI CSV and multiple IBKR scanner CSVs, deduplicated into the existing import pipeline; no fixed 4% discovery requirement. IBKR supplies 5-minute/premarket OHLCV; yfinance supplies daily context.
+- One common `ASJR_Analyst/DataLake/YYYY-MM-DD/`; each existing five-minute Chakra job pulls Git inputs, collects/calculates, saves and pushes results. No second scanner DataLake or scheduler.
+- Required access: plain-list SSH script, same five-minute Discord result, hourly AI CSV refresh/review and on-demand AI reads. Five sections, LONG/SHORT, completed 5-minute candles, session VWAP, EMA9 and volume.
+- This instructions-first commit does not deploy runtime changes. Implementation drafts remain local/uncommitted at this checkpoint. No VPS restart, IBKR chart comparison, live notification verification or automation mutation has occurred.
