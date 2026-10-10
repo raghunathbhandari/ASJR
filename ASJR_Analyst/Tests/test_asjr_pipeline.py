@@ -47,7 +47,7 @@ try:
 except Exception:
     launch_nq_download_once = None
 
-ASJR_ANALYST_VERSION = "2026.10.10.9"
+ASJR_ANALYST_VERSION = "2026.10.10.10"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -220,6 +220,19 @@ def run_asjr_manual_pipeline(
             "FEATURES | Daily summary built | rows=%s",
             len(daily_latest),
         )
+
+        # Install the OPTIONAL passive IBKR WAP callback wrapper before
+        # the legacy 5M pull. It adds NO requests and does not change
+        # legacy 6-column OHLCV parsing. Doing this before discovery
+        # allows scanner to REUSE actual WAP from legacy stocks later.
+        runtime_mode = scanner_runtime(
+            REPO_ROOT, paths.trading_day(trade_date))["mode"]
+        if str(runtime_mode).lower() in ("shadow", "active"):
+            try:
+                from RudraScanner.wap_capture import install_wap_capture
+                install_wap_capture(app)
+            except Exception:
+                logger.exception("RUDRA SCANNER | passive WAP capture unavailable")
 
         # 4. IBKR 5m data
         logger.info(
