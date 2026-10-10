@@ -13,7 +13,6 @@ command to validate the selection logic.
 import argparse
 import csv
 import sys
-from collections import Counter
 from datetime import date
 from pathlib import Path
 
