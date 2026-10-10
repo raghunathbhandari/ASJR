@@ -4,6 +4,28 @@ Updated: 10 October 2026, Europe/London.
 
 **Read this document first in every future session.** Repository: `raghunathbhandari/ASJR`, production branch `main`. Operational history: `ASJR_Analyst/OPERATIONAL_HANDOFF.md`.
 
+**SINGLE LATEST STATUS (Saturday 10 Oct 2026, after 13:38 UTC):**
+**Start with [`RudraScanner/CURRENT_STATE.md`](CURRENT_STATE.md).**
+The user confirms their **existing IBKR connection, scanning and OHLC
+imports are already working correctly for other ASJR/Chakra tasks**.
+Reuse that SAME connection and import system; no new Gateway,
+client ID, port, scheduler or bot is needed. This baseline user
+confirmation is NOT yet evidence that all FOUR new RudraScanner
+codes, new WAP capture, ETF context or scanner output have run LIVE.
+
+**83/83 offline tests PASSED on user's VPS (0.887s).**
+Monday 2026-10-12 `SHADOW` code/preflight READY,
+scanner Discord OFF, no orders. 19 copied fixed rows /
+18 Scanner-eligible (ONDS excluded), AI only one
+valid at Monday market open (INTC, overlaps FIXED);
+10 AI candidates expire before market open.
+The existing long-running Chakra process's reload
+and actual Monday scanner outputs are NOT verified.
+Earlier progress blocks in this long README are
+historical; the CURRENT_STATE document takes
+priority if status sentences conflict.
+
+
 ## VERIFIED MONDAY PREFLIGHT — 2026-10-10 13:30 UTC: **83 / 83 PASSED**
 
 **Actual user VPS evidence, not estimated:** user ran `git pull
@@ -1871,6 +1893,6 @@ Integration checklist for that next task:
    bot restart. Verify loaded version, current Git snapshot and delivered
    Discord payload rather than assuming successful activation.
 
-**Latest status: USER VPS INPUT SMOKE TEST VERIFIED (20/30); full unit tests PENDING; BOT INTEGRATION NOT STARTED.**
+**Historical initial-stage checkpoint (superseded): USER VPS INPUT SMOKE TEST VERIFIED (20/30); those 65- and 83-test suites were subsequently run. For current verification see `RudraScanner/CURRENT_STATE.md`.**
 Do not mistake the isolated package or the new task entry for deployed
 production code. Keep this status current after the user's test.
