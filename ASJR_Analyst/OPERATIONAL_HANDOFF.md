@@ -1090,3 +1090,47 @@ ticker universe and must not be enabled without approval.
 section **VERIFIED VPS TEST — Saturday 2026-10-10,
 55/55 PASSED** and `RudraScanner/FULL_TEST.md`.
 Do not auto-restart the live Chakra bot.
+
+## 2026-10-10 FINAL VPS REGRESSION CHECKPOINT — 56/56 PASS
+
+**Latest user terminal evidence:** successful `git pull --ff-only
+origin main` updated the VPS from `e3250e40` to `42c45aae`.
+The full `RudraScanner/tests/` suite then completed:
+
+    Ran 56 tests in 0.497s
+    OK
+
+**All 56 tests passed with no errors, failures or pandas FutureWarning.**
+This includes `test_empty_prior_source_does_not_emit_futurewarning`,
+proving that the previously noisy `volume_history.py` empty
+baseline concat fix works on the user's real Python environment.
+This supersedes the earlier "56th test pending" notes.
+
+**Verified test scope:** offline 5M EMA9 and synthetic exact-WAP
+VWAP guards, 20-session RVOL tests, five bidirectional synthetic
+detector scenarios, source-cap logic, fake-IBKR 1H requests,
+safe first-use Reversal state, safe Discord dedup/ack unit tests,
+historical offline 30/30 candidate replay.
+Prior actual 2026-10-09 historical raw DataLake smoke test
+returned 56,027 completed 5M candles across 106 tickers and
+correctly reported unavailable actual WAP VWAP / RVOL20.
+No actual live 4-code IBKR scanner run or live alert was
+performed. Existing Chakra is still feature-gated OFF.
+
+**Next permitted controlled milestone:** audit the external
+deployed `/root/trading/utils/trading_sudarsan_chakra.py`
+and real `EWrapper` scanner/historical callbacks, then
+enable only SHADOW during a regular US market session
+with user-controlled process configuration and restart.
+Verify real candidate/source counts, valid current stock
+contracts, actual WAP and timestamps, data freshness,
+1H warm-up and pacing before ACTIVE or Discord.
+ACTIVE would change ticker coverage of the existing Wicks
+detector despite unchanged rules: explicit approval needed.
+AI research CSV expires Monday Oct 12 at 12:00 UTC
+(13:00 UK) and must be refreshed before US open.
+
+Canonical current checkpoint:
+`RudraScanner/README.md` section "CURRENT VERIFIED STATE —
+2026-10-10: 56 / 56 VPS tests passed" and
+`RudraScanner/FULL_TEST.md`.
