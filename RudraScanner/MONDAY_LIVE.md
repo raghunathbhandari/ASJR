@@ -7,7 +7,7 @@
 
 The existing five-minute Chakra pipeline
 `ASJR_Analyst/Tests/test_asjr_pipeline.py` (new version
-`2026.10.10.10`) now reads
+`2026.10.10.12`) now reads
 `ASJR_Analyst/config/rudra_scanner_runtime.json`.
 It schedules **SHADOW** mode on or after Monday 12 Oct ET.
 
@@ -141,7 +141,7 @@ that old fixed stocks were deliberately removed.
    process **once** after Git pull. This is required for
    new `test_asjr_pipeline.py` imports to take effect;
    do not start a second bot process. Verify
-   `ASJR Analyst Version: 2026.10.10.10` in the log.
+   `ASJR Analyst Version: 2026.10.10.12` in the log.
    The SHADOW switch is date-scoped; Friday/weekend
    historical job remains OFF.
 4. On Monday 12 October US premarket, observe the
