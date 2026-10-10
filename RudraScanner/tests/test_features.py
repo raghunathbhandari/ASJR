@@ -144,6 +144,7 @@ class WapTapTests(unittest.TestCase):
         fake = FakeApp()
         self.assertTrue(install_wap_capture(fake))
         self.assertFalse(install_wap_capture(fake))
+        fake._rudra_wap_sidecar[42] = []
         fake.historicalData(42, SimpleNamespace(
             date="1791552600", open=100, high=101, low=99,
             close=100, volume=1000, wap=100.25))
