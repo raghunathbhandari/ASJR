@@ -2,6 +2,27 @@
 
 Updated: 10 October 2026, Europe/London.
 
+**NEW SSH MANUAL SCANNER COMMAND (10 Oct 2026):**
+[`scan_now.py`](scan_now.py), with full instructions in
+[`SCAN_NOW.md`](SCAN_NOW.md).
+This was absent when the user's SSH command returned
+`can't open file`. It is NOW committed: an atomic
+on-demand request to be fulfilled by the **NEXT
+existing Chakra five-minute scanner cycle**, reusing
+its existing IBKR Gateway/client/app. The command
+does NOT establish an independent connection or
+perform an instantaneous extra broker scan, and
+cannot return live results on Saturday while markets
+and Chakra are closed. Changes: CLI, locked runtime
+request in `ASJR_Analyst/rudra_scanner_manual_request.json`
+(.gitignored), test suite +10, and same-process
+Chakra bridge, pipeline version **2026.10.10.13**.
+**Previous user VPS result = 83/83 PASS; new
+expected 93/93 suite NOT YET VPS TESTED OR
+PROCESS RELOADED.** Do not declare the SSH
+feature live until user's new SSH results confirm it.
+Scanner Discord remains OFF.
+
 **Read this document first in every future session.** Repository: `raghunathbhandari/ASJR`, production branch `main`. Operational history: `ASJR_Analyst/OPERATIONAL_HANDOFF.md`.
 
 **SINGLE LATEST STATUS (Saturday 10 Oct 2026, after 13:38 UTC):**
