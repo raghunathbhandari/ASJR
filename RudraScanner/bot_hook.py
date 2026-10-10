@@ -12,6 +12,7 @@ create another scheduler. This is a deliberate integration test gate.
 from __future__ import annotations
 
 import os
+import json
 from pathlib import Path
 
 from .storage import save_discovery
@@ -24,6 +25,34 @@ REPLAY = "replay"
 ACTIVE = "active"
 
 
+def scanner_runtime(repo_root, trade_date):
+    """Hot-read scheduled scanner config every Chakra 5M cycle.
+
+    Explicit environment RUDRA_SCANNER_MODE always takes precedence.
+    Older dates remain OFF; a Git pull does not itself prove a running
+    VPS process has reloaded code or reached the scheduled market.
+    """
+    path = (Path(repo_root) / "ASJR_Analyst" / "config" /
+            "rudra_scanner_runtime.json")
+    try:
+        state = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(state, dict):
+            raise ValueError("invalid scanner runtime config")
+    except (OSError, ValueError):
+        state = {}
+    start = str(state.get("enabled_from_et", "9999-12-31"))[:10]
+    if str(trade_date)[:10] < start:
+        configured = OFF
+    else:
+        configured = str(state.get("mode", OFF)).lower()
+    return {"mode": os.environ.get(MODE_ENV, configured),
+            "research": bool(state.get("research", False)),
+            "alerts_enabled": bool(state.get("alerts_enabled", False)),
+            "thresholds_approved": bool(state.get(
+                "thresholds_approved", False)),
+            "source": str(path) if path.exists() else "DEFAULT_OFF"}
+
+
 def run_bot_shadow(app, trade_date, *, repo_root, mode=None, logger=None,
                    timeout=5.0, allow_replay=False,
                    save_replay=False, replay_source_date=None):
@@ -34,7 +63,7 @@ def run_bot_shadow(app, trade_date, *, repo_root, mode=None, logger=None,
     EClient/EWrapper app: no second IBKR connection may be started.
     """
     if mode is None:
-        mode = os.environ.get(MODE_ENV, OFF)
+        mode = scanner_runtime(repo_root, trade_date)["mode"]
     normalized_mode = str(mode).strip().lower()
     if normalized_mode == REPLAY:
         if not allow_replay:
@@ -80,10 +109,10 @@ def run_bot_shadow(app, trade_date, *, repo_root, mode=None, logger=None,
         "fixed_state": result["fixed"]["state"],
         "ibkr_scan_states": codes,
         "alert_delivery": "DISABLED",
-        "legacy_universe_changed": False,
         # The existing Chakra pipeline decides whether the live
         # universe is safe to replace. An incomplete scanner response
         # must NOT silently activate a partial stock list.
-        "candidates": result["candidates"] if normalized_mode == ACTIVE
-            and active_ready else [],
+        "candidates": result["candidates"] if active_ready else [],
+        "eligible_for_full_scan": bool(active_ready),
+        "legacy_universe_changed": False,
     }
