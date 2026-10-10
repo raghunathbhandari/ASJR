@@ -576,3 +576,11 @@ not live-activated, and new tests remain unverified on VPS.
 - **Development only**: new files committed, tests not yet executed
   on verified runtime, no live scanner or bot integration/activation.
   RTH-reset VWAP remains a separate agreed setting.
+
+## 2026-10-10 RudraScanner indicator clarification
+
+User reiterated that the scanner uses **both EMA9 and VWAP together**.
+EMA9 is continuous across available 5-minute bars and days including
+premarket; VWAP is a separate RTH-reset indicator. The historical-bar WAP
+versus HLC3×volume VWAP source is still awaiting explicit confirmation.
+See `RudraScanner/README.md`. No live activation.
