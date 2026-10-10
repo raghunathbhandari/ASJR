@@ -563,3 +563,16 @@ capitalization above USD 500 million; up to 50 rows per scanner code.
 This decision is recorded in `RudraScanner/README.md`. It does not
 reactivate the old fixed +/-4% discovery rule. The scanner remains isolated,
 not live-activated, and new tests remain unverified on VPS.
+
+## 2026-10-10 RudraScanner continuous EMA9 confirmed and coded
+
+- User decision: 5-minute EMA9 must be continuous across day boundaries,
+  including premarket/extended-hours bars returned by IBKR. No daily/RTH
+  EMA9 restart. Do not invent bars for missing overnight intervals.
+- Code: `RudraScanner/ema9.py` adds completed-candle EMA9 calculation
+  with timezone validation, warm-up flag, gap minutes and data-quality
+  diagnostics. Tests: `RudraScanner/tests/test_ema9.py`.
+- Canonical design/history: `RudraScanner/README.md`.
+- **Development only**: new files committed, tests not yet executed
+  on verified runtime, no live scanner or bot integration/activation.
+  RTH-reset VWAP remains a separate agreed setting.
