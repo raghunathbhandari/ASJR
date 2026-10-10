@@ -27,6 +27,7 @@ import Utils.asjr_logger as asjr_logger
 import Strategies.RudraReversal1H.rudra_reversal as rudra_reversal
 from RudraScanner.bot_hook import run_bot_shadow
 from RudraScanner.engine import evaluate_scanner, persist_features
+from RudraScanner.hourly import refresh_hourly_cache
 
 try:
     from Backtesting.DataLoader.forex_download_hook import launch_forex_download_once
@@ -38,7 +39,7 @@ try:
 except Exception:
     launch_nq_download_once = None
 
-ASJR_ANALYST_VERSION = "2026.10.10.2"
+ASJR_ANALYST_VERSION = "2026.10.10.3"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -48,10 +49,12 @@ for m in (
     importlib.reload(m)
 
 
-def run_rudra_reversal_strategy(trade_date=None):
-    """Run the isolated Rudra-Reversal 1H detector."""
+def run_rudra_reversal_strategy(trade_date=None, tickers=None):
+    """Run locked 1H Rudra-Reversal rules with an optionally shared ticker set."""
+    if tickers is None:
+        return rudra_reversal.build_rudra_reversal_alerts(trade_date=trade_date)
     return rudra_reversal.build_rudra_reversal_alerts(
-        trade_date=trade_date,
+        trade_date=trade_date, tickers=tuple(tickers),
     )
 
 
@@ -80,6 +83,7 @@ def run_asjr_manual_pipeline(
                 "git": {"status": "SKIPPED_CLOSED_SESSION"}, "log_file": None,
                 "rudra_scanner_shadow": {"state": "SKIPPED_CLOSED_SESSION"},
                 "rudra_scanner_features": {"state": "SKIPPED_CLOSED_SESSION"},
+                "rudra_scanner_hourly": {"state": "SKIPPED_CLOSED_SESSION"},
             }
         trade_date = resolved_date
 
@@ -163,7 +167,15 @@ def run_asjr_manual_pipeline(
             rudra_scanner_shadow = {"mode": "shadow", "state": "ERROR"}
 
         # 1. Build universe
-        if gapup_df is None and fetch_gapup_from_app:
+        rudra_active = (
+            rudra_scanner_shadow.get("mode") == "active"
+            and rudra_scanner_shadow.get("state") == "ACTIVE_SELECTED"
+            and bool(rudra_scanner_shadow.get("candidates"))
+        )
+        # ACTIVE is explicit opt-in and strictly fail-closed. No extra
+        # old percent-mover scanner calls when the new 30-name list
+        # is selected; if incomplete, preserve the legacy workflow.
+        if gapup_df is None and fetch_gapup_from_app and not rudra_active:
             logger.info("MOVERS | Fetch started")
             gapup_df = ibkr.get_gapup_tickers(app)
             logger.info("MOVERS | Fetch completed | rows=%s", len(gapup_df))
@@ -183,7 +195,18 @@ def run_asjr_manual_pipeline(
                 ", ".join(gapup_tickers) if gapup_tickers else "None",
             )
 
-        uni = universe.build_universe(trade_date, gapup_df=gapup_df)
+        if rudra_active:
+            # One bounded list shared by Scanner and Reversal (NQ remains
+            # a separate Yahoo instrument). No new IBKR app connection.
+            uni = pd.DataFrame([
+                {"ticker": item["ticker"],
+                 "source": "+".join(item["sources"]),
+                 "exchange": None,
+                 "sector": item.get("fixed_sector", "")}
+                for item in rudra_scanner_shadow["candidates"]
+            ])
+        else:
+            uni = universe.build_universe(trade_date, gapup_df=gapup_df)
         tickers = (
             uni["ticker"]
             .dropna()
@@ -256,7 +279,7 @@ def run_asjr_manual_pipeline(
         # Only explicit shadow mode performs extra work and emits only
         # saved diagnostic/research outputs, NEVER scanner Discord alerts.
         rudra_scanner_features = {"state": "OFF", "alert_delivery": "DISABLED"}
-        if rudra_scanner_shadow.get("mode") == "shadow":
+        if rudra_scanner_shadow.get("mode") in ("shadow", "active"):
             try:
                 radar_bars, radar_result = evaluate_scanner(
                     intraday_raw, enable_research=False,
@@ -285,9 +308,30 @@ def run_asjr_manual_pipeline(
 
         intraday = intraday_features.add_intraday_features(intraday_raw)
         alert_data = alerts.build_wick_alerts(intraday, trade_date=trade_date)
+
+        # Locked Reversal detection remains unchanged. ACTIVE mode
+        # fetches and reuses a bounded 1H source for the same stock
+        # candidates and preserves NQ on its independent Yahoo route.
+        rudra_scanner_hourly = {"state": "OFF"}
+        if rudra_active:
+            try:
+                rudra_scanner_hourly = refresh_hourly_cache(
+                    app, REPO_ROOT, paths.trading_day(trade_date),
+                    tickers,
+                )
+                logger.info(
+                    "RUDRA SCANNER | 1H history | state=%s | rows=%s",
+                    rudra_scanner_hourly.get("state"),
+                    rudra_scanner_hourly.get("rows"),
+                )
+            except Exception:
+                logger.exception("RUDRA SCANNER | 1H collection failed")
+                rudra_scanner_hourly = {"state": "ERROR"}
+
         try:
             rudra_reversal_alerts = run_rudra_reversal_strategy(
                 trade_date=trade_date,
+                tickers=tickers + ["NQ"] if rudra_active else None,
             )
         except Exception:
             # Rudra-Reversal is independent. Never block live WICKS delivery.
@@ -436,6 +480,7 @@ def run_asjr_manual_pipeline(
             "rudra_reversal_alerts": rudra_reversal_alerts,
             "rudra_scanner_shadow": rudra_scanner_shadow,
             "rudra_scanner_features": rudra_scanner_features,
+            "rudra_scanner_hourly": rudra_scanner_hourly,
             "sector": sector,
             "ticker_summary": ticker_summary,
             "snapshot": snap,
