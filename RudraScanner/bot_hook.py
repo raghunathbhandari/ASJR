@@ -54,6 +54,10 @@ def run_bot_shadow(app, trade_date, *, repo_root, mode=None, logger=None,
                 }}
     if app is None:
         raise ValueError("Shadow scan needs the connected existing IBKR app")
+    # Shadow gate also enables real WAP capture for existing 5M requests
+    # later in the SAME legacy Chakra cycle; no independent data call.
+    from .wap_capture import install_wap_capture
+    install_wap_capture(app)
 
     result = save_discovery(
         app, trade_date, repo_root=Path(repo_root),
