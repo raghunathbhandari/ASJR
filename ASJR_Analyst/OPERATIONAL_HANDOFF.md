@@ -697,3 +697,50 @@ IBKR WAP/5M/1H data flow, publish one authoritative result and use
 safe Git/Discord delivery. **No integration, deployment or restart
 is authorised as already complete**; the pending steps and acceptance
 gates are documented in `RudraScanner/README.md`.
+
+## 2026-10-10 final user handoff: Resume from RudraScanner README
+
+The user requested that **all progress and the exact next-session resume
+point** be saved in Markdown. `RudraScanner/README.md` now contains
+**START HERE NEXT SESSION — latest checkpoint (2026-10-10 UK)** near the top.
+Read this FIRST; its detailed checklist supersedes earlier provisional
+status blurbs, without changing their historical record.
+
+**Current verified status:** GitHub development code committed. Offline
+unittest/VPS SSH output has **not yet been supplied or verified**. The user
+will run the tests later. The US market is closed Saturday, Oct 10, but
+read-only saved-file validation can run against **2026-10-09**. Expected
+(not observed) selected universe is **10 FIXED + 10 AI + 0 IBKR = 20**
+unique names while there is no saved new multi-scan IBKR CSV.
+This is input selection, **not 20 trading signals**. A real trading-day
+five-pattern output previously illustrated in chat is only an EXAMPLE:
+the real five detectors, actual WAP VWAP processing, Discord scanner
+delivery and hourly AI task are NOT deployed.
+
+**Next stage after seeing and fixing real SSH test results:** integrate the
+new scanner into the EXISTING five-minute Chakra bot method, using the
+same DataLake for Radar/Reversal, capped 10+10+10 source universe, one Git
+pull/import/save/push flow, continuous EMA9, RTH-reset actual-WAP VWAP,
+tested five LONG+SHORT setups, independent Reversal 1H logic and preserved
+Wicks delivery/ack. External VPS caller still needs a live-code audit,
+and user controls any bot restart. No automatic trade execution.
+
+**Exact VPS commands, pending user execution:**
+
+    cd /root/trading/ASJR
+    git status --short
+    git pull --ff-only origin main
+    /root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+    /root/trading/venv_new/bin/python RudraScanner/ssh_smoke_test.py --date 2026-10-09
+
+The AI research expires **Monday Oct 12 at 12:00 UTC / 13:00 UK**
+and must be refreshed before the US open; it contains source-backed
+watch candidates but unverified fundamental suitability. The
+priority ranking and detector thresholds need review rather than
+unsupported assumptions.
+
+**Maintenance rule for future work:** update the near-top START HERE
+checkpoint in RudraScanner README and this ASJR handoff with each
+substantial code change, test result, activation and any remaining
+blockers; retain clear distinctions between planned, committed,
+offline-tested, VPS-verified and live-alert-verified stages.
