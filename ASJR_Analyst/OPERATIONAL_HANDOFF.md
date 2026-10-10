@@ -1293,3 +1293,54 @@ Complete explanation and actual Friday summary:
 `RudraScanner/FRIDAY_REPLAY.md`, and newest
 `RudraScanner/README.md` resume checkpoint.
 No bot restart or scanner Discord approval occurred.
+
+## 2026-10-10 12:41 UTC Friday retest: 64/65 tests, mock warm-up issue fixed
+
+The user shared their second Friday full-suite command and
+saved report from VPS after pulling `940f949d..9fc0dbf6`
+on main. The unit suite returned:
+
+    Ran 65 tests in 0.746s
+    FAILED (failures=1)
+
+**Exact failure:** `test_friday_round.FridayReplayTests.
+test_markout_entry_next_bar_and_exit_after_six`.
+The test monkeypatched `detect_five_patterns()` with
+an unconditional fake signal, allowing index 6
+(30-minute RTH gate). However, the assertion
+correctly expected actual pattern minimum 15
+completed bars (index >=14). This was a **test
+mock bug**, not a verified live strategy flaw.
+
+**Code fix committed to main:** only
+`RudraScanner/tests/test_friday_round.py`
+was changed: `fake_signal()` now blocks signals
+when `len(bars) < 15` (reports
+`blocked_data=1`), mirroring the production
+detector's warm-up. All real scanner detection,
+data import, alert sending and exit analysis code
+remains unchanged. **The corrected 65-test suite
+is pending VPS re-execution**, not yet 65/65 PASS.
+
+**User's Friday WAP research results remain valid
+as generated:** 22,290 historical IBKR WAP
+5M bars across 40 instruments; 9,360 RTH VWAP
+ready. 11 labelled signals = 10 unique
+entry opportunities after one duplicate AMZN
+pattern label. 4 positive and 6 negative unique
+hypothetical next-bar-entry / 30-minute markouts;
+40.0% positive, +0.0147% mean before fees,
+spread or slippage. No orders/Discord,
+hindsight universe and experimental setups.
+
+Next safe SSH command after pull:
+
+    cd /root/trading/ASJR
+    git status --short
+    git pull --ff-only origin main
+    /root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+
+No IBKR backfill required; already cached.
+Canonical resumption notes in
+`RudraScanner/README.md` and
+`RudraScanner/FRIDAY_REPLAY.md`.
