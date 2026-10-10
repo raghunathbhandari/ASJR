@@ -1403,7 +1403,7 @@ rollback and exact operational constraints.
   the existing `ibkr_trading_sudarsan_chakra(app)`;
   no new scheduler/broker connection/order function.
 - Existing `ASJR_Analyst/Tests/test_asjr_pipeline.py`
-  is version **2026.10.10.10** and installs passive
+  is version **2026.10.10.12** and installs passive
   IBKR WAP tap before the legacy 5M fetch (no added
   requests at this step), then delivers original
   **WICKS and locked 1H Reversal alerts BEFORE**
@@ -1497,7 +1497,7 @@ second process automatically.
 **Monday acceptance:** After the user
 restarts/reloads the existing bot AND
 confirms 81/81 tests, verify version
-2026.10.10.10 in Chakra logs, legacy
+2026.10.10.12 in Chakra logs, legacy
 Wicks/Reversal immediate dispatch, scanner
 4-code actual result/partial statuses, <=30
 separate stocks, WAP/timing/ETF 5M context
