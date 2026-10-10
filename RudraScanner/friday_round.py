@@ -337,6 +337,24 @@ def replay_once(raw, root, day, *, hold_bars=6):
             "markout_pct_before_costs", "sector_etf",
             "index_pct_at_signal", "sector_pct_at_signal", "kind",
         ])
+    # Pattern labels can overlap on the exact same ticker/entry candle.
+    # Distinct entry opportunities and the raw pattern hits are NOT
+    # interchangeable. Keep the raw ledger unchanged for research but
+    # calculate the independent-entry diagnostic separately.
+    distinct = trades.drop_duplicates(
+        subset=["ticker", "direction", "entry_time_uk"],
+        keep="first",
+    )
+    distinct_count = len(distinct)
+    pattern_stats = {}
+    for name, group in trades.groupby("pattern", sort=True):
+        marks = group["markout_pct_before_costs"]
+        pattern_stats[str(name)] = {
+            "signals": int(len(group)),
+            "wins": int((marks > 0).sum()),
+            "win_rate_pct": round(float((marks > 0).mean()) * 100.0, 2),
+            "average_markout_pct": round(float(marks.mean()), 4),
+        }
     summary = {
         "date": day,
         "state": "FRIDAY_RESEARCH_ONLY",
@@ -351,6 +369,16 @@ def replay_once(raw, root, day, *, hold_bars=6):
         "eligible_rth_ticker_bars": eligible_bars,
         "blocks": blocks,
         "research_signals_with_markout": len(trades),
+        "distinct_entry_opportunities": distinct_count,
+        "overlapping_pattern_labels": int(len(trades) - distinct_count),
+        "distinct_entry_wins": int(
+            (distinct["markout_pct_before_costs"] > 0).sum()),
+        "distinct_entry_win_rate_pct": round(
+            100.0 * float((distinct["markout_pct_before_costs"] > 0).mean()), 2
+        ) if distinct_count else None,
+        "distinct_entry_average_markout_pct": round(
+            float(distinct["markout_pct_before_costs"].mean()), 4
+        ) if distinct_count else None,
         "markout_bars": hold_bars,
         "win_rate_pct": round(
             100.0*(trades["markout_pct_before_costs"] > 0).mean(), 2
@@ -360,11 +388,15 @@ def replay_once(raw, root, day, *, hold_bars=6):
         ) if len(trades) else None,
         "by_pattern": {k: int(v) for k, v in
                        trades["pattern"].value_counts().items()},
+        "by_pattern_diagnostics": pattern_stats,
         "exit_definition": "NEXT_5M_OPEN_TO_CLOSE_AFTER_6_5M_BARS",
         "costs_included": False,
         "real_live_signals": 0,
         "discord_sent": 0,
-        "warning": "NOT A FULL UNBIASED BACKTEST; needs historical ex-ante universe and locked exits",
+        "warning": ("NOT A FULL UNBIASED BACKTEST; needs historical "
+                    "ex-ante universe and locked exits; repeated entries "
+                    "can overlap and signal-level markouts are not a "
+                    "portfolio equity curve"),
     }
     return trades, summary
 
