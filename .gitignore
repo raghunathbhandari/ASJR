@@ -13,3 +13,9 @@ ASJR_Analyst/mean_reversal_alert_batch.tmp
 
 # Large local-only NQ historical dataset (never commit / never pull to VPS)
 Backtesting/BacktestData/External/NQ/Dataset_NQ_1min_2022_2025.csv
+
+# Ephemeral cross-process manual RudraScanner SSH -> existing Chakra requests.
+# This must stay on the VPS only (never Git stage/rebase the pending queue).
+ASJR_Analyst/rudra_scanner_manual_request.json
+ASJR_Analyst/rudra_scanner_manual_request.tmp
+ASJR_Analyst/rudra_scanner_manual_request.lock
