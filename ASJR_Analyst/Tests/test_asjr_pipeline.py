@@ -47,7 +47,7 @@ try:
 except Exception:
     launch_nq_download_once = None
 
-ASJR_ANALYST_VERSION = "2026.10.10.6"
+ASJR_ANALYST_VERSION = "2026.10.10.7"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -184,7 +184,7 @@ def run_asjr_manual_pipeline(
         # ACTIVE is explicit opt-in and strictly fail-closed. No extra
         # old percent-mover scanner calls when the new 30-name list
         # is selected; if incomplete, preserve the legacy workflow.
-        if gapup_df is None and fetch_gapup_from_app and not rudra_active:
+        if gapup_df is None and fetch_gapup_from_app:
             logger.info("MOVERS | Fetch started")
             gapup_df = ibkr.get_gapup_tickers(app)
             logger.info("MOVERS | Fetch completed | rows=%s", len(gapup_df))
@@ -381,73 +381,38 @@ def run_asjr_manual_pipeline(
             sector = pd.DataFrame()
             logger.info("SECTOR | Skipped")
 
-        # Research pattern evaluation is opt-in and uses strict
-        # index -> sector -> ticker confirmation after sector data loads.
-        # It cannot alter the locked detectors' rules or their state.
+        # New scanner's independent 5M sidecar already evaluated actual
+        # completed SPY/QQQ/sector ETF candles *as-of the SAME bar*.
+        # Never use delayed Yahoo daily close to approve a 5M signal.
+        # Monday's provisional patterns are RESEARCH ONLY: separate
+        # scanner Discord gate remains OFF until live + thresholds check.
+        runtime = scanner_runtime(REPO_ROOT, paths.trading_day(trade_date))
+        scanner_events = list(rudra_scanner_features.get("events", []))
         rudra_scanner_research = {
-            "state": "OFF", "alert_delivery": "DISABLED"
+            "state": rudra_scanner_features.get("state", "OFF"),
+            "events": len(scanner_events),
+            "context": rudra_scanner_features.get("context", {}),
+            "report": rudra_scanner_features.get("report"),
+            "alert_delivery": "DISABLED",
         }
-        if (
-            rudra_scanner_shadow.get("mode") in ("active", "shadow")
-            and os.environ.get("RUDRA_SCANNER_RESEARCH", "0") == "1"
-            and "radar_bars" in locals()
-        ):
+        if runtime["alerts_enabled"] and runtime["thresholds_approved"]:
             try:
-                ai_context, _ = read_ai_csv(
-                    paths.master_config_path("ai_scanner_list.csv")
-                )
-                selected_context = rudra_scanner_shadow.get("candidates", [])
-                etfs = ticker_etf_from_sources(
-                    selected_context, ai_rows=ai_context,
-                )
-                index_bias, sectors, context_status = classify_topdown(
-                    sector, trade_date=paths.trading_day(trade_date),
-                    ticker_etfs=etfs,
-                )
-                allowed_symbols = set(etfs)
-                eligible_bars = radar_bars[
-                    radar_bars["ticker"].isin(allowed_symbols)
-                ].copy()
-                events, detector_health = detect_five_patterns(
-                    eligible_bars, index_bias=index_bias,
-                    sector_bias_by_ticker=sectors,
-                    settings=PatternSettings(enabled_for_research=True),
-                )
-                radar_result["events"] = events
-                radar_result["detector_status"] = detector_health
-                radar_result["state"] = "EXPERIMENTAL_RESEARCH"
-                persist_features(
-                    REPO_ROOT, paths.trading_day(trade_date),
-                    radar_bars, radar_result,
-                )
-                rudra_scanner_research = {
-                    "state": "EXPERIMENTAL_RESEARCH",
-                    "events": len(events),
-                    "context": context_status,
-                    "alert_delivery": "DISABLED",
-                }
-                # Both gates must be explicitly set. Unapproved
-                # development thresholds cannot send a trading alert.
-                send_state = deliver_scanner_alerts(
-                    events, alert_sender,
+                from RudraScanner.delivery import queue_scanner_events
+                queue_status = queue_scanner_events(
+                    scanner_events,
                     state_file=paths.ROOT / "rudra_scanner_delivery_state.json",
                     trade_date=paths.trading_day(trade_date),
-                    enabled=os.environ.get("RUDRA_SCANNER_ALERTS") == "1",
-                    thresholds_approved=os.environ.get(
-                        "RUDRA_SCANNER_THRESHOLDS_APPROVED") == "1",
                 )
-                rudra_scanner_research["alert_delivery"] = send_state["state"]
-                rudra_scanner_research["events_sent"] = send_state["sent"]
-                logger.info(
-                    "RUDRA SCANNER | research=%s | index=%s | events=%s | delivery=%s",
-                    detector_health["state"], index_bias, len(events),
-                    send_state["state"],
-                )
+                rudra_scanner_research["queue_status"] = queue_status
+                rudra_scanner_research["alert_delivery"] = "QUEUED_FOR_EXISTING_DISCORD"
+                logger.info("RUDRA SCANNER | queued separate Discord signals=%s",
+                            queue_status)
             except Exception:
-                logger.exception("RUDRA SCANNER | research/delivery failed")
-                rudra_scanner_research = {
-                    "state": "ERROR", "alert_delivery": "NOT_CONFIRMED",
-                }
+                logger.exception("RUDRA SCANNER | independent alert queue error")
+                rudra_scanner_research["alert_delivery"] = "ERROR_UNSENT"
+        else:
+            logger.info("RUDRA SCANNER | 5M research=%s | candidates=%s | Discord GATED OFF",
+                        rudra_scanner_research["state"], len(scanner_events))
 
         # 6. Processed ticker summary + snapshot
         ticker_summary = snapshot.build_ticker_summary(
