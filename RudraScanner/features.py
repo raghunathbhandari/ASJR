@@ -28,7 +28,9 @@ def build_scanner_features(raw, *, now=None):
     status = dict(status)
     status.update(wap_source="IBKR_HISTORICAL_BAR_WAP_REQUIRED",
                   vwap_ready_rows=0, rvol20_ready_rows=0,
-                  exact_wap_rows=0, no_wap_rows=0)
+                  exact_wap_rows=0, no_wap_rows=0,
+                  wap_state="WAP_MISSING_OR_INCOMPLETE_RTH",
+                  rvol_state="INSUFFICIENT_20_FULL_RTH_SESSIONS")
     extra = ["wap", "vwap", "vwap_ready", "wap_present",
              "session_date_et", "minutes_into_rth", "rvol20",
              "rvol20_ready", "prior_complete_sessions",
