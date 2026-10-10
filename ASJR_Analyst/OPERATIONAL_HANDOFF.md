@@ -1210,3 +1210,86 @@ running IBKR Gateway and the user's choice to run it):**
 Do not claim these tests have passed or quote a Friday
 win rate without actual user VPS results. Production
 `RUDRA_SCANNER_MODE=off`; locked Wicks/Reversal untouched.
+
+## 2026-10-10 verified Friday IBKR 40-instrument WAP replay — first real pattern research result
+
+The user ran:
+`/root/trading/venv_new/bin/python RudraScanner/friday_round.py
+--date 2026-10-09 --download-ibkr --host 127.0.0.1
+--port 4002 --client-id 91 --save`.
+An initial "No such file" was due only to not yet pulling the
+committed file; a subsequent `git pull` fast-forwarded to
+`940f949d` and the run succeeded.
+
+**ACTUAL VPS evidence:**
+- 40/40 historical IBKR instrument requests completed,
+  `failures = {}`; 30 retrospective stocks + SPY/QQQ +
+  eight sector ETFs, **22,290 actual 5M OHLCV/WAP bars**,
+  **9,360** valid RTH WAP-weighted VWAP bars.
+- **2,160** RTH stock bars after the opening execution
+  gate; **1,853** missing/mixed index-sector directional
+  context; 36 insufficient pattern lookback; 8 pattern
+  hits with insufficient complete 30-minute forward
+  bars; missing WAP 0.
+- Raw detector labels: **11 LONG pattern hits**,
+  **5 positive, 6 negative** for a provisional next-open
+  to six-bars-later close markout, **45.45%** positive,
+  mean **+0.0311% per pattern hit before costs**.
+- By pattern: HITCHHIKER 6, 2 positive, mean −0.0364%;
+  BACK$IDE 4, 2 positive, mean +0.0914%;
+  SECOND CHANCE 1, 1 positive, +0.1947%;
+  RUBBERBAND 0; FASHIONABLY LATE 0.
+- AMZN 2026-10-09 20:25 BST generated both
+  HITCHHIKER and SECOND CHANCE with the SAME
+  entry at 20:30 UK and SAME +0.1947% 30m
+  markout. These cannot be counted as separate
+  portfolio entries. **10 distinct entry opportunities,
+  4 positive, 6 negative, 40% positive,
+  +0.0147% mean before costs** (simple same-ticker/
+  side/entry-time deduplication). Other entries can
+  overlap within a ticker.
+- Best recorded markout HUM +0.6329% (BACK$IDE);
+  worst AMT −0.5489% (HITCHHIKER).
+- `real_live_signals: 0`, `discord_sent: 0`,
+  `orders_sent: 0`; saved the historical WAP CSV
+  and research report only under
+  `ASJR_Analyst/DataLake/2026-10-09/`.
+  The historical API backfill does NOT verify the
+  upcoming real-time four-code scanner.
+
+**Cautions:** this universe includes Saturday AI research
+and Friday after-close movers, creating hindsight selection
+bias. One day cannot establish an edge. Pattern thresholds
+remain provisional, and the exit is a temporary 30-minute
+markout, not a user-approved exit/SL. Returns exclude spread,
+fees, slippage, execution and short borrows. Counting
++0.0311% as tradeable expected net profit would be misleading.
+
+**Follow-up GitHub code committed AFTER that observed test:**
+`RudraScanner/friday_round.py` now additionally produces
+`distinct_entry_opportunities`,
+`overlapping_pattern_labels`,
+`distinct_entry_win_rate_pct`,
+`distinct_entry_average_markout_pct` and
+per-pattern win/mean statistics. The prior raw pattern ledger
+is retained for research. A ninth Friday unit test checks
+duplicate-pattern handling; the existing markout
+unit test was corrected to respect the 15-bar
+detector warm-up. **Suite now 65 source tests**:
+56 previously VPS PASSED + 9 NEW Friday replay tests
+NOT YET CONFIRMED on the VPS. Do not claim 65/65 PASS
+until user supplies new output.
+
+**Next run does NOT require new IBKR requests**; Friday
+`raw/rudra_friday_ibkr_wap.csv` is already cached:
+
+    cd /root/trading/ASJR
+    git status --short
+    git pull --ff-only origin main
+    /root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+    /root/trading/venv_new/bin/python RudraScanner/friday_round.py --date 2026-10-09 --save
+
+Complete explanation and actual Friday summary:
+`RudraScanner/FRIDAY_REPLAY.md`, and newest
+`RudraScanner/README.md` resume checkpoint.
+No bot restart or scanner Discord approval occurred.
