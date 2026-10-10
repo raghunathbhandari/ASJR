@@ -622,3 +622,24 @@ on Reversal's dedicated Yahoo Finance route.
 combined 1H data import is not wired, and no VPS validation or restart
 has happened. Tests committed, not runtime-verified. See canonical
 `RudraScanner/README.md` for complete history.
+
+## 2026-10-10 confirmed max 30 stock tickers (10/10/10)
+
+User approved **max 30 distinct US-stock candidates total** for the
+shared RudraScanner/Rudra-Reversal source universe, selected up to
+10 FIXED, 10 AI hourly, 10 IBKR scanner. Cross-source duplicates
+take one slot; fill from the same source's next eligible candidate,
+never overflow a source or transfer unused slots. Apply cap before
+IBKR 5M/1H market data import to avoid loading every discovery name.
+NQ Yahoo instrument remains separate from 30 US-stock names.
+
+Development code: `RudraScanner/universe.py::merge_shared_universe`
+enforces hard quotas and provides selection-source provenance and
+`selection_summary`; `RudraScanner/storage.py` now saves status
+and selected origin to common DataLake. Added offline cap tests in
+`RudraScanner/tests/test_selection_caps.py`.
+
+Rank tie-breakers are **provisional pending user confirmation**;
+no fixed 4% gate. **No bot restart or live activation**. Locked
+Reversal `STRATEGY_TICKERS`, Wicks and live ASJR imports are unchanged.
+Canonical details: `RudraScanner/README.md`.
