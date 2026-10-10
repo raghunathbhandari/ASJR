@@ -1034,3 +1034,59 @@ and scanner Discord are NOT user-activated or verified.
 The user should send the 55-test output so failures can
 be fixed before any live test. Exact WAP VWAP and RVOL20
 correctly remain DATA NOT READY until real sources/history exist.
+
+## 2026-10-10 USER VERIFIED 55/55 PHASE 2 TESTS — latest observed checkpoint
+
+User supplied exact VPS results for the new complete offline test
+sequence from `/root/trading/ASJR`.
+
+- `python -m compileall -q RudraScanner
+  ASJR_Analyst/Tests/test_asjr_pipeline.py
+  ASJR_Analyst/Utils/asjr_ibkr.py` completed silently
+  (no syntax errors).
+- `python -m unittest discover -s RudraScanner/tests -p
+  'test_*.py' -v` returned **Ran 55 tests in 0.531s; OK**
+  with **0 test failures or errors**.
+- `RudraScanner/bot_test.py --date 2026-10-09
+  --ibkr-source-date 2026-10-09` returned an offline
+  **30/30 source universe**, 10 fixed + 10 AI + 10
+  historical legacy-mover IBKR substitutes, 84 candidates
+  qualifying its incomplete archival price/volume screen.
+  **No broker calls, no technical signals, no file save.**
+- `RudraScanner/datalake_test.py --date 2026-10-09`
+  returned **56,027 completed 5M bars / 106 historical
+  tickers**, continuous EMA9 OK,
+  **WAP_MISSING_OR_INCOMPLETE_RTH (0 exact VWAP rows)**,
+  **INSUFFICIENT_20_FULL_RTH_SESSIONS (0 RVOL20 rows)**,
+  `INDICATORS_ONLY`, detectors DISABLED, Discord DISABLED,
+  no verified 5M pattern entry/exit signals.
+  `TOP-DOWN context gate: 0` is NOT proof index/sector
+  confirmation was executed, because pattern detector is OFF.
+
+**Nonfatal issue:** pandas `FutureWarning` on concat of
+empty rolling-volume DataFrame at
+`RudraScanner/volume_history.py:89`. Follow-up **fix
+committed** to avoid concatenating empty inputs, plus
+`test_empty_prior_source_does_not_emit_futurewarning`
+regression test in `tests/test_volume_history.py`.
+**New total = 56 test methods, NOT yet VPS run for the fix**.
+Expected result is zero warnings and same market-data
+quality conclusions; never report follow-up PASS before
+new actual user output.
+
+**Remaining live acceptance tasks:**
+audit actual VPS EWrapper scanner and historical callbacks,
+test four new scanner codes on next regular US trading
+session in isolated `RUDRA_SCANNER_MODE=shadow`,
+verify actual WAP/5M and data alignment, 20 real complete
+RTH sessions for RVOL20, per-symbol >=150 complete 1H
+Reversal bars and stable pacing, establish source-verified
+sector direction and final detector numerical settings.
+Discord send gates still OFF; Wicks and original Reversal
+detector logic unchanged. ACTIVE would change Wicks'
+ticker universe and must not be enabled without approval.
+
+**Next resumption path:** `RudraScanner/README.md`
+section **VERIFIED VPS TEST — Saturday 2026-10-10,
+55/55 PASSED** and `RudraScanner/FULL_TEST.md`.
+Do not auto-restart the live Chakra bot.
