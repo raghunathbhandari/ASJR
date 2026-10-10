@@ -1,5 +1,47 @@
 # RudraScanner — Current State / Start Here Next Session
 
+## 2026-10-10 14:22 UTC — user reports existing Chakra bot restarted
+
+**User confirmed:** "BOT restarted now" after installing the
+`scan_now.py` same-process SSH bridge and version
+`2026.10.10.13` changes on the VPS.
+
+**Evidence limitations:** No current process startup log,
+running version print, test suite output, or Monday live broker
+scan was provided with this restart report. Do NOT mark
+`2026.10.10.13` as confirmed loaded, do NOT mark expanded
+**93/93** tests passed, and do NOT mark scanner live.
+The previously verified **83/83 pass** predates the new
+SSH command. Existing scanner/Gateway/OHLC success is
+user-confirmed for other ASJR tasks.
+
+Saturday (Oct 10) `scan_now.py --no-wait` correctly
+reported `MARKET SESSION CLOSED` and
+`scan_now.py --status` reported
+`NO MANUAL REQUEST SAVED`, confirming the CLI can
+be invoked and refuses to enqueue on a closed session.
+This was **NOT** a live SSH IPC completion test.
+
+**Next required evidence:**
+
+```bash
+cd /root/trading/ASJR
+/root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py'
+```
+
+Expected 93 tests, not yet verified. Inspect actual
+Chakra startup log for `RUN | VERSION | 2026.10.10.13`
+on next eligible US session. On Monday 12 Oct, allow
+the connected existing Chakra 5-minute scan to run,
+then test SSH `scan_now.py` with its real
+QUEUED -> COMPLETE / DATA_NOT_READY handshake.
+Scanner Discord remains OFF in SHADOW. No new
+IBKR connection, scheduler, manual trading orders
+or second bot should be created.
+
+---
+
+
 **SSH manual scan implementation added later on Saturday 10 October.**
 **NOW EXISTS:** [`scan_now.py`](scan_now.py) and
 [`SCAN_NOW.md`](SCAN_NOW.md). Unlike
