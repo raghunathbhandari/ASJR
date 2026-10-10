@@ -744,3 +744,46 @@ checkpoint in RudraScanner README and this ASJR handoff with each
 substantial code change, test result, activation and any remaining
 blockers; retain clear distinctions between planned, committed,
 offline-tested, VPS-verified and live-alert-verified stages.
+
+## 2026-10-10 USER VPS SSH RESULT VERIFIED — RudraScanner phase 1
+
+The user supplied actual console output for:
+
+    /root/trading/venv_new/bin/python RudraScanner/ssh_smoke_test.py --date 2026-10-09
+
+**Input smoke test PASSED on the VPS.** The result showed:
+
+- AI list PARTIAL, 11 eligible rows, 0 expired;
+  source published_at time unavailable for LITE/HUM/NVDA.
+- Fixed list PARTIAL, 18 enabled after the old enabled
+  ONDS row was excluded under the user's existing rule.
+- New IBKR scanner CSV NOT_YET_SAVED, zero IBKR discovery rows;
+  this is expected because the read-only smoke test makes
+  **no live IBKR request**.
+- Exactly **20 / 30 selected** = **10 FIXED + 10 AI + 0 IBKR**.
+  Cross-source INTC counted once. Source bucket lists:
+  FIXED: AKAM, AMAT, CRDO, INTC, MSFT, ORCL, QCOM, SMCI,
+  WDC, WTTR; AI: AAPL, AMT, AMZN, HUM, JPM, LITE,
+  NVDA, PLTR, SPCX, TMUS. No IBKR source names yet.
+- Same deduplicated ticker universe displayed for the intended
+  Scanner/Reversal stock selection; NQ remains Yahoo 1H outside 30.
+
+**Verification must be interpreted narrowly:** the Python full offline
+unittest command result has not been submitted; live multi-code IBKR,
+1H import, historical WAP/RTH VWAP, five actual 5M detectors,
+Chakra-method integration, Git delivery, Discord and automatic hourly
+AI research are still **NOT verified or integrated**. The earlier
+sample signal messages were hypothetical examples, not real scans.
+
+**Remaining check before modifying production pipeline:**
+
+    cd /root/trading/ASJR
+    /root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+
+**Next engineering phase, already requested by user:** safely integrate
+the scanner within the existing five-minute Chakra bot METHOD, reusing
+the 30-stock shared candidate list/DataLake, preserving Wicks and
+locked Rudra-Reversal 1H logic. Do not auto-restart, add a second
+scheduler, or claim live notifications. The canonical latest
+per-session checkpoint and actual evidence are in
+`RudraScanner/README.md`, at START HERE NEXT SESSION.
