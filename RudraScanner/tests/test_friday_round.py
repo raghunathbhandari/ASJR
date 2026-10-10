@@ -80,10 +80,19 @@ class FridayReplayTests(unittest.TestCase):
             first = trades.iloc[0]
             self.assertEqual(first["direction"], "LONG")
             self.assertEqual(first["pattern"], "HITCHHIKER")
+            # The real detector requires >=15 RTH bars of lookback,
+            # so the earliest valid signal is NOT the 7th day bar.
+            signal_stamp = pd.Timestamp(first["signal_time_uk"]).tz_convert("UTC")
+            bar_i = int((signal_stamp -
+                         pd.Timestamp("2026-10-09T13:30:00Z")).total_seconds()
+                        / 300)
+            self.assertGreaterEqual(bar_i, 14)
             self.assertAlmostEqual(
-                float(first["entry_next_open"]), 101.0+0.1*7-0.01)
+                float(first["entry_next_open"]),
+                101.0 + 0.1*(bar_i+1) - 0.01)
             self.assertAlmostEqual(
-                float(first["exit_6bar_close"]), 101.0+0.1*12)
+                float(first["exit_6bar_close"]),
+                101.0 + 0.1*(bar_i+6))
             self.assertTrue(status["selection_hindsight"])
             self.assertEqual(status["discord_sent"], 0)
 
