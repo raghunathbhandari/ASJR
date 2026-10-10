@@ -86,7 +86,12 @@ def apply_rolling_rvol20(features, repo_root, trade_date, *, save=False):
     else:
         older = pd.DataFrame(columns=FIELDS)
     incoming = _verified_history(features)
-    combined = pd.concat([older[FIELDS], incoming], ignore_index=True)
+    # Pandas 2.x warns when concatenating empty/all-NA frames and may
+    # change inferred dtypes in future versions. Keep only genuinely
+    # populated sources; an all-empty result retains the declared schema.
+    sources = [part for part in (older[FIELDS], incoming) if not part.empty]
+    combined = (pd.concat(sources, ignore_index=True) if sources else
+                pd.DataFrame(columns=FIELDS))
     combined["ticker"] = combined["ticker"].astype(str).str.strip().str.upper()
     combined["session_date_et"] = combined["session_date_et"].astype(str)
     combined["minutes_into_rth"] = pd.to_numeric(
