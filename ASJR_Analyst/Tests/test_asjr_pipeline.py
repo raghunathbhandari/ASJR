@@ -36,6 +36,7 @@ from RudraScanner.topdown import classify_topdown, ticker_etf_from_sources
 from RudraScanner.patterns import PatternSettings, detect_five_patterns
 from RudraScanner.delivery import deliver_scanner_alerts
 from RudraScanner.discovery import read_ai_csv
+from RudraScanner.manual_request import capture_pending, complete_pending
 
 try:
     from Backtesting.DataLoader.forex_download_hook import launch_forex_download_once
@@ -295,6 +296,11 @@ def run_asjr_manual_pipeline(
         # new IBKR requests and no production universe/alert changes.
         # SHADOW reuses the existing connected app and common DataLake.
         # Never allow an experimental scanner to stop live WICKS/Reversal.
+        # Direct SSH scan_now.py requests are consumed by THIS running Chakra
+        # 5M cycle; no second IBKR client, scheduler or duplicate scan.
+        manual_scan_request_id = capture_pending(
+            REPO_ROOT, paths.trading_day(trade_date),
+        )
         try:
             rudra_scanner_shadow = run_bot_shadow(
                 app, trade_date, repo_root=REPO_ROOT, logger=logger,
@@ -364,6 +370,26 @@ def run_asjr_manual_pipeline(
             except Exception:
                 logger.exception("RUDRA SCANNER | 1H collection failed")
                 rudra_scanner_hourly = {"state": "ERROR"}
+
+        # ACK one queued SSH request only AFTER this same cycle's
+        # discovery + 5M report + 1H cache have completed. No extra scan.
+        if manual_scan_request_id:
+            try:
+                manual_outcome = complete_pending(
+                    REPO_ROOT, paths.trading_day(trade_date),
+                    manual_scan_request_id,
+                    discovery=rudra_scanner_shadow,
+                    five_minute=rudra_scanner_features,
+                    hourly=rudra_scanner_hourly,
+                )
+                logger.info(
+                    "RUDRA SCANNER | SSH request=%s | completion=%s",
+                    manual_scan_request_id,
+                    (manual_outcome or {}).get("status", "SKIPPED"),
+                )
+            except Exception:
+                # Never interrupt Wicks, Reversal, snapshot or Git pipeline.
+                logger.exception("RUDRA SCANNER | SSH request ACK failed")
 
         intraday_latest = intraday_features.latest_intraday_summary(
             intraday
