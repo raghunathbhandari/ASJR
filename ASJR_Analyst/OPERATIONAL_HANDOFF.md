@@ -1,6 +1,6 @@
 # ASJR Analyst operational handoff
 
-Updated 2026-10-01 (UK). This records the implementation and observed state for Rudrakchhya and future ASJR sessions. Check the current Git branch, VPS logs and today's DataLake files before treating a run as live-verified.
+Updated 2026-10-10 (UK). This records the implementation and observed state for Rudrakchhya and future ASJR sessions. Check the current Git branch, VPS logs and today's DataLake files before treating a run as live-verified.
 
 ## Maintenance rule
 
