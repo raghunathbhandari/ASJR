@@ -125,8 +125,10 @@ def run_git_command(command: str, author_id, *,
                 return _execute_checked(cmd, root)
             finally:
                 fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
-    except OSError:
-        return "ASJR | GIT FAILED | unable to obtain command lock"
+    except Exception as exc:
+        # Report errors to Discord without leaking credentials or traceback.
+        return ("ASJR | GIT EXCEPTION | " +
+                _safe_excerpt(f"{type(exc).__name__}: {exc}"))
 
 
 def _execute_checked(cmd: str, root: Path) -> str:
@@ -178,15 +180,3 @@ def _execute_checked(cmd: str, root: Path) -> str:
             "Existing commits pushed; uncommitted files were NOT uploaded."
             + (f"\n{summary}" if summary else ""))
 
-
-# Simple function names to map in user's EXISTING Discord command handler.
-def gitpull(author_id, **kwargs):
-    return run_git_command("!gitpull", author_id, **kwargs)
-
-
-def gitpush(author_id, **kwargs):
-    return run_git_command("!gitpush", author_id, **kwargs)
-
-
-def handle_git_command(command, author_id, **kwargs):
-    return run_git_command(command, author_id, **kwargs)
