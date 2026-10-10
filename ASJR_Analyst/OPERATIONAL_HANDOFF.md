@@ -600,3 +600,25 @@ source publication over time without changing locked Reversal signal rules.
 User approved actual bar WAP as the scanner VWAP price source; upstream IBKR
 callback extension and runtime verification are still outstanding.
 Canonical details: `RudraScanner/README.md`. No live deployment yet.
+
+## 2026-10-10 common candidates: fixed + AI + IBKR for both strategies
+
+User clarified: **fixed watchlist tickers are mandatory candidate inputs
+alongside AI hourly tickers and IBKR scanner tickers**, and this ticker idea
+is for BOTH RudraScanner (5M) and Rudra-Reversal (1H). Use the existing
+`DataLake/YYYY-MM-DD/config/fixed_watchlist.csv`; no separate new
+source directory. Merge/dedupe, retain source provenance and share
+collected stock data. The two strategies retain isolated locked rules.
+
+New isolated code: `RudraScanner/universe.py`, updated
+`RudraScanner/storage.py`, test `RudraScanner/tests/test_universe.py`.
+The file `processed/scalp_radar_candidates.csv` is the proposed common
+candidate artifact, with FIXED/AI/IBKR provenance. Explicit ONDS/BEAT
+exclusion wins even if a historic fixed row is enabled (2026-10-09 fixed
+file contains an enabled ONDS, so record that as a conflict). NQ stays
+on Reversal's dedicated Yahoo Finance route.
+
+**Not live**: existing Reversal `STRATEGY_TICKERS` was not changed,
+combined 1H data import is not wired, and no VPS validation or restart
+has happened. Tests committed, not runtime-verified. See canonical
+`RudraScanner/README.md` for complete history.
