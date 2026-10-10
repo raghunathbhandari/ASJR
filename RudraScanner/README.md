@@ -6,15 +6,15 @@ Updated: 10 October 2026, Europe/London.
 
 ## START HERE NEXT SESSION — latest checkpoint (2026-10-10 UK)
 
-**STATE: Phase 1 discovery source committed to GitHub; SSH test results not
-yet received; live Chakra bot integration NOT STARTED.** This is the main
+**STATE: Phase 1 discovery source committed to GitHub; user VPS SSH input smoke test VERIFIED (20/30: 10 FIXED + 10 AI + 0 IBKR); full unittest results PENDING; live Chakra bot integration NOT STARTED.** This is the main
 resumption point for any future assistant session. Read this section
 before making code changes. Do not claim live scanner signals or successful
 VPS testing without observing real outputs.
 
 ### Next user action and exact SSH tests
 
-User said they will run SSH tests and share output. Saturday 2026-10-10 is
+User has supplied a successful read-only SSH smoke-test output. The
+separate full Python unittest output is still pending. Saturday 2026-10-10 is
 a closed US equity trading day, but these OFFLINE checks work on the
 previous US session 2026-10-09. Run in the VPS repository:
 
@@ -28,7 +28,7 @@ If Git has local changes or conflicts, do not reset or force-push. Inspect
 and resolve safely. The SSH preview does not connect to IBKR, send Discord,
 alter the DataLake, or start/restart Chakra. Unit tests use local fixtures.
 
-**Expected preview, not a verified result:** With the October 9 saved fixed
+**Now VPS-verified preview:** With the October 9 saved fixed
 list and current AI CSV, the selected candidates should total up to
 10 FIXED + 10 AI + 0 IBKR = 20 DISTINCT stocks, until the multi-code
 IBKR scanner creates a real saved CSV. Missing IBKR list is
@@ -37,7 +37,7 @@ occupies one fixed slot. The old fixed file enables ONDS but the new
 universe correctly excludes and reports it. Some AI published_at_utc
 times are unknown; a PARTIAL evidence warning is expected, not
 automatically a Python error. Compare actual output before claiming
-that any of these counts or tests passed.
+that remaining unit tests passed; only the input smoke test passed.
 
 ### Confirmed system contracts
 
@@ -92,7 +92,7 @@ that any of these counts or tests passed.
   universe.py, storage.py, ema9.py, ssh_smoke_test.py,
   print_saved.py, package init, and tests/test_discovery.py,
   test_universe.py, test_selection_caps.py, test_ema9.py.
-  Only their GitHub existence is verified, NOT execution success.
+  Their GitHub existence is verified; the user's VPS input smoke test passed, but the full unittest suite has not yet been observed.
 
 ### First engineering task AFTER receiving valid SSH output
 
@@ -117,6 +117,79 @@ ASJR_Analyst/OPERATIONAL_HANDOFF.md. This is the user's explicit
 continuity requirement.
 
 ---
+
+
+## VPS EVIDENCE UPDATE — 2026-10-10: SSH smoke test VERIFIED
+
+**User supplied the actual VPS terminal output** from host
+`nostalgic-mirzakhani` using this exact command:
+
+```bash
+/root/trading/venv_new/bin/python RudraScanner/ssh_smoke_test.py --date 2026-10-09
+```
+
+**RESULT: PASS for the intended READ-ONLY DISCOVERY / SELECTION smoke test.**
+This is a new **observed VPS result**, not merely a synthetic expectation.
+
+| Diagnostic printed by user's VPS | Observed result | Interpretation |
+|---|---|---|
+| AI status | PARTIAL; eligible rows **11**, expired **0** | AI CSV read successfully. Status PARTIAL from incomplete source publication timestamps; INTC duplicated as intended across sources. |
+| Fixed status | PARTIAL; enabled **18**; exclusions **ONDS** | Fixed list read successfully; ONDS excluded under user policy despite enabled legacy row. |
+| IBKR scanner CSV | **NOT_YET_SAVED**, rows **0** | New live IBKR multi-code scans **have not run**, not a scanner failure/success measurement. |
+| Selected / max | **20 / 30** distinct stocks | **Correct** under the confirmed hard limit. |
+| Per selection source | **FIXED 10**, **AI 10**, **IBKR 0** | Correct per-source quota and deduplication. |
+| Unused slots | FIXED 0; AI 0; IBKR 10 | Expected without real IBKR scanner output. |
+| NQ | Yahoo 1H separate from 30-stock cap | Correct displayed contract. |
+
+**Exact selected candidates from the actual VPS printout:**
+
+- **FIXED 10/10:** AKAM, AMAT, CRDO, INTC, MSFT, ORCL,
+  QCOM, SMCI, WDC, WTTR.
+- **AI 10/10:** AAPL, AMT, AMZN, HUM, JPM, LITE, NVDA,
+  PLTR, SPCX, TMUS.
+- **IBKR 0/10:** None; saved new scanner CSV does not exist yet.
+- **One deduplicated shared list (20):** AAPL, AKAM, AMAT,
+  AMT, AMZN, CRDO, HUM, INTC, JPM, LITE, MSFT, NVDA,
+  ORCL, PLTR, QCOM, SMCI, SPCX, TMUS, WDC, WTTR.
+
+**Observed warnings:**
+- AI: LITE, HUM, NVDA — source calendar date known but
+  `published_at_utc` exact time unavailable. Do not invent times.
+- Fixed: ONDS — enabled old fixed watchlist row conflicts with
+  user exclusion and is correctly omitted.
+- IBKR: `NOT_YET_SAVED`; does not query IBKR from smoke test.
+
+**Verification levels — DO NOT CONFLATE:**
+
+- [x] Source files and documentation committed and checked on GitHub.
+- [x] **User VPS SSH read-only ticker input smoke test output observed**;
+      expected source counts and dedupe confirmed.
+- [ ] Full Python `unittest discover` output received and passed.
+- [ ] IBKR connected 4-code scanner callback verified in a session.
+- [ ] 5M raw bars + actual WAP and 1H stock history validated.
+- [ ] EMA9 + RTH VWAP and five pattern detectors replay-tested.
+- [ ] Existing five-minute Chakra method integration implemented and tested.
+- [ ] Scanner result saved, Git-pushed and correctly delivered to Discord.
+- [ ] Hourly automatic AI CSV research refresh actually running.
+
+**Important:** This result is **input selection**, not any
+technical LONG/SHORT signal. It was executed during a closed US
+market Saturday, using the October 9 daily fixed configuration.
+It is not a live scanner or production bot run.
+
+**Next recommended command to finish Phase 1 offline verification:**
+
+```bash
+cd /root/trading/ASJR
+/root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+```
+
+The user previously requested the subsequent implementation stage:
+**integrate RudraScanner into the EXISTING Chakra 5-minute method**,
+with a feature gate and preservation of live Wicks and locked
+Rudra-Reversal alerts. Begin engineering work after reviewing test
+results and resolving any actual failures; keep the live bot untouched
+until integration testing and user-controlled activation.
 
 ## Current implementation checkpoint — 2026-10-10
 
