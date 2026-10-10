@@ -1,16 +1,18 @@
-"""Opt-in WAP sidecar on the EXISTING IBKR EWrapper historicalData callback.
+"""Opt-in capture of IBKR's actual historical-bar WAP.
 
-Installed only when the scanner's live shadow gate is explicitly enabled.
-The original callback always executes first, unchanged. This does NOT
-create another EClient, request data, or monkeypatch module-wide ibapi.
+Original EWrapper callback runs unchanged. Match WAP using the bar's
+timestamp, never positionally: the six-field parser sorts timestamps
+and incoming callbacks need not arrive in sorted order.
 """
 from __future__ import annotations
 
 import math
 
+import pandas as pd
+
 
 def install_wap_capture(app):
-    """Return true if installed; one install per existing IBKR application."""
+    """Tap the existing connected EWrapper; no new broker connection."""
     if getattr(app, "_rudra_wap_capture_installed", False):
         return False
     handler = getattr(app, "historicalData", None)
@@ -19,16 +21,15 @@ def install_wap_capture(app):
     app._rudra_wap_sidecar = {}
 
     def wrapped(req_id, bar):
-        # Preserve historicalData business logic and any original errors.
         result = handler(req_id, bar)
         try:
             value = float(getattr(bar, "wap", float("nan")))
-            if math.isfinite(value) and value > 0:
-                app._rudra_wap_sidecar.setdefault(req_id, []).append(value)
-            else:
-                app._rudra_wap_sidecar.setdefault(req_id, []).append(None)
+            price = value if math.isfinite(value) and value > 0 else None
         except (TypeError, ValueError, AttributeError):
-            app._rudra_wap_sidecar.setdefault(req_id, []).append(None)
+            price = None
+        app._rudra_wap_sidecar.setdefault(req_id, []).append(
+            (str(getattr(bar, "date", "")), price)
+        )
         return result
 
     app.historicalData = wrapped
@@ -36,17 +37,42 @@ def install_wap_capture(app):
     return True
 
 
-def attach_wap(app, req_id, parsed, rows):
-    """Attach WAP only if source callback bar counts and parsing match.
+def _stamp(raw):
+    """IBKR formatDate=2 is epoch seconds, otherwise require tz suffix."""
+    value = str(raw).strip()
+    if not value:
+        return None
+    try:
+        return pd.to_datetime(int(value), unit="s", utc=True)
+    except ValueError:
+        try:
+            stamp = pd.Timestamp(value)
+        except (ValueError, TypeError):
+            return None
+        if stamp.tzinfo is None:
+            return None
+        return stamp.tz_convert("UTC")
 
-    False / missing data cannot silently change exact-vwap readiness.
-    Consumes the sidecar regardless of readiness, preventing memory leaks.
+
+def attach_wap(app, req_id, parsed, rows):
+    """Attach real bar WAP only on exact timestamp/row-count match.
+
+    Missing or duplicate timestamps are DATA NOT READY for VWAP. The
+    sidecar is consumed regardless of success to prevent memory growth.
     """
     sidecar = getattr(app, "_rudra_wap_sidecar", None)
     recorded = sidecar.pop(req_id, None) if isinstance(sidecar, dict) else None
-    if (recorded is None or len(recorded) != len(rows)
-            or len(parsed) != len(rows)):
+    if recorded is None or len(recorded) != len(rows) or len(parsed) != len(rows):
+        return parsed
+    lookup = {}
+    for start, price in recorded:
+        stamp = _stamp(start)
+        if stamp is None or stamp in lookup:
+            return parsed
+        lookup[stamp] = price
+    indexes = pd.to_datetime(parsed.index, utc=True, errors="coerce")
+    if indexes.isna().any() or any(t not in lookup for t in indexes):
         return parsed
     out = parsed.copy()
-    out["WAP"] = recorded
+    out["WAP"] = [lookup[t] for t in indexes]
     return out
