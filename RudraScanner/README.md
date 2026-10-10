@@ -32,6 +32,102 @@ Updated: 10 October 2026, Europe/London.
   for the exact SSH commands. No new test PASS is claimed
   until the user shares actual VPS output.
 
+## LATEST IMPLEMENTATION — Friday 2026-10-09 one-round historical research
+
+**User request (Saturday 2026-10-10 UK):** "any way we can run
+this total code for Friday, to do a one round Backtest?"
+The Friday replay entry point is now committed to GitHub as
+`RudraScanner/friday_round.py`, with instructions in
+`RudraScanner/FRIDAY_REPLAY.md` and **8 additional offline
+unit tests** in `RudraScanner/tests/test_friday_round.py`.
+
+### Immediate available test on the saved Friday DataLake
+
+```bash
+cd /root/trading/ASJR
+git status --short
+git pull --ff-only origin main
+/root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+/root/trading/venv_new/bin/python RudraScanner/friday_round.py --date 2026-10-09
+```
+
+The script does one complete Friday RTH 5-minute historical pass
+using the **same `build_scanner_features` and
+`detect_five_patterns` code**, not the live bot. It requires
+actual IBKR bar WAP for VWAP and fresh as-of-candle SPY,
+QQQ and sector-ETF prices. The saved Friday DataLake did not
+include WAP or usable same-time sector ETF history, so an
+offline-only run correctly reports **NO EVALUABLE SIGNALS**
+with blockage counts — this is NOT a 0%-win backtest.
+
+### If IBKR Gateway/TWS API is available on the weekend
+
+Run the separate **read-only historical bar request** via
+`ib_async` (no bot restart, no live trading):
+
+```bash
+/root/trading/venv_new/bin/python RudraScanner/friday_round.py \
+  --date 2026-10-09 --download-ibkr \
+  --host 127.0.0.1 --port 4002 --client-id 91 --save
+```
+
+The code requests real historical `TRADES` 5M candles
+from Friday and two earlier days, from the frozen retrospective
+30 names + SPY/QQQ + sector ETFs. It reads
+`ib_async.BarData.average` (historical bar WAP), not
+invented HLC3, and enforces 09:30 ET RTH VWAP reset.
+It checks IBKR stock contracts but does **not** claim to
+verify issuer fundamentals or market cap. The gateway
+may be disconnected or have weekend/pacing/permissions issues;
+such errors are reported as failures, not made-up results.
+The source is saved **only** as named test data under the
+same 2026-10-09 DataLake:
+`raw/rudra_friday_ibkr_wap.csv` and
+`reports/rudra_friday_ibkr_backfill_status.json`.
+
+Bar-by-bar replay gates direction using the last completed
+5M candle SPY/QQQ/sector ETF return versus the immediately
+preceding verified 15:55 ET RTH close; requires each benchmark
+to have the SAME current 5M timestamp. Five patterns are
+evaluated only with all candles completed **as of signal time**;
+exits require strictly consecutive bars and are labelled as
+hypothetical **next 5M open to close after six 5M bars**
+(30-minute fixed-horizon markout, no fees/slippage).
+One test also verifies that stale sector/index candles cannot
+quietly authorise entries.
+
+**CRITICAL HINDSIGHT BIAS:** The Friday frozen candidate
+list was selected using Saturday news and Friday-after-close
+movers. Even with exact WAP, this is a retrospective
+**technical RESEARCH replay**, **not** a valid unbiased
+Friday-morning stocks-in-play discovery backtest. The
+numerical pattern thresholds and 30-minute exit are NOT
+user-approved locked strategies, and overlapping signals
+are not a realistic portfolio equity curve.
+No Wicks or locked 1H Reversal rules are changed.
+
+### Verification status after this addition
+
+- Prior **56/56 unit tests on user VPS PASSED**, verified
+  in 0.497s. These results precede this new Friday code.
+- New `tests/test_friday_round.py` adds **8 tests** for
+  historical 30-universe, missing WAP, missing/stale QQQ,
+  as-of-5M context, hypothetical next-open/six-bar exit,
+  weekend date and direction gating.
+- **Current suite source inventory: 64 cases**, but the
+  new 8 tests and the Friday research runner
+  have **NOT YET BEEN VPS VERIFIED**.
+- Scanner mode stays `OFF` by default. No broker API
+  call, Discord send, VPS restart, order or bot state
+  change was initiated by the assistant.
+- **Next session:** review actual SSH test output, fix
+  any failures, review broker returned WAP/ETF availability
+  if the user opts to run a read-only Gateway request,
+  then interpret genuine pattern counts and markouts
+  without conflating them with validated strategy profit.
+
+---
+
 ## CURRENT VERIFIED STATE — 2026-10-10: **56 / 56 VPS tests passed**
 
 **Authoritative resumption checkpoint.** User ran from
