@@ -412,6 +412,25 @@ def build_ema20_alerts(intraday, trade_date=None, now=None):
     return build_wick_alerts(intraday, trade_date=trade_date, now=now)
 
 
+def _scanner_queue_approved():
+    """No latent experimental scanner message leaks when gates are OFF.
+
+    Only the current ET session's own queued messages are eligible.
+    This does not govern or modify Wicks/locked Reversal delivery.
+    """
+    from RudraScanner.bot_hook import scanner_runtime
+    from RudraScanner.delivery import _scanner_read
+    day = datetime.now(ET).date().isoformat()
+    conf = scanner_runtime(ROOT.parent, day)
+    if (conf.get("mode") not in ("shadow", "active") or
+            not conf.get("research") or
+            not conf.get("alerts_enabled") or
+            not conf.get("thresholds_approved")):
+        return False
+    state = _scanner_read(ROOT / "rudra_scanner_delivery_state.json", {})
+    return state.get("trade_date") == day
+
+
 def prepare_alert(
     result,
     state_file=STATE_FILE,
@@ -422,6 +441,8 @@ def prepare_alert(
         # Wicks/Reversal were already delivered by an internal sender.
         # A scanner batch may have been queued afterward, so it must
         # still reach the existing external Chakra formatter.
+        if not _scanner_queue_approved():
+            return ""
         from RudraScanner.delivery import prepare_queued_alert
         return prepare_queued_alert(
             state_file=ROOT / "rudra_scanner_delivery_state.json",
@@ -547,6 +568,11 @@ def send_alerts(result, sender, state_file=STATE_FILE, batch_file=BATCH_FILE):
     # Scanner queue is separate from both locked alert strategies.
     # It can emit several Discord-sized batches when an explicit sender
     # was supplied, and ACKs ONLY after the actual sender call.
+    if not _scanner_queue_approved():
+        result["alerts_dispatched"] = (
+            not result.get("alert_data") and not rudra_remaining
+        )
+        return sent_count
     from RudraScanner.delivery import prepare_queued_alert, mark_queued_sent
     scanner_state = ROOT / "rudra_scanner_delivery_state.json"
     scanner_batch = ROOT / "rudra_scanner_delivery_batch.json"
@@ -581,6 +607,8 @@ def mark_alert_sent(
         return _mark_wick_alert_sent(state_file, batch_file)
     if rudra_reversal.has_prepared_batch():
         return rudra_reversal.mark_alert_sent()
+    if not _scanner_queue_approved():
+        return 0
     from RudraScanner.delivery import mark_queued_sent
     return mark_queued_sent(
         state_file=ROOT / "rudra_scanner_delivery_state.json",
