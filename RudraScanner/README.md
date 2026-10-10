@@ -5,6 +5,137 @@ Updated: 10 October 2026, Europe/London.
 **Read this document first in every future session.** Repository: `raghunathbhandari/ASJR`, production branch `main`. Operational history: `ASJR_Analyst/OPERATIONAL_HANDOFF.md`.
 
 
+## PHASE 2 CODE CHECKPOINT — 2026-10-10: full gated Scanner / Reversal integration
+
+**AUTHORITATIVE LATEST STATE:** User's existing VPS evidence is
+**24/24 old unit tests OK** and **30/30 historical ticker replay OK**.
+Following user request to implement the full system, code for the
+remaining indicator, shared data, research detectors, 1H bridge,
+rolling volume reference and separately gated scanner delivery was
+COMMITTED. **The NEW extended suite now has 48 test methods and has
+NOT YET BEEN RUN on the user's VPS. Real IBKR/Gateway and actual
+production messages remain UNVERIFIED.** Do not call the scanner
+fully deployed on the basis of committed code alone.
+
+### New committed files and safe integration paths
+
+- `RudraScanner/features.py`: completed 5-minute continuous EMA9;
+  exact RTH VWAP from **IBKR bar WAP × volume**, reset 09:30 ET;
+  no HLC3 substitution; annotated missing WAP. Local 12-bar
+  volume ratio explicitly NOT labelled RVOL20.
+- `RudraScanner/wap_capture.py`: feature-gated capture of actual
+  bar WAP on the **existing** `EWrapper.historicalData` callback;
+  preserve old six-field callback and align WAP to parser timestamps.
+  `ASJR_Analyst/Utils/asjr_ibkr.py` attaches an extra WAP column
+  only when the callback sidecar really supplies matching values.
+- `RudraScanner/volume_history.py`: true time-matched 20-prior-complete-
+  RTH-session cumulative volume baseline, persisted **inside the common
+  dated ASJR DataLake**. Each new day's
+  `processed/rudra_scanner_rvol20_baseline.csv` can read the latest
+  earlier trading-day baseline and combine real complete sessions.
+  Protects reference against five-day raw-folder cleanup; 78 exact
+  RTH five-minute bars are required to qualify a reference day.
+  Until enough real sessions exist, RVOL20 is **UNAVAILABLE**.
+- `RudraScanner/patterns.py`: five symmetric 5M
+  LONG/SHORT detectors (Hitchhiker, Back$ide, Rubberband,
+  Second Chance, Fashionably Late). Their numerical thresholds
+  remain **PROVISIONAL / RESEARCH ONLY**, not user-approved or
+  demonstrated by backtesting.
+- `RudraScanner/topdown.py`: **Index → Sector → Ticker**
+  directional gate requiring same-date SPY/QQQ and sector ETF
+  evidence; missing or mixed data means WAIT.
+- `RudraScanner/engine.py`: shared DataLake
+  `processed/rudra_scanner_features.csv` and namespaced
+  `reports/rudra_scanner_research.txt` /
+  `reports/rudra_scanner_research_status.json`; these are
+  **not** authoritative live signals while testing.
+- `RudraScanner/hourly.py`: bounded existing-IBKR-connection
+  1H historical fetch for up to 30 selected stocks; refresh at
+  most once per hour when ACTIVE, store
+  `raw/intraday_1h.csv` + status under common DataLake,
+  retaining >=150 completed 1H-bar eligibility.
+- `RudraScanner/reversal_bridge.py`: seed new Reversal symbols
+  from the most recent completed 1H candle only after >=150
+  historical bars; prevents accidental historical signal floods
+  without rewriting locked BB(20,2) strategy.
+- `RudraScanner/delivery.py`: independently deduplicated scanner
+  Discord messages, separate from Wicks and Reversal.
+  Two explicit controls required:
+  `RUDRA_SCANNER_ALERTS=1` AND
+  `RUDRA_SCANNER_THRESHOLDS_APPROVED=1`.
+  Default DISABLED. Failed sends remain unacknowledged.
+  No automated orders.
+- `ASJR_Analyst/Tests/test_asjr_pipeline.py` version
+  `2026.10.10.5`: calls scanner from the existing 5M Chakra
+  method, reuses same 5M request; in SHADOW saves indicator
+  diagnostics, in explicitly opted-in ACTIVE selects common
+  up-to-30 stock list, fetches shared 1H cache, sends the
+  *same locked Reversal method* these names plus NQ, and
+  retains unchanged Wicks detection logic. Market/sector
+  matching and research calculations only when enabled,
+  with independently gated scanner Discord.
+  Exception paths for scanner stages are isolated from
+  existing production alerts.
+- `RudraScanner/datalake_test.py`: read-only offline
+  historical 5M input/indicator coverage report from Friday's
+  common DataLake, expected to show missing exact WAP
+  until real callback capture is verified.
+- New tests: `test_features.py` (9), `test_hourly.py` (3),
+  `test_topdown.py` (5), `test_delivery.py` (4),
+  `test_volume_history.py` (3), plus the previously
+  VPS-verified 24 tests: **48 in source**.
+
+### Flags and safety status
+
+| Flag / mode | Default | Behaviour |
+|---|---|---|
+| `RUDRA_SCANNER_MODE=off` | **OFF** | No new scanner API requests, no strategy changes |
+| `RUDRA_SCANNER_MODE=shadow` | Opt in later | Four real IBKR scanners + WAP tap + research diagnostics from existing legacy 5M import; original ticker universe and alerts unchanged |
+| `RUDRA_SCANNER_MODE=active` | **NOT ENABLED** | Experimental new <=30 stock 5M universe and hourly common 1H Reversal source; **changes the set of names Wicks monitors** even though its detection rules are unchanged; requires user approval, pacing/contract verification and 48-test pass first |
+| `RUDRA_SCANNER_RESEARCH=1` | OFF | Evaluate provisional five-pattern research only with actual WAP and current index/sector context |
+| `RUDRA_SCANNER_ALERTS=1` plus `RUDRA_SCANNER_THRESHOLDS_APPROVED=1` | BOTH OFF | Scanner Discord delivery requires both flags; do not approve pattern thresholds by assumption |
+
+**VERY IMPORTANT:** Weekend historical replay is only a test of
+ticker membership; it does not supply actual IBKR WAP or current
+20-session RTH volume data. Before activating ACTIVE, verify whether
+Wicks should monitor the new shared 30 stocks or retain a separate
+legacy watch universe (which would increase data requests).
+Also verify the external VPS EWrapper callback and paced historical
+requests. No live bot restart, remote IBKR call, or Discord test
+was performed by the assistant.
+
+### Execute the full weekend VPS test now
+
+Canonical checklist with explanations:
+`RudraScanner/FULL_TEST.md`.
+
+```bash
+cd /root/trading/ASJR
+git status --short
+git pull --ff-only origin main
+/root/trading/venv_new/bin/python -m compileall -q RudraScanner ASJR_Analyst/Tests/test_asjr_pipeline.py ASJR_Analyst/Utils/asjr_ibkr.py
+/root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+/root/trading/venv_new/bin/python RudraScanner/bot_test.py --date 2026-10-09 --ibkr-source-date 2026-10-09
+/root/trading/venv_new/bin/python RudraScanner/datalake_test.py --date 2026-10-09
+```
+
+**Expected**, not observed for new files: 48 tests, final `OK`;
+30/30 historical ticker candidate report; 5M feature report
+with EMA9 present but actual WAP/VWAP flagged unavailable
+because Friday's stored OHLCV lacks WAP. A correctly blocked
+research setup is a PASS, not a missed live trading alert.
+Do not enable SHADOW/ACTIVE/RESEARCH/ALERTS based merely
+on expected numbers. Wait for actual test stdout/stderr and
+repair any failures; verify state in this README next session.
+
+**Pending acceptance:** new 48-case test outputs, real connected
+four-code scan, accurate actual WAP and sector data, IBKR 1H
+historical coverage, 5M/1H performance and alert deliveries,
+user agreement on numerical pattern thresholds and Wicks scope,
+plus automated hourly sourced AI research refresh.
+
+---
+
 ## VERIFIED VPS CHECKPOINT — 2026-10-10, Friday replay + 24/24 tests
 
 **LATEST OBSERVED STATE (supersedes older pending-test notes below):**
