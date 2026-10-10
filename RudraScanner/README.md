@@ -50,6 +50,63 @@ Older status notes below are historical and superseded by this line.
   for the exact SSH commands. No new test PASS is claimed
   until the user shares actual VPS output.
 
+## LATEST VPS TEST UPDATE — 2026-10-10 12:41 UTC
+
+**User observed new Friday replay suite: 65 tests ran, 64 passed
+and 1 failed** (`Ran 65 tests in 0.746s;
+FAILED (failures=1)`). All eight other Friday tests and
+previous 56 unit tests completed OK.
+
+Only failure:
+`test_friday_round.FridayReplayTests.test_markout_entry_next_bar_and_exit_after_six`.
+Its synthetic `fake_signal()` was unconditional, allowing a
+mocked trade at Friday RTH candle **index 6** (the 30-minute
+execution gate). The test asserted a real detector's
+minimum **15 completed RTH bars** (index >=14), which its
+mock had skipped, so `AssertionError: 6 not greater
+than or equal to 14`. **No failing live rule or
+incorrect historical backtest signal was observed.**
+
+**Fix COMMITTED, not yet VPS-retested:** Only
+`RudraScanner/tests/test_friday_round.py` was changed,
+to make the mocked detector return no signals before
+15 completed RTH bars. The existing real `patterns.py`,
+`friday_round.py`, and live Chakra logic were NOT altered.
+Suite remains **65 cases**. Do not claim 65/65 passed
+until user supplies new output.
+
+**Friday retrospective backtest is independently confirmed:**
+cached 22,290 real historical IBKR WAP 5M bars across
+40 symbols and 9,360 valid RTH VWAP bars; 11 pattern
+labels but **10 deduplicated entries**, 4 positive,
+6 negative, **40%** positive, **+0.0147%**
+mean 30-minute markout per distinct opportunity before
+costs. The duplicate was one AMZN candle tagged twice.
+The saved backtest remains a hindsight-biased retrospective
+study with no portfolio P&L and no live signals.
+Output status `FRIDAY_RESEARCH_ONLY`,
+`selection_hindsight: true`, 0 Discord sends.
+
+**Next direct SSH validation** (no IBKR redownload required):
+
+```bash
+cd /root/trading/ASJR
+git status --short
+git pull --ff-only origin main
+/root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+```
+
+Expected (unverified after fix): `Ran 65 tests`, `OK`.
+Optional saved Friday summary already exists; no need to run
+`--download-ibkr` again. If later regenerated, use
+`/root/trading/venv_new/bin/python RudraScanner/friday_round.py
+--date 2026-10-09 --save`.
+
+**Production:** RudraScanner feature gate OFF; Wicks,
+locked 1H Rudra-Reversal and Discord delivery unchanged.
+
+---
+
 ## LATEST VPS OBSERVED — Friday 9 Oct historical IBKR/WAP research replay
 
 **User tested on 2026-10-10:** after pulling new source files,
