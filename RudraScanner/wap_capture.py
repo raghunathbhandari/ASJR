@@ -27,9 +27,12 @@ def install_wap_capture(app):
             price = value if math.isfinite(value) and value > 0 else None
         except (TypeError, ValueError, AttributeError):
             price = None
-        app._rudra_wap_sidecar.setdefault(req_id, []).append(
-            (str(getattr(bar, "date", "")), price)
-        )
+        # Only explicitly registered five-minute request IDs are tracked;
+        # do not retain every unrelated Gateway historical callback.
+        if req_id in app._rudra_wap_sidecar:
+            app._rudra_wap_sidecar[req_id].append(
+                (str(getattr(bar, "date", "")), price)
+            )
         return result
 
     app.historicalData = wrapped
