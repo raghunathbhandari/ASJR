@@ -1134,3 +1134,79 @@ Canonical current checkpoint:
 `RudraScanner/README.md` section "CURRENT VERIFIED STATE —
 2026-10-10: 56 / 56 VPS tests passed" and
 `RudraScanner/FULL_TEST.md`.
+
+## 2026-10-10 Friday Oct 9 one-round retrospective scanner replay COMMITTED
+
+User requested running the **full RudraScanner five-pattern code
+for Friday 2026-10-09** without restarting the closed-market
+Chakra bot. New source committed on main:
+
+- `RudraScanner/friday_round.py`: direct standalone
+  one-session command. Uses existing `features.py` and
+  `patterns.py`; frozen previously verified Friday
+  30 candidate names (10 FIXED + 10 Saturday AI +
+  10 historic Friday mover-list). Friday session is evaluated
+  **bar by bar**, no later OHLC, index or sector ETF close
+  can be used in an earlier signal.
+- Requires exact real IBKR historical TRADES WAP and
+  previous RTH close + timestamp-matched SPY/QQQ and sector
+  ETFs for a research setup. No HLC3 VWAP substitution.
+  Archived `raw/intraday_5m.csv` has no WAP and is
+  expected to print **NO EVALUABLE SIGNALS** and
+  explicit blocker counts; this is **not** a backtest with
+  zero wins or zero profits.
+- Optional `--download-ibkr` uses a NEW isolated,
+  read-only `ib_async.IB` connection (clientId 91
+  by default) to the user's **already running** Gateway;
+  historical TRADES `BarData.average` supplies actual
+  bar WAP. Requests up to 30 stocks + SPY/QQQ/sector
+  ETFs; no orders, no Chakra process changes, no Discord
+  or automated Git push. The Gateway may be unavailable
+  on the weekend; code reports errors honestly.
+- Namespaced test-only input and result paths in
+  `ASJR_Analyst/DataLake/2026-10-09/`:
+  `raw/rudra_friday_ibkr_wap.csv`,
+  `reports/rudra_friday_ibkr_backfill_status.json`,
+  `reports/rudra_friday_round_status.json`,
+  `reports/rudra_friday_round_markouts.csv` (results
+  only saved via `--save`).
+- Research exit sample: signal confirmed on completed
+  5M candle, hypothetical next bar open, exit at close
+  6 bars after signal (30-minute horizon); no fees,
+  spread/slippage, risk exits or position cap. Requiring
+  strictly consecutive bars avoids inventing a 30-min
+  markout when history has gaps.
+- Frozen Friday 30-selection list was produced
+  **after Friday market close** from Saturday research
+  and archived mover screens: severe **lookahead / hindsight
+  universe bias**. This tool tests retrospective technical
+  pattern feasibility only; NOT as-of-open SMB discovery
+  or validated trading P&L. No historical profits claimed.
+- New `RudraScanner/tests/test_friday_round.py`
+  includes **8 new unit tests** for missing actual WAP,
+  missing/stale benchmark, future-free index/sector
+  context, markout entry/exit alignment and date checks.
+  **Suite source total now 64**, up from the prior
+  verified 56/56. The NEW tests have **not** been
+  executed/verified on user VPS yet.
+
+Read full instructions: `RudraScanner/FRIDAY_REPLAY.md`;
+latest resumption note at top of
+`RudraScanner/README.md`.
+
+**Immediate read-only SSH commands:**
+
+    cd /root/trading/ASJR
+    git status --short
+    git pull --ff-only origin main
+    /root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+    /root/trading/venv_new/bin/python RudraScanner/friday_round.py --date 2026-10-09
+
+**Optional connected Friday WAP backfill (requires an existing
+running IBKR Gateway and the user's choice to run it):**
+
+    /root/trading/venv_new/bin/python RudraScanner/friday_round.py --date 2026-10-09 --download-ibkr --host 127.0.0.1 --port 4002 --client-id 91 --save
+
+Do not claim these tests have passed or quote a Friday
+win rate without actual user VPS results. Production
+`RUDRA_SCANNER_MODE=off`; locked Wicks/Reversal untouched.
