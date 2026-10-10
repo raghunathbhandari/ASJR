@@ -113,6 +113,32 @@ class BotIntegrationTests(unittest.TestCase):
             self.assertIn("IBKR (10/10)", text)
             self.assertIn("Signals: NOT IMPLEMENTED", text)
 
+    def test_shadow_invokes_existing_app_through_feature_gate(self):
+        from unittest.mock import patch
+
+        fake_app = object()
+        fake_result = {
+            "candidates": [{"ticker": "INTC", "selection_source": "FIXED"}],
+            "ai": {"state": "PARTIAL"},
+            "fixed": {"state": "OK"},
+            "ibkr": {
+                code: {"state": "EMPTY"} for code in (
+                    "TOP_PERC_GAIN", "TOP_PERC_LOSE",
+                    "HOT_BY_VOLUME", "MOST_ACTIVE"
+                )
+            },
+        }
+        with patch("RudraScanner.bot_hook.save_discovery",
+                   return_value=fake_result) as saved:
+            outcome = run_bot_shadow(fake_app, "2026-10-09",
+                                     repo_root="/tmp/test",
+                                     mode="shadow")
+        self.assertEqual(outcome["state"], "SHADOW_SAVED")
+        self.assertEqual(outcome["selected_total"], 1)
+        self.assertEqual(outcome["alert_delivery"], "DISABLED")
+        self.assertFalse(outcome["legacy_universe_changed"])
+        self.assertIs(saved.call_args.args[0], fake_app)
+
     def test_replay_rejects_future_ibkr_lookahead(self):
         with tempfile.TemporaryDirectory() as root:
             fixture(root)
