@@ -32,6 +32,55 @@ Updated: 10 October 2026, Europe/London.
   for the exact SSH commands. No new test PASS is claimed
   until the user shares actual VPS output.
 
+## CURRENT VERIFIED STATE — 2026-10-10: **56 / 56 VPS tests passed**
+
+**Authoritative resumption checkpoint.** User ran from
+`/root/trading/ASJR` after a successful `git pull --ff-only
+origin main` (fast-forward from `e3250e40` to `42c45aae`):
+
+```text
+Ran 56 tests in 0.497s
+OK
+```
+
+All original 55 Phase 2 tests and the new pandas empty-baseline
+`FutureWarning` regression test passed; **zero errors, zero
+failures and no pandas warning in the supplied output**.
+The updated `RudraScanner/volume_history.py` empty-concat fix
+is therefore **VPS VERIFIED**. The user did not run a new
+connected IBKR scanner or live bot cycle in this test.
+
+**Prior verified offline evidence remains**: 2026-10-09 legacy
+historical DataLake replay selected **30/30 candidates** (10
+FIXED + 10 AI + 10 old IBKR mover-list substitute);
+`datalake_test.py` processed **56,027 historical completed
+five-minute bars from 106 tickers**, with continuous EMA9 OK,
+but actual IBKR WAP VWAP **0 rows READY**, RVOL20 **0 rows
+READY**, experimental detectors and Discord **DISABLED**.
+Historical replay **does not** prove four live IBKR scanners,
+VWAP correctness on a real feed, Reversal shared 1H coverage,
+new live trade signals, or reliable Discord sending.
+
+**Next controlled stage:** audit the deployed VPS external
+`EWrapper` callback and the existing Chakra runner, then
+run new IBKR four-code discovery in **SHADOW** only during an
+actual US trading session, preserving the legacy Wicks and
+Rudra-Reversal import universe. Check scanner callback statuses,
+real contract identity, 5M WAP, session timestamps, pacing,
+DataLake files, and version. Keep
+`RUDRA_SCANNER_MODE=off` in production until user-controlled
+activation. Do not turn on ACTIVE, five-pattern Discord,
+or alter Wicks' ticker scope without explicit review.
+The AI research snapshot expires Monday 12 October 2026
+at 12:00 UTC / 13:00 UK and must be refreshed before RTH.
+
+**Operational handoff:** `RudraScanner/FULL_TEST.md` and
+`ASJR_Analyst/OPERATIONAL_HANDOFF.md` carry the same
+verified 56/56 state. Older 55-test / "pending" sections
+below are historical chronological records, superseded here.
+
+---
+
 ## VERIFIED VPS TEST — Saturday 2026-10-10, 55/55 PASSED
 
 **LATEST USER-OBSERVED TEST:** User ran the entire Phase 2 offline
