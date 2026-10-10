@@ -1,5 +1,28 @@
 # RudraScanner — Current State / Start Here Next Session
 
+**SSH manual scan implementation added later on Saturday 10 October.**
+**NOW EXISTS:** [`scan_now.py`](scan_now.py) and
+[`SCAN_NOW.md`](SCAN_NOW.md). Unlike
+`print_saved.py` and `live_status.py`, the new CLI
+writes a local **request for the next existing 5-minute Chakra
+cycle** and can wait to print its actual saved 5M report.
+It does NOT create a separate IBKR connection and does
+NOT trigger an independent instant broker scan.
+The existing pipeline version advanced to
+`2026.10.10.13`, with atomic request ACK after its
+original scanner/5M/1H sidecar completes. Local
+requests are excluded from Git; normal DataLake
+reports still follow the existing Git workflow.
+The extra **10 offline regression tests have been
+committed but NOT YET VERIFIED ON VPS**. Previously
+confirmed 83/83 PASS; **93/93 expected after pull,
+not yet observed**. User must pull, retest, and
+reload existing Chakra before the SSH request can
+be consumed. On Saturday `scan_now.py` intentionally
+returns `MARKET SESSION CLOSED` (no broker work).
+Monday scanner Discord remains OFF; AI research
+expiry is unresolved.
+
 **As of Saturday 10 October 2026, after 13:38 UTC.**
 This is the **current checkpoint**, superseding older progress
 blocks lower in the README and handoff documents.
