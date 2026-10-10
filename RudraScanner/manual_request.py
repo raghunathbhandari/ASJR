@@ -111,7 +111,7 @@ def capture_pending(root, day):
     if (state.get("status") == "QUEUED" and
             state.get("trade_date") == str(day) and
             state.get("schema_version") == SCHEMA):
-        return state["request_id"]
+        return state.get("request_id")
     return None
 
 
@@ -145,7 +145,7 @@ def complete_pending(root, day, request_id, *, discovery, five_minute, hourly):
                        five_minute_state=five_minute.get("state", "NOT_READY"),
                        one_hour_state=hourly.get("state", "NOT_READY"),
                        report_path=str(expected) if good else "",
-                       result_source="EXISTING_CHARKA_CYCLE_NO_NEW_CONNECTION")
+                       result_source="EXISTING_CHAKRA_CYCLE_NO_NEW_CONNECTION")
         _atomic(path, updated)
         return updated
     return _locked_update(root, finish)
