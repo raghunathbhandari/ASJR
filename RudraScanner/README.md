@@ -836,9 +836,7 @@ run. The October 9 fixed file has 19 rows, one excluded ONDS, and
 the first ten selections include INTC and the two existing "OPEN
 POSITION" labels. Missing timestamp provenance warnings are expected.
 
-**Status:** commits and GitHub file existence verified. SSH commands,
-unittest results, and live IBKR/Discord delivery have *not yet been run
-or observed by the assistant*. If Git reports a conflict or dirty state,
+**Status update after user testing:** commits and GitHub file existence verified; SSH input smoke test now observed on VPS and passed (20/30). The separate full unittest command and live IBKR/Discord delivery have *not been observed or verified*. If Git reports a conflict or dirty state,
 do not force-reset or restart the bot. Show the output for diagnosis.
 Continue to avoid editing locked Reversal/Wicks logic.
 
@@ -875,6 +873,6 @@ Integration checklist for that next task:
    bot restart. Verify loaded version, current Git snapshot and delivered
    Discord payload rather than assuming successful activation.
 
-**Current status: PENDING SSH TEST OUTPUT; BOT INTEGRATION NOT STARTED.**
+**Latest status: USER VPS INPUT SMOKE TEST VERIFIED (20/30); full unit tests PENDING; BOT INTEGRATION NOT STARTED.**
 Do not mistake the isolated package or the new task entry for deployed
 production code. Keep this status current after the user's test.
