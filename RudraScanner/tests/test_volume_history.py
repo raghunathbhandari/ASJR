@@ -1,6 +1,7 @@
 """20 full-session cumulative RVOL survives daily DataLake rollover."""
 import tempfile
 import unittest
+import warnings
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -61,6 +62,18 @@ class RollingHistoryTests(unittest.TestCase):
             self.assertTrue(result["rvol20_ready"].all())
             self.assertTrue(Path(status["output"]).is_file())
             self.assertIn("DataLake/2026-10-12", status["output"])
+
+    def test_empty_prior_source_does_not_emit_futurewarning(self):
+        with tempfile.TemporaryDirectory() as repo:
+            # Regression check for pandas changing concat behaviour.
+            short = artificial_sessions(["2026-10-09"],
+                                        partial_date="2026-10-09")
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", FutureWarning)
+                data, state = apply_rolling_rvol20(
+                    short, repo, "2026-10-09")
+            self.assertFalse(data["rvol20_ready"].any())
+            self.assertEqual(state["stored_rows"], 0)
 
     def test_insufficient_sessions_remain_unavailable(self):
         with tempfile.TemporaryDirectory() as repo:
