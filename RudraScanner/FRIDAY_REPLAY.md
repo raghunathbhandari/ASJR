@@ -5,34 +5,38 @@
 five setup detectors**, with as-of-candle index/sector checks. This is
 not a bot restart or Discord/test trade order.
 
-## Latest actual test run — one synthetic mock assertion fixed
+## Latest verified VPS tests — 65/65 PASSED on 2026-10-10
 
-On 2026-10-10 12:41 UTC the user's VPS completed
-**65 tests with 1 failure** (`0.746s`). The
-Friday historical IBKR WAP replay itself completed successfully
-with **11 pattern labels, 10 distinct opportunities,
-40.00% unique-entry win rate and +0.0147% average
-before costs**, matching earlier observed research results.
+**Actual user SSH evidence:** Git fast-forwarded from
+`9fc0dbf6` to `368cf6d3`. Complete tests returned:
 
-**Failure was isolated to test code**:
-`test_markout_entry_next_bar_and_exit_after_six` used an
-unconditional fake pattern detector, which could signal at
-5M RTH candle 6 although the real detector needs at least
-15 complete RTH bars. The test's mock has now been changed
-to enforce the real 15-bar minimum. No actual detector
-or market calculation rules changed. **Re-run of the
-65-case suite is pending; pass not yet verified.**
-
-```bash
-cd /root/trading/ASJR
-git pull --ff-only origin main
-/root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+```text
+Ran 65 tests in 0.784s
+OK
 ```
 
-Do not download Friday IBKR historical bars again; they
-remain cached in the common DataLake.
+Zero failures/errors. The synthetic mock issue in
+`test_markout_entry_next_bar_and_exit_after_six`
+is **resolved and verified**: the mock now enforces the
+real 15-completed-RTH-bar minimum before signalling.
+No real detector rules or Friday research calculations changed.
+
+**Earlier Friday IBKR backfill and retrospective replay remain
+verified:** 22,290 actual historical 5M WAP bars from
+40 instruments; 9,360 VWAP-ready RTH bars; 11 labelled
+signals, **10 distinct entry opportunities** (4 positive,
+6 negative), **40% positive, +0.0147% average**
+hypothetical six-bar / 30-minute return before costs.
+Results are retrospectively selected and cannot establish
+a live trading edge.
+
+**Next stage** is controlled LIVE four-code scanner
+`SHADOW` validation using the same Chakra connection
+with the user controlling activation. Production stays
+OFF, with no scanner orders/Discord delivery verified.
 
 ---
+
 
 ## VERIFIED Friday IBKR historical replay — 2026-10-10 user VPS output
 
