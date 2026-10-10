@@ -5,6 +5,103 @@
 five setup detectors**, with as-of-candle index/sector checks. This is
 not a bot restart or Discord/test trade order.
 
+## VERIFIED Friday IBKR historical replay — 2026-10-10 user VPS output
+
+**The user successfully ran the NEW research backfill and one-day
+five-pattern replay**, after initially seeing "No such file"
+before `git pull`. After a successful Git fast-forward to
+`940f949d`, the script was found and completed successfully.
+
+Command actually executed:
+
+```bash
+/root/trading/venv_new/bin/python RudraScanner/friday_round.py \
+  --date 2026-10-09 --download-ibkr \
+  --host 127.0.0.1 --port 4002 \
+  --client-id 91 --save
+```
+
+**ACTUAL observed historical IBKR response:**
+
+- **40/40** requested US stocks/sector ETF instruments returned historical
+  data (30 frozen retrospective stocks + SPY + QQQ + eight sector ETFs).
+  `failures: {}`.
+- **22,290 5-minute bars**, **40 tickers**, all 22,290 rows had
+  real reported historical IBKR WAP/average values.
+- **9,360 RTH bars** had valid calculated session-reset exact VWAP.
+- The research pass evaluated **2,160** post-opening-gate
+  stock RTH candles, with the following blocks:
+  **1,853** missing/mixed directional context;
+  **36** insufficient pattern-history bars;
+  **8** setups too late for the fixed 30-minute forward
+  comparison. `missing_wap: 0`.
+- **11 pattern-tagged research signals**, all LONG, **5 positive,
+  6 negative**, average hypothetical 30-minute markout
+  **+0.0311%** per pattern hit before trading costs; displayed
+  **45.45%** signal-level win rate.
+- Detector counts:
+  `HITCHHIKER` **6** (2 positive, mean **−0.0364%**),
+  `BACK$IDE` **4** (2 positive, mean **+0.0914%**),
+  `SECOND CHANCE` **1** (1 positive, **+0.1947%**),
+  `RUBBERBAND` **0**, `FASHIONABLY LATE` **0**.
+- **IMPORTANT SAME-BAR DUPLICATE:** AMZN at **20:25 BST**
+  generated both HITCHHIKER and SECOND CHANCE, with identical
+  next-open / 30-minute markout of **+0.1947%**.
+  Counting that *once* yields **10 distinct entry
+  opportunities**, **4 positive, 6 negative**, **40.00%**
+  positive, average **+0.0147%** per unique entry
+  before commissions/spread/slippage. Other AMZN/HUM signals
+  may overlap while earlier hypothetical entries remain open,
+  so even these 10 opportunities do **not** equal 10
+  independent portfolio positions.
+- Best printed single markout was HUM BACK$IDE
+  **+0.6329%** (19:00 BST signal); worst was AMT
+  HITCHHIKER **−0.5489%** (18:55 BST signal).
+- `real_live_signals: 0`, `discord_sent: 0`,
+  `orders_sent: 0`. Research files saved only to the
+  common **2026-10-09 DataLake**.
+- **HINDSIGHT / SELECTION BIAS PERSISTS:** The 30 selected
+  candidates were chosen using Friday after-close archived
+  legacy movers and Saturday AI research. This is NOT a
+  prospective Friday morning scanner backtest.
+  Also, exits are the provisional next-open to
+  30-minute horizon, not user-locked EMA9/trailing/stops,
+  and costs are excluded. No strategy edge is established.
+
+### Follow-up improvement committed, not yet re-verified on VPS
+
+`RudraScanner/friday_round.py` now reports
+`distinct_entry_opportunities`,
+`overlapping_pattern_labels`,
+`distinct_entry_wins`,
+`distinct_entry_win_rate_pct`,
+`distinct_entry_average_markout_pct` and
+`by_pattern_diagnostics` in JSON, while preserving
+the 11 raw pattern-tagged rows and legacy report fields.
+A new test in `tests/test_friday_round.py`
+verifies the duplicate calculation. This makes the
+source test suite **65 methods** (56 previously verified
+on VPS, 9 new Friday replay tests not yet VPS-verified).
+
+Run from VPS **without another paid IBKR backfill**,
+because `raw/rudra_friday_ibkr_wap.csv` already exists:
+
+```bash
+cd /root/trading/ASJR
+git status --short
+git pull --ff-only origin main
+/root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+/root/trading/venv_new/bin/python RudraScanner/friday_round.py --date 2026-10-09 --save
+```
+
+Expected after new code (but **not yet rerun**):
+65 tests OK; 11 raw pattern hits, 10 distinct entries,
+40% distinct-entry positive, +0.0147% mean unique
+markout before costs. Do not claim the test suite or
+updated summary passed until actual user VPS output is observed.
+
+---
+
 ## Precise limitations
 
 1. The user-verified Friday archived 5M file includes 56,027 completed
