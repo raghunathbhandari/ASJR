@@ -3,6 +3,73 @@
 **Prepared Saturday 10 Oct 2026. Intended next US session Monday
 12 Oct 2026. Timezone: Europe/London BST (UTC+1) for all bot alerts.**
 
+## VERIFIED user VPS retest — Saturday 2026-10-10 13:30 UTC
+
+User pulled GitHub main from `1ce9a402` to
+`2d1ee811` and reran the complete Phase 3 suite:
+
+```text
+Ran 83 tests in 0.887s
+OK
+```
+
+**83/83 tests passed, zero failures.** Both
+`test_pipeline_bridge` approval-gate test fixtures
+were corrected and are now independently confirmed
+on the user's VPS. The production scanner alerts
+remain DISABLED; their fail-closed behaviour
+is intentional.
+
+Read-only `RudraScanner/live_preflight.py`
+also returned `ready_to_shadow=true`. This
+means the **checked code and scheduled configuration**
+are ready, NOT that a connected IBKR live scan
+has run. Actual values:
+
+| Read-only check | User's observed result |
+|---|---|
+| Scheduled mode | `shadow` for 2026-10-12 |
+| Research mode | `true` |
+| Scanner Discord | `alerts_enabled=false`, `thresholds_approved=false` |
+| Fixed-list rows eligible | **18** / 19 configured; excluded `ONDS` |
+| Fixed status | `PARTIAL` (intentional exclusion) |
+| AI candidates valid at Monday RTH | **1**; 10 expired |
+| AI source state | `PARTIAL` |
+| Four IBKR scanner codes / legacy Wicks / Reversal hooks | Present (code checks only) |
+| Broker requests / orders / Discord from preflight | **0 / 0 / 0** |
+
+**Current outstanding activation checks:**
+1. Confirm the actual VPS-running Chakra process
+   imports the updated modules after the user-controlled
+   restart (Git pull alone does not reload Python).
+2. Confirm that the external EWrapper/trading launcher
+   really allows historical WAP and four scanner
+   callbacks using the same running IBKR app.
+3. Monday after a 5M run, inspect real
+   `raw/scanner_status.json`, selected CSV and
+   `reports/scalp_radar.txt`, timestamps, actual
+   WAP/VWAP, index/sector alignment and Wicks/Reversal
+   delivery.
+4. Refresh the AI source **from actual new research**;
+   do not extend the previous ten expiry timestamps
+   or falsely claim 30/30 ticker coverage.
+
+**SSH quick inspection after a real market-session cycle:**
+
+```bash
+cd /root/trading/ASJR
+/root/trading/venv_new/bin/python RudraScanner/live_status.py --date 2026-10-12
+```
+
+No scanner Discord signals or trading orders should be
+sent during SHADOW. The file-based mode becomes relevant
+when the running Chakra code is reloaded; an explicitly
+set `RUDRA_SCANNER_MODE=off` environment variable
+overrides it. The older 81/83 failure section below
+is historical and now resolved.
+
+---
+
 ## User VPS preflight 2026-10-10 13:24 — two test mock failures FIXED IN GIT
 
 **Actual observed console, NOT a full pass:** User fast-forward pulled
