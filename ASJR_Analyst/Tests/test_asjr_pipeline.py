@@ -47,7 +47,7 @@ try:
 except Exception:
     launch_nq_download_once = None
 
-ASJR_ANALYST_VERSION = "2026.10.10.8"
+ASJR_ANALYST_VERSION = "2026.10.10.9"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -153,37 +153,6 @@ def run_asjr_manual_pipeline(
 
 
     try:
-        # First gated RudraScanner method integration. Default OFF: zero
-        # new IBKR requests and no production universe/alert changes.
-        # SHADOW reuses the existing connected app and common DataLake.
-        # Never allow an experimental scanner to stop live WICKS/Reversal.
-        try:
-            rudra_scanner_shadow = run_bot_shadow(
-                app, trade_date, repo_root=REPO_ROOT, logger=logger,
-            )
-            logger.info(
-                "RUDRA SCANNER | shadow=%s | state=%s | selected=%s | sources=%s | scans=%s",
-                rudra_scanner_shadow.get("mode"),
-                rudra_scanner_shadow.get("state"),
-                rudra_scanner_shadow.get("selected_total", 0),
-                rudra_scanner_shadow.get("selected_by_source", {}),
-                rudra_scanner_shadow.get("ibkr_scan_states", {}),
-            )
-        except Exception:
-            logger.exception(
-                "RUDRA SCANNER | isolated shadow discovery failed; legacy pipeline continues"
-            )
-            rudra_scanner_shadow = {"mode": "shadow", "state": "ERROR"}
-
-        # 1. Build universe
-        rudra_active = (
-            rudra_scanner_shadow.get("mode") == "active"
-            and rudra_scanner_shadow.get("state") == "ACTIVE_SELECTED"
-            and bool(rudra_scanner_shadow.get("candidates"))
-        )
-        # ACTIVE is explicit opt-in and strictly fail-closed. No extra
-        # old percent-mover scanner calls when the new 30-name list
-        # is selected; if incomplete, preserve the legacy workflow.
         if gapup_df is None and fetch_gapup_from_app:
             logger.info("MOVERS | Fetch started")
             gapup_df = ibkr.get_gapup_tickers(app)
@@ -302,6 +271,33 @@ def run_asjr_manual_pipeline(
             logger.info("ALERTS | Immediate dispatch | events=%s", sent)
         alert_data = delivery["alert_data"]
         rudra_reversal_alerts = delivery["rudra_reversal_alerts"]
+        # All original 5M Wicks and locked 1H Reversal logic AND
+        # immediate delivery finish before any extra scanner discovery.
+        # Monday scanner is a sidecar: NEVER delay existing alerts with
+        # four IBKR discovery scans.
+        # First gated RudraScanner method integration. Default OFF: zero
+        # new IBKR requests and no production universe/alert changes.
+        # SHADOW reuses the existing connected app and common DataLake.
+        # Never allow an experimental scanner to stop live WICKS/Reversal.
+        try:
+            rudra_scanner_shadow = run_bot_shadow(
+                app, trade_date, repo_root=REPO_ROOT, logger=logger,
+            )
+            logger.info(
+                "RUDRA SCANNER | shadow=%s | state=%s | selected=%s | sources=%s | scans=%s",
+                rudra_scanner_shadow.get("mode"),
+                rudra_scanner_shadow.get("state"),
+                rudra_scanner_shadow.get("selected_total", 0),
+                rudra_scanner_shadow.get("selected_by_source", {}),
+                rudra_scanner_shadow.get("ibkr_scan_states", {}),
+            )
+        except Exception:
+            logger.exception(
+                "RUDRA SCANNER | isolated shadow discovery failed; legacy pipeline continues"
+            )
+            rudra_scanner_shadow = {"mode": "shadow", "state": "ERROR"}
+
+
         # Legacy Wicks and locked Reversal were evaluated and any
         # immediate sender dispatch finished BEFORE extra scanner
         # IBKR work. Preserve original alert priority and state.
