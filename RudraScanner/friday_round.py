@@ -274,7 +274,9 @@ def replay_once(raw, root, day, *, hold_bars=6):
             for sym in ("SPY", "QQQ", etf):
                 prior, history = benchmarks[sym]
                 previous = history.loc[history.index <= stamp]
-                if previous.empty:
+                if previous.empty or previous.index[-1] != stamp:
+                    # Missing a benchmark ETF's SAME completed 5M
+                    # candle is stale context, not a valid as-of quote.
                     pct[sym] = float("nan")
                 else:
                     pct[sym] = (
@@ -303,6 +305,11 @@ def replay_once(raw, root, day, *, hold_bars=6):
                     continue
                 entry_bar = day_frame.iloc[i + 1]
                 exit_bar = day_frame.iloc[i + hold_bars]
+                if (entry_bar["datetime"] != stamp + pd.Timedelta(minutes=5)
+                        or exit_bar["datetime"] != stamp
+                        + pd.Timedelta(minutes=5*hold_bars)):
+                    blocks["no_future_exit_bar"] += 1
+                    continue
                 price_in = float(entry_bar["open"])
                 price_out = float(exit_bar["close"])
                 signed_return = (price_out / price_in - 1) * 100 * (
