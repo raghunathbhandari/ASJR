@@ -5,6 +5,17 @@ Updated: 10 October 2026, Europe/London.
 **Read this document first in every future session.** Repository: `raghunathbhandari/ASJR`, production branch `main`. Operational history: `ASJR_Analyst/OPERATIONAL_HANDOFF.md`.
 
 
+### Additional safety tests added after initial Phase 2 checkpoint
+
+- Added `RudraScanner/tests/test_reversal_bridge.py` (2 tests):
+  new selected 1H Reversal tickers require >=150 completed bars
+  before first-use state seeding; no historical signal flood.
+- The current source inventory is **50 unittest methods total**:
+  24 previously VPS-passed + 26 new as yet UNVERIFIED tests.
+  The test/activation checklist is
+  `RudraScanner/FULL_TEST.md`. Its 50/50 outcome must be
+  checked from the actual user's VPS terminal, not assumed.
+
 ## PHASE 2 CODE CHECKPOINT — 2026-10-10: full gated Scanner / Reversal integration
 
 **AUTHORITATIVE LATEST STATE:** User's existing VPS evidence is
@@ -12,7 +23,7 @@ Updated: 10 October 2026, Europe/London.
 Following user request to implement the full system, code for the
 remaining indicator, shared data, research detectors, 1H bridge,
 rolling volume reference and separately gated scanner delivery was
-COMMITTED. **The NEW extended suite now has 48 test methods and has
+COMMITTED. **The NEW extended suite now has 50 test methods and has
 NOT YET BEEN RUN on the user's VPS. Real IBKR/Gateway and actual
 production messages remain UNVERIFIED.** Do not call the scanner
 fully deployed on the basis of committed code alone.
@@ -83,7 +94,7 @@ fully deployed on the basis of committed code alone.
 - New tests: `test_features.py` (9), `test_hourly.py` (3),
   `test_topdown.py` (5), `test_delivery.py` (4),
   `test_volume_history.py` (3), plus the previously
-  VPS-verified 24 tests: **48 in source**.
+  VPS-verified 24 tests: **50 in source**.
 
 ### Flags and safety status
 
@@ -91,7 +102,7 @@ fully deployed on the basis of committed code alone.
 |---|---|---|
 | `RUDRA_SCANNER_MODE=off` | **OFF** | No new scanner API requests, no strategy changes |
 | `RUDRA_SCANNER_MODE=shadow` | Opt in later | Four real IBKR scanners + WAP tap + research diagnostics from existing legacy 5M import; original ticker universe and alerts unchanged |
-| `RUDRA_SCANNER_MODE=active` | **NOT ENABLED** | Experimental new <=30 stock 5M universe and hourly common 1H Reversal source; **changes the set of names Wicks monitors** even though its detection rules are unchanged; requires user approval, pacing/contract verification and 48-test pass first |
+| `RUDRA_SCANNER_MODE=active` | **NOT ENABLED** | Experimental new <=30 stock 5M universe and hourly common 1H Reversal source; **changes the set of names Wicks monitors** even though its detection rules are unchanged; requires user approval, pacing/contract verification and 50-test pass first |
 | `RUDRA_SCANNER_RESEARCH=1` | OFF | Evaluate provisional five-pattern research only with actual WAP and current index/sector context |
 | `RUDRA_SCANNER_ALERTS=1` plus `RUDRA_SCANNER_THRESHOLDS_APPROVED=1` | BOTH OFF | Scanner Discord delivery requires both flags; do not approve pattern thresholds by assumption |
 
@@ -119,7 +130,7 @@ git pull --ff-only origin main
 /root/trading/venv_new/bin/python RudraScanner/datalake_test.py --date 2026-10-09
 ```
 
-**Expected**, not observed for new files: 48 tests, final `OK`;
+**Expected**, not observed for new files: 50 tests, final `OK`;
 30/30 historical ticker candidate report; 5M feature report
 with EMA9 present but actual WAP/VWAP flagged unavailable
 because Friday's stored OHLCV lacks WAP. A correctly blocked
@@ -128,7 +139,7 @@ Do not enable SHADOW/ACTIVE/RESEARCH/ALERTS based merely
 on expected numbers. Wait for actual test stdout/stderr and
 repair any failures; verify state in this README next session.
 
-**Pending acceptance:** new 48-case test outputs, real connected
+**Pending acceptance:** new 50-case test outputs, real connected
 four-code scan, accurate actual WAP and sector data, IBKR 1H
 historical coverage, 5M/1H performance and alert deliveries,
 user agreement on numerical pattern thresholds and Wicks scope,
