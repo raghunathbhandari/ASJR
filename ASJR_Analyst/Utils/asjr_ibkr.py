@@ -331,6 +331,8 @@ def get_ibkr_5m_batch(
 
                 app.data[req_id] = []
                 app.hist_done[req_id] = False
+                if getattr(app, "_rudra_wap_capture_installed", False):
+                    app._rudra_wap_sidecar[req_id] = []
                 req_map[req_id] = ticker
 
                 app.reqHistoricalData(
