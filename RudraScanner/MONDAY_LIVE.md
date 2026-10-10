@@ -3,6 +3,24 @@
 **Prepared Saturday 10 Oct 2026. Intended next US session Monday
 12 Oct 2026. Timezone: Europe/London BST (UTC+1) for all bot alerts.**
 
+**LATEST VERIFIED STATE — use [`CURRENT_STATE.md`](CURRENT_STATE.md)
+as the first checkpoint next session (10 October, after 13:38 UTC).**
+The user confirms **existing IBKR Gateway connection,
+existing scanning and OHLC market-data imports are
+already working correctly for OTHER ASJR/Chakra tasks**.
+The new RudraScanner **reuses that IBKR app** and does
+NOT require another IBKR login, port/client ID, Gateway
+or scheduler. **83/83 source tests passed on user's
+VPS**; `ready_to_shadow=true` was a read-only code
+preflight. **Do not confuse** healthy legacy IBKR scans
+with verified results for the four NEW scanner codes.
+Live RudraScanner-specific callbacks, 5M WAP, sector
+ETFs, pacing and generated files remain to be checked
+in the first Monday Chakra session. Scanner Discord
+remains OFF. The running long-lived Chakra module
+reload was not confirmed.
+
+
 ## VERIFIED user VPS retest — Saturday 2026-10-10 13:30 UTC
 
 User pulled GitHub main from `1ce9a402` to
@@ -358,6 +376,4 @@ without actual VPS file/console output.
 The intended scheduled SHADOW code has been COMMITTED,
 but is **not yet live-verified/deployed in the VPS process**.
 
-**Current status: GitHub implementation ready for Monday
-SHADOW acceptance, pending 81 tests and user-controlled
-reload. Do not mark Discord trading alerts live.**
+**CURRENT ACCEPTANCE: user's VPS confirmed 83/83 tests PASS on 10 October and read-only Monday SHADOW preflight ready. The running process reload and real new RudraScanner live 4-code / WAP / report output are still UNVERIFIED. Scanner Discord is OFF.**
