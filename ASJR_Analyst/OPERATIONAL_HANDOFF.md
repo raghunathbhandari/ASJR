@@ -1790,3 +1790,57 @@ AI tickers. No 30/30 live selection is yet proved.
 Further details:
 `RudraScanner/MONDAY_LIVE.md` and
 `RudraScanner/README.md`.
+
+## 2026-10-10 15:19 UTC — existing Discord bot Git commands: ONE handler
+
+The user showed their existing bot command pattern
+`if text.startswith("!NEWS"): ... await message.channel.send(result)`
+and explicitly requested **one reusable method** for
+`!gitpull` and `!gitpush`, not an additional bot or
+multiple methods.
+
+Implemented:
+`ASJR_Analyst/Utils/discord_git_commands.py`
+exports the single callable `run_git_command(text, author_id)`.
+It returns the full Discord-ready success/failure/exception message,
+and recognizes EXACT `!GITPULL` and `!GITPUSH` (case-insensitive).
+`!gitpull` = `git pull --ff-only origin main` and
+`!gitpush` = `git push origin main`, from
+`/root/trading/ASJR`. It does not stage/commit,
+force-push, stash, reset or create a new bot.
+It verifies branch and intended origin, blocks
+concurrent Discord Git calls, and fails closed for
+non-authorised user IDs via
+`ASJR_DISCORD_GIT_ALLOWED_IDS` environment variable
+or explicit `allowed_ids` function argument.
+All command exit errors and exceptions return
+a short message instead of raising into Discord.
+Use `asyncio.to_thread` from Discord async handler
+to avoid blocking messages while Git runs.
+
+Paste at TOP of existing external Discord bot Python file:
+```python
+import asyncio
+import sys
+sys.path.insert(0, "/root/trading/ASJR/ASJR_Analyst")
+from Utils.discord_git_commands import run_git_command
+```
+
+Paste in EXISTING bot on_message command chain:
+```python
+if text.strip().upper() in ("!GITPULL", "!GITPUSH"):
+    result = await asyncio.to_thread(
+        run_git_command, text, message.author.id,
+        allowed_ids={YOUR_NUMERIC_DISCORD_USER_ID},
+    )
+    await message.channel.send(result)
+    return
+```
+Replace `YOUR_NUMERIC_DISCORD_USER_ID` with the user's
+actual Discord numeric ID; never invent this number.
+Alternatively omit `allowed_ids` only after setting
+`ASJR_DISCORD_GIT_ALLOWED_IDS` in the running bot environment.
+No modification to external bot script was possible via
+GitHub: that bot resides outside the repo on VPS.
+After Git pull and bot restart, user must paste the
+handler block and test both Discord commands.
