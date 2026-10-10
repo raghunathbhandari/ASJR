@@ -28,6 +28,7 @@ import Utils.asjr_logger as asjr_logger
 import Strategies.RudraReversal1H.rudra_reversal as rudra_reversal
 from RudraScanner.bot_hook import run_bot_shadow
 from RudraScanner.engine import evaluate_scanner, persist_features
+from RudraScanner.volume_history import apply_rolling_rvol20
 from RudraScanner.hourly import refresh_hourly_cache
 from RudraScanner.reversal_bridge import seed_new_symbols
 from RudraScanner.topdown import classify_topdown, ticker_etf_from_sources
