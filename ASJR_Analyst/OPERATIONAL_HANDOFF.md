@@ -1591,3 +1591,65 @@ external launcher/Discord callback compatibility.
 Full up-to-date checklist:
 `RudraScanner/MONDAY_LIVE.md`; primary overview:
 `RudraScanner/README.md`.
+
+## 2026-10-10 13:30 UTC — VERIFIED Monday SHADOW preflight 83/83 PASS
+
+The user ran the complete test suite after
+`git pull --ff-only origin main`, updating the VPS from
+`1ce9a402` to `2d1ee811`. Actual console result:
+
+    Ran 83 tests in 0.887s
+    OK
+
+**All 83 tests passed, zero errors/failures.** Both
+previously failing Discord bridge tests
+`test_external_mark_sent_falls_through_to_scanner_ack`
+and `test_scanner_batch_after_internal_wicks_reversal_dispatch`
+now pass after the test fixtures were corrected to simulate
+explicitly approved alerts. The *real* Monday Scanner
+Discord gating remains OFF / fail-closed.
+
+**Actual read-only `RudraScanner/live_preflight.py`
+output** for Monday Oct 12:
+`scheduled_mode=shadow`; `research_enabled=true`;
+`live_scanner_alerts_enabled=false`;
+`approved_thresholds=false`;
+`ready_to_shadow=true`;
+`fixed_today=18` and `fixed_state=PARTIAL`
+because Friday's 19-row copied fixed list contains
+the expressly excluded ticker ONDS (excluded in
+RudraScanner, without changing legacy Wicks).
+`ai_valid_at_monday_open=1`,
+`ai_expired_at_open=10` and
+`ai_state_at_monday_open=PARTIAL`.
+The one nominally still-valid AI row is permanent
+INTC watch; it overlaps fixed names, so it is not
+ten newly sourced AI candidates. Four scanner
+code strings, existing Chakra, Wicks and locked
+Reversal and Discord queue interfaces passed
+static preflight existence checks. This command
+made **0 broker requests, 0 orders and 0 Discord sends**.
+
+**Unverified / next milestone:** GitHub code and
+VPS checkout pass offline tests, but the long-running
+Chakra Python process may still be using earlier
+modules until a user-controlled restart. The actual
+external EWrapper callbacks, connected four live
+IBKR scanners, 5M WAP, ETF times, same-time
+pattern state and scanner-only common DataLake
+output are still not verified. Production scanner
+Discord remains disabled during SHADOW. The
+user's workflow is to verify external launcher
+and process environment, optionally restart via
+`!mbdstop` / `!mbdstart` after code/test
+acceptance, then inspect:
+
+    /root/trading/venv_new/bin/python RudraScanner/live_status.py --date 2026-10-12
+
+Ensure live legacy Wicks and Reversal continue to
+function. Automatic hourly AI-to-GitHub research
+remains absent; do not silently keep expired ten
+AI tickers. No 30/30 live selection is yet proved.
+Further details:
+`RudraScanner/MONDAY_LIVE.md` and
+`RudraScanner/README.md`.
