@@ -1524,3 +1524,70 @@ WAP, 81 new-case suite, source freshness,
 real Discord scanner delivery and timing
 remain UNVERIFIED.
 
+
+## 2026-10-10 13:24 UTC — user VPS MONDAY LIVE preflight 81/83; 2 test-only failures fixed
+
+Actual user-supplied console, after fast-forward
+`368cf6d3..1ce9a402` on GitHub main:
+`Ran 83 tests in 0.972s; FAILED (failures=2)`.
+The 2 failures were **only**:
+`test_external_mark_sent_falls_through_to_scanner_ack`
+(count 0 rather than 1) and
+`test_scanner_batch_after_internal_wicks_reversal_dispatch`
+(empty string rather than "QUEUED RESEARCH").
+The tests had not mocked the current approved-scanner Discord
+runtime gate. Production's `_scanner_queue_approved()`
+CORRECTLY blocks scanner sends/ACKs when
+`alerts_enabled=false` or
+`thresholds_approved=false`. Fixed both **TESTS ONLY**
+by mocking the approved state for the tested branch.
+No live alert approval and no locked strategy code changed.
+**Actual 83/83 re-run still PENDING user VPS output.**
+
+Preflight reported `ready_to_shadow=true` (code
+configuration checks only; DOES NOT verify connected
+IBKR/live market scan), `scheduled_mode=shadow`,
+`research_enabled=true`, but scanner Discord flags
+both false, original Wicks/Reversal hooks present and
+no broker/Discord actions in preflight. It also showed
+`fixed_today=0`, `fixed_state=MISSING`,
+`ai_valid_at_monday_open=1`,
+`ai_expired_at_open=10`.
+
+To fix the Monday fixed list **without changing legacy
+strategy membership**, created
+`ASJR_Analyst/DataLake/2026-10-12/config/fixed_watchlist.csv`
+as an exact copy of Friday 2026-10-09 fixed CSV
+(19 rows, includes INTC, AKAM and WTTR).
+The RudraScanner selector will rank at most 10
+FIXED stocks, and exclude ONDS from Scanner even though
+original Wicks watchlist membership remains unmodified.
+After VPS git pull, preflight should find the Monday file.
+This new input has NOT YET been VPS verified.
+
+The expiring AI research CSV is still a material
+coverage blocker: ten rows expire Monday October 12
+12:00 UTC / 13:00 BST, with only permanent
+unverified INTC remaining, and it overlaps fixed.
+Do NOT claim full AI 10-stock discovery or 30/30 total,
+extend dates without sourced new research, or
+silently use Friday news as fresh Monday catalysts.
+No configured hourly AI-to-GitHub writer exists.
+Monday SHADOW can still test four-code IBKR discovery
+with a partial source universe.
+
+**Next safe VPS step (do NOT restart bot first):**
+
+    cd /root/trading/ASJR
+    git status --short
+    git pull --ff-only origin main
+    /root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+    /root/trading/venv_new/bin/python RudraScanner/live_preflight.py
+
+Expected: 83 tests OK (not yet verified); fixed no
+longer MISSING. Continue only with user-controlled
+restart after confirming actual test result and
+external launcher/Discord callback compatibility.
+Full up-to-date checklist:
+`RudraScanner/MONDAY_LIVE.md`; primary overview:
+`RudraScanner/README.md`.
