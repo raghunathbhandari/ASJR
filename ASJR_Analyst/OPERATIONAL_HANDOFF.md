@@ -554,3 +554,12 @@ git pull
 - Next: execute offline tests; validate actual callback/provenance and volume,
   settle unconfirmed EMA9/threshold settings, implement pattern replay,
   then add gated integration with safe Git sync and verified delivery.
+
+## 2026-10-10 RudraScanner discovery filters confirmed
+
+The user explicitly approved retaining the currently inherited IBKR scanner
+filters: price above USD 5; average daily volume above 1 million; market
+capitalization above USD 500 million; up to 50 rows per scanner code.
+This decision is recorded in `RudraScanner/README.md`. It does not
+reactivate the old fixed +/-4% discovery rule. The scanner remains isolated,
+not live-activated, and new tests remain unverified on VPS.
