@@ -113,7 +113,7 @@ class FridayReplayTests(unittest.TestCase):
         self.assertEqual(
             clock.tz_convert("America/New_York").date().isoformat(),
             TEST_DATE)
-        self.assertGreater(clock.hour, 18)
+        self.assertEqual(clock.tz_convert("America/New_York").hour, 23)
 
 
 if __name__ == "__main__":
