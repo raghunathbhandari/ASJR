@@ -505,3 +505,83 @@ Do not invent missing liquidity, fundamentals, spread or catalyst data.
 The 1H Reversal strategy needs >=150 completed 1H bars per included stock.
 Tickers with insufficient history must be labelled DATA NOT READY,
 not quietly dropped with a false no-signal claim.
+
+## First sourced AI CSV refresh + SSH input smoke test — 2026-10-10
+
+**User request:** update the AI-managed CSV from current web research so
+the user can test from SSH. Work was completed and committed to `main`;
+it is not a claim that automatic hourly refresh, live IBKR scanning or
+production alerts are running.
+
+### AI CSV research snapshot
+
+Updated `ASJR_Analyst/config/ai_scanner_list.csv` with exactly
+**10 distinct Friday 2026-10-09 news candidates**, plus the permanent
+INTC monitor already carried in the fixed watchlist. Eleven CSV rows
+does **not** mean 11 AI-selected slots: selection quotas skip overlap,
+so INTC will count against the FIXED bucket and the 10 other eligible
+names fill the AI bucket when the October 9 fixed list is used.
+
+- `INTC`: permanent WATCH, explicitly unverified, no false research time.
+- `SPCX`: SpaceX telecom spectrum expansion; sector ETF classification
+  unverified; LONG research context only.
+- `PLTR`: positive analyst coverage (Goldman and Barclays).
+- `LITE`: CEO discussed exceptional demand for AI optical products.
+- `AMT`: telecom tower infrastructure repricing after SpaceX news.
+- `HUM`: Medicare Advantage quality star rating recovery.
+- `AMZN`: AWS/AI and large-cap consumer rebound research.
+- `TMUS`: incumbent mobile carrier weakness amid spectrum competition.
+- `AAPL`: supplier-order report suggesting soft iPhone Pro demand.
+- `JPM`: upcoming October 13 bank earnings (event risk, not a trade).
+- `NVDA`: volatile AI infrastructure sentiment after competing reports.
+
+Each news row contains a direct article link, `researched_at_utc =
+2026-10-10T09:23:11Z`, and `expires_at_utc =
+2026-10-12T12:00:00Z` (before Monday's regular open). Where a publisher
+exposed an **exact** article time, `published_at_utc` is recorded.
+Where only its calendar date was established, `published_at_utc`
+is deliberately blank, never fabricated; read_ai_csv reports this as a
+PARTIAL provenance warning. All rows have `quality_status =
+UNVERIFIED` because comprehensive fundamental eligibility has not been
+independently established. These rows are **research watch candidates,
+not mechanical LONG/SHORT signals**. Candidates may be extended; wait
+for price/volume/EMA9/VWAP/structure confirmation.
+
+The source URLs are embedded in the CSV. Research was performed on
+Saturday after the October 9 US close; no market-current 5M data
+or executable entries are claimed. There is **no active automatic
+hourly research task created by this update**. A future premarket
+AI refresh must replace/expire old research rather than promoting it
+as fresh.
+
+### Read-only SSH test (new file)
+
+Added `RudraScanner/ssh_smoke_test.py`. Reads the existing AI CSV,
+October 9 fixed watchlist, and *optional previously saved* IBKR scanner
+CSV. Reports validation/freshness, excluded fixed names, and FIXED/AI/
+IBKR selected-count summary, with the hard 30-stock cap. It **does not**
+connect to IBKR, call the live bot, alter the DataLake, send messages,
+commit or push. It labels a missing IBKR CSV `NOT_YET_SAVED`.
+
+Execute on the user's VPS:
+
+```bash
+cd /root/trading/ASJR
+git status --short
+git pull --ff-only origin main
+/root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+/root/trading/venv_new/bin/python RudraScanner/ssh_smoke_test.py --date 2026-10-09
+```
+
+**Expected selection model, not a verified runtime result:**
+up to 10 FIXED, 10 AI, and 0 IBKR until a multi-code scanner CSV
+is actually saved; never mislabel zero IBKR rows as a successful scanner
+run. The October 9 fixed file has 19 rows, one excluded ONDS, and
+the first ten selections include INTC and the two existing "OPEN
+POSITION" labels. Missing timestamp provenance warnings are expected.
+
+**Status:** commits and GitHub file existence verified. SSH commands,
+unittest results, and live IBKR/Discord delivery have *not yet been run
+or observed by the assistant*. If Git reports a conflict or dirty state,
+do not force-reset or restart the bot. Show the output for diagnosis.
+Continue to avoid editing locked Reversal/Wicks logic.
