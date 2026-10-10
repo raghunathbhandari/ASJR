@@ -386,3 +386,59 @@ completed bars; VWAP resets at US RTH open.
 code inspection; common 1H collection, actual WAP callback integration,
 runtime tests and production deployment are not yet verified. Do not restart
 or change live Wicks / Reversal while implementing these stages.
+
+## Shared ticker-universe clarification and Phase 1 extension — 2026-10-10
+
+**User-confirmed:** both RudraScanner and Rudra-Reversal should consume the
+current ticker discovery idea **and the existing fixed watchlist**. Their
+signals/indicators/timeframes must remain separate. This clarifies the earlier
+"two CSV inputs" design: there are **two dynamic discovery feeds** (AI CSV +
+IBKR scanner CSV), plus the **already-existing day-specific fixed list**.
+Do not create another independently researched third ticker CSV.
+
+The common ticker inputs for both US-stock strategies are:
+
+1. Existing `DataLake/YYYY-MM-DD/config/fixed_watchlist.csv`
+   (prepared/copied by the existing ASJR day-bootstrap, including manual edits).
+2. AI-managed `ASJR_Analyst/config/ai_scanner_list.csv`.
+3. IBKR multi-code `raw/ibkr_scanner_list.csv`.
+
+Deduplicate by ticker, preserve FIXED/AI/IBKR source labels and each IBKR
+scan code, and publish the single list at
+`DataLake/YYYY-MM-DD/processed/scalp_radar_candidates.csv`. Both strategies
+should eventually use this *same eligible stock list* and shared historical
+imports. The 5M Radar detector does **not** replace the locked 1H
+Rudra-Reversal BB detector. NQ uses its existing independent Yahoo Finance
+1H route as a non-stock Reversal extension; do not silently drop it.
+
+**Added code (committed to main):**
+- `RudraScanner/universe.py`: read/validate enabled daily fixed rows,
+  merge with AI+IBKR candidate provenance, and output
+  `common_tickers(rows)`. Missing fixed files are explicitly MISSING;
+  they are never silently replaced with a guessed list.
+- `RudraScanner/storage.py` updated: saves the shared three-origin
+  candidate CSV and includes fixed list health/exclusions in
+  `raw/scanner_status.json`.
+- `RudraScanner/tests/test_universe.py`: tests fixed-only names, overlap,
+  disabled names, explicit exclusions, duplicates, missing fixed source,
+  source provenance and saved artifacts.
+
+**Known conflict found in the actual October 9 fixed CSV:** `ONDS` is
+enabled there, but the user previously explicitly excluded `ONDS` (also
+`BEAT`). The development shared-universe reader excludes and **reports**
+such conflicts, preserving the existing historical fixed CSV unchanged.
+If those exclusions are reversed, ask the user explicitly; do not infer
+from an old enabled fixed row. Other enabled fixed-list tickers remain
+candidates even if absent from both dynamic discoveries.
+
+**Important activation boundary:** the *shared candidate-generation code*
+now exists, but the production Reversal source still has its original
+`STRATEGY_TICKERS` and uses 1H sources with fallback caches. We have
+**not** changed that hardcoded live strategy ticker list, configured 1H
+imports, Chakra schedule or Wicks alerts. First validate 1H availability
+for the combined eligible list (150+ completed 1H bars per ticker),
+performance and existing Reversal compatibility. Then integrate the one
+shared universe as a controlled deployment, retaining existing NQ Yahoo
+feed and locked BB rules. The complete tests for this extension have been
+committed but **not verified as executed on VPS**. Attempted isolated
+external checkout could not reach GitHub, so do not claim test success.
