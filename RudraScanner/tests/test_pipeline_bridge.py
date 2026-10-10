@@ -35,6 +35,15 @@ class ChakraBridgeTests(unittest.TestCase):
         self.assertEqual(message,"RUDRA RADAR DISCORD")
         self.assertEqual(mock.call_count,1)
 
+    def test_scanner_batch_after_internal_wicks_reversal_dispatch(self):
+        with patch("RudraScanner.delivery.prepare_queued_alert",
+                   return_value="QUEUED RESEARCH") as queued:
+            result={"alert_data":[],"rudra_reversal_alerts":[],
+                    "alerts_dispatched":True}
+            message=alerts.prepare_alert(result)
+        self.assertEqual(message,"QUEUED RESEARCH")
+        self.assertEqual(queued.call_count,1)
+
     def test_external_mark_sent_falls_through_to_scanner_ack(self):
         with patch.object(alerts,"_read_json",return_value={}):
             with patch.object(alerts.rudra_reversal,
