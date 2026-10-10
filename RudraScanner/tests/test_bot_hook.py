@@ -116,7 +116,10 @@ class BotIntegrationTests(unittest.TestCase):
     def test_shadow_invokes_existing_app_through_feature_gate(self):
         from unittest.mock import patch
 
-        fake_app = object()
+        class FakeLiveApp:
+            def historicalData(self, req_id, bar):
+                return None
+        fake_app = FakeLiveApp()
         fake_result = {
             "candidates": [{"ticker": "INTC", "selection_source": "FIXED"}],
             "ai": {"state": "PARTIAL"},
