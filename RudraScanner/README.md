@@ -319,3 +319,17 @@ not in legacy Wicks or the locked Rudra-Reversal modules.
 
 The former open decision about EMA9 session reset is **resolved** by the
 user: continuous, across days, including premarket. Do not re-ask.
+
+## Indicator clarification — 2026-10-10
+
+User reiterated: **RudraScanner uses EMA9 AND VWAP together** for pattern
+analysis; this is not a choice between indicators. The previously confirmed
+continuous five-minute EMA9 (including available premarket/extended-hours
+bars, no daily reset) remains unchanged. The previously confirmed
+**regular-session VWAP reset at 09:30 ET** remains unchanged.
+
+**Still unresolved**: for VWAP, whether to extend the IBKR callback to
+capture each historical bar's actual WAP (preferred when available), or use
+an explicitly labelled HLC3×volume approximation from existing OHLCV.
+Do not silently select one or claim actual WAP without checking the upstream
+callback. No live bot changes made from this clarification.
