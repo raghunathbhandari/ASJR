@@ -4,6 +4,50 @@ Updated: 10 October 2026, Europe/London.
 
 **Read this document first in every future session.** Repository: `raghunathbhandari/ASJR`, production branch `main`. Operational history: `ASJR_Analyst/OPERATIONAL_HANDOFF.md`.
 
+**LATEST MONDAY LIVE CHECKPOINT — Oct 10 13:24 UTC user VPS output:**
+Actual extended suite ran **83 tests, 81 passed, 2 failed**.
+Both failures were synthetic `test_pipeline_bridge` cases that
+incorrectly expected Scanner Discord even with intentionally
+DISABLED production alerts. Fixed the two test mocks to
+explicitly authorize the scanner queue; **production fail-closed
+Discord gate and locked Wicks/Reversal unchanged**.
+Follow-up 83/83 VPS pass is **NOT YET observed**.
+
+Monday preflight showed live scanner SHADOW config present,
+original Wicks/Reversal hooks present, but Monday fixed CSV
+MISSING and AI CSV 10 rows expired by Monday open. Created
+`ASJR_Analyst/DataLake/2026-10-12/config/fixed_watchlist.csv`
+from Friday's exact existing canonical fixed list (19 rows;
+includes INTC and existing AKAM/WTTR open-position notes).
+The scanner excludes ONDS and selects **up to 10 fixed**
+among those rows. New CSV and test fix are committed,
+but VPS retest pending. **AI hourly refresh still NOT
+automated**: after 12 Oct 12:00 UTC expiry, only the
+permanent unverified INTC row remains (already in fixed
+pool); 30/30 should not be claimed. Do not silently extend
+expiry or fabricate news.
+
+**IMMEDIATE SAFE RETEST — no broker calls, no restart:**
+
+```bash
+cd /root/trading/ASJR
+git status --short
+git pull --ff-only origin main
+/root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+/root/trading/venv_new/bin/python RudraScanner/live_preflight.py
+```
+
+Expect **83 tests**, zero failures; `fixed_state`
+no longer `MISSING`. This is expected, not verified until
+the user's SSH output arrives. Monday SHADOW does NOT send
+scanner Discord alerts or modify Wicks/Reversal.
+Canonical procedure: `RudraScanner/MONDAY_LIVE.md`.
+Older 65/65 and Friday WAP research checkpoints
+below remain valid historically; the two new test
+failures do not invalidate Friday's verified replay.
+
+
+
 **LATEST MONDAY DEPLOYMENT PREP (code committed, VPS tests still pending):** See `RudraScanner/MONDAY_LIVE.md` and the `MONDAY 12 OCTOBER 2026` checkpoint below. **The verified 65-test Friday baseline is historical.**\n\n**PRIOR VERIFIED FRIDAY BASELINE — 10 Oct 2026 12:46:59 UTC:**
 User pulled GitHub `main` successfully to commit `368cf6d3`
 and ran the COMPLETE `RudraScanner/tests/` suite on their VPS:
