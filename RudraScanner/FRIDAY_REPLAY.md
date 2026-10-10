@@ -5,6 +5,35 @@
 five setup detectors**, with as-of-candle index/sector checks. This is
 not a bot restart or Discord/test trade order.
 
+## Latest actual test run — one synthetic mock assertion fixed
+
+On 2026-10-10 12:41 UTC the user's VPS completed
+**65 tests with 1 failure** (`0.746s`). The
+Friday historical IBKR WAP replay itself completed successfully
+with **11 pattern labels, 10 distinct opportunities,
+40.00% unique-entry win rate and +0.0147% average
+before costs**, matching earlier observed research results.
+
+**Failure was isolated to test code**:
+`test_markout_entry_next_bar_and_exit_after_six` used an
+unconditional fake pattern detector, which could signal at
+5M RTH candle 6 although the real detector needs at least
+15 complete RTH bars. The test's mock has now been changed
+to enforce the real 15-bar minimum. No actual detector
+or market calculation rules changed. **Re-run of the
+65-case suite is pending; pass not yet verified.**
+
+```bash
+cd /root/trading/ASJR
+git pull --ff-only origin main
+/root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+```
+
+Do not download Friday IBKR historical bars again; they
+remain cached in the common DataLake.
+
+---
+
 ## VERIFIED Friday IBKR historical replay — 2026-10-10 user VPS output
 
 **The user successfully ran the NEW research backfill and one-day
