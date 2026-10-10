@@ -25,6 +25,7 @@ import Utils.asjr_snapshot as snapshot
 import Utils.asjr_git as asjr_git
 import Utils.asjr_logger as asjr_logger
 import Strategies.RudraReversal1H.rudra_reversal as rudra_reversal
+from RudraScanner.bot_hook import run_bot_shadow
 
 try:
     from Backtesting.DataLoader.forex_download_hook import launch_forex_download_once
@@ -36,7 +37,7 @@ try:
 except Exception:
     launch_nq_download_once = None
 
-ASJR_ANALYST_VERSION = "2026.10.08.1"
+ASJR_ANALYST_VERSION = "2026.10.10.1"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -76,6 +77,7 @@ def run_asjr_manual_pipeline(
                 "ticker_summary": pd.DataFrame(),
                 "snapshot": {"trade_date": str(pd.Timestamp.now(tz=asjr_day.ET).date())},
                 "git": {"status": "SKIPPED_CLOSED_SESSION"}, "log_file": None,
+                "rudra_scanner_shadow": {"state": "SKIPPED_CLOSED_SESSION"},
             }
         trade_date = resolved_date
 
@@ -136,6 +138,28 @@ def run_asjr_manual_pipeline(
 
 
     try:
+        # First gated RudraScanner method integration. Default OFF: zero
+        # new IBKR requests and no production universe/alert changes.
+        # SHADOW reuses the existing connected app and common DataLake.
+        # Never allow an experimental scanner to stop live WICKS/Reversal.
+        try:
+            rudra_scanner_shadow = run_bot_shadow(
+                app, trade_date, repo_root=REPO_ROOT, logger=logger,
+            )
+            logger.info(
+                "RUDRA SCANNER | shadow=%s | state=%s | selected=%s | sources=%s | scans=%s",
+                rudra_scanner_shadow.get("mode"),
+                rudra_scanner_shadow.get("state"),
+                rudra_scanner_shadow.get("selected_total", 0),
+                rudra_scanner_shadow.get("selected_by_source", {}),
+                rudra_scanner_shadow.get("ibkr_scan_states", {}),
+            )
+        except Exception:
+            logger.exception(
+                "RUDRA SCANNER | isolated shadow discovery failed; legacy pipeline continues"
+            )
+            rudra_scanner_shadow = {"mode": "shadow", "state": "ERROR"}
+
         # 1. Build universe
         if gapup_df is None and fetch_gapup_from_app:
             logger.info("MOVERS | Fetch started")
@@ -377,6 +401,7 @@ def run_asjr_manual_pipeline(
             "alerts_dispatched": delivery.get("alerts_dispatched", False),
             "alert_data": alert_data,
             "rudra_reversal_alerts": rudra_reversal_alerts,
+            "rudra_scanner_shadow": rudra_scanner_shadow,
             "sector": sector,
             "ticker_summary": ticker_summary,
             "snapshot": snap,
