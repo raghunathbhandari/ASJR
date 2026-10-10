@@ -4,6 +4,65 @@ Updated: 10 October 2026, Europe/London.
 
 **Read this document first in every future session.** Repository: `raghunathbhandari/ASJR`, production branch `main`. Operational history: `ASJR_Analyst/OPERATIONAL_HANDOFF.md`.
 
+## VERIFIED MONDAY PREFLIGHT — 2026-10-10 13:30 UTC: **83 / 83 PASSED**
+
+**Actual user VPS evidence, not estimated:** user ran `git pull
+--ff-only origin main`, advancing main from `1ce9a402` to
+`2d1ee811`, and executed complete scanner unittest discovery.
+Console returned:
+
+```text
+Ran 83 tests in 0.887s
+OK
+```
+
+**All 83 offline tests PASSED**, including the two
+`test_pipeline_bridge` scanner Discord gate tests which had
+previously failed due to test mocks omitting explicit approval.
+No errors or failures remain in the current verified suite.
+This does NOT establish real-time IBKR scanner/data or Discord
+behaviour.
+
+**Actual Monday 2026-10-12 read-only preflight result:**
+`scheduled_mode=shadow`, `research_enabled=true`,
+`live_scanner_alerts_enabled=false`,
+`approved_thresholds=false`,
+`ready_to_shadow=true`. All four scanner codes and
+pipeline/legacy Wicks/Reversal integration checks were present.
+`fixed_today=18`, `fixed_state=PARTIAL` from 19 copied
+Friday fixed list rows, deliberately excluding `ONDS`.
+`ai_valid_at_monday_open=1`, `ai_expired_at_open=10`,
+`ai_state_at_monday_open=PARTIAL` (the sole valid AI
+candidate is the permanent `INTC` watch, already in
+FIXED). No automatic hourly verified AI-to-GitHub refresh
+is yet enabled; do not infer 30/30 or keep ten expired names.
+
+**Deployment state:** GitHub main and pulled VPS checkout
+passed preflight; the long-running Python bot process has
+NOT been confirmed to have reloaded the latest code.
+The preflight made **zero broker requests, orders or
+Discord sends**, so live four-code scanning and actual
+5M WAP on Monday are NOT yet tested. User controls
+restart through existing Discord bot commands after
+confirming active process environment, external
+EWrapper callbacks and Git sync.
+
+**Next check** (Monday, after scheduled 5M Chakra cycle):
+
+```bash
+cd /root/trading/ASJR
+/root/trading/venv_new/bin/python RudraScanner/live_status.py --date 2026-10-12
+```
+
+Inspect exact IBKR scan-code statuses, source counts,
+5M WAP and ETF timing, 1H availability, saved
+`reports/scalp_radar.txt` and absence of unapproved
+scanner Discord. Wicks and locked Reversal must remain
+working. The authoritative deployment guide is
+`RudraScanner/MONDAY_LIVE.md`.
+
+---
+
 **LATEST MONDAY LIVE CHECKPOINT — Oct 10 13:24 UTC user VPS output:**
 Actual extended suite ran **83 tests, 81 passed, 2 failed**.
 Both failures were synthetic `test_pipeline_bridge` cases that
