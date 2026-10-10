@@ -47,7 +47,7 @@ try:
 except Exception:
     launch_nq_download_once = None
 
-ASJR_ANALYST_VERSION = "2026.10.10.7"
+ASJR_ANALYST_VERSION = "2026.10.10.8"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -277,6 +277,34 @@ def run_asjr_manual_pipeline(
         storage.save_csv(intraday_raw, intraday_file)
         logger.info("FILE | Saved intraday_5m | %s", intraday_file)
 
+        intraday = intraday_features.add_intraday_features(intraday_raw)
+        alert_data = alerts.build_wick_alerts(intraday, trade_date=trade_date)
+
+        try:
+            # Never seed/change existing locked Reversal state in
+            # Monday SHADOW. New 1H bars are research cache only.
+            rudra_reversal_alerts = run_rudra_reversal_strategy(
+                trade_date=trade_date,
+            )
+        except Exception:
+            # Rudra-Reversal is independent. Never block live WICKS delivery.
+            logger.exception("RUDRA REVERSAL 1H | scan failed")
+            rudra_reversal_alerts = []
+
+        # Deliver before sector research, report writing and Git submission.
+        # Delivery order is WICKS first, then Rudra-Reversal 1H.
+        delivery = {
+            "alert_data": alert_data,
+            "rudra_reversal_alerts": rudra_reversal_alerts,
+        }
+        if alert_sender is not None:
+            sent = alerts.send_alerts(delivery, alert_sender)
+            logger.info("ALERTS | Immediate dispatch | events=%s", sent)
+        alert_data = delivery["alert_data"]
+        rudra_reversal_alerts = delivery["rudra_reversal_alerts"]
+        # Legacy Wicks and locked Reversal were evaluated and any
+        # immediate sender dispatch finished BEFORE extra scanner
+        # IBKR work. Preserve original alert priority and state.
         # The scanner uses the existing app / already downloaded bar
         # frames and requests only its missing 30-name/ETF symbols.
         # SHADOW preserves the original Wicks and Reversal universe.
@@ -305,9 +333,6 @@ def run_asjr_manual_pipeline(
                     "state": "ERROR", "alert_delivery": "DISABLED",
                 }
 
-        intraday = intraday_features.add_intraday_features(intraday_raw)
-        alert_data = alerts.build_wick_alerts(intraday, trade_date=trade_date)
-
         # Locked Reversal detection remains unchanged. ACTIVE mode
         # fetches and reuses a bounded 1H source for the same stock
         # candidates and preserves NQ on its independent Yahoo route.
@@ -328,28 +353,6 @@ def run_asjr_manual_pipeline(
                 logger.exception("RUDRA SCANNER | 1H collection failed")
                 rudra_scanner_hourly = {"state": "ERROR"}
 
-        try:
-            # Never seed/change existing locked Reversal state in
-            # Monday SHADOW. New 1H bars are research cache only.
-            rudra_reversal_alerts = run_rudra_reversal_strategy(
-                trade_date=trade_date,
-            )
-        except Exception:
-            # Rudra-Reversal is independent. Never block live WICKS delivery.
-            logger.exception("RUDRA REVERSAL 1H | scan failed")
-            rudra_reversal_alerts = []
-
-        # Deliver before sector research, report writing and Git submission.
-        # Delivery order is WICKS first, then Rudra-Reversal 1H.
-        delivery = {
-            "alert_data": alert_data,
-            "rudra_reversal_alerts": rudra_reversal_alerts,
-        }
-        if alert_sender is not None:
-            sent = alerts.send_alerts(delivery, alert_sender)
-            logger.info("ALERTS | Immediate dispatch | events=%s", sent)
-        alert_data = delivery["alert_data"]
-        rudra_reversal_alerts = delivery["rudra_reversal_alerts"]
         intraday_latest = intraday_features.latest_intraday_summary(
             intraday
         )
