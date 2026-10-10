@@ -787,3 +787,73 @@ locked Rudra-Reversal 1H logic. Do not auto-restart, add a second
 scheduler, or claim live notifications. The canonical latest
 per-session checkpoint and actual evidence are in
 `RudraScanner/README.md`, at START HERE NEXT SESSION.
+
+## 2026-10-10 VPS 18/18 tests passed; Chakra hook wired; Friday offline replay
+
+**Observed from user's actual VPS terminal:**
+`python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v`
+completed **18 tests in 0.181 seconds, OK**, zero failures.
+This confirms the original discovery/EMA9/shared-universe/offline
+tests on the user's runtime. Previously observed read-only SSH
+ticker-preview test also passed: 10 FIXED + 10 AI + 0 IBKR = 20/30.
+
+**User then requested immediate bot-call implementation, with
+IBKR candidates copied/reused from the Friday 2026-10-09 DataLake
+while the market is closed.**
+
+Source changes committed to GitHub main:
+
+- `ASJR_Analyst/Tests/test_asjr_pipeline.py` version
+  `2026.10.10.1` now invokes
+  `RudraScanner.bot_hook.run_bot_shadow()` inside the existing
+  five-minute `run_asjr_manual_pipeline` method, before the legacy
+  universe is fetched. Hook errors are isolated from
+  Wicks/Rudra-Reversal. Shadow result included in returned dict.
+- `RudraScanner/bot_hook.py` mode environment
+  `RUDRA_SCANNER_MODE`: defaults to `off`; `shadow` enables
+  new four-code IBKR discovery and shared DataLake candidate
+  recording without changing legacy imports or alert delivery.
+  No extra scheduler or IBKR connection. Production refuses
+  replay unless caller passes `allow_replay=True` explicitly.
+- `RudraScanner/replay.py` +
+  `RudraScanner/bot_test.py` now enable a direct, read-only
+  Friday historical replay via the SAME bot hook, no live API.
+  IBKR source `2026-10-09/raw/ibkr_gapup.csv` (old 4%-era
+  mover list, not live four-scanner output) cross-checked
+  against `daily_30d.csv` for >=20 saved valid sessions,
+  last close >$5 and mean 20-day volume >1 million, ranked by
+  observed mean 20-day dollar volume, then de-duplicated into
+  the historical **10 IBKR slots**.
+- Friday stored `ibkr_gapup.csv` contains 87 rows; 84 passed
+  historical 20-day price/volume screening in a GitHub data
+  inspection. **No current market cap/fundamentals/tradability
+  verified**, and no new four-scanner result claimed.
+- `RudraScanner/tests/test_bot_hook.py` adds six offline tests;
+  this **new code is NOT yet VPS-tested**. Original 18/18 result
+  does not include these six. Existing Wicks/Reversal untouched.
+
+**Next direct SSH validation, safe during Saturday market closure:**
+
+    cd /root/trading/ASJR
+    git status --short
+    git pull --ff-only origin main
+    /root/trading/venv_new/bin/python RudraScanner/bot_test.py --date 2026-10-09 --ibkr-source-date 2026-10-09
+    /root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+
+Optional `--save` only after preview produces
+`raw/ibkr_scanner_replay_list.csv`,
+`processed/rudra_scanner_replay_candidates.csv`,
+`reports/rudra_scanner_replay_report.txt` and
+`reports/rudra_scanner_replay_status.json` under the
+SAME common dated DataLake. It never overwrites live scanner
+files, Git pushes, or sends Discord. User has not supplied
+this new replay/test output yet.
+
+**Integration level:** live bot **METHOD CALL WIRED, DEFAULT
+OFF**, no production activation/restart or live 5-pattern
+detectors yet. Must not claim new scanner 30-stock import,
+1H feed for Reversal, actual WAP/VWAP, technical signals,
+or Discord scanner alerts implemented. The user will
+directly run the offline replay first and supply its output.
+For chronological and priority checkpoints read
+`RudraScanner/README.md` section "LATEST UPDATE".
