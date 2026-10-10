@@ -83,6 +83,8 @@ def main(argv=None):
         print("RUDRA SCANNER | DISABLED; no new request queued.")
         print("Configured mode:", runtime["mode"], "| research:", runtime["research"])
         return 2
+    if args.timeout < 1 and not args.no_wait:
+        parser.error("--timeout must be >=1 seconds")
     state, created = request_scan(root, day)
     print("RUDRA SCANNER | SSH REQUEST", "QUEUED" if created else "ALREADY QUEUED", flush=True)
     print("REQUEST ID:", state["request_id"], "| ET DATE:", day, flush=True)
@@ -91,8 +93,6 @@ def main(argv=None):
     if args.no_wait:
         print("To inspect: python RudraScanner/scan_now.py --status", flush=True)
         return 0
-    if args.timeout < 1:
-        parser.error("--timeout must be >=1 seconds")
     start = time.monotonic()
     while time.monotonic() - start < args.timeout:
         outcome = load_request(root)
