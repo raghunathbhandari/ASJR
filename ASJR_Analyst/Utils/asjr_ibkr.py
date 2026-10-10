@@ -384,6 +384,13 @@ def get_ibkr_5m_batch(
                         pass
 
                 df = parse_ibkr_bars(rows)
+                # RudraScanner opt-in WAP capture: the original callback
+                # and six-column OHLCV parser remain backwards compatible.
+                # Only use real recorded IBKR bar WAP; missing WAP is
+                # never replaced with OHLC3/4 for trade signals.
+                if getattr(app, "_rudra_wap_capture_installed", False):
+                    from RudraScanner.wap_capture import attach_wap
+                    df = attach_wap(app, req_id, df, rows)
                 batch_result[ticker] = df
 
                 print(
