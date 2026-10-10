@@ -148,11 +148,29 @@ class WapTapTests(unittest.TestCase):
             date="1791552600", open=100, high=101, low=99,
             close=100, volume=1000, wap=100.25))
         self.assertEqual(len(fake.data[42][0]), 6)
-        self.assertEqual(fake._rudra_wap_sidecar[42], [100.25])
-        parsed = pd.DataFrame([{"Close": 100}])
+        self.assertEqual(fake._rudra_wap_sidecar[42], [("1791552600", 100.25)])
+        parsed = pd.DataFrame(
+            {"Close": [100]},
+            index=pd.DatetimeIndex([pd.to_datetime(
+                1791552600, unit="s", utc=True).tz_convert("America/New_York")])
+        )
         decorated = attach_wap(fake, 42, parsed, fake.data[42])
         self.assertAlmostEqual(float(decorated.iloc[0]["WAP"]), 100.25)
         self.assertNotIn(42, fake._rudra_wap_sidecar)
+
+    def test_wap_attaches_by_time_when_callbacks_are_out_of_order(self):
+        class Fake:
+            _rudra_wap_sidecar = {
+                5: [("1791552900", 101.5), ("1791552600", 100.25)]
+            }
+        timestamps = pd.to_datetime([1791552600, 1791552900], unit="s", utc=True)
+        parsed = pd.DataFrame({"Close": [100, 101]}, index=timestamps)
+        attached = attach_wap(
+            Fake(), 5, parsed, [
+                ["1791552900", 0, 0, 0, 0, 0],
+                ["1791552600", 0, 0, 0, 0, 0],
+            ])
+        self.assertEqual(attached["WAP"].tolist(), [100.25, 101.5])
 
 
 if __name__ == "__main__":
