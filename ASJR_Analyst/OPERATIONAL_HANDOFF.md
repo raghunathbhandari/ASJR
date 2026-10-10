@@ -903,3 +903,96 @@ Do not invent signal thresholds or claim Sunday/weekend market data
 is live. AI news CSV expires Monday Oct 12 12:00 UTC
 (13:00 BST). Complete resumption checkpoint in
 `RudraScanner/README.md` section “VERIFIED VPS CHECKPOINT”.
+
+## 2026-10-10 Phase 2 implementation committed — 50 new/old test inventory
+
+**User instruction:** implement the full RudraScanner system so they can
+run an end-to-end VPS test even during the Saturday US-market closure.
+The new code is on GitHub main, BUT **no new VPS run has been supplied
+since the previous 24/24 verified tests**. Follow the latest
+`RudraScanner/README.md` Phase 2 checkpoint and
+`RudraScanner/FULL_TEST.md` first; do not equate code commits
+with live verification.
+
+### Existing five-minute Chakra pipeline integration
+
+`ASJR_Analyst/Tests/test_asjr_pipeline.py` now at
+`ASJR_ANALYST_VERSION = 2026.10.10.5`, referencing:
+
+- `RudraScanner/bot_hook.py` —
+  `RUDRA_SCANNER_MODE=off` default, `shadow` isolated
+  discovery and diagnostic outputs, opt-in `active`
+  common up-to-30 US-stock selected import set.
+- `RudraScanner/wap_capture.py` and additive change in
+  `ASJR_Analyst/Utils/asjr_ibkr.py` —
+  actual IBKR bar WAP aligned to timestamp and attached to
+  the existing six-field historical parse only when captured.
+  RTH VWAP is not approximated silently from OHLC.
+- `RudraScanner/features.py` —
+  continuous cross-day/pre-market completed-bar EMA9,
+  regular-session reset exact WAP VWAP, volume ratios,
+  explicit missing quality diagnostics.
+- `RudraScanner/volume_history.py` —
+  preserve true cumulative RVOL20 from 20 prior **full**
+  RTH sessions by carrying last 21 full sessions
+  via `DataLake/YYYY-MM-DD/processed/rudra_scanner_rvol20_baseline.csv`.
+  This stays within the one common DataLake and survives
+  five-day old daily raw folder cleanup.
+- `RudraScanner/patterns.py` and `topdown.py` —
+  five symmetric experimental 5M LONG/SHORT research setups
+  only when SPY/QQQ and sector ETF direction are aligned;
+  unavailable or mixed => WAIT. Thresholds are provisional,
+  still require user review and proper historical performance tests.
+- `RudraScanner/engine.py`, `datalake_test.py` —
+  common-day research feature CSV, status JSON and plain text
+  outputs, read-only historical replay test.
+- `RudraScanner/hourly.py` —
+  with explicit ACTIVE mode, up to 30 1H stock historical
+  IBKR requests on the same app, refreshed at most hourly;
+  writes `raw/intraday_1h.csv` and status under common DataLake.
+  Locked Rudra-Reversal evaluates those names plus existing
+  Yahoo NQ without its BB math changing.
+- `RudraScanner/reversal_bridge.py` —
+  safely seed first-use stock symbols at latest completed 1H
+  candle after >=150 bars; avoid alert floods from old history.
+- `RudraScanner/delivery.py` —
+  separate idempotent scanner Discord ack state; both
+  `RUDRA_SCANNER_ALERTS=1` and
+  `RUDRA_SCANNER_THRESHOLDS_APPROVED=1` required and
+  **neither enabled/approved**. Research-only flag
+  `RUDRA_SCANNER_RESEARCH=1` also OFF.
+  Wicks and Reversal alert detector code unchanged.
+
+**Production scope caution:** ACTIVE opts to replace imported
+ticker set with the shared <=30 names and therefore *also changes
+the names seen by existing Wicks* (not its wick rules).
+User confirmation before enabling ACTIVE is required.
+SHADOW mode preserves legacy monitored ticker list.
+The actual VPS external EWrapper script has NOT been inspected
+or verified against WAP tap. Live scanner, pacing, 1H coverage,
+VWAP and Discord outcomes remain unknown. Production defaults OFF.
+
+### Full offline test instruction on the user's VPS
+
+    cd /root/trading/ASJR
+    git status --short
+    git pull --ff-only origin main
+    /root/trading/venv_new/bin/python -m compileall -q RudraScanner ASJR_Analyst/Tests/test_asjr_pipeline.py ASJR_Analyst/Utils/asjr_ibkr.py
+    /root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+    /root/trading/venv_new/bin/python RudraScanner/bot_test.py --date 2026-10-09 --ibkr-source-date 2026-10-09
+    /root/trading/venv_new/bin/python RudraScanner/datalake_test.py --date 2026-10-09
+
+The source now contains **50 unittest methods** (original
+24 VPS-verified plus 26 NEW and unverified test methods).
+Expected 50/50 and successful read-only Friday input/feature
+reports; **do not report PASS until actual VPS output arrives**.
+Friday lacks actual WAP and 20 complete RTH sessions, so
+exact VWAP/RVOL20 should report DATA NOT READY, never
+fabricated live trade alerts. Weekend replay should remain
+30/30 historical candidate lists, not live IBKR scanning.
+
+**Next step:** inspect the user's 50-test output and fix any actual
+failures; only after that consider controlled one-session
+SHADOW mode with the user's approval and user-controlled bot
+configuration/restart. Do not initiate live ACTIVE, Discord, or
+automated trading without source/pacing/threshold validation.
