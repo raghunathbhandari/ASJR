@@ -333,3 +333,56 @@ capture each historical bar's actual WAP (preferred when available), or use
 an explicitly labelled HLC3×volume approximation from existing OHLCV.
 Do not silently select one or claim actual WAP without checking the upstream
 callback. No live bot changes made from this clarification.
+
+## Shared DataLake ownership — 2026-10-10 (explicit user decision)
+
+**The ASJR DataLake is common to all modules, including Rudra-Reversal and
+RudraScanner.** It is not RudraScanner's private store, and no second DataLake
+folder or competing five-minute collector may be introduced.
+
+**Canonical shared day root:** `ASJR_Analyst/DataLake/YYYY-MM-DD/`
+(one US trading-session date per folder). Keep existing common
+`config/`, `raw/`, `processed/`, `reports/` subfolders.
+
+- Shared collected inputs: `raw/intraday_5m.csv`, daily OHLCV,
+  benchmark/sector context, and additional timeframes when available
+  (including 1H for Rudra-Reversal), with common consistent ticker/time
+  semantics. Collect a given feed once and let relevant modules read it.
+- RudraScanner owns its namespaced derivative outputs
+  (`processed/scalp_radar_*.csv`, `processed/scalp_radar*.json*`,
+  `reports/scalp_radar.txt`) but they live *inside the shared day root*.
+- Rudra-Reversal remains a separate strategy and can own separate
+  reversal-specific derivative outputs *inside that same root* when
+  integrated. Do not overwrite the shared raw feeds, other modules'
+  outputs, or Reversal's locked strategy signals.
+- Git pull/read/fetch/process/commit/push remains one existing Chakra job.
+  Writes need module-scoped, non-colliding filenames and accurate freshness,
+  source provenance and timeframe. No second scheduler or Git writer.
+- Scanner 5M and Reversal 1H cannot assume one data interval substitutes for
+  the other; publish a status if a required source/timeframe is missing.
+- RVOL history/rolling data and historical 1H warmup must survive the
+  five-day DataLake cleanup (reference store or published eligible history
+  inside the common system; do not silently delete needed baselines).
+
+**Audited current Reversal code:** `ASJR_Analyst/Strategies/RudraReversal1H/
+rudra_reversal.py` already searches the requested day's shared
+`DataLake/YYYY-MM-DD/raw/` for 1H input first (including
+`intraday_1h.csv`, `hourly_1h.csv`), then falls back to
+`Backtesting/BacktestData/IBKR/MarketData/1h/`; NQ currently uses a separate
+Yahoo Finance 1H file. This is its *current source fallback*, not a newly
+verified common 1H ingestion pipeline. Before claiming full shared-DataLake
+operation, implement/verify a proper common 1H input, while preserving
+the existing NQ/Yahoo source requirement and Reversal's locked calculations.
+
+The user also accepted using actual IBKR historical-bar **WAP** for
+RudraScanner VWAP (rather than an unlabeled HLC3 approximation). Retain
+actual WAP with the shared 5M feed when upstream callbacks are enhanced,
+so all consumers can access the same raw measurements. Existing saved
+5M OHLCV without WAP must be labelled **WAP_MISSING** for exact VWAP,
+not silently treated as exact WAP. EMA9 remains continuous across available
+completed bars; VWAP resets at US RTH open.
+
+**Status:** shared architecture agreed; Reversal source fallbacks confirmed by
+code inspection; common 1H collection, actual WAP callback integration,
+runtime tests and production deployment are not yet verified. Do not restart
+or change live Wicks / Reversal while implementing these stages.
