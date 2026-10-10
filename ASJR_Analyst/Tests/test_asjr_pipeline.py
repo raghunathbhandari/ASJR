@@ -47,7 +47,7 @@ try:
 except Exception:
     launch_nq_download_once = None
 
-ASJR_ANALYST_VERSION = "2026.10.10.10"
+ASJR_ANALYST_VERSION = "2026.10.10.11"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -233,6 +233,22 @@ def run_asjr_manual_pipeline(
                 install_wap_capture(app)
             except Exception:
                 logger.exception("RUDRA SCANNER | passive WAP capture unavailable")
+
+        # Cheap WAP callback installation happens BEFORE the existing
+        # legacy 5M import. It requests NO extra broker history and does
+        # not delay Wicks. The slow four-code discovery and independent
+        # scanner fetch still run only AFTER Wicks/Reversal delivery.
+        scanner_clock = scanner_runtime(
+            REPO_ROOT, paths.trading_day(trade_date)
+        )
+        if str(scanner_clock.get("mode", "off")).lower() in ("shadow", "active"):
+            try:
+                from RudraScanner.wap_capture import install_wap_capture
+                install_wap_capture(app)
+                logger.info("RUDRA SCANNER | pre-5M WAP tap installed | mode=%s",
+                            scanner_clock["mode"])
+            except Exception:
+                logger.exception("RUDRA SCANNER | WAP tap failed; scanner VWAP unavailable")
 
         # 4. IBKR 5m data
         logger.info(
