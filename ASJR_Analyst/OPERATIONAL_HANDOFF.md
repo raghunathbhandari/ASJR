@@ -1383,3 +1383,144 @@ controlled single US market session `shadow` test via
 existing Chakra connection, preserving original live universe.
 New status canonical at top of `RudraScanner/README.md`
 and `RudraScanner/FRIDAY_REPLAY.md`.
+
+## 2026-10-10 MONDAY 12 OCT LIVE CHAKRA SHADOW — CODE COMMITTED, VPS TEST PENDING
+
+**User instruction:** Apply ALL RudraScanner code to the existing
+live scanner for Monday 12 Oct, review integration and update docs.
+This is the latest state and supersedes prior "Monday
+SHADOW not implemented" checkpoints. Read
+`RudraScanner/MONDAY_LIVE.md` FIRST for commands,
+rollback and exact operational constraints.
+
+**GitHub/main changes committed** (NOT yet reloaded into VPS process):
+
+- New `ASJR_Analyst/config/rudra_scanner_runtime.json`:
+  date-gated `enabled_from_et=2026-10-12`,
+  `mode=shadow`, `research=true`,
+  **scanner Discord alerts FALSE** and pattern-threshold
+  approval FALSE. Production source watcher remains
+  the existing `ibkr_trading_sudarsan_chakra(app)`;
+  no new scheduler/broker connection/order function.
+- Existing `ASJR_Analyst/Tests/test_asjr_pipeline.py`
+  is version **2026.10.10.10** and installs passive
+  IBKR WAP tap before the legacy 5M fetch (no added
+  requests at this step), then delivers original
+  **WICKS and locked 1H Reversal alerts BEFORE**
+  four-code discovery or extra 5M/1H sidecar loads.
+  `uni = universe.build_universe(...)` unchanged,
+  `run_rudra_reversal_strategy(trade_date=...)`
+  unchanged; new selected 30 names NEVER replace
+  Wick/Reversal live name universe in SHADOW.
+- `RudraScanner/bot_hook.py` hot-reads
+  date-gated runtime configuration and runs
+  TOP_PERC_GAIN, TOP_PERC_LOSE, HOT_BY_VOLUME and
+  MOST_ACTIVE, capped 10 fixed + 10 valid AI +
+  10 IBKR, no fixed 4% condition.
+  SHADOW now returns selected candidates for 5M
+  import, rather than just counts.
+- New `RudraScanner/live_round.py` computes
+  genuine completed 5M EMA9 and RTH reset VWAP
+  from IBKR WAP, persistent RTH RVOL20 baseline,
+  and all five bidirectional pattern detectors.
+  Reuses already imported legacy WAP bars, loads
+  only missing stocks+SPY/QQQ/evidenced sector
+  ETF 5M bars from SAME app. Directional context
+  uses timestamp-matched completed 5M ETF prices
+  versus PRIOR RTH close (avoids future-close).
+  Unknown ETF/missing WAP = WAIT.
+  Saves `ASJR_Analyst/DataLake/2026-10-12/
+  reports/scalp_radar.txt` and JSON/CSV.
+  No additional top-level DataLake.
+- Existing `RudraScanner/hourly.py`
+  caches the selected 1H stock source once per
+  hour. Under SHADOW it does NOT seed, rewrite
+  or run locked Rudra Reversal on new names;
+  Yahoo NQ and original 1H Reversal alerts remain
+  unchanged.
+- `RudraScanner/delivery.py` adds separate
+  state/ACK and batch for scanner research
+  Discord, integrated at LAST priority in
+  `ASJR_Analyst/Utils/asjr_alerts.py`
+  `prepare_alert()`, `mark_alert_sent()`
+  and optional `send_alerts()`.
+  This was designed around previously observed
+  external Chakra pattern:
+  `tp.run_asjr_manual_pipeline(...)`
+  -> `tp.prepare_alert(result)` -> `SN.send_to_discord`.
+  Actual `/root/trading/utils/trading_sudarsan_chakra.py`
+  is **not available in GitHub** and cannot be
+  definitively reviewed without user VPS output.
+  Scanner messages are **OFF in config** pending
+  user-approved numerical thresholds. No orders.
+- New `RudraScanner/live_preflight.py`:
+  direct SSH read-only readiness (0 IBKR
+  requests, 0 orders, 0 Discord).
+  New `tests/test_live_round.py` (7),
+  `tests/test_live_preflight.py` (2),
+  `tests/test_pipeline_bridge.py` (5),
+  plus 2 new queue tests in `test_delivery.py`.
+  Total **81 source tests = 65 previously VPS
+  verified + 16 NEW UNVERIFIED**.
+  Do not claim 81/81 passed without VPS output.
+
+**Important blocker in separate AI hourly workflow:**
+Attempt to create new 8–20 UK weekday
+AI research + GitHub CSV updater AUTOMATION
+FAILED because the user has reached their
+5-active-task limit. The existing Saturday AI
+CSV snapshot expires Monday 2026-10-12
+12:00 UTC (13:00 UK), BEFORE Monday US RTH.
+Unless refreshed, 10 AI source slots are
+not assured. DO NOT imply the AI hourly
+GitHub CSV updater is running. It must
+be scheduled after user makes a task slot,
+or researched/updated manually.
+
+**Mandatory immediate read-only VPS verification:**
+
+    cd /root/trading/ASJR
+    git status --short
+    git pull --ff-only origin main
+    /root/trading/venv_new/bin/python -m compileall -q RudraScanner ASJR_Analyst/Tests/test_asjr_pipeline.py ASJR_Analyst/Utils/asjr_ibkr.py ASJR_Analyst/Utils/asjr_alerts.py
+    /root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+    /root/trading/venv_new/bin/python RudraScanner/live_preflight.py
+
+Expected **81 tests**, OK; **NOT YET USER VPS VERIFIED**
+for new code. If tests fail, fix GitHub before
+any user-controlled restart. Git pull alone
+does not reload an existing tmux Python process.
+User controls restart via their established
+Discord bot control commands; never start a
+second process automatically.
+
+**Monday acceptance:** After the user
+restarts/reloads the existing bot AND
+confirms 81/81 tests, verify version
+2026.10.10.10 in Chakra logs, legacy
+Wicks/Reversal immediate dispatch, scanner
+4-code actual result/partial statuses, <=30
+separate stocks, WAP/timing/ETF 5M context
+and the shared DataLake report. FIRST
+US RTH open is 14:30 UK BST, pattern
+research after 15:00 UK. 20-day RVOL20
+will remain unavailable until 20 complete
+prior RTH days have been collected.
+Inspect IBKR pacing and Git sync,
+as shadow extra history increases demand.
+
+**SAFE rollback:** set scanner runtime
+`mode=off` or process env
+`RUDRA_SCANNER_MODE=off`, Git pull/reload
+normal process. Never modify Wicks/Reversal
+rules, current open positions, historical
+data or alerts to force scanner to work.
+
+**No live claims beyond code:** 65/65
+prior offline unit tests VERIFIED, Friday
+40-history-contract WAP fetch worked,
+but Monday real 4-code callbacks, streaming
+WAP, 81 new-case suite, source freshness,
+real Discord scanner delivery and timing
+remain UNVERIFIED.
+
