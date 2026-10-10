@@ -654,3 +654,40 @@ unittest results, and live IBKR/Discord delivery have *not yet been run
 or observed by the assistant*. If Git reports a conflict or dirty state,
 do not force-reset or restart the bot. Show the output for diagnosis.
 Continue to avoid editing locked Reversal/Wicks logic.
+
+## Next task queued — Chakra bot-method integration (2026-10-10)
+
+**User's stated sequence:** they will run the prepared SSH tests first; **after
+reviewing the results, the next implementation task is integration into the
+existing Chakra five-minute bot method.** This is a requested next stage,
+NOT authorization to deploy or restart the bot before test verification.
+
+Integration checklist for that next task:
+
+1. Review actual SSH unittest and `ssh_smoke_test.py` output; fix failures,
+   stale AI inputs or eligibility issues before live wiring.
+2. Audit the production entry point `run_asjr_manual_pipeline(app, ...)`
+   and its external VPS caller at
+   `/root/trading/utils/trading_sudarsan_chakra.py`. Preserve existing
+   Wicks and locked 1H Rudra-Reversal delivery.
+3. Within the **same existing five-minute cycle** use one Git pull before
+   input reads, the confirmed FIXED 10 + AI 10 + IBKR 10 shared stock
+   selection, and bounded common DataLake imports (IBKR 5M and needed
+   1H, Yahoo daily, NQ Yahoo 1H). No new scheduler or competing importer.
+4. Validate completed candles, continuous premarket-inclusive EMA9,
+   RTH-reset VWAP from actual IBKR bar WAP, source volume units,
+   session/sector context, data freshness, and required Reversal 1H warmup.
+5. Only after the five LONG/SHORT setup definitions, thresholds, and replay
+   tests have been reviewed: publish authoritative scanner results to the
+   common day DataLake, feed the same saved text to Discord, hourly AI
+   review and SSH reader, and safely Git commit/push in the single job.
+6. Implement idempotent Discord delivery with acknowledgement/retry
+   and separate strategy state. Make all new scanner behavior opt-in or
+   feature-gated until observed live checks pass.
+7. Run dry-run/replay and integration tests before user-controlled pull/
+   bot restart. Verify loaded version, current Git snapshot and delivered
+   Discord payload rather than assuming successful activation.
+
+**Current status: PENDING SSH TEST OUTPUT; BOT INTEGRATION NOT STARTED.**
+Do not mistake the isolated package or the new task entry for deployed
+production code. Keep this status current after the user's test.
