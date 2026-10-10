@@ -179,3 +179,74 @@ FASHIONABLY LATE
 ## Change record
 
 - 2026-10-10: User chose 5-minute candles, LONG/SHORT, VWAP/EMA9/volume, plain-list SSH output, AI hourly CSV discovery, multiple IBKR scanners without fixed 4%, common DataLake, Git pull/push each five-minute Chakra cycle, Discord every cycle, hourly AI review and on-demand access.
+
+
+## Phase 1 implementation record — 2026-10-10
+
+**Committed to main; development only, not active in Chakra.** This section
+documents what was actually added, and must be extended after every later
+RudraScanner discussion, change, test, or activation. GitHub remains the
+canonical handoff. Never silently treat planned phases as deployed.
+
+### New files
+
+- `RudraScanner/__init__.py` — identifies the isolated scanner package.
+- `RudraScanner/discovery.py` — strict AI CSV reader with expiration and
+  evidence/freshness handling; four IBKR scans
+  (`TOP_PERC_GAIN`, `TOP_PERC_LOSE`, `HOT_BY_VOLUME`, `MOST_ACTIVE`)
+  with per-code SUCCESS/EMPTY/TIMEOUT/ERROR and provenance; deduplication
+  without any fixed percent-move gate.
+- `RudraScanner/storage.py` — opt-in `save_discovery(app, trade_date,
+  repo_root=...)` saves input copy, IBKR CSV, statuses and candidate union
+  under the existing day DataLake. This does **not** replace the live pipeline.
+- `RudraScanner/print_saved.py` — SSH read-only display of a saved report,
+  or DATA NOT READY when the detector has not published a report.
+- `RudraScanner/tests/test_discovery.py` — offline tests covering AI input
+  validation, stale/duplicate/excluded tickers, IBKR scan status/filters,
+  candidate union and DataLake paths; `tests/__init__.py` for discovery.
+- `ASJR_Analyst/config/ai_scanner_list.csv` — initial INTC permanent
+  WATCH row, explicitly UNVERIFIED, no fabricated catalyst or research dates.
+
+### Operational and verification status
+
+- **Not connected to** `run_asjr_manual_pipeline`, the five-minute Chakra
+  caller, Git pull/push orchestration, Discord, or any automated AI task.
+- **No live IBKR, VPS or Discord checks performed.** Tests committed as source,
+  **not yet executed in a verified Python runtime**. Do not claim green tests.
+- Inherited IBKR starting filters from existing ASJR:
+  minimum USD price 5, average volume 1,000,000, market cap 500 million,
+  `STK.US.MAJOR`, `CORP`, maximum 50 rows per scan. These are
+  **provisional existing settings**, not newly user-approved thresholds.
+- Original pipeline still uses the old +/−4% mover adapter and performs Git
+  pull in `submit_datalake` after collection. Neither path was changed.
+- The authoritative five-pattern detectors, 20-session RVOL,
+  minute freshness, benchmark/sector feeds, safe five-minute integration,
+  per-event delivery acknowledgements, hourly AI task, and live deployment
+  remain **unimplemented**.
+
+### Test command (for a developer, not the live scheduler)
+
+```bash
+cd /root/trading/ASJR
+/root/trading/venv_new/bin/python -m unittest RudraScanner.tests.test_discovery -v
+```
+
+### Open decisions: ask the user, do not assume
+
+1. Confirm or revise the inherited IBKR price/volume/market-cap filters and
+   acceptable candidate cap before activating multi-scan in Chakra.
+2. For EMA9, confirm whether regular-session 5-minute values carry across
+   prior trading sessions or restart at each 09:30 ET open.
+3. Confirm how to develop/lock numerical thresholds for all five setups
+   (research-only candidates vs active alert thresholds); definitions are
+   conceptual and have not been backtested or approved.
+4. Verify source-specific callback fields, sector ETF mapping, VWAP source,
+   delayed bars and real runtime volume units before enabling alerts.
+
+### Next safe steps
+
+Execute offline tests and fix any failures; audit connected IBKR callbacks;
+then add indicators / RVOL and replay tests. Do not hook into production
+or restart the bot until the unresolved settings are confirmed and outputs
+are verified. Keep this README and `ASJR_Analyst/OPERATIONAL_HANDOFF.md`
+consistent after every material change.
