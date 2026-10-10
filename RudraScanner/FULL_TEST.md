@@ -1,5 +1,38 @@
 # RudraScanner — Full Test and Activation Checklist
 
+## VERIFIED — all 56 VPS regression tests passed (10 Oct 2026)
+
+The user submitted actual SSH output:
+
+```text
+Ran 56 tests in 0.497s
+OK
+```
+
+No pandas `FutureWarning`, failed tests or test errors appeared.
+`git pull --ff-only origin main` succeeded, updating to
+`42c45aae`. This includes the new
+`test_empty_prior_source_does_not_emit_futurewarning`
+and the rolling-volume concat fix, now verified on the VPS.
+
+**Status of test coverage:** Completed offline validation, **NOT** a
+live IBKR scanner or actual Discord trade-alert test.
+The previous Friday archive report remains accurate:
+30/30 historical candidates; 56,027 completed 5M bars;
+106 archived tickers; EMA9 OK; actual WAP-VWAP missing;
+20-session RVOL unavailable. Do not interpret
+`TOP-DOWN blocked_context=0` while the detector is disabled
+as proof of confirmed market alignment.
+
+**Next action:** audit the actual current VPS IBKR callback and
+Chakra method, then a single controlled US market-session
+`RUDRA_SCANNER_MODE=shadow` test. The user controls any
+bot process restart. Keep ACTIVE/RESEARCH/ALERTS OFF pending
+actual market feed, thresholds, and acknowledgement checks.
+Older 55/56 "expected" test notes below are superseded.
+
+---
+
 ## Latest VPS result — verified 2026-10-10
 
 The user ran syntax check and all **55 tests in 0.531s: OK**,
