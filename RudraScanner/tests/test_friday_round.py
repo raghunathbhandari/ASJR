@@ -119,6 +119,29 @@ class FridayReplayTests(unittest.TestCase):
             # current signal by using QQQ's stale last available price.
             self.assertTrue(state["selection_hindsight"])
 
+    def test_overlapping_patterns_are_one_distinct_entry(self):
+        def two_labels(bars, *, index_bias, sector_bias_by_ticker, settings):
+            return (
+                [{"pattern": "HITCHHIKER"},
+                 {"pattern": "SECOND CHANCE"}],
+                {"blocked_data": 0},
+            )
+        with tempfile.TemporaryDirectory() as root:
+            with patch("RudraScanner.friday_round.detect_five_patterns",
+                       side_effect=two_labels):
+                trades, state = replay_once(
+                    fixture(root), root, TEST_DATE, hold_bars=3)
+            self.assertGreater(len(trades), 0)
+            self.assertEqual(
+                state["research_signals_with_markout"],
+                2 * state["distinct_entry_opportunities"])
+            self.assertEqual(
+                state["overlapping_pattern_labels"],
+                state["distinct_entry_opportunities"])
+            self.assertEqual(state["by_pattern_diagnostics"]["HITCHHIKER"]["signals"],
+                             state["distinct_entry_opportunities"])
+            self.assertIsNotNone(state["distinct_entry_win_rate_pct"])
+
     def test_direction_wait_on_mixed(self):
         self.assertEqual(_direction(1, -1, 3, 1), "WAIT")
         self.assertEqual(_direction(1, 1, -1, 1), "WAIT")
