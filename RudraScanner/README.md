@@ -69,6 +69,128 @@ by this verified entry.
   for the exact SSH commands. No new test PASS is claimed
   until the user shares actual VPS output.
 
+## MONDAY 12 OCTOBER 2026 — Live Chakra SHADOW implementation committed
+
+**LATEST IMPLEMENTATION — read this BEFORE older Friday snapshots.**
+The user authorised putting RudraScanner into the existing
+live Chakra scanning code for Monday and reviewing all code.
+The GitHub implementation is now ready for a controlled
+Monday **SHADOW** production-data run, with ALL existing
+Wicks and locked Reversal alerts/monitored names
+preserved. **Real Monday execution is NOT yet verified.**
+
+**Authoritative deployment document:**
+`RudraScanner/MONDAY_LIVE.md`.
+
+### What code is now applied
+
+1. `ASJR_Analyst/config/rudra_scanner_runtime.json`
+   schedules `mode=shadow` on **2026-10-12 ET**,
+   `research=true`, `alerts_enabled=false`,
+   `thresholds_approved=false`. Env
+   `RUDRA_SCANNER_MODE` overrides this mode.
+2. Existing `ASJR_Analyst/Tests/test_asjr_pipeline.py`
+   version `2026.10.10.10` sets up PASSIVE WAP
+   callback capture before existing 5M bars, then
+   performs Wicks and locked 1H Reversal delivery
+   BEFORE the new four-code IBKR discovery,
+   new selected-stock/sector 5M sidecar and
+   hourly-cached 1H data import. Preserves legacy
+   `universe.build_universe()` and its alert list.
+3. `RudraScanner/bot_hook.py` has hot-read
+   Monday runtime mode, separate fixed/AI/IBKR
+   capped selection (up to 10/10/10); four scanners
+   TOP_PERC_GAIN, TOP_PERC_LOSE, HOT_BY_VOLUME,
+   MOST_ACTIVE with no default 4% gain filter.
+   Source/status files inside **one shared DataLake**.
+4. `RudraScanner/live_round.py` reuses original
+   IBKR WAP-containing 5M stock bars and fetches
+   only missing selected stocks plus SPY/QQQ/
+   evidenced sector ETFs from SAME app. Uses
+   as-of completed 5M index+sector alignment
+   versus previous verified RTH close;
+   unavailable benchmark/sector => WAIT.
+   Computes actual IBKR WAP-VWAP, continuous
+   EMA9, rolling RVOL20 reference and five
+   experimental LONG/SHORT setups. Writes
+   `reports/scalp_radar.txt`, scanner CSV
+   and JSON diagnostics in common date DataLake.
+5. `RudraScanner/hourly.py` caches up to
+   30 selected 1H stock histories every hour for
+   later Reversal research; it does **not** change
+   locked Reversal indicators, ticker list, states
+   or Yahoo NQ live alerts in Monday SHADOW.
+6. `RudraScanner/delivery.py` and
+   `ASJR_Analyst/Utils/asjr_alerts.py` wire a
+   **separate** scanner message queue through the
+   existing Chakra `prepare_alert()`,
+   `mark_alert_sent()` and optional sender,
+   preserving Wicks first, Reversal second, Scanner
+   last. Double-gate remains DISABLED: no
+   new Discord pattern alerts until approved;
+   no order placements are implemented.
+7. `RudraScanner/live_preflight.py` adds a
+   read-only Monday readiness check, including
+   scheduled mode, current AI CSV expiry, fixed
+   config, original alerts and scanner bridge.
+
+**Current test evidence:** the user previously
+**verified 65/65 offline tests** (0.784s,
+zero errors). The newest GitHub source contains
+**81 unit tests total** after 16 Monday cases
+(7 sidecar, 2 scanner queue, 2 preflight,
+5 Chakra bridge) were added. These newest tests
+have **NOT** yet been run on user's VPS.
+No claim of 81/81 PASS is authorised until user
+shares console output.
+
+### Mandatory VPS commands BEFORE restarting existing Chakra
+
+```bash
+cd /root/trading/ASJR
+git status --short
+git pull --ff-only origin main
+/root/trading/venv_new/bin/python -m compileall -q RudraScanner ASJR_Analyst/Tests/test_asjr_pipeline.py ASJR_Analyst/Utils/asjr_ibkr.py ASJR_Analyst/Utils/asjr_alerts.py
+/root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+/root/trading/venv_new/bin/python RudraScanner/live_preflight.py
+```
+
+**Expected, not yet observed:** 81 tests, OK.
+The user-controlled Git pull/restart is necessary:
+GitHub commits do not reload an existing running
+Python `tmux` process. Never start a second
+Chakra process. Monday first RTH open is 14:30
+UK BST; patterns are gated until at least 15:00 UK.
+
+**AI-hourly blocker:** The attempted additional
+ChatGPT hourly GitHub AI CSV update schedule
+FAILED because the account already has five
+active tasks. There is NO automatic AI
+CSV refresh created by this change. Saturday's
+AI news rows expire **2026-10-12 12:00 UTC**
+(13:00 UK), before Monday RTH; such rows
+correctly become ineligible unless refreshed.
+The new live IBKR and Fixed scanners can still
+work with fewer than 30 total stocks, but do
+not claim a verified 10+10+10 full list if AI
+is expired. Existing AI research tasks must
+be changed/paused before one can be scheduled;
+do not silently alter the user's other alerts.
+
+**Remaining live acceptance blockers:** VPS external
+`/root/trading/utils/trading_sudarsan_chakra.py`
+is not in GitHub and has not been code-audited;
+new Monday real four-scanner callbacks, actual
+live WAP and ETA/pacing are unverified. Friday
+was only retrospectively 10 independent
+opportunities, 40% positive markouts before
+costs — no validated strategy threshold edge.
+Discord flags OFF and no production scanner
+buy/sell signals are promised. Keep existing
+Wicks/Reversal protected.
+
+---
+
 ## LATEST VPS TEST UPDATE — 2026-10-10 12:41 UTC
 
 **User observed new Friday replay suite: 65 tests ran, 64 passed
