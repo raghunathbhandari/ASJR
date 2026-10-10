@@ -1,4 +1,5 @@
 import sys
+import os
 from pathlib import Path
 import importlib
 import pandas as pd
@@ -28,6 +29,10 @@ import Strategies.RudraReversal1H.rudra_reversal as rudra_reversal
 from RudraScanner.bot_hook import run_bot_shadow
 from RudraScanner.engine import evaluate_scanner, persist_features
 from RudraScanner.hourly import refresh_hourly_cache
+from RudraScanner.topdown import classify_topdown, ticker_etf_from_sources
+from RudraScanner.patterns import PatternSettings, detect_five_patterns
+from RudraScanner.delivery import deliver_scanner_alerts
+from RudraScanner.discovery import read_ai_csv
 
 try:
     from Backtesting.DataLoader.forex_download_hook import launch_forex_download_once
@@ -39,7 +44,7 @@ try:
 except Exception:
     launch_nq_download_once = None
 
-ASJR_ANALYST_VERSION = "2026.10.10.3"
+ASJR_ANALYST_VERSION = "2026.10.10.4"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -84,6 +89,7 @@ def run_asjr_manual_pipeline(
                 "rudra_scanner_shadow": {"state": "SKIPPED_CLOSED_SESSION"},
                 "rudra_scanner_features": {"state": "SKIPPED_CLOSED_SESSION"},
                 "rudra_scanner_hourly": {"state": "SKIPPED_CLOSED_SESSION"},
+                "rudra_scanner_research": {"state": "SKIPPED_CLOSED_SESSION"},
             }
         trade_date = resolved_date
 
@@ -201,7 +207,6 @@ def run_asjr_manual_pipeline(
             uni = pd.DataFrame([
                 {"ticker": item["ticker"],
                  "source": "+".join(item["sources"]),
-                 "exchange": None,
                  "sector": item.get("fixed_sector", "")}
                 for item in rudra_scanner_shadow["candidates"]
             ])
@@ -380,6 +385,74 @@ def run_asjr_manual_pipeline(
             sector = pd.DataFrame()
             logger.info("SECTOR | Skipped")
 
+        # Research pattern evaluation is opt-in and uses strict
+        # index -> sector -> ticker confirmation after sector data loads.
+        # It cannot alter the locked detectors' rules or their state.
+        rudra_scanner_research = {
+            "state": "OFF", "alert_delivery": "DISABLED"
+        }
+        if (
+            rudra_scanner_shadow.get("mode") in ("active", "shadow")
+            and os.environ.get("RUDRA_SCANNER_RESEARCH", "0") == "1"
+            and "radar_bars" in locals()
+        ):
+            try:
+                ai_context, _ = read_ai_csv(
+                    paths.master_config_path("ai_scanner_list.csv")
+                )
+                selected_context = rudra_scanner_shadow.get("candidates", [])
+                etfs = ticker_etf_from_sources(
+                    selected_context, ai_rows=ai_context,
+                )
+                index_bias, sectors, context_status = classify_topdown(
+                    sector, trade_date=paths.trading_day(trade_date),
+                    ticker_etfs=etfs,
+                )
+                allowed_symbols = set(etfs)
+                eligible_bars = radar_bars[
+                    radar_bars["ticker"].isin(allowed_symbols)
+                ].copy()
+                events, detector_health = detect_five_patterns(
+                    eligible_bars, index_bias=index_bias,
+                    sector_bias_by_ticker=sectors,
+                    settings=PatternSettings(enabled_for_research=True),
+                )
+                radar_result["events"] = events
+                radar_result["detector_status"] = detector_health
+                radar_result["state"] = "EXPERIMENTAL_RESEARCH"
+                persist_features(
+                    REPO_ROOT, paths.trading_day(trade_date),
+                    radar_bars, radar_result,
+                )
+                rudra_scanner_research = {
+                    "state": "EXPERIMENTAL_RESEARCH",
+                    "events": len(events),
+                    "context": context_status,
+                    "alert_delivery": "DISABLED",
+                }
+                # Both gates must be explicitly set. Unapproved
+                # development thresholds cannot send a trading alert.
+                send_state = deliver_scanner_alerts(
+                    events, alert_sender,
+                    state_file=paths.ROOT / "rudra_scanner_delivery_state.json",
+                    trade_date=paths.trading_day(trade_date),
+                    enabled=os.environ.get("RUDRA_SCANNER_ALERTS") == "1",
+                    thresholds_approved=os.environ.get(
+                        "RUDRA_SCANNER_THRESHOLDS_APPROVED") == "1",
+                )
+                rudra_scanner_research["alert_delivery"] = send_state["state"]
+                rudra_scanner_research["events_sent"] = send_state["sent"]
+                logger.info(
+                    "RUDRA SCANNER | research=%s | index=%s | events=%s | delivery=%s",
+                    detector_health["state"], index_bias, len(events),
+                    send_state["state"],
+                )
+            except Exception:
+                logger.exception("RUDRA SCANNER | research/delivery failed")
+                rudra_scanner_research = {
+                    "state": "ERROR", "alert_delivery": "NOT_CONFIRMED",
+                }
+
         # 6. Processed ticker summary + snapshot
         ticker_summary = snapshot.build_ticker_summary(
             uni,
@@ -481,6 +554,7 @@ def run_asjr_manual_pipeline(
             "rudra_scanner_shadow": rudra_scanner_shadow,
             "rudra_scanner_features": rudra_scanner_features,
             "rudra_scanner_hourly": rudra_scanner_hourly,
+            "rudra_scanner_research": rudra_scanner_research,
             "sector": sector,
             "ticker_summary": ticker_summary,
             "snapshot": snap,
