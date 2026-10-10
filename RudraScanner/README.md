@@ -265,3 +265,27 @@ These are **discovery filters**, not a percentage-move threshold or entry rules.
 Do not re-ask this decision unless the user requests a change or real IBKR
 validation reveals a technical incompatibility. Production activation and
 live IBKR validation remain pending.
+
+## Confirmed EMA9 continuity — 2026-10-10 (user decision)
+
+The user confirmed **continuous 5-minute EMA9 across days** with premarket
+bars included. **Do not reset EMA9 at 09:30 ET or at calendar/session
+boundaries.** Carry the previous observed EMA through each subsequent
+completed 5-minute bar, including extended-hours data the IBKR import
+actually provides. Use all real available bars sorted chronologically
+per symbol; do not manufacture missing 5-minute overnight or market-closed
+candles. Include postmarket/overnight bars if the upstream feed contains them.
+
+The indicator computes EMA9 from the oldest available preceding 5-minute
+bar (with explicit history/warm-up status) and updates it only on completed
+bars. Any missing or late bars must be surfaced rather than silently
+asserting the stream was gap-free. Input integrity and freshness still
+govern tradability.
+
+**VWAP is separate:** retain the previously agreed regular-session
+VWAP reset at the US RTH open. Continuous EMA9 does **not** imply
+continuous VWAP. VWAP's price/volume source remains to be confirmed
+against the actual IBKR callback before live activation.
+
+The continuous EMA9 implementation belongs in the isolated scanner,
+not in legacy Wicks or the locked Rudra-Reversal modules.
