@@ -291,6 +291,13 @@ def run_asjr_manual_pipeline(
                 radar_bars, radar_result = evaluate_scanner(
                     intraday_raw, enable_research=False,
                 )
+                radar_bars, rvol_history = apply_rolling_rvol20(
+                    radar_bars, REPO_ROOT, paths.trading_day(trade_date),
+                    save=True,
+                )
+                radar_result["feature_status"]["rvol_state"] = rvol_history["state"]
+                radar_result["feature_status"]["rvol20_ready_rows"] = rvol_history["ready_rows"]
+                radar_result["volume_history"] = rvol_history
                 radar_paths = persist_features(
                     REPO_ROOT, paths.trading_day(trade_date),
                     radar_bars, radar_result,
