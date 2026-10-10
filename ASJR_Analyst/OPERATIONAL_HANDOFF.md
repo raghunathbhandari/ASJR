@@ -1344,3 +1344,42 @@ No IBKR backfill required; already cached.
 Canonical resumption notes in
 `RudraScanner/README.md` and
 `RudraScanner/FRIDAY_REPLAY.md`.
+
+## 2026-10-10 12:46:59 UTC — final Friday replay unit test suite VERIFIED 65/65
+
+User performed successful fast-forward pull from `9fc0dbf6` to
+`368cf6d3` in VPS `/root/trading/ASJR`, then ran:
+
+    /root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+
+**Real SSH output: `Ran 65 tests in 0.784s; OK`. All 65 passed, zero
+errors/failures.** This includes the corrected mocked early-entry
+test `test_markout_entry_next_bar_and_exit_after_six`:
+the fake pattern now respects the real detector's 15 complete RTH
+bar lookback. Previous 64/65 failure is resolved and VERIFIED.
+No real detector rule, Wicks, Reversal or Chakra production logic
+changed in that specific unit-test fix.
+
+**Friday historical research evidence from prior actual VPS run:**
+40 IBKR stocks/ETFs, 22,290 genuine historical 5M WAP
+bars, 9,360 valid RTH VWAP-ready bars, 11 experimental LONG
+pattern labels but only 10 unique entry opportunities
+(4 positive, 6 negative, 40% positive; mean +0.0147%
+hypothetical six-bar / 30-minute markout BEFORE trading costs).
+Candidate selection used after-close/Saturday information;
+consequently this is hindsight-biased research, not an
+as-of-market-open stock-scanner backtest, nor proof of a
+profitable strategy. The user's Friday IBKR data is cached
+in common `ASJR_Analyst/DataLake/2026-10-09/raw/rudra_friday_ibkr_wap.csv`
+on VPS; no need to redownload for further Friday replay.
+
+**Current stage:** all 65 source unit tests offline-VPS verified.
+LIVE four IBKR scanner discovery codes, actual live WAP/5M
+callbacks, 1H shared stock-history readiness, live Discord
+scanner alerts and performance remain unverified. Production
+`RUDRA_SCANNER_MODE=off` by default; keep existing Wicks
+and locked Reversal unchanged. Next after user approval:
+controlled single US market session `shadow` test via
+existing Chakra connection, preserving original live universe.
+New status canonical at top of `RudraScanner/README.md`
+and `RudraScanner/FRIDAY_REPLAY.md`.
