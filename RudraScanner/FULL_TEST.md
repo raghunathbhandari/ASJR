@@ -1,5 +1,37 @@
 # RudraScanner — Full Test and Activation Checklist
 
+## Latest VPS result — verified 2026-10-10
+
+The user ran syntax check and all **55 tests in 0.531s: OK**,
+then Friday historical candidate replay **30/30** and
+`datalake_test.py`: **56,027 completed 5M bars**, 106 symbols,
+continuous EMA9 OK, actual WAP/VWAP missing and
+RVOL20 insufficient. No signal or Discord alert was produced.
+This is the actual OBSERVED offline result.
+
+A nonfatal pandas FutureWarning from empty DataFrame concat
+in `volume_history.py` was then fixed, with a new test
+`test_empty_prior_source_does_not_emit_futurewarning`.
+The code now has **56** unit test methods; the last NEW
+test has **not** been VPS-verified yet.
+
+Run after safe Git pull:
+
+```bash
+cd /root/trading/ASJR
+git status --short
+git pull --ff-only origin main
+/root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+/root/trading/venv_new/bin/python RudraScanner/datalake_test.py --date 2026-10-09
+```
+
+Expected after this new fix: 56/56 OK; the pandas
+FutureWarning gone; EMA9 and missing WAP/RVOL diagnostics
+unchanged. Do NOT assert success until actual terminal results.
+
+---
+
+
 Date: **10 October 2026 (UK)**. Read this alongside `RudraScanner/README.md`.
 Repo: `raghunathbhandari/ASJR`, branch `main`.
 
