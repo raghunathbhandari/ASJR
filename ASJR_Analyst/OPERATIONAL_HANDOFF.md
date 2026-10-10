@@ -643,3 +643,23 @@ Rank tie-breakers are **provisional pending user confirmation**;
 no fixed 4% gate. **No bot restart or live activation**. Locked
 Reversal `STRATEGY_TICKERS`, Wicks and live ASJR imports are unchanged.
 Canonical details: `RudraScanner/README.md`.
+
+## 2026-10-10 news research CSV and SSH dry-run entry point
+
+- User asked to populate AI ticker CSV from current web research for
+  subsequent SSH testing. Updated `ASJR_Analyst/config/ai_scanner_list.csv`
+  with ten non-fixed news ideas from October 9 plus permanent INTC.
+  Rows are sourced and expiry-stamped (October 12 12:00 UTC).
+  Unknown exact publisher times are left blank; fundamental quality
+  is UNVERIFIED; these are research contexts not validated trade signals.
+  Current list: INTC, SPCX, PLTR, LITE, AMT, HUM, AMZN,
+  TMUS, AAPL, JPM, NVDA.
+- `RudraScanner/ssh_smoke_test.py`: read-only validation and selected
+  ticker preview for a dated common DataLake folder. Use
+  `/root/trading/venv_new/bin/python RudraScanner/ssh_smoke_test.py
+  --date 2026-10-09` after `git pull --ff-only origin main`.
+  Also run offline `python -m unittest discover` for scanner tests.
+- No live IBKR request or VPS test ran in this development session.
+  No new automatic hourly update task or production scanner integration
+  is active. The existing Chakra/Reversal/Wicks modules remain unchanged.
+  Full instructions in `RudraScanner/README.md`.
