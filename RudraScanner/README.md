@@ -50,6 +50,76 @@ Older status notes below are historical and superseded by this line.
   for the exact SSH commands. No new test PASS is claimed
   until the user shares actual VPS output.
 
+## LATEST VPS OBSERVED — Friday 9 Oct historical IBKR/WAP research replay
+
+**User tested on 2026-10-10:** after pulling new source files,
+`friday_round.py --date 2026-10-09 --download-ibkr
+--host 127.0.0.1 --port 4002 --client-id 91 --save`
+succeeded using the user's IBKR historical API connection.
+**40/40** instrument requests returned bars; **22,290**
+historical 5M candles across 30 test stocks + SPY/QQQ
++ eight sector ETFs; **22,290 actual historical WAP
+values**; **9,360** RTH bars with valid reset VWAP;
+**zero reported IBKR backfill failures**.
+
+**Actual Friday outcome:** **11 tagged five-pattern research
+signals**, 5 positive / 6 negative, **45.45% pattern-level
+positive**, +**0.0311%** mean 30-minute markout before costs.
+Hitchhiker 6 (2 wins, −0.0364% mean); Back$ide 4
+(2 wins, +0.0914% mean); Second Chance 1
+(1 win, +0.1947%). Rubberband/Fashionably Late 0.
+All 11 were LONG. **1,853** of 2,160 eligible
+stock RTH candles lacked aligned index/sector context;
+36 blocked for incomplete setup history and eight
+late-horizon events had no complete 30-minute exit.
+
+**CRITICAL non-independent labels:** AMZN's **20:25 UK**
+Hitchhiker and Second Chance are the SAME underlying
+next-open entry and +0.1947% markout.
+Unique-entry diagnostic: **10 possible entries**,
+**4 positive / 6 negative = 40.00%**, and
+**+0.0147% average return before costs**. Other
+entry opportunities can overlap in time; no
+position sizing, stop, slippage, commission or
+portfolio P&L is simulated. The Saturday-selected
+30-name candidate set is hindsight-biased for
+Friday discovery, and the 30-minute exit horizon
+is a temporary research comparison, not approved.
+
+**Follow-up source change COMMITTED, awaiting VPS test:** 
+`RudraScanner/friday_round.py` now prints
+both raw pattern and **distinct-entry** metrics,
+and `tests/test_friday_round.py` adds a regression
+case. **65 source test methods**, of which the earlier
+56-unit baseline was VPS VERIFIED; the nine Friday
+replay tests are NOT yet observed as passing.
+The user's **IBKR WAP backfill was successfully
+saved in the Friday common DataLake**, so next
+time no extra API requests are required:
+
+```bash
+cd /root/trading/ASJR
+git status --short
+git pull --ff-only origin main
+/root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+/root/trading/venv_new/bin/python RudraScanner/friday_round.py --date 2026-10-09 --save
+```
+
+Research result interpretation and source files:
+`RudraScanner/FRIDAY_REPLAY.md`.
+
+**Production remains unchanged:** mode OFF, no
+real-time four-code scanner verification,
+no scanner Discord signal, no orders.
+Next proper research step after replay QA:
+separate retrospective candidate analysis from
+as-of-open scanner universe, deconflict overlapping
+entries, and compare realistic exits with costs
+across more dates before locking thresholds.
+Continue to preserve Wicks and locked Reversal.
+
+---
+
 ## LATEST IMPLEMENTATION — Friday 2026-10-09 one-round historical research
 
 **User request (Saturday 2026-10-10 UK):** "any way we can run
