@@ -70,6 +70,11 @@ class FridayReplayTests(unittest.TestCase):
 
     def test_markout_entry_next_bar_and_exit_after_six(self):
         def fake_signal(bars, *, index_bias, sector_bias_by_ticker, settings):
+            # The mock must honor the real detector's minimum 15 RTH
+            # completed bars. An unconditional mock otherwise triggers
+            # at the outer 30-minute execution gate (bar index 6).
+            if len(bars) < 15:
+                return ([], {"blocked_data": 1})
             return ([{"pattern": "HITCHHIKER"}], {"blocked_data": 0})
         with tempfile.TemporaryDirectory() as root:
             with patch("RudraScanner.friday_round.detect_five_patterns",
