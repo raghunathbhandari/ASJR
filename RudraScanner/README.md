@@ -4,6 +4,120 @@ Updated: 10 October 2026, Europe/London.
 
 **Read this document first in every future session.** Repository: `raghunathbhandari/ASJR`, production branch `main`. Operational history: `ASJR_Analyst/OPERATIONAL_HANDOFF.md`.
 
+## START HERE NEXT SESSION — latest checkpoint (2026-10-10 UK)
+
+**STATE: Phase 1 discovery source committed to GitHub; SSH test results not
+yet received; live Chakra bot integration NOT STARTED.** This is the main
+resumption point for any future assistant session. Read this section
+before making code changes. Do not claim live scanner signals or successful
+VPS testing without observing real outputs.
+
+### Next user action and exact SSH tests
+
+User said they will run SSH tests and share output. Saturday 2026-10-10 is
+a closed US equity trading day, but these OFFLINE checks work on the
+previous US session 2026-10-09. Run in the VPS repository:
+
+    cd /root/trading/ASJR
+    git status --short
+    git pull --ff-only origin main
+    /root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+    /root/trading/venv_new/bin/python RudraScanner/ssh_smoke_test.py --date 2026-10-09
+
+If Git has local changes or conflicts, do not reset or force-push. Inspect
+and resolve safely. The SSH preview does not connect to IBKR, send Discord,
+alter the DataLake, or start/restart Chakra. Unit tests use local fixtures.
+
+**Expected preview, not a verified result:** With the October 9 saved fixed
+list and current AI CSV, the selected candidates should total up to
+10 FIXED + 10 AI + 0 IBKR = 20 DISTINCT stocks, until the multi-code
+IBKR scanner creates a real saved CSV. Missing IBKR list is
+NOT_YET_SAVED, NOT a successful live scan. INTC is in both fixed/AI but
+occupies one fixed slot. The old fixed file enables ONDS but the new
+universe correctly excludes and reports it. Some AI published_at_utc
+times are unknown; a PARTIAL evidence warning is expected, not
+automatically a Python error. Compare actual output before claiming
+that any of these counts or tests passed.
+
+### Confirmed system contracts
+
+- **Shared DataLake:** ASJR_Analyst/DataLake/YYYY-MM-DD/ for ALL modules,
+  including RudraScanner and Rudra-Reversal. No second collector or scheduler.
+- **Shared stock candidate cap:** maximum 30 UNIQUE names:
+  10 FIXED from dated watchlist + 10 AI web research + 10 IBKR scanners.
+  Duplicates fill from next eligible candidate in the same source.
+  Cap applies BEFORE future 5M and 1H historical imports. Legacy Wicks
+  import and locked 1H Reversal stock list not changed yet.
+- **Discovery filters retained:** corporate US stocks over $5,
+  average daily volume over 1 million, market cap over $500 million;
+  50 results per IBKR scan code. Four codes: TOP_PERC_GAIN,
+  TOP_PERC_LOSE, HOT_BY_VOLUME, MOST_ACTIVE. No fixed +/-4% gate
+  for new scanner membership or technical entry.
+- **Indicators:** completed 5-minute EMA9 across available trading days,
+  including premarket and extended hours, NO EMA9 daily reset or
+  fabricated gap-filling. VWAP is used TOGETHER with EMA9 and resets
+  at US RTH 09:30 ET. The user accepted real IBKR historical-bar WAP
+  as VWAP input, but callback collection and calculation are NOT built.
+  Include volume, price structure, Index -> Sector -> Ticker, fresh data.
+- **Separate strategies, shared stock candidates:** 5M RudraScanner
+  LONG/SHORT five detectors; locked Rudra-Reversal 1H Bollinger Band
+  logic unchanged. NQ remains an additional Yahoo 1H instrument outside
+  the 30 US stock cap. Reversal needs >=150 completed 1H bars per
+  eligible name and cannot use missing 1H as a zero-signal finding.
+- **Five requested scanner setup names:** Hitchhiker (momentum hold/break),
+  Back$ide (reversal), Rubberband (extension snapback), Second Chance
+  (breakout/breakdown retest), Fashionably Late (EMA9 and VWAP transition).
+  Their numerical thresholds, backtests and production detectors
+  remain UNIMPLEMENTED.
+- **New expected trading-day behavior, NOT ACTIVE:** One existing
+  five-minute Chakra cycle pulls Git, reads source CSVs, imports up to
+  30 names, calculates indicators and five detector types, publishes
+  saved plain report in shared DataLake, Git commits/pushes once,
+  and delivers only new qualifying signals to Discord with ack/retry.
+  Hourly AI researches/refreshes its own list and reviews that same
+  mechanical report. SSH/on-demand AI reads saved signals without a
+  separate market-data request. No valid setups -> no made-up alerts.
+  Earlier example ticker signals shown to the user were ONLY
+  ILLUSTRATIVE, never a real scan result. No hourly automation is
+  actually running yet.
+- **Source file status:** AI research CSV
+  ASJR_Analyst/config/ai_scanner_list.csv holds permanent INTC plus
+  SPCX, PLTR, LITE, AMT, HUM, AMZN, TMUS, AAPL, JPM, NVDA,
+  researched after the Friday October 9 session. The news rows expire
+  2026-10-12T12:00:00Z (13:00 UK Monday). These are WATCH ideas,
+  not real LONG/SHORT trade signals; quality statuses are UNVERIFIED.
+  SPCX stock/sector eligibility must be checked against actual IBKR.
+  Fresh AI research is needed before Monday RTH.
+- **Development files committed:** RudraScanner/discovery.py,
+  universe.py, storage.py, ema9.py, ssh_smoke_test.py,
+  print_saved.py, package init, and tests/test_discovery.py,
+  test_universe.py, test_selection_caps.py, test_ema9.py.
+  Only their GitHub existence is verified, NOT execution success.
+
+### First engineering task AFTER receiving valid SSH output
+
+**Integrate RudraScanner into the existing Chakra bot method**, not a
+new process or independent scheduler. Audit
+ASJR_Analyst/Tests/test_asjr_pipeline.py and the external VPS caller
+/root/trading/utils/trading_sudarsan_chakra.py (its actual current
+runtime content was not fetched). Preserve existing Wicks and Reversal
+delivery, separate state/acknowledgements, and the user's restart control.
+Add shared 30-name selection before downloads; use one common DataLake,
+bounded 5M and 1H imports, and validate WAP/time/volume units and
+live historical-feed lag. Implement RTH VWAP, sector context and the
+five replay-tested detectors before live Discord messages. Require
+feature-gated, nonintrusive tests, Git sync without force-push,
+and observed logs/version/saved results/Discord deliveries before
+calling scanner deployed. Ranking tie-breakers and numerical thresholds
+are still subject to user approval; do not assume.
+
+**After every material change:** update this section, add a dated
+chronological note below, and update
+ASJR_Analyst/OPERATIONAL_HANDOFF.md. This is the user's explicit
+continuity requirement.
+
+---
+
 ## Current implementation checkpoint — 2026-10-10
 
 This is the quick-start summary of **all decisions and implementation activity
