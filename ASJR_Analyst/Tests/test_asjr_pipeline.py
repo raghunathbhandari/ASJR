@@ -48,7 +48,7 @@ try:
 except Exception:
     launch_nq_download_once = None
 
-ASJR_ANALYST_VERSION = "2026.10.10.12"
+ASJR_ANALYST_VERSION = "2026.10.10.13"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
