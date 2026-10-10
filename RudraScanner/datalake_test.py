@@ -37,6 +37,12 @@ def main(argv=None):
     except (ValueError, TypeError, KeyError) as exc:
         print(f"DATA QUALITY ERROR | {exc}")
         return 2
+    features, history = apply_rolling_rvol20(
+        features, args.repo, args.date, save=args.save,
+    )
+    report["feature_status"]["rvol_state"] = history["state"]
+    report["feature_status"]["rvol20_ready_rows"] = history["ready_rows"]
+    report["volume_history"] = history
     print(format_report(args.date, report))
     if args.save:
         paths = persist_features(args.repo, args.date, features, report)
