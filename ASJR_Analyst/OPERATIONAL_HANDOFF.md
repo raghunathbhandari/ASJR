@@ -2,6 +2,98 @@
 
 Updated 2026-10-10 (UK). This records the implementation and observed state for Rudrakchhya and future ASJR sessions. Check the current Git branch, VPS logs and today's DataLake files before treating a run as live-verified.
 
+## LATEST ASJR / RUDRASCANNER STATE — 2026-10-10, after 13:38 UTC
+
+**READ FIRST NEXT SESSION:**
+[`RudraScanner/CURRENT_STATE.md`](../RudraScanner/CURRENT_STATE.md)
+(specific implementation/test/deployment checklist).
+This entry supersedes outdated statuses elsewhere in this
+long historical handoff.
+
+**Important correction from the user's direct confirmation:**
+The **existing IBKR Gateway connection, baseline scanner operations,
+and OHLC imports ARE ALREADY WORKING correctly for other
+ASJR/Chakra tasks**. They are *user-confirmed existing operational
+infrastructure*, not a missing capability. **Do not
+propose a new IBKR login, Gateway, client ID, port, scheduler,
+or second bot**. The new RudraScanner must share the
+connected EWrapper/EClient app and original 5-minute pipeline.
+Do NOT infer that the new RudraScanner's four scanner-code
+requests or genuine live 5M WAP callback have already run:
+they are **still pending feature-specific live verification**.
+
+**Latest real VPS logs (Oct 10):**
+`git pull --ff-only origin main` through `2d1ee811`;
+complete scanner suite **83/83 PASS**:
+`Ran 83 tests in 0.887s; OK`.
+Monday read-only preflight returned
+`scheduled_mode=shadow`, `research_enabled=true`,
+`ready_to_shadow=true`, both scanner-Discord flags
+false. It made **0 IBKR requests, 0 orders, 0 Discord sends**.
+Fixed list: 19 configured rows, **18 eligible** in
+RudraScanner, because ONDS excluded; existing
+Wicks fixed membership untouched, permanent INTC
+and AKAM/WTTR notes preserved. The new Scanner
+selection caps fixed source to 10.
+AI ticker research valid at Monday open: **1**
+(permanent unverified INTC, overlaps fixed);
+**10 expired** at 12 Oct 12:00 UTC / 13:00 UK.
+There is **no working hourly AI-to-GitHub CSV automation**;
+the previously attempted schedule was blocked by the
+account active-task limit. Do not silently roll dates
+forward or claim 30/30 candidates.
+
+**New code already committed and pulled in VPS checkout:**
+Monday 12-Oct SHADOW runtime config, four IBKR scanner
+codes (TOP_PERC_GAIN / TOP_PERC_LOSE /
+HOT_BY_VOLUME / MOST_ACTIVE); separate 30-name source
+selection, additional missing stock and SPY/QQQ/sector-ETF
+5M fetch through the SAME app; actual IBKR WAP
+VWAP, continuous EMA9, 20 completed prior RTH
+sessions RVOL20, 5 provisional long/short patterns,
+top-down as-of-5M confirmation, independent 1H
+research cache, same common DataLake and Git reports.
+Old Wicks and locked 1H Rudra-Reversal detectors,
+NQ Yahoo feed and their Discord state remain
+separate. No new orders, scanner Discord OFF.
+
+**Unverified:** whether the running VPS Chakra Python
+process has reloaded new imports since the pull; new
+4-code IBKR callback results, WAP/sector/benchmark
+freshness and pacing, new 5M/1H/report CSV outputs,
+and experimental scanner Discord bridge in the
+actual running process. Saturday's
+`RudraScanner/live_status.py --date 2026-10-12`
+output `NOT SAVED YET` is EXPECTED and means no
+Monday data files exist yet; it is a **read-only
+saved-report viewer, not a command that starts
+broker scans**. A Monday live session must be
+observed before declaring new scanner LIVE.
+
+**Next verification:** with the user's existing
+bot-control workflow, confirm version
+`ASJR Analyst Version: 2026.10.10.12` after
+a controlled process reload, then check fresh
+Monday 12 Oct 5-minute Chakra run:
+
+```bash
+cd /root/trading/ASJR
+/root/trading/venv_new/bin/python RudraScanner/live_status.py --date 2026-10-12
+/root/trading/venv_new/bin/python RudraScanner/print_saved.py --date 2026-10-12
+```
+
+Validate real per-code scanner status, selected
+source counts, real WAP, sector context, current
+bar stamps, RVOL20 readiness, one-hour coverage
+and that Wicks/Reversal alerts still function.
+No second IBKR connection needed. First 15
+full RTH 5M bars (75 min) may be required
+for a pattern in addition to the 30-minute
+execution gate. Keep scanner Discord disabled
+until explicit approval and evidence.
+
+---
+
 ## Maintenance rule
 
 - This file is the canonical AI/analyst handoff and must be updated after every material ASJR/Chakra/Rudrakchhya/Jaguar code, alert, schedule, DataLake, operational, audit, or deployment change so future sessions start from the latest verified state.
