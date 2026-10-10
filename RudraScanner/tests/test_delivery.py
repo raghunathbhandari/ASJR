@@ -3,7 +3,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from RudraScanner.delivery import deliver_scanner_alerts, event_key, format_alert
+from RudraScanner.delivery import (deliver_scanner_alerts, event_key,
+    format_alert, queue_scanner_events, prepare_queued_alert,
+    mark_queued_sent)
 
 
 def event(name="INTC", time="2026-10-09T16:00:00+00:00"):
@@ -62,6 +64,38 @@ class DeliveryTests(unittest.TestCase):
                 trade_date="2026-10-09",
                 enabled=True, thresholds_approved=True)
             self.assertEqual(response["sent"], 1)
+
+    def test_existing_bot_prepares_scanner_only_after_queue_and_ack(self):
+        with tempfile.TemporaryDirectory() as root:
+            state = Path(root) / "scanner_state.json"
+            batch = Path(root) / "scanner_batch.json"
+            self.assertEqual(
+                queue_scanner_events([event()], state_file=state,
+                                     trade_date="2026-10-09")["queued_new"], 1)
+            self.assertEqual(
+                queue_scanner_events([event()], state_file=state,
+                                     trade_date="2026-10-09")["queued_new"], 0)
+            message = prepare_queued_alert(state_file=state,
+                                           batch_file=batch)
+            self.assertIn("INTC", message)
+            self.assertIn("EXPERIMENTAL", message)
+            # Preparing a Discord message must never count as sent.
+            self.assertEqual(len(__import__("json").loads(state.read_text())["pending"]),1)
+            self.assertEqual(mark_queued_sent(state_file=state, batch_file=batch),1)
+            self.assertEqual(prepare_queued_alert(state_file=state,
+                                                  batch_file=batch),"")
+            self.assertFalse(batch.exists())
+
+    def test_scanner_queue_preserves_failure_until_marked(self):
+        with tempfile.TemporaryDirectory() as root:
+            state = Path(root) / "state.json"
+            batch = Path(root) / "batch.json"
+            queue_scanner_events([event("INTC"),event("WDC")],
+                                 state_file=state, trade_date="2026-10-09")
+            before = prepare_queued_alert(state_file=state,batch_file=batch)
+            second = prepare_queued_alert(state_file=state,batch_file=batch)
+            self.assertEqual(before, second)
+            self.assertGreater(len(__import__("json").loads(state.read_text())["pending"]),0)
 
     def test_unapproved_status_not_sent(self):
         with tempfile.TemporaryDirectory() as root:
