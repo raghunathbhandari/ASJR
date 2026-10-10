@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "enabled_from_et": "2026-10-12",
+  "mode": "shadow",
+  "research": true,
+  "alerts_enabled": false,
+  "thresholds_approved": false,
+  "preserve_legacy_wicks": true,
+  "preserve_locked_reversal": true,
+  "notes": "MONDAY LIVE SHADOW: run 4 IBKR scanners and 5M research via current Chakra job, save reports; no scanner Discord until actual live callbacks and thresholds approved. Explicit RUDRA_SCANNER_MODE environment overrides mode."
+}
