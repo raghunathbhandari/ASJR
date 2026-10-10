@@ -19,6 +19,8 @@ Repo: `raghunathbhandari/ASJR`, branch `main`.
 
 | File | Purpose |
 |---|---|
+| `RudraScanner/volume_history.py` | Preserve time-matched cumulative RVOL20 reference from 20 full prior RTH sessions in the same dated DataLake; read latest prior day, never fake missing history |
+| `RudraScanner/tests/test_volume_history.py` | 3 new strict prior-day, rollover, and missing-data tests |
 | `RudraScanner/features.py` | Actual IBKR WAP-weighted regular-session VWAP, continuous EMA9 import, true 20 prior complete RTH session RVOL (unavailable without coverage) |
 | `RudraScanner/wap_capture.py` | Optional timestamp-aligned historicalData callback WAP capture on the SAME IBKR app |
 | `ASJR_Analyst/Utils/asjr_ibkr.py` | Add WAP to returned 5-minute DataFrame when sidecar has a correct timestamp match; original six-field parser unchanged |
@@ -35,8 +37,8 @@ Repo: `raghunathbhandari/ASJR`, branch `main`.
 | `RudraScanner/tests/test_topdown.py` | 5 new benchmark/sector WAIT/LONG/SHORT checks |
 | `RudraScanner/tests/test_delivery.py` | 4 new Discord deduplication, approval and retry checks |
 
-**Expected test inventory:** **45 test methods** (24 previously verified +
-21 newly added). This is a SOURCE COUNT, not a claimed successful run.
+**Expected test inventory:** **48 test methods** (24 previously verified +
+24 newly added). This is a SOURCE COUNT, not a claimed successful run.
 
 ## Run NOW on Saturday — no live IBKR required
 
@@ -55,12 +57,12 @@ the running live-bot repo.
 
 No output and exit code 0 indicate Python parsing succeeded.
 
-### Step 3: Run ALL 45 unit tests
+### Step 3: Run ALL 48 unit tests
 
     /root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
 
 **Expected**: 45 tests; ending `OK`. Share the complete output. DO NOT
-claim 45/45 passed until the actual VPS output is reviewed.
+claim 48/48 passed until the actual VPS output is reviewed.
 
 ### Step 4: Test historical 30-stock input (read-only)
 
@@ -73,7 +75,9 @@ zero real trade alerts; **NOT** the live four-code IBKR scanner.
 
     /root/trading/venv_new/bin/python RudraScanner/datalake_test.py --date 2026-10-09
 
-Friday's legacy IBKR raw file lacks the historical WAP field.
+Friday's legacy IBKR raw file lacks the historical WAP field. The
+new rolling RVOL20 baseline is likely also absent until twenty full
+prior RTH sessions have been retained in common DataLake snapshots.
 Expected: completed bars and continuous EMA9, but
 `WAP_MISSING_OR_INCOMPLETE_RTH`; no verified VWAP-based entries,
 `RVOL20` unavailable unless the full 20-session baseline exists.
@@ -126,7 +130,7 @@ Wicks ticker-scope change have been reviewed.
 
 ## Controlled future US-market test — NOT on closed-market Saturday
 
-1. Confirm 45/45 unit tests and Friday offline raw-data report.
+1. Confirm 48/48 unit tests and Friday offline raw-data report.
 2. Audit the actual VPS external caller
    `/root/trading/utils/trading_sudarsan_chakra.py`,
    EWrapper.historicalData callback, timing and IBKR pacing.
