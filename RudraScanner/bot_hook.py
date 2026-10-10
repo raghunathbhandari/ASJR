@@ -21,6 +21,7 @@ MODE_ENV = "RUDRA_SCANNER_MODE"
 OFF = "off"
 SHADOW = "shadow"
 REPLAY = "replay"
+ACTIVE = "active"
 
 
 def run_bot_shadow(app, trade_date, *, repo_root, mode=None, logger=None,
@@ -46,7 +47,7 @@ def run_bot_shadow(app, trade_date, *, repo_root, mode=None, logger=None,
         if save_replay:
             replay_result["report_path"] = persist_replay(repo_root, replay_result)
         return replay_result
-    if normalized_mode != SHADOW:
+    if normalized_mode not in (SHADOW, ACTIVE):
         state = "OFF" if normalized_mode in ("", OFF) else "INVALID_MODE"
         return {"mode": normalized_mode or OFF, "state": state,
                 "selected_total": 0, "selected_by_source": {
@@ -67,9 +68,12 @@ def run_bot_shadow(app, trade_date, *, repo_root, mode=None, logger=None,
     codes = {code: entry["state"] for code, entry in result["ibkr"].items()}
     complete = all(state in ("SUCCESS", "EMPTY") for state in codes.values())
     data_ready = result["fixed"]["state"] not in ("MISSING", "ERROR")
+    active_ready = (complete and data_ready and
+                    result["ai"]["state"] not in ("MISSING", "ERROR"))
     return {
-        "mode": SHADOW,
-        "state": "SHADOW_SAVED" if complete and data_ready else "PARTIAL",
+        "mode": normalized_mode,
+        "state": (("ACTIVE_SELECTED" if normalized_mode == ACTIVE
+                   else "SHADOW_SAVED") if active_ready else "PARTIAL"),
         "selected_total": selected["selected_total"],
         "selected_by_source": selected["selected_by_source"],
         "ai_state": result["ai"]["state"],
@@ -77,4 +81,9 @@ def run_bot_shadow(app, trade_date, *, repo_root, mode=None, logger=None,
         "ibkr_scan_states": codes,
         "alert_delivery": "DISABLED",
         "legacy_universe_changed": False,
+        # The existing Chakra pipeline decides whether the live
+        # universe is safe to replace. An incomplete scanner response
+        # must NOT silently activate a partial stock list.
+        "candidates": result["candidates"] if normalized_mode == ACTIVE
+            and active_ready else [],
     }
