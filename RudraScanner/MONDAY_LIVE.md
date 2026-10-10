@@ -3,6 +3,85 @@
 **Prepared Saturday 10 Oct 2026. Intended next US session Monday
 12 Oct 2026. Timezone: Europe/London BST (UTC+1) for all bot alerts.**
 
+## User VPS preflight 2026-10-10 13:24 — two test mock failures FIXED IN GIT
+
+**Actual observed console, NOT a full pass:** User fast-forward pulled
+`368cf6d3..1ce9a402` on main and ran complete Monday suite.
+**83 tests ran in 0.972 seconds, 81 passed, 2 failed**.
+The two failures were ONLY in
+`RudraScanner/tests/test_pipeline_bridge.py`:
+
+- `test_scanner_batch_after_internal_wicks_reversal_dispatch`:
+  expected `"QUEUED RESEARCH"` but got empty string;
+- `test_external_mark_sent_falls_through_to_scanner_ack`:
+  expected one acknowledged event but got zero.
+
+**Root cause:** Both synthetic tests mocked the queue response but
+did NOT mock `asjr_alerts._scanner_queue_approved()`.
+The production method CORRECTLY refuses to prepare/send/ACK a
+scanner message when `alerts_enabled=false` and
+`thresholds_approved=false`, as required for Monday SHADOW.
+Changed ONLY those two test fixtures to explicitly simulate the
+approved queue state. No production Discord safety flags were
+changed. This Git fix has NOT YET BEEN VPS RETESTED;
+**expected 83/83 after pull; do not claim until terminal proves it**.
+
+**Preflight actually returned:**
+`scheduled_mode=shadow`, `research_enabled=true`,
+`live_scanner_alerts_enabled=false`,
+`approved_thresholds=false`,
+`same_chakra_pipeline_hook=true`,
+`legacy_wicks_still_present=true`,
+`locked_reversal_still_present=true`,
+`discord_queue_bridge=true`, `ready_to_shadow=true`
+(meaning CODE HOOKS configured, NOT real IBKR verified).
+At the first check, `fixed_today=0`, `fixed_state=MISSING`,
+`ai_valid_at_monday_open=1`,
+`ai_expired_at_open=10`.
+
+**Fixed-list blocker addressed in Git:** Created
+`ASJR_Analyst/DataLake/2026-10-12/config/fixed_watchlist.csv`
+as a **byte-for-byte copy** of Friday's canonical
+`2026-10-09/config/fixed_watchlist.csv`.
+This preserves all 19 manually configured rows, existing
+`INTC`, and positions `AKAM` / `WTTR` without altering
+the legacy Wicks membership. RudraScanner excludes
+`ONDS` from its own capped selection. On pull,
+`read_fixed_watchlist()` should find the Monday list;
+the scanner ranks up to 10 fixed names, not all 19.
+This change itself has NOT YET BEEN VPS RETESTED.
+
+**AI still needs real refreshing:** Ten Saturday AI rows expire
+Monday **2026-10-12 12:00 UTC / 13:00 BST**. The one
+still eligible at Monday open is `INTC` as a
+permanent unverified WATCH, and it is already in
+the fixed selection; so there may be **zero unique
+fresh AI bucket names** at open. Don't mislabel a
+10+0+10 partial result as 30/30. Do not silently
+extend expiry or invent Monday catalysts. No reliable
+hourly AI-to-GitHub update task is configured.
+
+### Safe retest now, without any IBKR or bot restart
+
+```bash
+cd /root/trading/ASJR
+git status --short
+git pull --ff-only origin main
+/root/trading/venv_new/bin/python -m unittest discover -s RudraScanner/tests -p 'test_*.py' -v
+/root/trading/venv_new/bin/python RudraScanner/live_preflight.py
+```
+
+Expected: `Ran 83 tests ... OK`; no failures;
+`fixed_today` positive and `fixed_state` no longer
+`MISSING`; `ai_valid_at_monday_open` still 1 until
+valid future-dated sourced research is refreshed.
+Do **not** restart Chakra until actual test output
+has been reviewed, and never enable scanner
+Discord or ACTIVE solely because the preflight
+returns `ready_to_shadow=true`.
+
+---
+
 ## What was applied to GitHub MAIN
 
 The existing five-minute Chakra pipeline
