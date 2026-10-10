@@ -84,28 +84,150 @@ def read_fixed_watchlist(repo_root, trade_date):
     return candidates, status
 
 
-def merge_shared_universe(fixed_rows, ai_rows, ibkr_rows):
-    """Return one deduplicated stock universe used as input for both strategies.
+MAX_PER_SOURCE = 10
+MAX_STOCK_TICKERS = 3 * MAX_PER_SOURCE
+SOURCES = ("FIXED", "AI", "IBKR")
 
-    Fixed tickers survive even if absent from the two discovery CSVs.
-    AI bias is context, never a direction override on either strategy.
+
+def _fixed_rank(row):
+    """Preserve required INTC and explicit open-position monitors first.
+
+    Other fixed entries stay in the manual CSV ordering. This is not a
+    claim about price strength or investment quality.
     """
-    merged = {r["ticker"]: r for r in merge_candidates(ai_rows, ibkr_rows)}
+    ticker = str(row.get("ticker", "")).upper()
+    notes = str(row.get("notes", "")).upper()
+    if ticker == "INTC":
+        return 0
+    if "OPEN POSITION" in notes:
+        return 1
+    return 2
+
+
+def _ai_rank(row):
+    """Smallest explicit positive AI priority number wins.
+
+    Research freshness breaks equal priorities; unresolved quality
+    checks must stay labelled, never misrepresented as verified.
+    """
+    try:
+        priority = float(row.get("priority", ""))
+        if not (0 < priority < float("inf")):
+            priority = float("inf")
+    except (TypeError, ValueError):
+        priority = float("inf")
+    freshness = 0 if row.get("freshness") == "FRESH" else 1
+    return priority, freshness
+
+
+def _ibkr_ranking(ibkr_rows):
+    """Candidate ranks use available scanner evidence only.
+
+    More distinct successful scan-code appearances sorts first; best
+    numerical rank breaks ties. This is NOT a predictive confidence score.
+    """
+    stats = {}
+    for row in ibkr_rows:
+        ticker = str(row.get("ticker", "")).strip().upper()
+        if not ticker_valid(ticker) or ticker in EXCLUDED:
+            continue
+        item = stats.setdefault(ticker, {"codes": set(), "best_rank": float("inf"),
+                                         "first_seen": len(stats)})
+        code = str(row.get("scan_code", "")).strip()
+        if code:
+            item["codes"].add(code)
+        try:
+            rank = float(row.get("rank", ""))
+            if 0 < rank < float("inf"):
+                item["best_rank"] = min(item["best_rank"], rank)
+        except (TypeError, ValueError):
+            pass
+    return sorted(stats, key=lambda t: (-len(stats[t]["codes"]),
+                                        stats[t]["best_rank"],
+                                        stats[t]["first_seen"], t))
+
+
+def merge_shared_universe(fixed_rows, ai_rows, ibkr_rows, *,
+                          max_per_source=MAX_PER_SOURCE):
+    """Select up to 10 *unique* tickers per source, never more than 30.
+
+    Fixed/AI/IBKR quotas are strict; unused quota is not moved to another
+    source. Cross-source overlap does not waste a slot: candidates already
+    selected by an earlier bucket are skipped in later buckets.
+
+    Selection source and all discovery provenance are recorded separately.
+    The output is the one common stock import list for both strategies;
+    Reversal's separate NQ Yahoo instrument is not counted as a stock.
+    """
+    if not isinstance(max_per_source, int) or not 0 <= max_per_source <= MAX_PER_SOURCE:
+        raise ValueError("per-source limit cannot exceed the confirmed 10")
+
+    # Preserve provenance even when a selected ticker was discovered elsewhere.
+    metadata = {r["ticker"]: r for r in merge_candidates(ai_rows, ibkr_rows)}
+    valid_fixed = []
     for row in fixed_rows:
         ticker = str(row.get("ticker", "")).strip().upper()
         if not ticker_valid(ticker) or ticker in EXCLUDED:
             continue
-        item = merged.setdefault(
-            ticker, {
-                "ticker": ticker, "sources": [], "scan_codes": [],
-                "ai_bias": "", "ai_freshness": "",
-            }
+        valid_fixed.append((ticker, row))
+        item = metadata.setdefault(
+            ticker, {"ticker": ticker, "sources": [], "scan_codes": [],
+                     "ai_bias": "", "ai_freshness": ""}
         )
-        if FIXED_SOURCE not in item["sources"]:
-            item["sources"].insert(0, FIXED_SOURCE)
-        if "fixed_sector" not in item:
-            item["fixed_sector"] = row.get("sector", "")
-    return [merged[t] for t in sorted(merged)]
+        if "FIXED" not in item["sources"]:
+            item["sources"].insert(0, "FIXED")
+        item.setdefault("fixed_sector", row.get("sector", ""))
+
+    # These are deterministic tie-breakers, NOT a proprietary SMB score.
+    fixed_ranked = [t for t, _ in sorted(valid_fixed, key=lambda pair: _fixed_rank(pair[1]))]
+    ai_ranked = [str(row.get("ticker", "")).strip().upper()
+                 for row in sorted(ai_rows, key=_ai_rank)]
+    ibkr_ranked = _ibkr_ranking(ibkr_rows)
+
+    selected = []
+    selected_set = set()
+    for source, tickers in (
+        ("FIXED", fixed_ranked),
+        ("AI", ai_ranked),
+        ("IBKR", ibkr_ranked),
+    ):
+        count = 0
+        for ticker in tickers:
+            if count >= max_per_source:
+                break
+            if not ticker_valid(ticker) or ticker in EXCLUDED or ticker in selected_set:
+                continue
+            selected_set.add(ticker)
+            count += 1
+            row = dict(metadata.get(ticker, {}))
+            row.setdefault("ticker", ticker)
+            row.setdefault("sources", [source])
+            row.setdefault("scan_codes", [])
+            row.setdefault("ai_bias", "")
+            row.setdefault("ai_freshness", "")
+            row["selection_source"] = source
+            selected.append(row)
+
+    if len(selected) > MAX_STOCK_TICKERS:
+        raise AssertionError("RudraScanner shared ticker cap exceeded")
+    # Alphabetical order is the established on-disk convention. Selection
+    # source is always explicit, so bucket counts do not depend on this order.
+    return sorted(selected, key=lambda row: row["ticker"])
+
+
+def selection_summary(rows):
+    """Auditable selection counts; not a score or performance prediction."""
+    buckets = {source: sum(row.get("selection_source") == source for row in rows)
+               for source in SOURCES}
+    return {
+        "max_total": MAX_STOCK_TICKERS,
+        "max_per_source": MAX_PER_SOURCE,
+        "selected_total": len(rows),
+        "selected_by_source": buckets,
+        "unused_slots": {
+            source: MAX_PER_SOURCE - buckets[source] for source in SOURCES
+        },
+    }
 
 
 def load_shared_universe(repo_root, trade_date, ai_rows, ibkr_rows):
