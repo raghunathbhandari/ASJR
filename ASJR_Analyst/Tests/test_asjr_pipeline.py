@@ -68,7 +68,7 @@ def run_rudra_reversal_strategy(trade_date=None, tickers=None):
     )
 
 
-def run_asjr_manual_pipeline(
+def _run_asjr_manual_pipeline_unlocked(
     app,
     trade_date=None,
     gapup_df=None,
@@ -617,6 +617,32 @@ def run_asjr_manual_pipeline(
     except Exception:
         logger.exception("RUN | FAILED")
         raise
+
+
+
+def run_asjr_manual_pipeline(*args, **kwargs):
+    """Shared process-level lock around the canonical Chakra pipeline.
+
+    Scheduled Chakra acquires this lock. A manual run_now process already
+    owns the same OS flock; only its own call may bypass re-acquisition.
+    """
+    import fcntl
+    lock_path = REPO_ROOT / ".chakra_run_now.lock"
+    if os.environ.get("ASJR_MANUAL_RUN_LOCK_HELD") == "1":
+        return _run_asjr_manual_pipeline_unlocked(*args, **kwargs)
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a+") as guard:
+        try:
+            fcntl.flock(guard.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            print("ASJR | BUSY | Another scheduled/manual Chakra pipeline is active")
+            return {
+                "alert_data": [], "rudra_reversal_alerts": [],
+                "snapshot": {"trade_date": paths.trading_day()},
+                "git": {"status": "SKIPPED_BUSY"},
+                "alerts_dispatched": False,
+            }
+        return _run_asjr_manual_pipeline_unlocked(*args, **kwargs)
 
 
 _premarket_prepared_events = []
