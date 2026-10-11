@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Read-only Chakra launcher inspection and RVOL/run_now unit tests.
 # No broker connection, no bot restart, no order and no Discord send.
-set -u
+set -euo pipefail
 ROOT=/root/trading/ASJR
 PY=/root/trading/venv_new/bin/python
 LAUNCH=/root/trading/utils/trading_sudarsan_chakra.py
@@ -15,7 +15,11 @@ echo "=== TARGETED TESTS ==="
 "$PY" -m unittest discover -s RudraScanner/tests -p 'test_premarket*.py' -v
 "$PY" -m unittest discover -s RudraScanner/tests -p 'test_run_now.py' -v
 echo "=== SAFE NO-BROKER CHECK ==="
-"$PY" RudraScanner/run_now.py --mode standalone
+if "$PY" RudraScanner/run_now.py --mode standalone; then
+  echo "ERROR: standalone unexpectedly returned success"; exit 1
+else
+  echo "PASS: standalone correctly blocked"
+fi
 echo "Expected exit 2 above: standalone is still deliberately disabled."
 echo "=== LAUNCHER PATH ==="
 if [[ -f "$LAUNCH" ]]; then
