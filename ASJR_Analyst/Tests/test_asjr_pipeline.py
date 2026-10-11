@@ -30,6 +30,7 @@ from RudraScanner.bot_hook import run_bot_shadow, scanner_runtime
 from RudraScanner.live_round import run_live_scanner_round
 from RudraScanner.engine import evaluate_scanner, persist_features
 from RudraScanner.volume_history import apply_rolling_rvol20
+from RudraScanner.premarket_rvol import update_history as update_premarket_history
 from RudraScanner.hourly import refresh_hourly_cache
 from RudraScanner.reversal_bridge import seed_new_symbols
 from RudraScanner.topdown import classify_topdown, ticker_etf_from_sources
@@ -48,7 +49,7 @@ try:
 except Exception:
     launch_nq_download_once = None
 
-ASJR_ANALYST_VERSION = "2026.10.10.13"
+ASJR_ANALYST_VERSION = "2026.10.11.1"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -264,6 +265,24 @@ def run_asjr_manual_pipeline(
         logger.info("FILE | Saved intraday_5m | %s", intraday_file)
 
         intraday = intraday_features.add_intraday_features(intraday_raw)
+        # Rudra-Premarket V1: rolling five-day same-session cumulative volume
+        # history, reusing the existing 5M feed and shared DataLake. Research
+        # calculation only until verified IBKR history and WAP VWAP are ready.
+        # Missing history never substitutes an RVOL of zero.
+        try:
+            premarket_rvol, premarket_rvol_status = update_premarket_history(
+                intraday, REPO_ROOT, paths.trading_day(trade_date), save=True
+            )
+            logger.info(
+                "RUDRA-PREMARKET | RVOL5 history | ready=%s | stored=%s",
+                premarket_rvol_status["ready5"],
+                premarket_rvol_status["stored_rows"],
+            )
+        except Exception:
+            premarket_rvol = pd.DataFrame()
+            premarket_rvol_status = {"state": "ERROR"}
+            logger.exception("RUDRA-PREMARKET | RVOL5 history failed")
+        # User disabled old wick setups; legacy hook remains for compatibility.
         alert_data = alerts.build_wick_alerts(intraday, trade_date=trade_date)
 
         try:
@@ -553,6 +572,7 @@ def run_asjr_manual_pipeline(
             "alerts_dispatched": delivery.get("alerts_dispatched", False),
             "alert_data": alert_data,
             "rudra_reversal_alerts": rudra_reversal_alerts,
+            "rudra_premarket_rvol_status": premarket_rvol_status,
             "rudra_scanner_shadow": rudra_scanner_shadow,
             "rudra_scanner_features": rudra_scanner_features,
             "rudra_scanner_hourly": rudra_scanner_hourly,
