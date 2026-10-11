@@ -21,9 +21,10 @@ from RudraScanner.manual_request import (
     current_trade_date, load_request, request_scan,
 )
 from RudraScanner.storage import read_saved_report
+from RudraScanner.premarket_diagnostic import print_saved as print_premarket_diagnostic
 
 
-def show_result(state, root):
+def show_result(state, root, *, premarket_test=False):
     print("RUDRA SCANNER | MANUAL SSH REQUEST |", state.get("status", "UNKNOWN"))
     for key in ("request_id", "trade_date", "requested_at_utc",
                 "completed_at_utc", "discovery_state", "scan_code_states",
@@ -33,6 +34,8 @@ def show_result(state, root):
     if state.get("status") == "COMPLETE":
         print("")
         print(read_saved_report(root, state["trade_date"]))
+        if premarket_test:
+            return print_premarket_diagnostic(root, state["trade_date"])
         return 0
     if state.get("status") == "DATA_NOT_READY":
         print("Scanner cycle returned without a fresh saved 5M report;")
@@ -48,6 +51,8 @@ def main(argv=None):
     parser.add_argument("--date", help="ET session date; must be today's scheduled Chakra session")
     parser.add_argument("--repo", default=str(Path(__file__).resolve().parents[1]))
     parser.add_argument("--status", action="store_true", help="Read current SSH request, do not queue")
+    parser.add_argument("--premarket-test", action="store_true",
+                        help="Report RVOL5 diagnostic after ONE existing full Chakra pipeline cycle; no Discord")
     parser.add_argument("--saved", action="store_true", help="Print saved report only, do not queue")
     parser.add_argument("--no-wait", action="store_true", help="Queue and return without waiting")
     parser.add_argument("--timeout", type=int, default=900,
@@ -59,13 +64,15 @@ def main(argv=None):
         if not state:
             print("RUDRA SCANNER | NO MANUAL REQUEST SAVED")
             return 0
-        return show_result(state, root)
+        return show_result(state, root, premarket_test=args.premarket_test)
     if args.saved:
         day = args.date or current_trade_date()
         if not day:
             print("No current US Chakra trading session; use --date YYYY-MM-DD")
             return 2
         print(read_saved_report(root, day))
+        if args.premarket_test:
+            return print_premarket_diagnostic(root, day)
         return 0
 
     day = current_trade_date()
@@ -88,7 +95,9 @@ def main(argv=None):
     state, created = request_scan(root, day)
     print("RUDRA SCANNER | SSH REQUEST", "QUEUED" if created else "ALREADY QUEUED", flush=True)
     print("REQUEST ID:", state["request_id"], "| ET DATE:", day, flush=True)
-    print("Uses SAME existing Chakra process and IBKR app, at its NEXT 5-minute cycle.", flush=True)
+    print("ONE normal FULL Chakra pipeline run, at its NEXT existing 5-minute cycle.", flush=True)
+    if args.premarket_test:
+        print("Rudra-Premarket RVOL5 report requested; diagnostic only, no Discord.", flush=True)
     print("NO new connection; NO immediate separate scan; NO orders; scanner Discord OFF.", flush=True)
     if args.no_wait:
         print("To inspect: python RudraScanner/scan_now.py --status", flush=True)
@@ -100,7 +109,7 @@ def main(argv=None):
             print("Request was replaced; no result can be attributed safely.")
             return 2
         if outcome.get("status") in ("COMPLETE", "DATA_NOT_READY"):
-            return show_result(outcome, root)
+            return show_result(outcome, root, premarket_test=args.premarket_test)
         time.sleep(2)
     print("TIMEOUT waiting for existing Chakra cycle. Request remains queued.")
     print("Inspect: python RudraScanner/scan_now.py --status")
