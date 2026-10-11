@@ -15,12 +15,8 @@ echo "=== TARGETED TESTS ==="
 "$PY" -m unittest discover -s RudraScanner/tests -p 'test_premarket*.py' -v
 "$PY" -m unittest discover -s RudraScanner/tests -p 'test_run_now.py' -v
 echo "=== SAFE NO-BROKER CHECK ==="
-if "$PY" RudraScanner/run_now.py --mode standalone; then
-  echo "ERROR: standalone unexpectedly returned success"; exit 1
-else
-  echo "PASS: standalone correctly blocked"
-fi
-echo "Expected exit 2 above: standalone is still deliberately disabled."
+"$PY" RudraScanner/run_now.py --mode standalone --dry-run
+echo "Dry-run above must not connect to IBKR."
 echo "=== LAUNCHER PATH ==="
 if [[ -f "$LAUNCH" ]]; then
   ls -l "$LAUNCH"
