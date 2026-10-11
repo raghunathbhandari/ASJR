@@ -1,5 +1,14 @@
 # ASJR / Chakra / Rudra-Premarket — AI SESSION HANDOFF
 
+## 2026-10-11 ~15:44 UK — VERIFIED RVOL5 REFERENCE COVERAGE
+
+User inspected `ASJR_Analyst/DataLake/2026-10-09/reports/rudra_premarket_backfill.json` on VPS. Actual output: `FETCHED: 30`; reference exists at `ASJR_Analyst/DataLake/2026-10-12/processed/rudra_premarket_rvol_history.csv`; `REFERENCE ROWS: 27744`. Per-segment complete historical sessions: **RTH >=5 for 30/30; POST >=5 for 30/30; PRE >=5 for 26/30**. Four PRE not ready: WTTR=1, OPRX=0 (absent PRE in report), AMT=2, HUM=1. NXPI PRE=9, TMUS PRE=8, FSLY PRE=9; other ready PRE generally 10. Many RTH and POST report 10 prior complete sessions, but the saved reference module `_clean_reference` retains only LAST FIVE per ticker/segment; do not confuse raw coverage counts with stored 5-session baseline.
+
+**Important limitations:** This is VERIFIED historical reference coverage, not live RVOL computation or live alert tests. Do not interpret missing PRE as zero volume. Do not rerun another import that overwrites the Monday reference without implementing a reference MERGE. Newly imported data exists locally on VPS, not automatically Git-synced.
+
+---
+
+
 ## 2026-10-11 ~15:42 UK — VERIFIED FIRST HISTORICAL FETCH RESULT (user VPS log)
 
 The user ran `/root/trading/venv_new/bin/python RudraScanner/import_premarket_history.py --day 2026-10-09 --max-tickers 30`. Terminal printed `RUDRA IMPORT | FINISHED .../2026-10-09/reports/rudra_premarket_backfill.json` with **30 of 30 ticker requests successful**, no reported historical fetch errors. All used the existing Gateway helper and IBKR client ID 656; volume of data varied (common 1,920 bars, NXPI 1,884, WTTR 1,413, OPRX 1,267, AMT 1,533, HUM 1,444, TMUS 1,906, FSLY 1,912). Fixed list 19 rows, 18 included, ONDS excluded; AI 14 enabled; saved Friday IBKR mover source 87 symbols (not a Sunday live scan). Selected 30 in source order: MSFT CRDO SMCI QCOM AMAT ORCL WDC MRVL LRCX NXPI AKAM WTTR MCHP OPRX MU CAT TSLA INTC SPCX PLTR LITE AMT HUM AMZN TMUS AAPL JPM NVDA FSLY NVAX.
