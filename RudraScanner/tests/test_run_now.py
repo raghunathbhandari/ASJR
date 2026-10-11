@@ -1,28 +1,36 @@
-"""Run-now safety checks. No broker/network access."""
+"""Offline one-shot full Chakra runner tests; never contact IBKR."""
 import unittest
 from unittest.mock import patch
 from RudraScanner import run_now
 
 
 class TestRunNow(unittest.TestCase):
-    def test_standalone_refuses_until_launcher_audited(self):
-        with patch.object(run_now.subprocess, "call") as call:
-            self.assertEqual(run_now.main(["--mode", "standalone"]), 2)
-            call.assert_not_called()
-
-    def test_status_delegated_without_broker(self):
-        with patch.object(run_now.subprocess, "call", return_value=0) as call:
-            self.assertEqual(run_now.main(["--status"]), 0)
-            command = call.call_args.args[0]
-            self.assertIn("scan_now.py", command[1])
-            self.assertIn("--status", command)
-
-    def test_full_cycle_request_diagnostic_mode(self):
-        with patch.object(run_now.subprocess, "call", return_value=0) as call:
+    def test_running_bot_uses_existing_queue(self):
+        with patch.object(run_now, "bot_running", return_value=True), \
+             patch.object(run_now, "queue_existing", return_value=0) as queued, \
+             patch.object(run_now, "run_standalone") as standalone:
             self.assertEqual(run_now.main(["--premarket-test", "--no-wait"]), 0)
-            command = call.call_args.args[0]
-            self.assertIn("--premarket-test", command)
-            self.assertIn("--no-wait", command)
+            queued.assert_called_once()
+            standalone.assert_not_called()
+
+    def test_stopped_bot_delegates_to_standalone(self):
+        with patch.object(run_now, "bot_running", return_value=False), \
+             patch.object(run_now, "run_standalone", return_value=0) as standalone:
+            self.assertEqual(run_now.main([]), 0)
+            standalone.assert_called_once_with(dry_run=False)
+
+    def test_dry_run_passed_to_standalone(self):
+        with patch.object(run_now, "bot_running", return_value=False), \
+             patch.object(run_now, "run_standalone", return_value=0) as standalone:
+            self.assertEqual(run_now.main(["--dry-run"]), 0)
+            standalone.assert_called_once_with(dry_run=True)
+
+    def test_status_only_uses_existing_cli(self):
+        with patch.object(run_now, "queue_existing", return_value=0) as queued, \
+             patch.object(run_now, "run_standalone") as standalone:
+            self.assertEqual(run_now.main(["--status"]), 0)
+            queued.assert_called_once()
+            standalone.assert_not_called()
 
 
 if __name__ == "__main__":
