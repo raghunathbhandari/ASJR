@@ -49,7 +49,7 @@ try:
 except Exception:
     launch_nq_download_once = None
 
-ASJR_ANALYST_VERSION = "2026.10.11.1"
+ASJR_ANALYST_VERSION = "2026.10.11.2"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -282,6 +282,17 @@ def run_asjr_manual_pipeline(
             premarket_rvol = pd.DataFrame()
             premarket_rvol_status = {"state": "ERROR"}
             logger.exception("RUDRA-PREMARKET | RVOL5 history failed")
+        # One-round diagnostic for the existing scan_now.py request.
+        # Shadow-only, never sends Discord or changes the trading strategy.
+        try:
+            from RudraScanner.premarket_diagnostic import save_diagnostic
+            premarket_test_file = save_diagnostic(
+                premarket_rvol, premarket_rvol_status,
+                REPO_ROOT, paths.trading_day(trade_date),
+            )
+        except Exception:
+            premarket_test_file = None
+            logger.exception("RUDRA-PREMARKET | diagnostic write failed")
         # User disabled old wick setups; legacy hook remains for compatibility.
         alert_data = alerts.build_wick_alerts(intraday, trade_date=trade_date)
 
@@ -573,6 +584,7 @@ def run_asjr_manual_pipeline(
             "alert_data": alert_data,
             "rudra_reversal_alerts": rudra_reversal_alerts,
             "rudra_premarket_rvol_status": premarket_rvol_status,
+            "rudra_premarket_test_file": premarket_test_file,
             "rudra_scanner_shadow": rudra_scanner_shadow,
             "rudra_scanner_features": rudra_scanner_features,
             "rudra_scanner_hourly": rudra_scanner_hourly,
