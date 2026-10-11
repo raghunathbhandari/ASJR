@@ -16,7 +16,7 @@ import pandas as pd
 ET = ZoneInfo("America/New_York")
 FIELDS = ["ticker", "session_date_et", "session", "minute", "cum_volume"]
 SEGMENTS = {"PRE": (240, 570), "RTH": (570, 960), "POST": (960, 1200)}
-MAX_SESSIONS = 6
+MAX_SESSIONS = 5
 
 
 def reference_path(root, trading_day):
