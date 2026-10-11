@@ -25,6 +25,14 @@ class TestRunNow(unittest.TestCase):
             self.assertEqual(run_now.main(["--dry-run"]), 0)
             standalone.assert_called_once_with(dry_run=True)
 
+    def test_dry_run_cannot_queue_when_bot_running(self):
+        with patch.object(run_now, "bot_running", return_value=True), \
+             patch.object(run_now, "run_standalone", return_value=2) as standalone, \
+             patch.object(run_now, "queue_existing") as queued:
+            self.assertEqual(run_now.main(["--dry-run"]), 2)
+            standalone.assert_called_once_with(dry_run=True)
+            queued.assert_not_called()
+
     def test_status_only_uses_existing_cli(self):
         with patch.object(run_now, "queue_existing", return_value=0) as queued, \
              patch.object(run_now, "run_standalone") as standalone:
