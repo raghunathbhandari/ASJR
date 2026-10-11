@@ -1,9 +1,9 @@
 {
-  "version": 6,
+  "version": 7,
   "setups": [
     {
       "id": "lower_liquidity_sweep_ratio",
-      "enabled": true,
+      "enabled": false,
       "label": "LOWER LIQUIDITY SWEEP",
       "side": "LOWER",
       "lookback_bars": 12,
@@ -18,7 +18,7 @@
     },
     {
       "id": "upper_liquidity_sweep_ratio",
-      "enabled": true,
+      "enabled": false,
       "label": "UPPER LIQUIDITY SWEEP",
       "side": "UPPER",
       "lookback_bars": 12,
@@ -33,7 +33,7 @@
     },
     {
       "id": "strong_rejection_ratio",
-      "enabled": true,
+      "enabled": false,
       "label": "STRONG REJECTION WICK",
       "side": "BOTH",
       "lookback_bars": 12,
@@ -49,7 +49,7 @@
     },
     {
       "id": "expansion_rejection_ratio",
-      "enabled": true,
+      "enabled": false,
       "label": "EXPANSION REJECTION WICK",
       "side": "BOTH",
       "lookback_bars": 12,
@@ -65,7 +65,7 @@
     },
     {
       "id": "two_sided_expansion_wick",
-      "enabled": true,
+      "enabled": false,
       "label": "TWO-SIDED EXPANSION WICK",
       "side": "BOTH",
       "two_sided": true,
@@ -179,5 +179,6 @@
     ],
     "lqda_policy_note": "For LQDA on 2026-10-01, 13:15 BST and 14:30 BST are validated; other reviewed LQDA wick candidates can be ignored for now.",
     "ratio_policy_note": "2026-10-04: all active setups require wick/body >=2.5x and high-low >=0.25% of close, plus existing relative range/volume/sweep gates. Earlier accepted examples may no longer qualify; MSFT 14:45 is intentionally filtered by the user-approved stricter ratio."
-  }
+  },
+  "rudra_premarket_note": "Legacy wicks disabled by user 2026-10-11. Rudra-Premarket replacement NOT YET LIVE; historical 5/20-day extended-hours RVOL and delivery integration pending."
 }
