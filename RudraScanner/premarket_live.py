@@ -23,10 +23,10 @@ def evaluate(raw,root,day,now=None):
     v=calculate(f[["ticker","datetime","volume"]].copy(),ref,trading_day=str(day))
     if v.empty:return [],{"state":"NO_CURRENT_SESSION"}
     keys=["ticker","timestamp_et"]
-    frame=f.copy()
+    frame=f.drop(columns=["session"], errors="ignore").copy()
     frame["timestamp_et"]=pd.to_datetime(frame["datetime"],utc=True).dt.tz_convert(ET)
     joined=frame.merge(v[["ticker","timestamp_et","rvol5","rvol5_ready","minute","session"]],on=keys,how="inner",validate="one_to_one")
-    joined=joined[joined["vwap_ready"].fillna(False)].copy()
+    joined=joined[joined["vwap_ready"].fillna(False) & joined["ema9_ready"].fillna(False)].copy()
     matches=candidates(joined)
     if matches.empty:return [],{"state":"NO_SIGNALS","ready5":int(v["rvol5_ready"].sum()),"vwap":int(joined.shape[0])}
     latest=matches.sort_values("timestamp_et").groupby("ticker").tail(1)
