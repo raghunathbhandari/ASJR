@@ -1,5 +1,14 @@
 # ASJR Analyst operational handoff
 
+## 2026-10-11 Background five-day history import — opt-in implementation, NOT LIVE
+
+User approved up to three ticker-wise background workers, one IBKR history request at a time initially, through the **existing** Chakra app (no second IBKR connection, no second bot/scheduler), deduplicated new-ticker import and first-time 5-session RVOL baseline. Commit `RudraScanner/premarket_backfill.py` (queue with max workers=3, broker concurrency=1, bounded retries delegated to existing IBKR helper) and `RudraScanner/tests/test_premarket_backfill.py` (offline tests; NOT YET EXECUTED on VPS).
+
+This queue is intentionally OPT-IN and NOT linked to production scheduler. It requires a shared live-priority IBKR request coordination gate before starting background requests on the same EClient, persisted store callback into existing shared DataLake with per-ticker atomic merge, proper completed-bar timestamps and 5-session comparisons, plus stage-by-stage live tests. Existing raw fetch duration default is 3D; backfill wrapper asks for 10D once and must be validated against IBKR entitlements and pacing. Never claim new ticker backfill or Discord alert is running until integrated, tested and user restarts existing VPS bot. Initial 3 worker threads do not imply 3 simultaneous broker requests. Wick config disabled in GitHub but VPS pull/status unverified. Rudra-Premarket alerts still NOT LIVE.
+
+---
+
+
 ## 2026-10-11 V1 scope reduction — RVOL5 ONLY (latest decision)
 
 User confirmed start with **five previous completed sessions' cumulative Relative Volume at Time** only, threshold <= 0.50; **remove RVOL20 and the 20-day import** from the new Rudra-Premarket strategy. Price > EMA9 > VWAP strict, skip 09:30–10:00 ET, otherwise eligible while fresh broker bars available. Discord header RUDRA-PREMARKET; one line per qualifying ticker with RV5 only, immediate dispatch when integrated. `RudraScanner/premarket_rvol.py` V1 calculator and `RudraScanner/tests/test_premarket_rvol.py` were changed accordingly; changes committed but offline unit tests, real IBKR 5-day extended-hours history ingestion, EMA9/WAP VWAP connection, bot sender integration, VPS pull/restart, and live Discord validation are STILL PENDING. Historical extended-hours complete-session policy may need adjustment for sparse IBKR trade bars. Do not claim V1 is live. Old Wicks configs were disabled in repo; downstream deployment not verified.
