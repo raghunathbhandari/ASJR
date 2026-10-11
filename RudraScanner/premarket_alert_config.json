@@ -1,4 +1,5 @@
 {
   "enabled": false,
-  "reason": "Await verified full pipeline and Discord acknowledgement tests; never enable solely on restart"
+  "reason": "Both Discord BUY WATCH and same-app automatic new-ticker backfill remain disabled until end-to-end VPS tests and verification",
+  "auto_backfill": false
 }
