@@ -26,7 +26,7 @@ def session_bars(ticker, day, segment="RTH", volume=100, upto=None):
 
 
 class TestPremarketRVOL(unittest.TestCase):
-    def test_five_and_twenty_same_minute_cumulative(self):
+    def test_five_only_same_minute_cumulative(self):
         prior = []
         for n in range(20):
             day = (datetime(2026, 9, 1) + timedelta(days=n)).date().isoformat()
@@ -39,9 +39,7 @@ class TestPremarketRVOL(unittest.TestCase):
             self.assertTrue(reference_path(root, "2026-10-12").is_file())
             last = out.sort_values("minute").iloc[-1]
             self.assertAlmostEqual(last.rvol5, .4)
-            self.assertAlmostEqual(last.rvol20, .4)
-            self.assertTrue(last.rvol5_ready)
-            self.assertTrue(last.rvol20_ready)
+                        self.assertTrue(last.rvol5_ready)
 
     def test_no_partial_or_future_lookahead(self):
         baseline = []
@@ -59,7 +57,6 @@ class TestPremarketRVOL(unittest.TestCase):
                                     root, "2026-10-12")
             last = out.iloc[-1]
             self.assertTrue(last.rvol5_ready)
-            self.assertFalse(last.rvol20_ready)
 
     def test_session_isolation_and_early_rth_exclusion(self):
         reference = []
@@ -75,7 +72,7 @@ class TestPremarketRVOL(unittest.TestCase):
         with tempfile.TemporaryDirectory() as root:
             x, _ = update_history(raw, root, "2026-10-12")
         self.assertEqual(set(x["session"].unique()), {"PRE", "RTH", "POST"})
-        for col in ("rvol5", "rvol20"):
+        for col in ("rvol5",):
             self.assertTrue(x[col].dropna().between(.4999, .5001).all())
         x["close"] = 101
         x["ema9"] = 100
@@ -96,7 +93,7 @@ class TestPremarketRVOL(unittest.TestCase):
         with tempfile.TemporaryDirectory() as root:
             out, _ = update_history(pd.DataFrame(baseline + current),
                                     root, "2026-10-12")
-        self.assertFalse(out.iloc[-1].rvol20_ready)
+        self.assertFalse(out.iloc[-1].rvol5_ready)
 
     def test_utc_time_conversion_and_partial_history(self):
         bars = pd.DataFrame(session_bars("INTC", "2026-10-12", "RTH", 100, 580))
@@ -104,7 +101,6 @@ class TestPremarketRVOL(unittest.TestCase):
         self.assertEqual(normalized["minute"].tolist(), [570, 575])
         out = calculate(bars, pd.DataFrame(), trading_day="2026-10-12")
         self.assertFalse(out["rvol5_ready"].any())
-        self.assertFalse(out["rvol20_ready"].any())
 
 
 if __name__ == "__main__":
