@@ -11,7 +11,7 @@ For every eligible ticker with valid synchronized price, EMA9, IBKR WAP-based VW
 - Exclude only 09:30 <= NY exchange-local time < 10:00 America/New_York (US cash-session open); timezone conversion DST aware. All other times when the existing broker actually supplies fresh 5m data are eligible, including premarket, RTH after 10, after-hours; do not invent all-night coverage when none exists.
 - Scan all tickers actually ingested by the existing shared pipeline, not just INTC; do not restrict by +4% price change. Do not assume the IBKR scanner searches the entire market each 5 minutes; universe coverage should be stated truthfully.
 - BUY WATCH only, not an automatic order.
-- Dispatch a one-line Discord alert immediately on that completed 5m cycle per qualifying ticker; no waiting for batching, no delay for Git push or extra scanner import. Report UK 24h time and ticker, price, RVOL5 and RVOL20. Example: RUDRA-PREMARKET | INTC | 17:35 | BUY WATCH | RV5 0.42x | RV20 0.38x.
+- Dispatch immediately on the completed 5m cycle, without waiting for Git push or extra scanner import. Use a two-line message: fixed header plus one line per qualifying ticker; UK 24h time. EXACT example:\n```text\nRUDRA-PREMARKET\nINTC | 17:35 | BUY WATCH | Price > EMA9 > VWAP | RV5 0.42x | RV20 0.38x\n```
 - Per-ticker per-bar dedup; prevent repeated spam each 5m while one continuously qualifying episode remains active, unless user explicitly requests repeated alerts. Independent simultaneous ticker signals should each send immediately, not be held for a consolidated scheduled batch.
 
 ## Replace alert type
