@@ -39,7 +39,7 @@ class TestPremarketRVOL(unittest.TestCase):
             self.assertTrue(reference_path(root, "2026-10-12").is_file())
             last = out.sort_values("minute").iloc[-1]
             self.assertAlmostEqual(last.rvol5, .4)
-                        self.assertTrue(last.rvol5_ready)
+            self.assertTrue(last.rvol5_ready)
 
     def test_no_partial_or_future_lookahead(self):
         baseline = []
