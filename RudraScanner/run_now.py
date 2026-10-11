@@ -82,7 +82,12 @@ def run_standalone(*, dry_run=False):
                 print("RUDRA RUN_NOW | ERROR: IBKR app not connected")
                 return 2
             print("RUDRA RUN_NOW | FULL CHAKRA PIPELINE START", flush=True)
-            result = module.ibkr_trading_sudarsan_chakra(app)
+            # Same OS flock is already owned by this manual process.
+            os.environ["ASJR_MANUAL_RUN_LOCK_HELD"] = "1"
+            try:
+                result = module.ibkr_trading_sudarsan_chakra(app)
+            finally:
+                os.environ.pop("ASJR_MANUAL_RUN_LOCK_HELD", None)
             if result is None:
                 print("RUDRA RUN_NOW | PIPELINE FAILED; review Chakra logs")
                 return 2
