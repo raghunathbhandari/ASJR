@@ -1,5 +1,12 @@
 # ASJR Analyst operational handoff
 
+## 2026-10-11 V1 scope reduction — RVOL5 ONLY (latest decision)
+
+User confirmed start with **five previous completed sessions' cumulative Relative Volume at Time** only, threshold <= 0.50; **remove RVOL20 and the 20-day import** from the new Rudra-Premarket strategy. Price > EMA9 > VWAP strict, skip 09:30–10:00 ET, otherwise eligible while fresh broker bars available. Discord header RUDRA-PREMARKET; one line per qualifying ticker with RV5 only, immediate dispatch when integrated. `RudraScanner/premarket_rvol.py` V1 calculator and `RudraScanner/tests/test_premarket_rvol.py` were changed accordingly; changes committed but offline unit tests, real IBKR 5-day extended-hours history ingestion, EMA9/WAP VWAP connection, bot sender integration, VPS pull/restart, and live Discord validation are STILL PENDING. Historical extended-hours complete-session policy may need adjustment for sparse IBKR trade bars. Do not claim V1 is live. Old Wicks configs were disabled in repo; downstream deployment not verified.
+
+---
+
+
 ## 2026-10-11 Rudra-Premarket alert change — PARTIALLY COMMITTED, NOT LIVE
 
 User explicitly replaced old Wicks with new Rudra-Premarket: strict 5m Price > EMA9 > VWAP; 5D and 20D cumulative RVOL-at-time <=0.5; exclude 09:30–10:00 America/New_York, monitor all other available sessions; format fixed header RUDRA-PREMARKET and one separate line per simultaneously qualifying ticker; immediate Discord delivery, UK HH:MM, no batches spanning scanner cycles. No automatic trades. Full approved specification: `ASJR_Analyst/RUDRA_PREMARKET_SPEC.md`.
