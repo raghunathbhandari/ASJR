@@ -13,7 +13,7 @@ sys.path.insert(0, str(ROOT))
 from RudraScanner.discovery import read_ai_csv, EXCLUDED
 from RudraScanner.universe import read_fixed_watchlist
 from RudraScanner.run_now import bot_running, RUN_LOCK, CHAKRA_FILE
-from RudraScanner.premarket_rvol import normalize_bars, _complete_profiles, _clean_reference, reference_path, FIELDS
+from RudraScanner.premarket_rvol import normalize_bars, _complete_profiles, _clean_reference, reference_path, durable_reference_path, FIELDS
 
 def source_tickers(day):
     fixed, fs = read_fixed_watchlist(ROOT, day)
@@ -104,14 +104,24 @@ def main(argv=None):
                 reportpath.write_text(json.dumps(report,indent=2,default=str)+"\n")
                 time.sleep(2)
             if profiles:
-                ref=_clean_reference(pd.concat(profiles,ignore_index=True),"2026-10-12")
+                parts = list(profiles)
+                durable = durable_reference_path(ROOT)
+                snapshot = reference_path(ROOT,"2026-10-12")
+                for previous in (durable, snapshot):
+                    if previous.is_file():
+                        try:
+                            parts.append(pd.read_csv(previous))
+                        except (OSError,ValueError,pd.errors.EmptyDataError):
+                            print("RUDRA IMPORT | WARNING: existing reference unreadable:",previous)
+                ref=_clean_reference(pd.concat(parts,ignore_index=True),"2026-10-12")
                 if not ref.empty:
-                    dest=reference_path(ROOT,"2026-10-12")
-                    dest.parent.mkdir(parents=True,exist_ok=True)
-                    tmp=dest.with_suffix(".tmp")
-                    tmp.write_text(ref.to_csv(index=False))
-                    os.replace(tmp,dest)
-                    report["reference_path"]=str(dest)
+                    for dest in (snapshot,durable):
+                        dest.parent.mkdir(parents=True,exist_ok=True)
+                        tmp=dest.with_suffix(".tmp")
+                        tmp.write_text(ref.to_csv(index=False))
+                        os.replace(tmp,dest)
+                    report["reference_path"]=str(snapshot)
+                    report["durable_reference_path"]=str(durable)
                     report["reference_rows"]=len(ref)
             reportpath.write_text(json.dumps(report,indent=2,default=str)+"\n")
             print("RUDRA IMPORT | FINISHED",reportpath,flush=True)
