@@ -49,7 +49,7 @@ try:
 except Exception:
     launch_nq_download_once = None
 
-ASJR_ANALYST_VERSION = "2026.10.11.4"
+ASJR_ANALYST_VERSION = "2026.10.11.5"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -396,6 +396,32 @@ def _run_asjr_manual_pipeline_unlocked(
                 rudra_scanner_features = {
                     "state": "ERROR", "alert_delivery": "DISABLED",
                 }
+
+        # Extend the same alert evaluation to AI/IBKR-discovered scanner
+        # names using raw actual IBKR 5M/WAP bars already fetched by scanner.
+        # No extra broker request; no separate app; do not return raw bars.
+        try:
+            extra_premarket_raw = rudra_scanner_features.pop("_premarket_raw", None)
+            if isinstance(extra_premarket_raw, pd.DataFrame) and not extra_premarket_raw.empty:
+                selected_raw = extra_premarket_raw.rename(columns={
+                    "Ticker": "ticker", "Date": "datetime",
+                    "Open": "open", "High": "high", "Low": "low",
+                    "Close": "close", "Volume": "volume", "WAP": "wap",
+                })
+                both = pd.concat([prem_raw, selected_raw], ignore_index=True, sort=False)
+                both["datetime"] = pd.to_datetime(both["datetime"], utc=True)
+                both["_has_wap"] = both.get("wap", pd.Series(index=both.index,
+                                                               dtype="float64")).notna()
+                both = (both.sort_values(["ticker", "datetime", "_has_wap"])
+                        .drop_duplicates(["ticker", "datetime"], keep="last")
+                        .drop(columns=["_has_wap"]))
+                prem_events, prem_quality = evaluate_premarket(
+                    both, REPO_ROOT, paths.trading_day(trade_date))
+                logger.info("RUDRA-PREMARKET | ALL SOURCES | %s | candidates=%s",
+                            prem_quality, len(prem_events))
+        except Exception:
+            logger.exception("RUDRA-PREMARKET | extra ticker evaluation failed; preserving legacy candidates")
+        # End of AI/IBKR premarket supplemental evaluation.
 
         # Locked Reversal detection remains unchanged. ACTIVE mode
         # fetches and reuses a bounded 1H source for the same stock
