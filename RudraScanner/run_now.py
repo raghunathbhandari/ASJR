@@ -64,9 +64,11 @@ def run_standalone(*, dry_run=False):
             return 0
         # Import exactly the existing VPS launcher, not a copy of its logic.
         # Its imports are expected to work in the existing trading venv.
-        directory = str(CHAKRA_FILE.parent)
-        if directory not in sys.path:
-            sys.path.insert(0, directory)
+        # Chakra imports `utils.*` as a top-level package. Its parent,
+        # /root/trading, must be importable (not just /root/trading/utils).
+        for directory in (str(CHAKRA_FILE.parent.parent), str(CHAKRA_FILE.parent)):
+            if directory not in sys.path:
+                sys.path.insert(0, directory)
         spec = importlib.util.spec_from_file_location("chakra_run_now_launcher", CHAKRA_FILE)
         if spec is None or spec.loader is None:
             print("RUDRA RUN_NOW | ERROR: cannot load Chakra launcher")
