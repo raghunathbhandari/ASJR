@@ -1,4 +1,4 @@
-"""Strict, no-lookahead 5/20-day cumulative Relative Volume at Time.
+"""Strict, no-lookahead 5-day cumulative Relative Volume at Time.
 
 Independent of RudraScanner's original RTH RVOL20. Uses only completed,
 continuous 5-minute session buckets; missing history never becomes RVOL zero.
@@ -16,7 +16,7 @@ import pandas as pd
 ET = ZoneInfo("America/New_York")
 FIELDS = ["ticker", "session_date_et", "session", "minute", "cum_volume"]
 SEGMENTS = {"PRE": (240, 570), "RTH": (570, 960), "POST": (960, 1200)}
-MAX_SESSIONS = 21
+MAX_SESSIONS = 6
 
 
 def reference_path(root, trading_day):
@@ -114,9 +114,9 @@ def _clean_reference(frame, day):
 
 
 def calculate(bars, reference, *, trading_day):
-    """Return current-bar RVOL; unavailable means NaN and ready=False.
+    """Return 5-day current-bar RVOL; unavailable means NaN and ready=False.
 
-    Comparisons use the 5 or 20 *previous full sessions of the same segment*
+    Comparisons use the 5 *previous full sessions of the same segment*
     and identical minute-of-day; per-current-session cumulative history must
     be contiguous from session open to that bar.
     """
@@ -124,16 +124,14 @@ def calculate(bars, reference, *, trading_day):
     reference = _clean_reference(reference, trading_day)
     current = normalized[normalized["session_date_et"].eq(str(trading_day))].copy()
     current["rvol5"] = float("nan")
-    current["rvol20"] = float("nan")
     current["rvol5_ready"] = False
-    current["rvol20_ready"] = False
     for (ticker, session), group in current.groupby(["ticker", "session"], sort=False):
         history = reference[(reference["ticker"] == ticker)
                             & (reference["session"] == session)]
         available = sorted(history["session_date_et"].unique())
         group = group.sort_values("minute")
         start, _ = SEGMENTS[session]
-        for period in (5, 20):
+        for period in (5,):
             days = available[-period:]
             if len(days) < period:
                 continue
@@ -180,7 +178,6 @@ def update_history(bars, root, trading_day, *, save=False):
     return current, {
         "reference_file": str(source) if source else None,
         "ready5": int(current["rvol5_ready"].sum()) if len(current) else 0,
-        "ready20": int(current["rvol20_ready"].sum()) if len(current) else 0,
         "stored_rows": len(reference),
         "saved": bool(save and not reference.empty),
     }
@@ -191,17 +188,15 @@ def candidates(features):
     if features is None or features.empty:
         return features.iloc[0:0] if features is not None else pd.DataFrame()
     needed = {"close", "ema9", "vwap", "rvol5", "rvol20",
-              "rvol5_ready", "rvol20_ready", "minute", "session"}
+              "rvol5_ready", "minute", "session"}
     if not needed.issubset(features.columns):
         return features.iloc[0:0]
     minute = pd.to_numeric(features["minute"], errors="coerce")
     ok = (features["rvol5_ready"].eq(True)
-          & features["rvol20_ready"].eq(True)
           & pd.to_numeric(features["close"], errors="coerce").gt(
                 pd.to_numeric(features["ema9"], errors="coerce"))
           & pd.to_numeric(features["ema9"], errors="coerce").gt(
                 pd.to_numeric(features["vwap"], errors="coerce"))
           & pd.to_numeric(features["rvol5"], errors="coerce").le(0.5)
-          & pd.to_numeric(features["rvol20"], errors="coerce").le(0.5)
           & ~(minute.ge(570) & minute.lt(600)))
     return features[ok].copy()
