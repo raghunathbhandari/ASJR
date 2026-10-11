@@ -187,7 +187,7 @@ def candidates(features):
     """Pure premarket watch candidates; not a Discord sender."""
     if features is None or features.empty:
         return features.iloc[0:0] if features is not None else pd.DataFrame()
-    needed = {"close", "ema9", "vwap", "rvol5", "rvol20",
+    needed = {"close", "ema9", "vwap", "rvol5",
               "rvol5_ready", "minute", "session"}
     if not needed.issubset(features.columns):
         return features.iloc[0:0]
