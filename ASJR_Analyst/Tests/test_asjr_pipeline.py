@@ -49,7 +49,7 @@ try:
 except Exception:
     launch_nq_download_once = None
 
-ASJR_ANALYST_VERSION = "2026.10.11.5"
+ASJR_ANALYST_VERSION = "2026.10.11.6"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -443,6 +443,24 @@ def _run_asjr_manual_pipeline_unlocked(
                 logger.exception("RUDRA SCANNER | 1H collection failed")
                 rudra_scanner_hourly = {"state": "ERROR"}
 
+        # Bounded RVOL5 first-time historical import for selected AI/IBKR
+        # symbols; current pipeline and scanner broker work have completed.
+        # Three validation workers, ONE broker request at a time. Feature
+        # switch is OFF until live pacing/coverage tests are approved.
+        premarket_backfill_status = {"state": "DISABLED"}
+        try:
+            from RudraScanner.premarket_live_backfill import backfill_cycle
+            active_names = [r["ticker"] for r in rudra_scanner_shadow.get("candidates", [])]
+            premarket_backfill_status = backfill_cycle(
+                app, REPO_ROOT, paths.trading_day(trade_date),
+                active_names,
+            )
+            logger.info("RUDRA-PREMARKET | auto history | %s",
+                        premarket_backfill_status)
+        except Exception:
+            premarket_backfill_status = {"state": "ERROR"}
+            logger.exception("RUDRA-PREMARKET | isolated background history failed")
+
         # ACK one queued SSH request only AFTER this same cycle's
         # discovery + 5M report + 1H cache have completed. No extra scan.
         if manual_scan_request_id:
@@ -628,6 +646,7 @@ def _run_asjr_manual_pipeline_unlocked(
             "rudra_premarket_rvol_status": premarket_rvol_status,
             "rudra_premarket_events": prem_events,
             "rudra_premarket_quality": prem_quality,
+            "rudra_premarket_backfill_status": premarket_backfill_status,
             "rudra_premarket_test_file": premarket_test_file,
             "rudra_scanner_shadow": rudra_scanner_shadow,
             "rudra_scanner_features": rudra_scanner_features,
