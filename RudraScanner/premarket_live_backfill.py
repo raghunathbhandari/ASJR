@@ -92,7 +92,7 @@ def backfill_cycle(app, root, day, tickers, *, enabled=None,
     if selection["state"] != "OK":
         return selection
     if not chosen:
-        return {"state": "UP_TO_DATE_OR_ATTEMPTED", **selection, "selected": []}
+        return {**selection, "state": "UP_TO_DATE_OR_ATTEMPTED", "selected": []}
 
     repo = Path(root)
     store_lock = Lock()
