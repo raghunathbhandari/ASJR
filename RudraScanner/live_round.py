@@ -203,7 +203,7 @@ def run_live_scanner_round(app, repo_root, trade_date, candidates, legacy_5m,
     _atomic(target / "scalp_radar.txt", text_report)
     _atomic(target / "rudra_scanner_live_status.json",
             json.dumps(report, indent=2, default=str)+"\n")
-    return {"state": report["state"], "events": report["events"],
+    return {"_premarket_raw": raw, "state": report["state"], "events": report["events"],
             "collection": collection, "context": context,
             "files": files, "report": str(target / "scalp_radar.txt"),
             "quality": report["feature_status"],
