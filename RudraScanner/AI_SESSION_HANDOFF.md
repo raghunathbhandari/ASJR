@@ -1,5 +1,17 @@
 # ASJR / Chakra / Rudra-Premarket — AI SESSION HANDOFF
 
+## 2026-10-11 ~15:53 UK — New shadow signal hook; DO NOT RESTART FOR LIVE ALERTS YET
+
+User authorized implementation of live Rudra-Premarket alerts. Partial, **not yet production-ready**, commits:
+- `RudraScanner/premarket_live.py` evaluates completed EMA9, IBKR WAP VWAP and durable RVOL5, prepares formatting and persisted acknowledgement helpers.
+- `RudraScanner/premarket_alert_config.json` deliberately `enabled: false`; no Discord BUY WATCH may be sent.
+- `ASJR_Analyst/Tests/test_asjr_pipeline.py` version `2026.10.11.3` installs WAP callback capture before existing 5m fetch and executes a guarded SHADOW `evaluate_premarket` on renamed 5m raw bars. Fixed prior erroneous `update_premarket_history(intraday,...)` input: now uses `prem_raw` with lowercased ticker/datetime/volume. Need Python compilation + end-to-end tests, and robust init when raw feed absent.
+- **Major blocker**: `RudraScanner/features.build_scanner_features` computes WAP-based VWAP for RTH only, NOT PRE/POST. Thus premarket and after-hours signal logic is not ready; VWAP user requirements cannot be claimed implemented. Live current-bar completeness, UK time, state/dedup ACK, external Chakra Discord integration and cross-process scheduler lock need test and additional wiring.
+- `--premarket-test` still does not guarantee alerts are suppressed in full standalone mode; regular Chakra messages may be sent. Do NOT restart bot with these new commits on assumption they are tested. User needs clear warning.
+
+---
+
+
 ## 2026-10-11 ~15:46 UK — RVOL5 RETENTION PROTECTION / CLEANUP CONTRACT
 
 User requires automatic five-day DataLake cleanup to **never delete the last five usable RVOL5 historical sessions**. Implemented code changes:
