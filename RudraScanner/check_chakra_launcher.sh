@@ -10,7 +10,11 @@ echo "=== GIT / VERSION ==="
 git status --short
 git log -1 --format='%h %s'
 echo "=== PYTHON COMPILE (no import execution) ==="
-"$PY" -m py_compile RudraScanner/run_now.py RudraScanner/scan_now.py RudraScanner/premarket_rvol.py RudraScanner/premarket_backfill.py RudraScanner/premarket_diagnostic.py
+"$PY" -m py_compile ASJR_Analyst/Tests/test_asjr_pipeline.py \
+ RudraScanner/run_now.py RudraScanner/scan_now.py \
+ RudraScanner/premarket_rvol.py RudraScanner/premarket_backfill.py \
+ RudraScanner/premarket_diagnostic.py RudraScanner/premarket_live.py \
+ RudraScanner/premarket_live_backfill.py RudraScanner/live_round.py
 echo "=== TARGETED TESTS ==="
 "$PY" -m unittest discover -s RudraScanner/tests -p 'test_premarket*.py' -v
 "$PY" -m unittest discover -s RudraScanner/tests -p 'test_run_now.py' -v
