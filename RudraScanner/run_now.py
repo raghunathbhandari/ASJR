@@ -116,6 +116,9 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.status or args.saved:
         return queue_existing(args)
+    if args.dry_run:
+        # Never queue a live cycle simply because a dry run was requested.
+        return run_standalone(dry_run=True)
     if args.mode == "queue":
         return queue_existing(args)
     if args.mode == "auto" and bot_running():
