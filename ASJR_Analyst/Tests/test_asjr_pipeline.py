@@ -49,7 +49,7 @@ try:
 except Exception:
     launch_nq_download_once = None
 
-ASJR_ANALYST_VERSION = "2026.10.11.2"
+ASJR_ANALYST_VERSION = "2026.10.11.3"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -230,7 +230,7 @@ def run_asjr_manual_pipeline(
         scanner_clock = scanner_runtime(
             REPO_ROOT, paths.trading_day(trade_date)
         )
-        if str(scanner_clock.get("mode", "off")).lower() in ("shadow", "active"):
+        if True:  # WAP required by Rudra-Premarket; zero additional API calls
             try:
                 from RudraScanner.wap_capture import install_wap_capture
                 install_wap_capture(app)
@@ -265,13 +265,29 @@ def run_asjr_manual_pipeline(
         logger.info("FILE | Saved intraday_5m | %s", intraday_file)
 
         intraday = intraday_features.add_intraday_features(intraday_raw)
+        # Evaluate premaket signal on the raw verified IBKR WAP-based feature
+        # feed, never on legacy EMA20/wick features. Shadow by default.
+        try:
+            from RudraScanner.premarket_live import evaluate as evaluate_premarket
+            prem_raw = intraday_raw.rename(columns={
+                "Ticker":"ticker","Date":"datetime","Open":"open",
+                "High":"high","Low":"low","Close":"close",
+                "Volume":"volume","WAP":"wap",
+            })
+            prem_events, prem_quality = evaluate_premarket(
+                prem_raw, REPO_ROOT, paths.trading_day(trade_date))
+            logger.info("RUDRA-PREMARKET | SIGNAL SHADOW | %s | candidates=%s",
+                        prem_quality, len(prem_events))
+        except Exception:
+            prem_events, prem_quality = [], {"state":"ERROR"}
+            logger.exception("RUDRA-PREMARKET | signal shadow failed")
         # Rudra-Premarket V1: rolling five-day same-session cumulative volume
         # history, reusing the existing 5M feed and shared DataLake. Research
         # calculation only until verified IBKR history and WAP VWAP are ready.
         # Missing history never substitutes an RVOL of zero.
         try:
             premarket_rvol, premarket_rvol_status = update_premarket_history(
-                intraday, REPO_ROOT, paths.trading_day(trade_date), save=True
+                prem_raw, REPO_ROOT, paths.trading_day(trade_date), save=True
             )
             logger.info(
                 "RUDRA-PREMARKET | RVOL5 history | ready=%s | stored=%s",
@@ -584,6 +600,8 @@ def run_asjr_manual_pipeline(
             "alert_data": alert_data,
             "rudra_reversal_alerts": rudra_reversal_alerts,
             "rudra_premarket_rvol_status": premarket_rvol_status,
+            "rudra_premarket_events": prem_events,
+            "rudra_premarket_quality": prem_quality,
             "rudra_premarket_test_file": premarket_test_file,
             "rudra_scanner_shadow": rudra_scanner_shadow,
             "rudra_scanner_features": rudra_scanner_features,
