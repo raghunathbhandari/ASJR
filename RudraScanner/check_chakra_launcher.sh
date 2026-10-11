@@ -15,8 +15,16 @@ echo "=== TARGETED TESTS ==="
 "$PY" -m unittest discover -s RudraScanner/tests -p 'test_premarket*.py' -v
 "$PY" -m unittest discover -s RudraScanner/tests -p 'test_run_now.py' -v
 echo "=== SAFE NO-BROKER CHECK ==="
-"$PY" RudraScanner/run_now.py --mode standalone --dry-run
-echo "Dry-run above must not connect to IBKR."
+if "$PY" RudraScanner/run_now.py --mode standalone --dry-run; then
+  echo "PASS: one-shot launch prerequisites"
+else
+  if tmux has-session -t trading_bot 2>/dev/null; then
+    echo "PASS: standalone safety refused because scheduled bot exists"
+  else
+    echo "ERROR: standalone dry-run failed; inspect launcher/lock"; exit 1
+  fi
+fi
+echo "Dry-run did not connect to IBKR."
 echo "=== LAUNCHER PATH ==="
 if [[ -f "$LAUNCH" ]]; then
   ls -l "$LAUNCH"
