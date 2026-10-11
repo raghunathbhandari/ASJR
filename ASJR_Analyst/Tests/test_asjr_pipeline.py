@@ -49,7 +49,7 @@ try:
 except Exception:
     launch_nq_download_once = None
 
-ASJR_ANALYST_VERSION = "2026.10.11.6"
+ASJR_ANALYST_VERSION = "2026.10.11.7"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -305,6 +305,7 @@ def _run_asjr_manual_pipeline_unlocked(
             premarket_test_file = save_diagnostic(
                 premarket_rvol, premarket_rvol_status,
                 REPO_ROOT, paths.trading_day(trade_date),
+                events=prem_events, signal_quality=prem_quality,
             )
         except Exception:
             premarket_test_file = None
@@ -422,6 +423,17 @@ def _run_asjr_manual_pipeline_unlocked(
         except Exception:
             logger.exception("RUDRA-PREMARKET | extra ticker evaluation failed; preserving legacy candidates")
         # End of AI/IBKR premarket supplemental evaluation.
+        # Replace initial legacy-only diagnostic with complete current
+        # selected-ticker results when scanner has supplied extra WAP bars.
+        try:
+            from RudraScanner.premarket_diagnostic import save_diagnostic
+            premarket_test_file = save_diagnostic(
+                premarket_rvol, premarket_rvol_status,
+                REPO_ROOT, paths.trading_day(trade_date),
+                events=prem_events, signal_quality=prem_quality,
+            )
+        except Exception:
+            logger.exception("RUDRA-PREMARKET | final diagnostic update failed")
 
         # Locked Reversal detection remains unchanged. ACTIVE mode
         # fetches and reuses a bounded 1H source for the same stock
