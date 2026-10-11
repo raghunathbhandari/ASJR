@@ -15,9 +15,12 @@ echo "=== PYTHON COMPILE (no import execution) ==="
  RudraScanner/premarket_rvol.py RudraScanner/premarket_backfill.py \
  RudraScanner/premarket_diagnostic.py RudraScanner/premarket_live.py \
  RudraScanner/premarket_live_backfill.py RudraScanner/live_round.py
+"$PY" -m py_compile RudraScanner/install_chakra_round_lock.py
+"$PY" RudraScanner/install_chakra_round_lock.py --check
 echo "=== TARGETED TESTS ==="
 "$PY" -m unittest discover -s RudraScanner/tests -p 'test_premarket*.py' -v
 "$PY" -m unittest discover -s RudraScanner/tests -p 'test_run_now.py' -v
+"$PY" -m unittest discover -s RudraScanner/tests -p 'test_chakra_round_lock_install.py' -v
 echo "=== SAFE NO-BROKER CHECK ==="
 if "$PY" RudraScanner/run_now.py --mode standalone --dry-run; then
   echo "PASS: one-shot launch prerequisites"
