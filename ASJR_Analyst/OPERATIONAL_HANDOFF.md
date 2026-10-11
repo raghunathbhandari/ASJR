@@ -1,5 +1,8 @@
 # ASJR Analyst operational handoff
 
+> **START HERE (2026-10-11):** Read [`RudraScanner/AI_SESSION_HANDOFF.md`](../../RudraScanner/AI_SESSION_HANDOFF.md) first for the up-to-date full Chakra/app/manual-run/import/test/source/status guide. This operational log contains historical snapshots, including old statements that tests were not yet run; the new guide reconciles verified evidence and current pending work.
+
+
 ## 2026-10-11 Background five-day history import — opt-in implementation, NOT LIVE
 
 User approved up to three ticker-wise background workers, one IBKR history request at a time initially, through the **existing** Chakra app (no second IBKR connection, no second bot/scheduler), deduplicated new-ticker import and first-time 5-session RVOL baseline. Commit `RudraScanner/premarket_backfill.py` (queue with max workers=3, broker concurrency=1, bounded retries delegated to existing IBKR helper) and `RudraScanner/tests/test_premarket_backfill.py` (offline tests; NOT YET EXECUTED on VPS).
