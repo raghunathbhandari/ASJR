@@ -19,6 +19,11 @@ SEGMENTS = {"PRE": (240, 570), "RTH": (570, 960), "POST": (960, 1200)}
 MAX_SESSIONS = 5
 
 
+def durable_reference_path(root):
+    """Outside dated DataLake; survives day-folder retention cleanup."""
+    return Path(root) / "ASJR_Analyst" / "state" / "rudra_premarket_rvol5.csv"
+
+
 def reference_path(root, trading_day):
     return (Path(root) / "ASJR_Analyst" / "DataLake" / str(trading_day)
             / "processed" / "rudra_premarket_rvol_history.csv")
@@ -156,7 +161,9 @@ def calculate(bars, reference, *, trading_day):
 
 def update_history(bars, root, trading_day, *, save=False):
     """Roll forward verified old complete sessions; no external requests."""
-    source = _previous_reference(root, trading_day)
+    source = durable_reference_path(root)
+    if not source.is_file():
+        source = _previous_reference(root, trading_day)
     if source is None:
         stored = pd.DataFrame(columns=FIELDS)
     else:
@@ -174,6 +181,11 @@ def update_history(bars, root, trading_day, *, save=False):
         temp = target.with_suffix(".tmp")
         temp.write_text(reference.to_csv(index=False), encoding="utf-8")
         os.replace(temp, target)
+        durable = durable_reference_path(root)
+        durable.parent.mkdir(parents=True, exist_ok=True)
+        durable_tmp = durable.with_suffix(".tmp")
+        durable_tmp.write_text(reference.to_csv(index=False), encoding="utf-8")
+        os.replace(durable_tmp, durable)
     current = calculate(bars, reference, trading_day=trading_day)
     return current, {
         "reference_file": str(source) if source else None,
