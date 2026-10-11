@@ -49,7 +49,7 @@ try:
 except Exception:
     launch_nq_download_once = None
 
-ASJR_ANALYST_VERSION = "2026.10.11.3"
+ASJR_ANALYST_VERSION = "2026.10.11.4"
 
 for m in (
     paths, asjr_day, storage, watchlist, universe, ibkr, yfd,
@@ -619,14 +619,36 @@ def run_asjr_manual_pipeline(
         raise
 
 
+_premarket_prepared_events = []
+
+
 def prepare_alert(result):
-    """Compatibility formatter; use alert_sender to send every wick immediately."""
-    return alerts.prepare_alert(result)
+    """Reuse canonical Chakra Discord sender; BUY WATCH is independently gated."""
+    global _premarket_prepared_events
+    _premarket_prepared_events = []
+    original = alerts.prepare_alert(result)
+    try:
+        from RudraScanner.premarket_live import enabled, prepare
+        if enabled() and result:
+            events = result.get("rudra_premarket_events", [])
+            additional = prepare(events, REPO_ROOT)
+            if additional:
+                _premarket_prepared_events = events
+                return "\n".join(part for part in (original, additional) if part)
+    except Exception as exc:
+        print("RUDRA-PREMARKET | formatter failure, other alerts preserved:", exc)
+    return original
 
 
 def mark_alert_sent():
-    """Acknowledge the prepared Discord wick batch after successful send."""
-    return alerts.mark_alert_sent()
+    """Only acknowledge BUY WATCH after existing Chakra reports send success."""
+    global _premarket_prepared_events
+    existing = alerts.mark_alert_sent()
+    if _premarket_prepared_events:
+        from RudraScanner.premarket_live import acknowledge
+        acknowledge(_premarket_prepared_events, REPO_ROOT)
+        _premarket_prepared_events = []
+    return existing
 
 
 
