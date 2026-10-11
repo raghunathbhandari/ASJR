@@ -1,5 +1,23 @@
 # ASJR / Chakra / Rudra-Premarket — AI SESSION HANDOFF
 
+## 2026-10-11 ~15:46 UK — RVOL5 RETENTION PROTECTION / CLEANUP CONTRACT
+
+User requires automatic five-day DataLake cleanup to **never delete the last five usable RVOL5 historical sessions**. Implemented code changes:
+- `RudraScanner.premarket_rvol.durable_reference_path(ROOT)` points to `ASJR_Analyst/state/rudra_premarket_rvol5.csv` (OUTSIDE `DataLake/YYYY-MM-DD`). `update_history` reads durable baseline first; whenever `save=True`, writes both daily `DataLake/YYYY-MM-DD/processed/rudra_premarket_rvol_history.csv` and durable state atomically.
+- `RudraScanner/import_premarket_history.py` merges newly fetched profiles with existing durable/daily references, preserving other ticker histories across import batches, and writes both destinations. Never rerun an old unpatched importer after the initial reference is protected.
+- `RudraScanner/protect_rvol5_history.py --for-day 2026-10-12` migrates existing 27,744-row daily reference (actual post-validation row count to be checked) to durable state without IBKR, shows rows/tickers/ready session groups, and fails closed on invalid source.
+- **The actual VPS five-day deletion cron/script lives outside verified ASJR repo files or has not yet been identified; it has NOT been modified or audited.** Before running cleanup, confirm that it only targets date-stamped `ASJR_Analyst/DataLake/YYYY-MM-DD`, NEVER `ASJR_Analyst/state`, and does not delete the baseline before migration. Ideally add a guard to the real cleanup job to verify a readable durable file with five completed sessions per eligible ticker/segment, or preserve dated source until guard passes. Durable baseline is a compact rolling cache; long-term research raw files are subject to separate policy.
+- Operational migration:
+```bash
+cd /root/trading/ASJR
+git pull --ff-only origin main
+/root/trading/venv_new/bin/python RudraScanner/protect_rvol5_history.py --for-day 2026-10-12
+```
+Do this BEFORE automatic cleanup deletes 2026-10-12 reference. Verify output. Future scheduled pipeline uses the durable state automatically after next code load/restart. No live Bot restart verified.
+
+---
+
+
 ## 2026-10-11 ~15:44 UK — VERIFIED RVOL5 REFERENCE COVERAGE
 
 User inspected `ASJR_Analyst/DataLake/2026-10-09/reports/rudra_premarket_backfill.json` on VPS. Actual output: `FETCHED: 30`; reference exists at `ASJR_Analyst/DataLake/2026-10-12/processed/rudra_premarket_rvol_history.csv`; `REFERENCE ROWS: 27744`. Per-segment complete historical sessions: **RTH >=5 for 30/30; POST >=5 for 30/30; PRE >=5 for 26/30**. Four PRE not ready: WTTR=1, OPRX=0 (absent PRE in report), AMT=2, HUM=1. NXPI PRE=9, TMUS PRE=8, FSLY PRE=9; other ready PRE generally 10. Many RTH and POST report 10 prior complete sessions, but the saved reference module `_clean_reference` retains only LAST FIVE per ticker/segment; do not confuse raw coverage counts with stored 5-session baseline.
