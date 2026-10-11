@@ -13,28 +13,28 @@ def enabled():
     try:return json.loads(CONFIG.read_text()).get("enabled") is True
     except (OSError,ValueError):return False
 def _exact_segment_vwap(joined):
-    """Same-session cumulative IBKR WAP x volume / volume, fail closed on gaps."""
-    joined=joined.copy()
-    joined["vwap"]=float("nan")
-    joined["vwap_ready"]=False
-    joined=joined.sort_values(["ticker","timestamp_et"])
-    starts={"PRE":240,"RTH":570,"POST":960}
-    for (ticker,day,session),part in joined.groupby(
-            ["ticker","session_date_et","session"],sort=False):
-        minute=part["minute"].astype(int).tolist()
-        good=(pd.to_numeric(part["wap"],errors="coerce").gt(0)
-              & pd.to_numeric(part["volume"],errors="coerce").gt(0))
-        prev=None
-        for idx,row in part.iterrows():
-            m=int(row["minute"])
-            contiguous=(m==starts[session]) if prev is None else (m==prev+5)
-            if not contiguous or not bool(good.loc[idx]):
-                break
-            prev=m
-            current=joined.loc[part.index[:part.index.get_loc(idx)+1]]
-            total=float(current["volume"].sum())
-            joined.loc[idx,"vwap"]=float((current["wap"]*current["volume"]).sum())/total
-            joined.loc[idx,"vwap_ready"]=True
+    """Exact per-segment IBKR-WAP VWAP. Fail closed after any missing bar."""
+    joined = joined.sort_values(["ticker", "timestamp_et"]).copy()
+    joined["vwap"] = float("nan")
+    joined["vwap_ready"] = False
+    starts = {"PRE": 240, "RTH": 570, "POST": 960}
+    groups = joined.groupby(["ticker", "session_date_et", "session"], sort=False)
+    for (_, _, session), part in groups:
+        if session not in starts:
+            continue
+        minute = part["minute"].astype(int)
+        start = starts[session]
+        expected = pd.Series(range(start, start + 5 * len(part), 5), index=part.index)
+        valid = (
+            minute.eq(expected)
+            & pd.to_numeric(part["wap"], errors="coerce").gt(0)
+            & pd.to_numeric(part["volume"], errors="coerce").gt(0)
+        )
+        valid_prefix = valid.cummin()
+        weighted = (part["wap"] * part["volume"]).cumsum()
+        total = part["volume"].cumsum()
+        joined.loc[part.index, "vwap"] = (weighted / total.where(total.gt(0))).where(valid_prefix)
+        joined.loc[part.index, "vwap_ready"] = valid_prefix.to_numpy()
     return joined
 
 def evaluate(raw,root,day,now=None):
@@ -50,7 +50,7 @@ def evaluate(raw,root,day,now=None):
     v=calculate(f[["ticker","datetime","volume"]].copy(),ref,trading_day=str(day))
     if v.empty:
         return [],{"state":"NO_CURRENT_SESSION"}
-    frame=f.drop(columns=["session"],errors="ignore").copy()
+    frame=f.drop(columns=["session","session_date_et","vwap","vwap_ready"],errors="ignore").copy()
     frame["timestamp_et"]=pd.to_datetime(frame["datetime"],utc=True).dt.tz_convert(ET)
     frame=frame.merge(v[["ticker","timestamp_et","session_date_et","rvol5",
                          "rvol5_ready","minute","session"]],on=["ticker","timestamp_et"],
