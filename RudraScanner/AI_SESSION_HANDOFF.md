@@ -1,5 +1,30 @@
 # ASJR / Chakra / Rudra-Premarket — AI SESSION HANDOFF
 
+## 2026-10-11 ~16:00 UK — Completed code stage for gated BUY WATCH, NOT DEPLOYED
+
+User authorized full new Rudra-Premarket alert implementation and a safe Chakra restart once verified. GitHub commits now include:
+- `RudraScanner/premarket_live.py`: evaluates the **latest completed and fresh 5-minute bar** using continuous EMA9, verified IBKR historical-bar WAP weighted into a strict contiguous-session cumulative VWAP for PRE/RTH/POST, and saved five-session same-segment cumulative RVOL; rejects 09:30–10:00 ET, no missing volume filled, no stale replay. `prepare` formats grouped UK-time BUY WATCH message; `acknowledge` persists sent keys only AFTER existing Chakra Discord success.
+- `RudraScanner/premarket_alert_config.json`: **enabled=false, auto_backfill=false**. This is intentional. A Git pull or restart CANNOT cause new experimental BUY WATCH messages or background imports unless both respective gates are deliberately switched and VPS tested.
+- `ASJR_Analyst/Tests/test_asjr_pipeline.py` version `2026.10.11.7`: canonical hook installs WAP callback before legacy same-app 5m fetch, calls live evaluator in SHADOW, reads durable RVOL5, adds selected AI/IBKR scanner extra WAP bars to final alert evaluation, retains existing Reversal/Wicks/snapshot/Git flow, exposes signal events/quality. `prepare_alert(result)` uses existing external `SN.send_to_discord` wrapper, joins premarket message when enabled, `mark_alert_sent()` acknowledges after successful send. The original canonical function is now `_run_asjr_manual_pipeline_unlocked`, called via locked public `run_asjr_manual_pipeline(...)`.
+- `RudraScanner/premarket_live_backfill.py`: *gated* three-worker historical import for new selected tickers (one IBKR history request at a time, max three ticker requests per full cycle, atomic shared reference merge, no duplicate same-day attempt). Invoked after other scanner broker stages, with SAME app, and joins workers before pipeline finishes.
+- `RudraScanner/run_now.py`: manual started-app path reuses current lock and passes controlled environment flag into pipeline. `--dry-run` explicitly never queues broker work.
+- `RudraScanner/install_chakra_round_lock.py`: reversible **external VPS launcher patch**, required for a full lock covering both canonical pipeline and original Discord send/ACK. `--check` only validates safety, `--apply` creates timestamped backup before patching `/root/trading/utils/trading_sudarsan_chakra.py`; does not change its trading/data/Discord body. DO NOT apply/restart without first passing tests and reviewing output.
+- New offline tests: `test_premarket_live.py`, `test_premarket_live_backfill.py`, `test_chakra_round_lock_install.py`, revised `test_run_now.py`; `check_chakra_launcher.sh` compiles new modules, executes targeted unit tests, performs read-only launcher patch preview and non-broker dry-run.
+
+**CRITICAL DEPLOYMENT STATUS**: NO VPS test output has been received for these new post-version-2026.10.11.7 changes. Earlier 9/9 RVOL/backfill and 3/3 or 4/4 run_now tests are OLD and do NOT establish that new code works. No live BUY WATCH delivery was tested, none enabled. User asked "can I restart BOT now?": wait for green offline tests. After pull:
+```bash
+cd /root/trading/ASJR
+git pull --ff-only origin main
+bash RudraScanner/check_chakra_launcher.sh
+```
+This is NO BROKER / NO ALERT test. If PASS, next carefully inspect output and run reversible lock installer with `--apply` ONLY with bot stopped and user approval, then restart bot in SHADOW (both gates still off), and verify normal Chakra logs. The user may enable live messages only after a real market-cycle quality check and explicit gate commit.
+**Unresolved specification discrepancy**: TV-style "1 Day Anchor" cumulative RVOL could cross PRE/RTH/POST, while this implementation computes cumulative RVOL separately within each segment; user confirmation needed before claiming indicator parity. Current complete-history data ready: 30 RTH, 30 POST, 26 PRE, stored 27,744 rows at durable state. Date-folder cleanup task was updated to preserve durable RVOL baseline.
+**Possible alert delivery tradeoff**: message is appended to other active alert text through single existing external Chakra send. Combined message should be bounded to Discord's limit before enabling if scanner/reversal messages can be lengthy.
+**No production claim** until operational logs prove signal timing, exact VWAP, selected AI names, dedup, Discord ACK, and cross-process lock.
+
+---
+
+
 ## 2026-10-11 ~15:53 UK — New shadow signal hook; DO NOT RESTART FOR LIVE ALERTS YET
 
 User authorized implementation of live Rudra-Premarket alerts. Partial, **not yet production-ready**, commits:
