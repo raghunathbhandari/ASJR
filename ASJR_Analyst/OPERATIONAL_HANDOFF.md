@@ -1,5 +1,16 @@
 # ASJR Analyst operational handoff
 
+## 2026-10-11 Rudra-Premarket alert change — PARTIALLY COMMITTED, NOT LIVE
+
+User explicitly replaced old Wicks with new Rudra-Premarket: strict 5m Price > EMA9 > VWAP; 5D and 20D cumulative RVOL-at-time <=0.5; exclude 09:30–10:00 America/New_York, monitor all other available sessions; format fixed header RUDRA-PREMARKET and one separate line per simultaneously qualifying ticker; immediate Discord delivery, UK HH:MM, no batches spanning scanner cycles. No automatic trades. Full approved specification: `ASJR_Analyst/RUDRA_PREMARKET_SPEC.md`.
+
+COMMITTED: all five setups in `ASJR_Analyst/config/wick_setups.json` switched to `enabled:false`, preserving Wicks implementation and other alerts. As the code reads the setup file on each pipeline run, the change should take effect on the next successful Git pull into VPS; NOT verified live or pulled. Existing pending legacy Wicks may still be in state but will not pass the disabled detector.
+
+NOT IMPLEMENTED: Rudra-Premarket calculation/integration/Discord alerts. Existing 3D IBKR 5m feed is insufficient for reliable 20-day cumulative same-time RVOL outside RTH. Existing `RudraScanner/volume_history.py` only verifies 20 prior full RTH sessions, cannot be reused silently for premarket/afterhours and lacks 5D ratios. Need source/persistent full 5m extended-hours reference and session-aware 5/20 comparisons, verified WAP VWAP/EMA9, completed-bar gating, per-ticker dedup, immediate all-ticker grouped dispatch with Discord limit handling, then unit/VPS live tests. Until implemented, NO Rudra-Premarket messages will be produced; keep scanner experimental Discord separate and the locked Rudra-Reversal alert path intact. Do not tell user the new alert is active. Explicitly communicate this interim gap.
+
+---
+
+
 Updated 2026-10-10 (UK). This records the implementation and observed state for Rudrakchhya and future ASJR sessions. Check the current Git branch, VPS logs and today's DataLake files before treating a run as live-verified.
 
 ## LATEST ASJR / RUDRASCANNER STATE — 2026-10-10, after 13:38 UTC
