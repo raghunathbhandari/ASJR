@@ -14,7 +14,7 @@ def report_path(root, day):
             / "reports" / "rudra_premarket_test.json")
 
 
-def save_diagnostic(rvol, status, root, day):
+def save_diagnostic(rvol, status, root, day, *, events=None, signal_quality=None):
     """Persist current RVOL5 readiness and reject unverified MA/VWAP signals."""
     path = report_path(root, day)
     rows = []
@@ -30,15 +30,17 @@ def save_diagnostic(rvol, status, root, day):
                           if pd.notna(last["rvol5"]) else None,
                 "rvol5_ready": bool(last["rvol5_ready"]),
                 "excluded_open": 570 <= minute < 600,
-                "signal": "NOT_EVALUATED_MISSING_VERIFIED_EMA9_VWAP",
+                "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS" if signal_quality is not None else "NOT_EVALUATED",
             })
     content = {
         "date_et": str(day),
+        "signal_quality": signal_quality or {"state": "NOT_EVALUATED"},
+        "signal_events": list(events or []),
         "mode": "SHADOW_DIAGNOSTIC_NO_DISCORD",
         "history": status,
         "tickers": sorted(rows, key=lambda x: x["ticker"]),
-        "notice": ("RVOL5 calculation only. Does not certify Price>EMA9>VWAP "
-                   "or create BUY WATCH alerts. Backfill queue not activated."),
+        "notice": ("Signal evaluation diagnostic; BUY WATCH Discord still separately gated. "
+                   "Refer to signal_quality and signal_events; no order is executed."),
     }
     path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_suffix(".tmp")
@@ -60,6 +62,8 @@ def print_saved(root, day):
     print("RUDRA-PREMARKET | ONE ROUND DIAGNOSTIC |", day)
     print("MODE:", report.get("mode"))
     print("HISTORY:", report.get("history"))
+    print("SIGNAL QUALITY:", report.get("signal_quality"))
+    print("SIGNAL EVENTS:", report.get("signal_events"))
     for item in report.get("tickers", []):
         rv = item["rvol5"]
         label = "%.2fx" % rv if rv is not None else "NOT READY"
