@@ -1,4 +1,13 @@
 # ASJR / Chakra / Rudra-Premarket — AI SESSION HANDOFF
+
+## 2026-10-11 ~15:42 UK — VERIFIED FIRST HISTORICAL FETCH RESULT (user VPS log)
+
+The user ran `/root/trading/venv_new/bin/python RudraScanner/import_premarket_history.py --day 2026-10-09 --max-tickers 30`. Terminal printed `RUDRA IMPORT | FINISHED .../2026-10-09/reports/rudra_premarket_backfill.json` with **30 of 30 ticker requests successful**, no reported historical fetch errors. All used the existing Gateway helper and IBKR client ID 656; volume of data varied (common 1,920 bars, NXPI 1,884, WTTR 1,413, OPRX 1,267, AMT 1,533, HUM 1,444, TMUS 1,906, FSLY 1,912). Fixed list 19 rows, 18 included, ONDS excluded; AI 14 enabled; saved Friday IBKR mover source 87 symbols (not a Sunday live scan). Selected 30 in source order: MSFT CRDO SMCI QCOM AMAT ORCL WDC MRVL LRCX NXPI AKAM WTTR MCHP OPRX MU CAT TSLA INTC SPCX PLTR LITE AMT HUM AMZN TMUS AAPL JPM NVDA FSLY NVAX.
+
+**DO NOT CLAIM RVOL5 READY.** The terminal output does not print `complete_prior_sessions`, reference row count or whether `2026-10-12/processed/rudra_premarket_rvol_history.csv` exists. Check these from JSON/read-only shell commands before claiming readiness. Historical data retrieval succeeded; no BUY WATCH signals, EMA9/VWAP, Discord or full open-market canonical pipeline were tested by this run. Imported raw CSVs are in VPS local DataLake and were not pushed to Git automatically.
+
+---
+
 **Last updated:** 2026-10-11, ~15:40 UK. **Canonical starting point for the next AI/Codex session.**
 **Truthfulness:** statuses below are confirmed only to the extent supported by actual commit history or VPS output. Do not interpret a committed module as running in production.
 
