@@ -1,13 +1,13 @@
 {
-  "state": "EXPERIMENTAL_RESEARCH",
+  "state": "INDICATORS_ONLY",
   "feature_status": {
-    "state": "OK",
-    "input_rows": 11543,
-    "completed_rows": 11543,
+    "state": "MISSING",
+    "input_rows": 0,
+    "completed_rows": 0,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
-    "tickers": 26,
+    "tickers": 0,
     "min_periods": 9,
     "session_reset": false,
     "extended_hours_included": true,
@@ -16,16 +16,16 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 11543,
+    "no_wap_rows": 0,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
   "detector_status": {
-    "state": "OK",
-    "tickers": 21,
+    "state": "DISABLED",
+    "tickers": 0,
     "emitted": 0,
     "blocked_context": 0,
-    "blocked_data": 21,
+    "blocked_data": 0,
     "blocked_session": 0,
     "mode": "RESEARCH_ONLY"
   },
@@ -42,12 +42,9 @@
   },
   "context": {
     "state": "WAIT",
-    "reason": "MIXED_OR_NEUTRAL_BENCHMARKS",
-    "timestamp": "2026-10-12 14:10:00+00:00",
-    "index_pct": {
-      "SPY": -0.0873,
-      "QQQ": -0.7161
-    },
+    "reason": "NO_COMPLETED_BARS",
+    "timestamp": null,
+    "index_pct": {},
     "sector_etf": {
       "AKAM": "XLK",
       "MRVL": "XLK",
@@ -65,10 +62,17 @@
   },
   "collection": {
     "requested": [
-      "AI",
-      "MDT",
-      "MMED",
-      "VZ",
+      "AKAM",
+      "AMAT",
+      "CRDO",
+      "INTC",
+      "MRVL",
+      "MSFT",
+      "ORCL",
+      "QCOM",
+      "SMCI",
+      "WDC",
+      "WTTR",
       "SPY",
       "QQQ",
       "SMH",
@@ -76,26 +80,16 @@
       "XLK"
     ],
     "symbols": [
-      "AI",
       "AKAM",
       "AMAT",
-      "ASTS",
-      "CBRS",
-      "CCC",
       "CRDO",
       "INTC",
-      "IONQ",
-      "MDT",
-      "MMED",
       "MRVL",
       "MSFT",
-      "NVTS",
       "ORCL",
       "QCOM",
       "SMCI",
-      "VZ",
       "WDC",
-      "WOLF",
       "WTTR",
       "SPY",
       "QQQ",
@@ -115,8 +109,6 @@
       "QCOM": "SMH",
       "WTTR": "XLE"
     },
-    "state": "COLLECTED",
-    "count": 11543,
-    "source": "SAME_IBKR_APP"
+    "state": "DATA_NOT_READY"
   }
 }
