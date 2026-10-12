@@ -1,3 +1,13 @@
+## 2026-10-12 16:35 UK — SMB TOP 5 PRECOMPUTED EVERY CHAKRA CYCLE (COMMITTED; VPS NOT YET VERIFIED)
+
+**User clarified desired behavior:** Every normal ~5-minute Chakra scanner cycle must automatically filter the latest saved four-code IBKR RAW source and persist the SMB Top 5 ranking without a manual request. Manual Discord `!runpy RudraScanner/scan_now\\.py --top` must ONLY READ this prepared ranking, not initiate filtering or any broker request. No scheduled Discord delivery.
+
+**Changes on GitHub main:** `RudraScanner/category_board.py::save_board` writes the existing board and then atomically saves `ASJR_Analyst/DataLake/YYYY-MM-DD/processed/rudra_smb_top5.txt` by calling `scan_rankings` on all latest four-code RAW rows. `RudraScanner/scan_now.py --top` reads that text snapshot directly, refuses if absent or older than 20 minutes. Added `RudraScanner/tests/test_top5_snapshot.py` to check saved snapshot content. The existing pipeline invokes `save_board` through `run_live_scanner_round`; if the Chakra sidecar does not finish or is disabled, no fresh ranking is produced. Scanner membership/classifications remain research watch only, not buy/sell signals. No new IBKR connection, scheduler, or auto-Discord send.
+
+**Verification pending:** New commits exist on GitHub, but VPS pull/reload, actual 5-minute snapshot generation, manual command read, and new unit tests are NOT YET verified on VPS. Check latest saved file timestamp and contents after a real successful Chakra cycle. Do not claim live behavior until tested.
+
+---
+
 # ASJR Analyst operational handoff
 
 ## 2026-10-12 16:24 UK — VERIFIED RUDRA SCANNER TWO MODES AND CALLS
