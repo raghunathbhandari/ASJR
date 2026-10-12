@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-10-12T11:58:48.166349Z",
+  "generated_at_utc": "2026-10-12T12:04:24.505428Z",
   "fixed": {
     "state": "PARTIAL",
     "path": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-12/config/fixed_watchlist.csv",
@@ -16,13 +16,10 @@
   "ai": {
     "state": "PARTIAL",
     "rows": 14,
-    "enabled": 14,
-    "expired": 0,
+    "enabled": 4,
+    "expired": 10,
     "unverified": 1,
     "warnings": [
-      "LITE: source date verified; exact published_at_utc unavailable",
-      "HUM: source date verified; exact published_at_utc unavailable",
-      "NVDA: source date verified; exact published_at_utc unavailable",
       "MRVL: source date verified; exact published_at_utc unavailable"
     ]
   },
@@ -44,19 +41,19 @@
       "rows": 49
     }
   },
-  "candidate_count": 30,
+  "candidate_count": 21,
   "selection": {
     "max_total": 30,
     "max_per_source": 10,
-    "selected_total": 30,
+    "selected_total": 21,
     "selected_by_source": {
       "FIXED": 10,
-      "AI": 10,
+      "AI": 1,
       "IBKR": 10
     },
     "unused_slots": {
       "FIXED": 0,
-      "AI": 0,
+      "AI": 9,
       "IBKR": 0
     }
   }
