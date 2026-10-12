@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 16361,
-    "completed_rows": 16361,
+    "input_rows": 16399,
+    "completed_rows": 16399,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 16361,
+    "no_wap_rows": 16399,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -73,7 +73,9 @@
       "AAPL",
       "AMT",
       "AMZN",
+      "ASTS",
       "BMNR",
+      "BMY",
       "HUM",
       "IONQ",
       "JPM",
@@ -160,7 +162,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 16361,
+    "count": 16399,
     "source": "SAME_IBKR_APP"
   }
 }
