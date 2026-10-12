@@ -21,7 +21,7 @@ from RudraScanner.manual_request import (
     current_trade_date, load_request, request_scan,
 )
 from RudraScanner.storage import read_saved_report
-from RudraScanner.top_in_play import scan_rankings
+from RudraScanner.top_in_play import scan_rankings, raw_ibkr_by_code
 import json
 from RudraScanner.premarket_diagnostic import print_saved as print_premarket_diagnostic
 
@@ -52,6 +52,7 @@ def main(argv=None):
     )
     parser.add_argument("--date", help="ET session date; must be today's scheduled Chakra session")
     parser.add_argument("--repo", default=str(Path(__file__).resolve().parents[1]))
+    parser.add_argument("--ibkr-raw", action="store_true", help="Read saved IBKR four-code scan rankings without another API call")
     parser.add_argument("--ibkr-direct", action="store_true", help="One-shot direct IBKR four-category scanner; no Chakra scan")
     parser.add_argument("--top", action="store_true", help="Short saved SMB-style Top In Play shortlist; no new scan")
     parser.add_argument("--status", action="store_true", help="Read current SSH request, do not queue")
@@ -63,6 +64,12 @@ def main(argv=None):
                         help="Maximum waiting seconds; does NOT control broker API")
     args = parser.parse_args(argv)
     root = Path(args.repo).resolve()
+    if args.ibkr_raw:
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        day = args.date or datetime.now(ZoneInfo("America/New_York")).date().isoformat()
+        print(raw_ibkr_by_code(root,day,limit=5),end="")
+        return 0
     if args.ibkr_direct:
         from RudraScanner.ibkr_direct import run_direct
         print(run_direct(limit=5,timeout=12),end="")
