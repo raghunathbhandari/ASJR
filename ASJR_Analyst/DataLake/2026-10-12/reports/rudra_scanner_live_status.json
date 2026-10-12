@@ -2,12 +2,12 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 22428,
-    "completed_rows": 22428,
+    "input_rows": 12306,
+    "completed_rows": 12306,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
-    "tickers": 40,
+    "tickers": 22,
     "min_periods": 9,
     "session_reset": false,
     "extended_hours_included": true,
@@ -16,17 +16,17 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 22428,
+    "no_wap_rows": 12306,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
   "detector_status": {
     "state": "OK",
-    "tickers": 30,
+    "tickers": 22,
     "emitted": 0,
     "blocked_context": 0,
     "blocked_data": 0,
-    "blocked_session": 30,
+    "blocked_session": 22,
     "mode": "RESEARCH_ONLY"
   },
   "events": [],
@@ -162,7 +162,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 22428,
+    "count": 12306,
     "source": "SAME_IBKR_APP"
   }
 }
