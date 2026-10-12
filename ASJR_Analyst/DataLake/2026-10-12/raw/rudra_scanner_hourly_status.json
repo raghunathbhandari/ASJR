@@ -1,18 +1,28 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T16:27:22.615066+00:00",
+  "generated_at_utc": "2026-10-12T16:33:14.228407+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
+    "ASTS",
+    "BORR",
+    "CBRS",
+    "CCC",
     "CRDO",
+    "DNA",
+    "FIGS",
     "INTC",
+    "IONQ",
+    "MDT",
+    "MMED",
     "MRVL",
     "MSFT",
     "ORCL",
     "QCOM",
     "SMCI",
     "WDC",
+    "WOLF",
     "WTTR"
   ],
   "per_ticker": {
@@ -24,13 +34,49 @@
       "state": "OK",
       "rows": 553
     },
+    "ASTS": {
+      "state": "OK",
+      "rows": 553
+    },
+    "BORR": {
+      "state": "OK",
+      "rows": 547
+    },
+    "CBRS": {
+      "state": "OK",
+      "rows": 553
+    },
+    "CCC": {
+      "state": "OK",
+      "rows": 470
+    },
     "CRDO": {
       "state": "OK",
       "rows": 553
     },
+    "DNA": {
+      "state": "OK",
+      "rows": 552
+    },
+    "FIGS": {
+      "state": "OK",
+      "rows": 498
+    },
     "INTC": {
       "state": "OK",
       "rows": 553
+    },
+    "IONQ": {
+      "state": "OK",
+      "rows": 553
+    },
+    "MDT": {
+      "state": "OK",
+      "rows": 523
+    },
+    "MMED": {
+      "state": "OK",
+      "rows": 446
     },
     "MRVL": {
       "state": "OK",
@@ -56,23 +102,37 @@
       "state": "OK",
       "rows": 553
     },
+    "WOLF": {
+      "state": "OK",
+      "rows": 553
+    },
     "WTTR": {
       "state": "OK",
       "rows": 428
     }
   },
-  "rows": 5935,
+  "rows": 11183,
   "usable_150bars": [
     "AKAM",
     "AMAT",
+    "ASTS",
+    "BORR",
+    "CBRS",
+    "CCC",
     "CRDO",
+    "DNA",
+    "FIGS",
     "INTC",
+    "IONQ",
+    "MDT",
+    "MMED",
     "MRVL",
     "MSFT",
     "ORCL",
     "QCOM",
     "SMCI",
     "WDC",
+    "WOLF",
     "WTTR"
   ]
 }

@@ -2,12 +2,12 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 2778,
-    "completed_rows": 2778,
+    "input_rows": 12145,
+    "completed_rows": 12145,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
-    "tickers": 6,
+    "tickers": 26,
     "min_periods": 9,
     "session_reset": false,
     "extended_hours_included": true,
@@ -16,16 +16,16 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 2778,
+    "no_wap_rows": 12145,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
   "detector_status": {
     "state": "OK",
-    "tickers": 1,
+    "tickers": 21,
     "emitted": 0,
     "blocked_context": 0,
-    "blocked_data": 1,
+    "blocked_data": 21,
     "blocked_session": 0,
     "mode": "RESEARCH_ONLY"
   },
@@ -43,10 +43,10 @@
   "context": {
     "state": "WAIT",
     "reason": "MIXED_OR_NEUTRAL_BENCHMARKS",
-    "timestamp": "2026-10-12 16:10:00+00:00",
+    "timestamp": "2026-10-12 16:15:00+00:00",
     "index_pct": {
       "SPY": 0.0385,
-      "QQQ": -0.4885
+      "QQQ": -0.5085
     },
     "sector_etf": {
       "AKAM": "XLK",
@@ -65,17 +65,8 @@
   },
   "collection": {
     "requested": [
-      "AKAM",
-      "AMAT",
-      "CRDO",
-      "INTC",
-      "MRVL",
-      "MSFT",
-      "ORCL",
-      "QCOM",
-      "SMCI",
-      "WDC",
-      "WTTR",
+      "MDT",
+      "MMED",
       "SPY",
       "QQQ",
       "SMH",
@@ -85,14 +76,24 @@
     "symbols": [
       "AKAM",
       "AMAT",
+      "ASTS",
+      "BORR",
+      "CBRS",
+      "CCC",
       "CRDO",
+      "DNA",
+      "FIGS",
       "INTC",
+      "IONQ",
+      "MDT",
+      "MMED",
       "MRVL",
       "MSFT",
       "ORCL",
       "QCOM",
       "SMCI",
       "WDC",
+      "WOLF",
       "WTTR",
       "SPY",
       "QQQ",
@@ -113,7 +114,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 2778,
+    "count": 12145,
     "source": "SAME_IBKR_APP"
   }
 }
