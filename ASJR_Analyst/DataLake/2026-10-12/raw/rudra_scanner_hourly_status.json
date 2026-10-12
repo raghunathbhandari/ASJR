@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T14:03:43.261068+00:00",
+  "generated_at_utc": "2026-10-12T14:09:49.703107+00:00",
   "selected_tickers": [
     "AI",
     "AKAM",
@@ -10,7 +10,6 @@
     "BORR",
     "CBRS",
     "CCC",
-    "CMG",
     "CRDO",
     "INTC",
     "IONQ",
@@ -18,10 +17,11 @@
     "META",
     "MRVL",
     "MSFT",
+    "NVTS",
     "ORCL",
     "QCOM",
-    "SECZ",
     "SMCI",
+    "VZ",
     "WDC",
     "WTTR"
   ],
@@ -54,10 +54,6 @@
       "state": "OK",
       "rows": 467
     },
-    "CMG": {
-      "state": "OK",
-      "rows": 546
-    },
     "CRDO": {
       "state": "OK",
       "rows": 550
@@ -86,6 +82,10 @@
       "state": "OK",
       "rows": 550
     },
+    "NVTS": {
+      "state": "OK",
+      "rows": 550
+    },
     "ORCL": {
       "state": "OK",
       "rows": 550
@@ -94,13 +94,13 @@
       "state": "OK",
       "rows": 550
     },
-    "SECZ": {
-      "state": "OK",
-      "rows": 550
-    },
     "SMCI": {
       "state": "OK",
       "rows": 550
+    },
+    "VZ": {
+      "state": "OK",
+      "rows": 547
     },
     "WDC": {
       "state": "OK",
@@ -111,7 +111,7 @@
       "rows": 425
     }
   },
-  "rows": 11278,
+  "rows": 11279,
   "usable_150bars": [
     "AI",
     "AKAM",
@@ -120,7 +120,6 @@
     "BORR",
     "CBRS",
     "CCC",
-    "CMG",
     "CRDO",
     "INTC",
     "IONQ",
@@ -128,10 +127,11 @@
     "META",
     "MRVL",
     "MSFT",
+    "NVTS",
     "ORCL",
     "QCOM",
-    "SECZ",
     "SMCI",
+    "VZ",
     "WDC",
     "WTTR"
   ]
