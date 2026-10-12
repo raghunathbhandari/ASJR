@@ -1,7 +1,7 @@
 {
   "state": "PARTIAL",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T00:27:36.735786+00:00",
+  "generated_at_utc": "2026-10-12T00:34:02.435092+00:00",
   "selected_tickers": [
     "AAOI",
     "AAPL",
@@ -9,7 +9,6 @@
     "AMAT",
     "AMT",
     "AMZN",
-    "ASTS",
     "AXTI",
     "BMNR",
     "CRCL",
@@ -32,7 +31,8 @@
     "SPCX",
     "TMUS",
     "WDC",
-    "WTTR"
+    "WTTR",
+    "XP"
   ],
   "per_ticker": {
     "AAOI": {
@@ -56,10 +56,6 @@
       "rows": 447
     },
     "AMZN": {
-      "state": "OK",
-      "rows": 560
-    },
-    "ASTS": {
       "state": "OK",
       "rows": 560
     },
@@ -128,16 +124,16 @@
       "rows": 560
     },
     "QCOM": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 560
     },
     "SECZ": {
       "state": "OK",
       "rows": 560
     },
     "SMCI": {
-      "state": "OK",
-      "rows": 560
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "SPCX": {
       "state": "OK",
@@ -154,9 +150,13 @@
     "WTTR": {
       "state": "OK",
       "rows": 439
+    },
+    "XP": {
+      "state": "OK",
+      "rows": 483
     }
   },
-  "rows": 15813,
+  "rows": 15736,
   "usable_150bars": [
     "AAOI",
     "AAPL",
@@ -164,7 +164,6 @@
     "AMAT",
     "AMT",
     "AMZN",
-    "ASTS",
     "AXTI",
     "BMNR",
     "CRCL",
@@ -181,11 +180,12 @@
     "ORCL",
     "PLTR",
     "PURR",
+    "QCOM",
     "SECZ",
-    "SMCI",
     "SPCX",
     "TMUS",
     "WDC",
-    "WTTR"
+    "WTTR",
+    "XP"
   ]
 }
