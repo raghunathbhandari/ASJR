@@ -1,15 +1,15 @@
 {
-  "state": "PARTIAL",
+  "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T11:42:52.087083+00:00",
+  "generated_at_utc": "2026-10-12T11:58:59.805274+00:00",
   "selected_tickers": [
+    "AAOI",
     "AAPL",
     "AKAM",
     "AMAT",
     "AMT",
     "AMZN",
     "ASTS",
-    "BMNR",
     "BMY",
     "CCC",
     "CRDO",
@@ -35,6 +35,10 @@
     "WTTR"
   ],
   "per_ticker": {
+    "AAOI": {
+      "state": "OK",
+      "rows": 548
+    },
     "AAPL": {
       "state": "OK",
       "rows": 548
@@ -56,10 +60,6 @@
       "rows": 548
     },
     "ASTS": {
-      "state": "OK",
-      "rows": 548
-    },
-    "BMNR": {
       "state": "OK",
       "rows": 548
     },
@@ -124,8 +124,8 @@
       "rows": 548
     },
     "SECZ": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 548
     },
     "SMCI": {
       "state": "OK",
@@ -156,15 +156,15 @@
       "rows": 423
     }
   },
-  "rows": 15366,
+  "rows": 15914,
   "usable_150bars": [
+    "AAOI",
     "AAPL",
     "AKAM",
     "AMAT",
     "AMT",
     "AMZN",
     "ASTS",
-    "BMNR",
     "BMY",
     "CCC",
     "CRDO",
@@ -180,6 +180,7 @@
     "ORCL",
     "PLTR",
     "QCOM",
+    "SECZ",
     "SMCI",
     "SNAP",
     "SOFI",
