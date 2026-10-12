@@ -21,6 +21,8 @@ from RudraScanner.manual_request import (
     current_trade_date, load_request, request_scan,
 )
 from RudraScanner.storage import read_saved_report
+from RudraScanner.top_in_play import render as render_top_in_play
+import json
 from RudraScanner.premarket_diagnostic import print_saved as print_premarket_diagnostic
 
 
@@ -50,6 +52,7 @@ def main(argv=None):
     )
     parser.add_argument("--date", help="ET session date; must be today's scheduled Chakra session")
     parser.add_argument("--repo", default=str(Path(__file__).resolve().parents[1]))
+    parser.add_argument("--top", action="store_true", help="Short saved SMB-style Top In Play shortlist; no new scan")
     parser.add_argument("--status", action="store_true", help="Read current SSH request, do not queue")
     parser.add_argument("--premarket-test", action="store_true",
                         help="Report RVOL5 diagnostic after ONE existing full Chakra pipeline cycle; no Discord")
@@ -59,6 +62,16 @@ def main(argv=None):
                         help="Maximum waiting seconds; does NOT control broker API")
     args = parser.parse_args(argv)
     root = Path(args.repo).resolve()
+    if args.top:
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        day = args.date or datetime.now(ZoneInfo("America/New_York")).date().isoformat()
+        board_path = root / "ASJR_Analyst" / "DataLake" / day / "processed" / "rudra_scanner_categories.json"
+        if not board_path.is_file():
+            print("RUDRA SCANNER | TOP IN PLAY | NO SAVED DATA")
+            return 2
+        print(render_top_in_play(json.loads(board_path.read_text(encoding="utf-8"))), end="")
+        return 0
     if args.status:
         state = load_request(root)
         if not state:
