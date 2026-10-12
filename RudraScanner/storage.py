@@ -69,4 +69,8 @@ def read_saved_report(repo_root, trade_date):
     report = day / "reports" / "scalp_radar.txt"
     if not report.is_file():
         return f"RUDRA RADAR | {trade_date} | DATA NOT READY (no saved report)"
-    return report.read_text(encoding="utf-8")
+    text = report.read_text(encoding="utf-8")
+    categories = day / "reports" / "rudra_scanner_categories.txt"
+    if categories.is_file():
+        text += "\n" + categories.read_text(encoding="utf-8")
+    return text
