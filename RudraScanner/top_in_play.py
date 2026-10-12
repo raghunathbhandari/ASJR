@@ -126,6 +126,41 @@ def scan_rankings(repo_root, day, board, *, now=None, limit=5):
     lines.append("SCANNER DISCOVERY | NOT TRADE SIGNALS")
     return "\n".join(lines)+"\n"
 
+
+def raw_ibkr_by_code(repo_root, day, *, code="ALL", limit=10):
+    """Print unmodified saved IBKR scan memberships and source ranks.
+
+    No scoring, no direction inference, no price inference, no API request.
+    """
+    scan_codes=("TOP_PERC_GAIN","TOP_PERC_LOSE","HOT_BY_VOLUME","MOST_ACTIVE")
+    path=(Path(repo_root)/"ASJR_Analyst"/"DataLake"/str(day)/
+          "raw"/"ibkr_scanner_list.csv")
+    if not path.is_file():
+        return "IBKR SCANNER | NO SAVED RAW CSV\n"
+    groups={key:[] for key in scan_codes}
+    with path.open(newline="",encoding="utf-8-sig") as handle:
+        for item in csv.DictReader(handle):
+            key=item.get("scan_code","")
+            if key in groups:
+                groups[key].append(item)
+    out=["IBKR SCANNER | RAW SAVED RESULTS | "+str(day)]
+    for key in scan_codes:
+        if code!="ALL" and code!=key:
+            continue
+        rows=groups[key]
+        try:
+            rows=sorted(rows,key=lambda x:int(x.get("rank") or 999999))
+        except ValueError:
+            pass
+        stamp=rows[0].get("scanned_at_utc","N/A") if rows else "N/A"
+        out.append(f"{key} | {len(rows)} tickers | scanned UTC {stamp}")
+        for item in rows[:limit]:
+            out.append(f" {item.get('rank','?')}. {item.get('ticker','?')}")
+        if len(rows)>limit:
+            out.append(f" + {len(rows)-limit} more (use --limit {len(rows)} in SSH)")
+    out.append("RAW IBKR SCAN CSV | no ranking calculation or trading signals")
+    return "\n".join(out)+"\n"
+
 def render(board, *, now=None, limit=5):
     now = now or datetime.now(timezone.utc)
     generated = datetime.fromisoformat(board["generated_at_uk"])
@@ -150,11 +185,19 @@ def render(board, *, now=None, limit=5):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Short Top In Play from saved scanner board")
+    parser.add_argument("--ibkr-raw", action="store_true", help="Raw IBKR output grouped by scanner code")
+    parser.add_argument("--code", choices=("ALL","TOP_PERC_GAIN","TOP_PERC_LOSE","HOT_BY_VOLUME","MOST_ACTIVE"), default="ALL")
+    parser.add_argument("--limit", type=int, default=10, help="Maximum per scanner code")
     parser.add_argument("--date", help="ET trading date; default current ET date")
     parser.add_argument("--repo", default=str(Path(__file__).resolve().parents[1]))
     parser.add_argument("--top", type=int, default=5, choices=range(1,6), metavar="1-5")
     args = parser.parse_args(argv)
     day = args.date or datetime.now(ET).date().isoformat()
+    if args.ibkr_raw:
+        if args.limit < 1 or args.limit > 50:
+            parser.error("--limit must be between 1 and 50")
+        print(raw_ibkr_by_code(args.repo,day,code=args.code,limit=args.limit),end="")
+        return 0
     path = (Path(args.repo)/"ASJR_Analyst"/"DataLake"/day/"processed"/"rudra_scanner_categories.json")
     if not path.is_file():
         print("RUDRA SCANNER | TOP IN PLAY | NO SAVED DATA")
