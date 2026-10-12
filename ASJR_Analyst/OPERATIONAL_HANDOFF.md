@@ -1,5 +1,29 @@
 # ASJR Analyst operational handoff
 
+## 2026-10-12 16:24 UK — VERIFIED RUDRA SCANNER TWO MODES AND CALLS
+
+**Current authoritative distinction:**
+1. **IBKR RAW** = four native IBKR scanner categories, original membership and per-code scanner rank, displayed in comma-separated watchlist format, **no Rudra scoring**. Categories: `TOP_PERC_GAIN`, `TOP_PERC_LOSE`, `HOT_BY_VOLUME`, `MOST_ACTIVE`. Scanner uses existing Chakra-connected IBKR app, four scanner calls, US major stocks, company type CORP, price above $5, average volume above 1m and market-cap filter. Result saved every successful Chakra scanner round under `ASJR_Analyst/DataLake/YYYY-MM-DD/raw/ibkr_scanner_list.csv` with columns `ticker,scan_code,rank,scanned_at_utc`; `raw/scanner_status.json` stores per-code SUCCESS/EMPTY/TIMEOUT and row counts. **This is not a new direct broker query on manual read.** Read output grouped in one comma-separated line per category, with source UTC time and row count; 10 names per section by default (max 50). All four code-wise lists can contain duplicates across categories.
+2. **Rudra Filtered / SMB TOP IN PLAY** = computed Top 5 from the **union of all recent IBKR RAW scanner rows**, not merely 30 FIXED/AI/IBKR stock imports or stale AI watchlist. `RudraScanner/top_in_play.py::scan_rankings` merges symbol appearances, uses scanner-code diversity, source rank, HOT_BY_VOLUME and MOST_ACTIVE boosts and available recent 5m price/12-bar volume bonuses; outputs GAINER/LOSER/ACTIVE as **scanner classes, not trading directions/entry signals**. Up to five symbols, price only when the 5m category board marks it fresh; remaining unique candidate count. No catalyst quality, full-session RVOL, sector alignment or fundamental-strength filtering yet. **This is scanner discovery, not probability of profit.**
+
+**CURRENT WORKING USER CALLS (confirmed by user in VPS and Discord on 2026-10-12):**
+
+| Function | SSH command (from `/root/trading/ASJR`) | Discord command |
+| --- | --- | --- |
+| IBKR RAW, 4 comma-separated categories | `/root/trading/venv_new/bin/python RudraScanner/top_in_play.py --ibkr-raw` | `!runpy RudraScanner/scan_now\\.py --ibkr-raw` |
+| Rudra Filtered, computed SMB Top 5 | `/root/trading/venv_new/bin/python RudraScanner/top_in_play.py` | `!runpy RudraScanner/scan_now\\.py --top` |
+| Raw IBKR 50 per scan from SSH | `/root/trading/venv_new/bin/python RudraScanner/top_in_play.py --ibkr-raw --limit 50` | Discord limits default to 5 per code |
+| Full experimental/scanner report (long) | `/root/trading/venv_new/bin/python RudraScanner/scan_now.py --saved` | `!runpy RudraScanner/scan_now\\.py --saved` |
+| Queue fresh FULL Chakra cycle; **no second broker client** | `/root/trading/venv_new/bin/python RudraScanner/scan_now.py --no-wait` | `!runpy RudraScanner/scan_now\\.py --no-wait` |
+| Check queued request | `/root/trading/venv_new/bin/python RudraScanner/scan_now.py --status` | `!runpy RudraScanner/scan_now\\.py --status` |
+
+**Most recent user-tested successful data:** saved scan collected `2026-10-12T15:15:51.716951Z` (16:15 BST), RAW four lists returned 50 gainers, 50 losers, 49 hot-volume, 49 most-active. RAW top 10 each: GAIN: `CCC,ALHC,FIGS,PRCT,EBAY,ASTS,DHT,BORR,VFC,BBNX`; LOSS: `WOLF,SECZ,TTMI,FCEL,IONQ,SMTC,CIEN,LITE,SKYD,FSLY`; HOT: `MMED,AI,BORR,CCC,CBRS,SECZ,ASTS,DHT,LEVI,TRMD`; ACTIVE: `SPCX,INTC,NVDA,IREN,SOFI,IONQ,T,NU,SNAP,AAL`. Discord SMB Top 5 verified by user at 16:21 BST from 16:15 snapshot: `CCC $7.69 GAINER`, `ASTS $53.55 GAINER`, `IONQ $36.05 LOSER`, `BORR $5.01 GAINER`, `CBRS $152.23 LOSER`, 149 remaining scanner candidates. **Do not treat these as live prices outside their timestamp or as validated trade signals.**
+
+**Operational details:** Chakra continues existing ~5min cycles; manual `--top` or `--ibkr-raw` just reads saved CSV and board. Do not create a new broker connection for normal read. `RudraScanner/ibkr_direct.py` and `scan_now.py --ibkr-direct` are optional, unverified standalone client-682 paths, **not the recommended/locked approach**; user explicitly preferred reusing Chakra's saved data. `RudraScanner/top5_delivery.py` is a prepared sender/dedup helper only; **automatic Discord Top 5 delivery is NOT yet wired to the external canonical launcher** `/root/trading/utils/trading_sudarsan_chakra.py` and is NOT active. Existing Wicks, Rudra-Reversal and premarket BUY WATCH rules untouched; BUY WATCH Discord OFF. New GitHub code may diverge from VPS due to concurrent automatic DataLake commits; user observed local `7b1c2375` vs remote `d050d418` and a dirty live log; after synchronization, user verified both commands. Do not recommend destructive git reset/rebase while Chakra writes without separately checking safety. No need to restart bot for read-only changes. Keep replies short, beginner-friendly.
+
+**Known limitations:** raw source ranks and multi-scanner score cannot measure trade probability. Some low-price/weak-quality names may appear. Separate five-category board persists under `reports/rudra_scanner_categories.txt` and `processed/rudra_scanner_categories.json`, but it currently lists technical diagnostics rather than a confirmed BUY setup; index/top-down WAIT, exact WAP/VWAP and premarket completed-bar readiness were unresolved in earlier logs. User's priority is scanner watchlists, not a signal. Future: full SMB score can include fresh catalysts, session change/RVOL, confirmed sector strength, and fundamental/quality filters after explicit testing. **Current locked outputs are exactly two scanner reports: IBKR RAW and Rudra Filtered.**
+
+
 > **START HERE (2026-10-11):** Read [`RudraScanner/AI_SESSION_HANDOFF.md`](../../RudraScanner/AI_SESSION_HANDOFF.md) first for the up-to-date full Chakra/app/manual-run/import/test/source/status guide. This operational log contains historical snapshots, including old statements that tests were not yet run; the new guide reconciles verified evidence and current pending work.
 
 
