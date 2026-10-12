@@ -1,7 +1,7 @@
 {
   "state": "PARTIAL",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T02:02:23.650219+00:00",
+  "generated_at_utc": "2026-10-12T02:14:16.004088+00:00",
   "selected_tickers": [
     "AAPL",
     "AKAM",
@@ -12,6 +12,7 @@
     "ASST",
     "AXTI",
     "BMNR",
+    "COIN",
     "CRCL",
     "CRDO",
     "HUM",
@@ -21,7 +22,6 @@
     "LITE",
     "MSFT",
     "MSTR",
-    "NBIS",
     "NVDA",
     "ORCL",
     "PLTR",
@@ -71,6 +71,10 @@
       "state": "OK",
       "rows": 560
     },
+    "COIN": {
+      "state": "OK",
+      "rows": 560
+    },
     "CRCL": {
       "state": "OK",
       "rows": 560
@@ -107,10 +111,6 @@
       "state": "OK",
       "rows": 560
     },
-    "NBIS": {
-      "state": "OK",
-      "rows": 560
-    },
     "NVDA": {
       "state": "OK",
       "rows": 560
@@ -120,12 +120,12 @@
       "rows": 560
     },
     "PLTR": {
-      "state": "OK",
-      "rows": 560
-    },
-    "PURR": {
       "state": "TIMEOUT",
       "rows": 0
+    },
+    "PURR": {
+      "state": "OK",
+      "rows": 560
     },
     "QCOM": {
       "state": "OK",
@@ -167,6 +167,7 @@
     "ASST",
     "AXTI",
     "BMNR",
+    "COIN",
     "CRCL",
     "CRDO",
     "HUM",
@@ -176,10 +177,9 @@
     "LITE",
     "MSFT",
     "MSTR",
-    "NBIS",
     "NVDA",
     "ORCL",
-    "PLTR",
+    "PURR",
     "QCOM",
     "SECZ",
     "SMCI",
