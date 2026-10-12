@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 12951,
-    "completed_rows": 12951,
+    "input_rows": 12977,
+    "completed_rows": 12977,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 12951,
+    "no_wap_rows": 12977,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -43,10 +43,10 @@
   "context": {
     "state": "WAIT",
     "reason": "MIXED_OR_NEUTRAL_BENCHMARKS",
-    "timestamp": "2026-10-12 18:50:00+00:00",
+    "timestamp": "2026-10-12 18:55:00+00:00",
     "index_pct": {
-      "SPY": -0.1798,
-      "QQQ": -0.8333
+      "SPY": -0.1618,
+      "QQQ": -0.832
     },
     "sector_etf": {
       "AKAM": "XLK",
@@ -93,8 +93,8 @@
       "QMCO",
       "SECZ",
       "SMCI",
-      "SMR",
       "WDC",
+      "WOLF",
       "WTTR",
       "SPY",
       "QQQ",
@@ -115,7 +115,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 12951,
+    "count": 12977,
     "source": "SAME_IBKR_APP"
   }
 }
