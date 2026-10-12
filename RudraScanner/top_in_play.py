@@ -19,30 +19,32 @@ def choose(board, limit=5):
     picked = []
     for row in rows:
         cats = set(row.get("categories") or ())
-        if row.get("data_state") != "FRESH_5M" or not cats.intersection(
+        if not cats.intersection(
                 {"STRONG_MOMENTUM", "WEAK_SELLING", "TOP_IN_PLAY", "REVERSAL_WATCH"}):
             continue
         change = row.get("change_5m_pct")
         volume = row.get("vol_12bar")
-        if "STRONG_MOMENTUM" in cats:
+        fresh = row.get("data_state") == "FRESH_5M"
+        if fresh and "STRONG_MOMENTUM" in cats:
             direction = "WATCH LONG"
             reason = "Rising 5m price + EMA9"
             directional = 3
-        elif "WEAK_SELLING" in cats:
+        elif fresh and "WEAK_SELLING" in cats:
             direction = "WATCH SHORT"
             reason = "Weak 5m price + EMA9"
             directional = 3
-        elif "REVERSAL_WATCH" in cats:
+        elif fresh and "REVERSAL_WATCH" in cats:
             direction = "WATCH REVERSAL"
             reason = "Early 5m recovery"
             directional = 2
         else:
             direction = "WATCH"
-            reason = "Multiple scanner sources"
+            codes = row.get("scanner_codes") or ""
+            reason = "IBKR scanner: " + codes.replace(",", "/") if codes else "AI research watch"
             directional = 0
-        if volume is not None and volume >= 1.5:
+        if fresh and volume is not None and volume >= 1.5:
             reason += " + active volume"
-        elif row.get("scanner_codes"):
+        elif fresh and row.get("scanner_codes") and directional:
             reason += " + scanner interest"
         score = (directional, int(volume is not None and volume >= 1.0),
                  int(row.get("discovery_priority") or 0),
@@ -57,16 +59,18 @@ def render(board, *, now=None, limit=5):
     generated = datetime.fromisoformat(board["generated_at_uk"])
     age = (now - generated.astimezone(timezone.utc)).total_seconds()
     day = now.astimezone(ET).date().isoformat()
-    if board.get("day") != day or age < -60 or age > 1200:
+    if board.get("day") != day or age < -60 or age > 86400:
         return ("RUDRA SCANNER | TOP IN PLAY | DATA STALE\n"
                 "No current shortlist. Wait for the next Chakra cycle.\n")
     stamp = generated.astimezone(UK).strftime("%H:%M")
     lines = [f"RUDRA SCANNER | TOP IN PLAY | {stamp} UK"]
+    if age > 1200:
+        lines.append("SAVED WATCHLIST | data older than 20 min")
     picks = choose(board,limit)
     for i, (_, ticker, direction, reason) in enumerate(picks, 1):
         lines.append(f"{i}. {ticker} | {direction} | {reason}")
     if not picks:
-        lines.append("NO VERIFIED CURRENT 5M CANDIDATES")
+        lines.append("NO RANKED DISCOVERY CANDIDATES")
     lines.append(f"REMAINING WATCHLIST | {max(0,len(board.get('rows',[]))-len(picks))} tickers")
     lines.append("RESEARCH WATCH ONLY | Not confirmed entries")
     return "\n".join(lines) + "\n"
