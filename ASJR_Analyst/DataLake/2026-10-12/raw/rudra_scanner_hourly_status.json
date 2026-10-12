@@ -1,7 +1,7 @@
 {
   "state": "PARTIAL",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T10:51:47.959286+00:00",
+  "generated_at_utc": "2026-10-12T11:03:43.227629+00:00",
   "selected_tickers": [
     "AAPL",
     "AKAM",
@@ -12,8 +12,10 @@
     "BMNR",
     "CCC",
     "CRDO",
+    "FWDI",
     "HUM",
     "INTC",
+    "IONQ",
     "IREN",
     "JPM",
     "LITE",
@@ -25,12 +27,10 @@
     "QCOM",
     "SECZ",
     "SMCI",
-    "SMR",
     "SNAP",
     "SOFI",
     "SPCX",
     "TMUS",
-    "TTD",
     "WDC",
     "WTTR"
   ],
@@ -71,11 +71,19 @@
       "state": "OK",
       "rows": 547
     },
+    "FWDI": {
+      "state": "OK",
+      "rows": 547
+    },
     "HUM": {
       "state": "OK",
       "rows": 415
     },
     "INTC": {
+      "state": "OK",
+      "rows": 547
+    },
+    "IONQ": {
       "state": "OK",
       "rows": 547
     },
@@ -116,14 +124,10 @@
       "rows": 547
     },
     "SECZ": {
-      "state": "OK",
-      "rows": 547
-    },
-    "SMCI": {
       "state": "TIMEOUT",
       "rows": 0
     },
-    "SMR": {
+    "SMCI": {
       "state": "OK",
       "rows": 547
     },
@@ -142,10 +146,6 @@
     "TMUS": {
       "state": "OK",
       "rows": 516
-    },
-    "TTD": {
-      "state": "OK",
-      "rows": 547
     },
     "WDC": {
       "state": "OK",
@@ -167,8 +167,10 @@
     "BMNR",
     "CCC",
     "CRDO",
+    "FWDI",
     "HUM",
     "INTC",
+    "IONQ",
     "IREN",
     "JPM",
     "LITE",
@@ -178,13 +180,11 @@
     "PLTR",
     "POET",
     "QCOM",
-    "SECZ",
-    "SMR",
+    "SMCI",
     "SNAP",
     "SOFI",
     "SPCX",
     "TMUS",
-    "TTD",
     "WDC",
     "WTTR"
   ]
