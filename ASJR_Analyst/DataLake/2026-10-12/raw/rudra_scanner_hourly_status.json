@@ -1,84 +1,42 @@
 {
-  "state": "COMPLETE",
+  "state": "PARTIAL",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T14:28:14.653343+00:00",
+  "generated_at_utc": "2026-10-12T14:51:24.301251+00:00",
   "selected_tickers": [
-    "AI",
     "AKAM",
     "AMAT",
-    "ASTS",
-    "CBRS",
-    "CCC",
     "CRDO",
     "INTC",
-    "IONQ",
-    "MDT",
-    "MMED",
     "MRVL",
     "MSFT",
-    "NVTS",
     "ORCL",
     "QCOM",
     "SMCI",
-    "VZ",
     "WDC",
-    "WOLF",
     "WTTR"
   ],
   "per_ticker": {
-    "AI": {
-      "state": "OK",
-      "rows": 550
-    },
     "AKAM": {
-      "state": "OK",
-      "rows": 528
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "AMAT": {
-      "state": "OK",
-      "rows": 551
-    },
-    "ASTS": {
-      "state": "OK",
-      "rows": 551
-    },
-    "CBRS": {
-      "state": "OK",
-      "rows": 551
-    },
-    "CCC": {
-      "state": "OK",
-      "rows": 468
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "CRDO": {
-      "state": "OK",
-      "rows": 551
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "INTC": {
-      "state": "OK",
-      "rows": 551
-    },
-    "IONQ": {
-      "state": "OK",
-      "rows": 551
-    },
-    "MDT": {
-      "state": "OK",
-      "rows": 521
-    },
-    "MMED": {
-      "state": "OK",
-      "rows": 444
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "MRVL": {
-      "state": "OK",
-      "rows": 551
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "MSFT": {
-      "state": "OK",
-      "rows": 551
-    },
-    "NVTS": {
       "state": "OK",
       "rows": 551
     },
@@ -94,15 +52,7 @@
       "state": "OK",
       "rows": 551
     },
-    "VZ": {
-      "state": "OK",
-      "rows": 548
-    },
     "WDC": {
-      "state": "OK",
-      "rows": 551
-    },
-    "WOLF": {
       "state": "OK",
       "rows": 551
     },
@@ -111,28 +61,13 @@
       "rows": 426
     }
   },
-  "rows": 11199,
+  "rows": 3181,
   "usable_150bars": [
-    "AI",
-    "AKAM",
-    "AMAT",
-    "ASTS",
-    "CBRS",
-    "CCC",
-    "CRDO",
-    "INTC",
-    "IONQ",
-    "MDT",
-    "MMED",
-    "MRVL",
     "MSFT",
-    "NVTS",
     "ORCL",
     "QCOM",
     "SMCI",
-    "VZ",
     "WDC",
-    "WOLF",
     "WTTR"
   ]
 }
