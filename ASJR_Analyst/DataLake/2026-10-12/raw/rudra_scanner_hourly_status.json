@@ -1,7 +1,7 @@
 {
   "state": "PARTIAL",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T04:27:58.934967+00:00",
+  "generated_at_utc": "2026-10-12T04:39:50.739567+00:00",
   "selected_tickers": [
     "AAOI",
     "AAPL",
@@ -14,6 +14,7 @@
     "BMNR",
     "CRCL",
     "CRDO",
+    "FWDI",
     "HUM",
     "INTC",
     "IREN",
@@ -28,7 +29,6 @@
     "QCOM",
     "SECZ",
     "SMCI",
-    "SNDK",
     "SPCX",
     "TMUS",
     "WDC",
@@ -79,6 +79,10 @@
       "state": "OK",
       "rows": 560
     },
+    "FWDI": {
+      "state": "OK",
+      "rows": 560
+    },
     "HUM": {
       "state": "OK",
       "rows": 426
@@ -124,18 +128,14 @@
       "rows": 560
     },
     "QCOM": {
-      "state": "OK",
-      "rows": 560
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "SECZ": {
       "state": "OK",
       "rows": 560
     },
     "SMCI": {
-      "state": "TIMEOUT",
-      "rows": 0
-    },
-    "SNDK": {
       "state": "OK",
       "rows": 560
     },
@@ -169,6 +169,7 @@
     "BMNR",
     "CRCL",
     "CRDO",
+    "FWDI",
     "HUM",
     "INTC",
     "IREN",
@@ -180,9 +181,8 @@
     "ORCL",
     "PLTR",
     "PURR",
-    "QCOM",
     "SECZ",
-    "SNDK",
+    "SMCI",
     "SPCX",
     "TMUS",
     "WDC",
