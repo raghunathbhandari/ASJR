@@ -75,14 +75,20 @@ def main(argv=None):
         print(run_direct(limit=5,timeout=12),end="")
         return 0
     if args.top:
-        from datetime import datetime
+        from datetime import datetime, timezone
         from zoneinfo import ZoneInfo
-        day = args.date or datetime.now(ZoneInfo("America/New_York")).date().isoformat()
-        board_path = root / "ASJR_Analyst" / "DataLake" / day / "processed" / "rudra_scanner_categories.json"
-        if not board_path.is_file():
-            print("RUDRA SCANNER | TOP IN PLAY | NO SAVED DATA")
+        day = args.date or datetime.now(ZoneInfo('America/New_York')).date().isoformat()
+        snapshot = root / 'ASJR_Analyst' / 'DataLake' / day / 'processed' / 'rudra_smb_top5.txt'
+        if not snapshot.is_file():
+            print('RUDRA SCANNER | SMB TOP 5 | NO SAVED RANKING')
             return 2
-        print(scan_rankings(root, day, json.loads(board_path.read_text(encoding="utf-8"))), end="")
+        # Do not return an obsolete cached ranking as if it were current.
+        age = datetime.now(timezone.utc).timestamp() - snapshot.stat().st_mtime
+        if age < -60 or age > 1200:
+            print('RUDRA SCANNER | SMB TOP 5 | SAVED RANKING STALE')
+            print('Latest precomputed ranking unavailable; check Chakra scanner cycles.')
+            return 2
+        print(snapshot.read_text(encoding='utf-8'), end='')
         return 0
     if args.status:
         state = load_request(root)
