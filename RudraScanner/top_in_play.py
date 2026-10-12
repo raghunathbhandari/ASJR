@@ -153,11 +153,9 @@ def raw_ibkr_by_code(repo_root, day, *, code="ALL", limit=10):
         except ValueError:
             pass
         stamp=rows[0].get("scanned_at_utc","N/A") if rows else "N/A"
-        out.append(f"{key} | {len(rows)} tickers | scanned UTC {stamp}")
-        for item in rows[:limit]:
-            out.append(f" {item.get('rank','?')}. {item.get('ticker','?')}")
-        if len(rows)>limit:
-            out.append(f" + {len(rows)-limit} more (use --limit {len(rows)} in SSH)")
+        tickers=",".join(str(item.get("ticker","")).strip() for item in rows[:limit]
+                         if str(item.get("ticker","")).strip())
+        out.append(f"{key} | {len(rows)} | {tickers or 'NONE'} | UTC {stamp}")
     out.append("RAW IBKR SCAN CSV | no ranking calculation or trading signals")
     return "\n".join(out)+"\n"
 
