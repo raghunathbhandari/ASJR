@@ -1,40 +1,86 @@
 {
-  "state": "PARTIAL",
+  "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T14:51:24.301251+00:00",
+  "generated_at_utc": "2026-10-12T14:57:54.579129+00:00",
   "selected_tickers": [
+    "AI",
     "AKAM",
     "AMAT",
+    "ASTS",
+    "BORR",
+    "CBRS",
+    "CCC",
     "CRDO",
+    "FIGS",
     "INTC",
+    "IONQ",
+    "MDT",
+    "MMED",
     "MRVL",
     "MSFT",
     "ORCL",
     "QCOM",
+    "SECZ",
     "SMCI",
     "WDC",
     "WTTR"
   ],
   "per_ticker": {
+    "AI": {
+      "state": "OK",
+      "rows": 550
+    },
     "AKAM": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 528
     },
     "AMAT": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 551
+    },
+    "ASTS": {
+      "state": "OK",
+      "rows": 551
+    },
+    "BORR": {
+      "state": "OK",
+      "rows": 545
+    },
+    "CBRS": {
+      "state": "OK",
+      "rows": 551
+    },
+    "CCC": {
+      "state": "OK",
+      "rows": 468
     },
     "CRDO": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 551
+    },
+    "FIGS": {
+      "state": "OK",
+      "rows": 496
     },
     "INTC": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 551
+    },
+    "IONQ": {
+      "state": "OK",
+      "rows": 551
+    },
+    "MDT": {
+      "state": "OK",
+      "rows": 521
+    },
+    "MMED": {
+      "state": "OK",
+      "rows": 444
     },
     "MRVL": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 551
     },
     "MSFT": {
       "state": "OK",
@@ -45,6 +91,10 @@
       "rows": 551
     },
     "QCOM": {
+      "state": "OK",
+      "rows": 551
+    },
+    "SECZ": {
       "state": "OK",
       "rows": 551
     },
@@ -61,11 +111,26 @@
       "rows": 426
     }
   },
-  "rows": 3181,
+  "rows": 11141,
   "usable_150bars": [
+    "AI",
+    "AKAM",
+    "AMAT",
+    "ASTS",
+    "BORR",
+    "CBRS",
+    "CCC",
+    "CRDO",
+    "FIGS",
+    "INTC",
+    "IONQ",
+    "MDT",
+    "MMED",
+    "MRVL",
     "MSFT",
     "ORCL",
     "QCOM",
+    "SECZ",
     "SMCI",
     "WDC",
     "WTTR"
