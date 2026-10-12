@@ -21,6 +21,7 @@ from .topdown import ticker_etf_from_sources
 from .volume_history import apply_rolling_rvol20
 from .storage import _atomic
 from .discovery import read_ai_csv
+from .category_board import build_board, save_board
 
 ET = "America/New_York"
 
@@ -186,6 +187,9 @@ def run_live_scanner_round(app, repo_root, trade_date, candidates, legacy_5m,
         report.update(state="EXPERIMENTAL_RESEARCH",
                       detector_status=detector, events=events)
     files = persist_features(root, day, features, report)
+    category_board = build_board(candidates, features, day=day, now=now)
+    category_path = save_board(root, day, category_board)
+    files['category_board'] = category_path
     target = root / "ASJR_Analyst" / "DataLake" / day / "reports"
     text_report = (
         f"RUDRA SCANNER LIVE DATA | {day} | 5M | UK TIME\n"
@@ -198,6 +202,7 @@ def run_live_scanner_round(app, repo_root, trade_date, candidates, legacy_5m,
         f"DISCOVERY | {collection['state']} | "
         f"extra historical requests: {len(collection['requested'])}\n"
         + format_report(day, report)
+        + "CATEGORIES | " + category_path + " | " + str(category_board['counts']) + "\n"
         + "TICKERS | " + ", ".join(c["ticker"] for c in candidates) + "\n"
     )
     _atomic(target / "scalp_radar.txt", text_report)
