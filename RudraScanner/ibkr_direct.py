@@ -56,6 +56,7 @@ def run_direct(host="127.0.0.1",port=4002,client_id=682,limit=10,timeout=12):
         if not app.ready.wait(timeout=min(timeout,8)):
             return "IBKR DIRECT | CONNECTION NOT READY\\n" + str(app.failures[:3]) + "\\n"
         lines=["IBKR DIRECT | 4 SCANNERS | "+datetime.now(UK).strftime("%H:%M UK")]
+        # Request all four scanners together so Discord stays under its 30s limit.
         for i,code in enumerate(CODES):
             req=960000+i
             app.requests[req]=code
@@ -70,17 +71,21 @@ def run_direct(host="127.0.0.1",port=4002,client_id=682,limit=10,timeout=12):
                      TagValue("avgVolumeAbove","1000000")]
             try:
                 app.reqScannerSubscription(req,sub,[],filters)
-                success=app.done[code].wait(timeout=timeout)
-                status="DONE" if success else "TIMEOUT"
-                values=sorted(set(app.rows[code]),key=lambda r:r[0])
-                lines.append(f"{code} | {status} | {len(values)} returned")
-                lines.extend(f" {rank}. {sym}" for rank,sym in values[:limit]
-                             if sym not in {"BEAT","ONDS"})
             except Exception as exc:
-                lines.append(f"{code} | ERROR | {type(exc).__name__}")
-            finally:
-                try: app.cancelScannerSubscription(req)
-                except Exception: pass
+                app.failures.append((req,"SEND",type(exc).__name__))
+                app.done[code].set()
+        deadline=time.monotonic()+timeout
+        for code in CODES:
+            app.done[code].wait(max(0,deadline-time.monotonic()))
+        for i,code in enumerate(CODES):
+            req=960000+i
+            status="DONE" if app.done[code].is_set() else "TIMEOUT"
+            values=sorted(set(app.rows[code]),key=lambda r:r[0])
+            lines.append(f"{code} | {status} | {len(values)} returned")
+            lines.extend(f" {rank}. {sym}" for rank,sym in values[:limit]
+                         if sym not in {"BEAT","ONDS"})
+            try: app.cancelScannerSubscription(req)
+            except Exception: pass
         if app.failures:
             lines.append("API ERRORS | "+str(app.failures[:5]))
         lines.append("DIRECT IBKR | NO TRADE ORDERS | NO SAVED DATA")
