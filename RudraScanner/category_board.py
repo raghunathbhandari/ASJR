@@ -135,4 +135,9 @@ def save_board(root, day, board):
     structured = folder / "processed" / "rudra_scanner_categories.json"
     _atomic(report, format_board(board))
     _atomic(structured, json.dumps(board, indent=2, default=str)+"\n")
+    # Calculate and save the SMB Top 5 on every Chakra scanner cycle.
+    # The manual Discord command reads this snapshot; no new IBKR request.
+    from .top_in_play import scan_rankings
+    top5 = folder / "processed" / "rudra_smb_top5.txt"
+    _atomic(top5, scan_rankings(root, day, board))
     return str(report)
