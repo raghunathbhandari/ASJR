@@ -65,7 +65,7 @@ def scan_rankings(repo_root, day, board, *, now=None, limit=5):
     root = Path(repo_root)
     path = root/"ASJR_Analyst"/"DataLake"/str(day)/"raw"/"ibkr_scanner_list.csv"
     if not path.is_file():
-        return "RUDRA SCANNER | SMB WATCH | NO SCANNER CSV\\n"
+        return "RUDRA SCANNER | SMB WATCH | NO SCANNER CSV\n"
     entries = {}
     with path.open(newline="",encoding="utf-8-sig") as handle:
         for row in csv.DictReader(handle):
@@ -86,7 +86,7 @@ def scan_rankings(repo_root, day, board, *, now=None, limit=5):
             e["ranks"][code]=min(e["ranks"].get(code,999),rank)
             e["ts"]=max(e["ts"],ts)
     if not entries:
-        return "RUDRA SCANNER | SMB WATCH | NO RECENT IBKR SCAN\\n"
+        return "RUDRA SCANNER | SMB WATCH | NO RECENT IBKR SCAN\n"
     stock_info={r["ticker"]:r for r in board.get("rows",[])}
     ranked=[]
     for sym,e in entries.items():
@@ -124,7 +124,7 @@ def scan_rankings(repo_root, day, board, *, now=None, limit=5):
         lines.append(f"{i}. {sym} | {bias} | {reason}{price_text}")
     lines.append(f"REMAINING SCANNER | {len(ranked)-min(limit,len(ranked))} tickers")
     lines.append("SCANNER DISCOVERY | NOT TRADE SIGNALS")
-    return "\\n".join(lines)+"\\n"
+    return "\n".join(lines)+"\n"
 
 def render(board, *, now=None, limit=5):
     now = now or datetime.now(timezone.utc)
