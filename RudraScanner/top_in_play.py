@@ -5,6 +5,7 @@ No broker connection, scans, orders, or alert sends. Freshness is explicit.
 """
 from __future__ import annotations
 import argparse
+import csv
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -54,6 +55,77 @@ def choose(board, limit=5):
     return picked[:limit]
 
 
+def scan_rankings(repo_root, day, board, *, now=None, limit=5):
+    """Rank ALL IBKR four-code discoveries, not only the selected 30.
+
+    No fallback to AI-only/FIXED. Scanner membership and rank describe
+    attention rather than trade probability; direction is scan-list bias.
+    """
+    now = now or datetime.now(timezone.utc)
+    root = Path(repo_root)
+    path = root/"ASJR_Analyst"/"DataLake"/str(day)/"raw"/"ibkr_scanner_list.csv"
+    if not path.is_file():
+        return "RUDRA SCANNER | SMB WATCH | NO SCANNER CSV\\n"
+    entries = {}
+    with path.open(newline="",encoding="utf-8-sig") as handle:
+        for row in csv.DictReader(handle):
+            sym = str(row.get("ticker") or "").strip().upper()
+            code = str(row.get("scan_code") or "").strip()
+            if not sym or sym in {"BEAT","ONDS"} or code not in {
+                "TOP_PERC_GAIN","TOP_PERC_LOSE","HOT_BY_VOLUME","MOST_ACTIVE"}:
+                continue
+            try:
+                ts=datetime.fromisoformat(str(row.get("scanned_at_utc","")).replace("Z","+00:00"))
+                rank=int(row.get("rank") or 999)
+            except (ValueError,TypeError):
+                continue
+            if ts.tzinfo is None or (now-ts).total_seconds()>1200 or (now-ts).total_seconds() < -60:
+                continue
+            e=entries.setdefault(sym,{"codes":set(),"ranks":{},"ts":ts})
+            e["codes"].add(code)
+            e["ranks"][code]=min(e["ranks"].get(code,999),rank)
+            e["ts"]=max(e["ts"],ts)
+    if not entries:
+        return "RUDRA SCANNER | SMB WATCH | NO RECENT IBKR SCAN\\n"
+    stock_info={r["ticker"]:r for r in board.get("rows",[])}
+    ranked=[]
+    for sym,e in entries.items():
+        codes=e["codes"]
+        gain="TOP_PERC_GAIN" in codes
+        lose="TOP_PERC_LOSE" in codes
+        bias=("GAINER" if gain and not lose else "LOSER" if lose and not gain else "ACTIVE")
+        hot="HOT_BY_VOLUME" in codes
+        active="MOST_ACTIVE" in codes
+        f=stock_info.get(sym,{})
+        fresh=f.get("data_state")=="FRESH_5M"
+        pct=f.get("change_5m_pct") if fresh else None
+        vol=f.get("vol_12bar") if fresh else None
+        # Volume and 5m movement are supplemental; not a verified session gap/RVOL.
+        evidence=len(codes)*100 + (45 if hot else 0) + (20 if active else 0)
+        evidence += sum(max(0,51-min(int(v),51)) for v in e["ranks"].values())
+        if vol is not None:
+            evidence += min(40,max(0,float(vol)*10))
+        if pct is not None:
+            evidence += min(25,abs(float(pct))*20)
+        reasons=[]
+        if gain and not lose:
+            reasons.append("GAINER")
+        elif lose and not gain:
+            reasons.append("LOSER")
+        if hot: reasons.append("HOT VOL")
+        if active: reasons.append("ACTIVE")
+        ranked.append((evidence,sym,bias,"+".join(reasons) or "SCANNER",f,e["ts"]))
+    ranked.sort(key=lambda x:(-x[0],x[1]))
+    stamp=max(e["ts"] for e in entries.values()).astimezone(UK).strftime("%H:%M")
+    lines=[f"RUDRA SCANNER | SMB TOP IN PLAY | {stamp} UK"]
+    for i,(_,sym,bias,reason,f,_) in enumerate(ranked[:limit],1):
+        price=f.get("price") if f.get("data_state")=="FRESH_5M" else None
+        price_text=f" | ${price:.2f}" if price is not None else ""
+        lines.append(f"{i}. {sym} | {bias} | {reason}{price_text}")
+    lines.append(f"REMAINING SCANNER | {len(ranked)-min(limit,len(ranked))} tickers")
+    lines.append("SCANNER DISCOVERY | NOT TRADE SIGNALS")
+    return "\\n".join(lines)+"\\n"
+
 def render(board, *, now=None, limit=5):
     now = now or datetime.now(timezone.utc)
     generated = datetime.fromisoformat(board["generated_at_uk"])
@@ -87,7 +159,7 @@ def main(argv=None):
     if not path.is_file():
         print("RUDRA SCANNER | TOP IN PLAY | NO SAVED DATA")
         return 2
-    print(render(json.loads(path.read_text(encoding="utf-8")), limit=args.top),end="")
+    print(scan_rankings(args.repo, day, json.loads(path.read_text(encoding="utf-8")), limit=args.top),end="")
     return 0
 
 
