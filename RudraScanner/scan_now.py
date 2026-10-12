@@ -21,7 +21,7 @@ from RudraScanner.manual_request import (
     current_trade_date, load_request, request_scan,
 )
 from RudraScanner.storage import read_saved_report
-from RudraScanner.top_in_play import render as render_top_in_play
+from RudraScanner.top_in_play import scan_rankings
 import json
 from RudraScanner.premarket_diagnostic import print_saved as print_premarket_diagnostic
 
@@ -70,7 +70,7 @@ def main(argv=None):
         if not board_path.is_file():
             print("RUDRA SCANNER | TOP IN PLAY | NO SAVED DATA")
             return 2
-        print(render_top_in_play(json.loads(board_path.read_text(encoding="utf-8"))), end="")
+        print(scan_rankings(root, day, json.loads(board_path.read_text(encoding="utf-8"))), end="")
         return 0
     if args.status:
         state = load_request(root)
