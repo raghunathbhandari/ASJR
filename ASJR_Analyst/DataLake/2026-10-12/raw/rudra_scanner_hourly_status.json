@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T15:52:58.552576+00:00",
+  "generated_at_utc": "2026-10-12T15:59:09.063901+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
@@ -21,8 +21,8 @@
     "QCOM",
     "SECZ",
     "SMCI",
-    "TTMI",
     "WDC",
+    "WOLF",
     "WTTR"
   ],
   "per_ticker": {
@@ -98,11 +98,11 @@
       "state": "OK",
       "rows": 552
     },
-    "TTMI": {
-      "state": "OK",
-      "rows": 550
-    },
     "WDC": {
+      "state": "OK",
+      "rows": 552
+    },
+    "WOLF": {
       "state": "OK",
       "rows": 552
     },
@@ -111,7 +111,7 @@
       "rows": 427
     }
   },
-  "rows": 11161,
+  "rows": 11163,
   "usable_150bars": [
     "AKAM",
     "AMAT",
@@ -131,8 +131,8 @@
     "QCOM",
     "SECZ",
     "SMCI",
-    "TTMI",
     "WDC",
+    "WOLF",
     "WTTR"
   ]
 }
