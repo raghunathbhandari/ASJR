@@ -1,7 +1,7 @@
 {
   "state": "PARTIAL",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T01:49:24.141134+00:00",
+  "generated_at_utc": "2026-10-12T01:55:50.849420+00:00",
   "selected_tickers": [
     "AAPL",
     "AKAM",
@@ -9,11 +9,12 @@
     "AMT",
     "AMZN",
     "APLD",
-    "ASST",
     "AXTI",
     "BMNR",
+    "COIN",
     "CRCL",
     "CRDO",
+    "HOOD",
     "HUM",
     "INTC",
     "IREN",
@@ -28,7 +29,6 @@
     "QCOM",
     "SECZ",
     "SMCI",
-    "SNDK",
     "SPCX",
     "TMUS",
     "WDC",
@@ -59,10 +59,6 @@
       "state": "OK",
       "rows": 560
     },
-    "ASST": {
-      "state": "OK",
-      "rows": 560
-    },
     "AXTI": {
       "state": "OK",
       "rows": 560
@@ -71,11 +67,19 @@
       "state": "OK",
       "rows": 560
     },
+    "COIN": {
+      "state": "OK",
+      "rows": 560
+    },
     "CRCL": {
       "state": "OK",
       "rows": 560
     },
     "CRDO": {
+      "state": "OK",
+      "rows": 560
+    },
+    "HOOD": {
       "state": "OK",
       "rows": 560
     },
@@ -128,14 +132,10 @@
       "rows": 560
     },
     "SECZ": {
-      "state": "OK",
-      "rows": 560
-    },
-    "SMCI": {
       "state": "TIMEOUT",
       "rows": 0
     },
-    "SNDK": {
+    "SMCI": {
       "state": "OK",
       "rows": 560
     },
@@ -164,11 +164,12 @@
     "AMT",
     "AMZN",
     "APLD",
-    "ASST",
     "AXTI",
     "BMNR",
+    "COIN",
     "CRCL",
     "CRDO",
+    "HOOD",
     "HUM",
     "INTC",
     "IREN",
@@ -181,8 +182,7 @@
     "PLTR",
     "PURR",
     "QCOM",
-    "SECZ",
-    "SNDK",
+    "SMCI",
     "SPCX",
     "TMUS",
     "WDC",
