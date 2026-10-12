@@ -1,24 +1,24 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T13:38:26.948023+00:00",
+  "generated_at_utc": "2026-10-12T13:44:36.126078+00:00",
   "selected_tickers": [
     "AI",
     "AKAM",
     "AMAT",
     "ASTS",
+    "BORR",
     "CBRS",
     "CCC",
     "CRDO",
-    "DNA",
     "INTC",
     "IONQ",
+    "IREN",
     "MDT",
     "META",
     "MMED",
     "MRVL",
     "MSFT",
-    "NVTS",
     "ORCL",
     "QCOM",
     "SMCI",
@@ -42,6 +42,10 @@
       "state": "OK",
       "rows": 550
     },
+    "BORR": {
+      "state": "OK",
+      "rows": 544
+    },
     "CBRS": {
       "state": "OK",
       "rows": 550
@@ -54,15 +58,15 @@
       "state": "OK",
       "rows": 550
     },
-    "DNA": {
-      "state": "OK",
-      "rows": 549
-    },
     "INTC": {
       "state": "OK",
       "rows": 550
     },
     "IONQ": {
+      "state": "OK",
+      "rows": 550
+    },
+    "IREN": {
       "state": "OK",
       "rows": 550
     },
@@ -83,10 +87,6 @@
       "rows": 550
     },
     "MSFT": {
-      "state": "OK",
-      "rows": 550
-    },
-    "NVTS": {
       "state": "OK",
       "rows": 550
     },
@@ -111,24 +111,24 @@
       "rows": 425
     }
   },
-  "rows": 11180,
+  "rows": 11175,
   "usable_150bars": [
     "AI",
     "AKAM",
     "AMAT",
     "ASTS",
+    "BORR",
     "CBRS",
     "CCC",
     "CRDO",
-    "DNA",
     "INTC",
     "IONQ",
+    "IREN",
     "MDT",
     "META",
     "MMED",
     "MRVL",
     "MSFT",
-    "NVTS",
     "ORCL",
     "QCOM",
     "SMCI",
