@@ -1,7 +1,7 @@
 {
   "state": "PARTIAL",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T01:55:50.849420+00:00",
+  "generated_at_utc": "2026-10-12T02:02:23.650219+00:00",
   "selected_tickers": [
     "AAPL",
     "AKAM",
@@ -9,12 +9,11 @@
     "AMT",
     "AMZN",
     "APLD",
+    "ASST",
     "AXTI",
     "BMNR",
-    "COIN",
     "CRCL",
     "CRDO",
-    "HOOD",
     "HUM",
     "INTC",
     "IREN",
@@ -22,6 +21,7 @@
     "LITE",
     "MSFT",
     "MSTR",
+    "NBIS",
     "NVDA",
     "ORCL",
     "PLTR",
@@ -59,6 +59,10 @@
       "state": "OK",
       "rows": 560
     },
+    "ASST": {
+      "state": "OK",
+      "rows": 560
+    },
     "AXTI": {
       "state": "OK",
       "rows": 560
@@ -67,19 +71,11 @@
       "state": "OK",
       "rows": 560
     },
-    "COIN": {
-      "state": "OK",
-      "rows": 560
-    },
     "CRCL": {
       "state": "OK",
       "rows": 560
     },
     "CRDO": {
-      "state": "OK",
-      "rows": 560
-    },
-    "HOOD": {
       "state": "OK",
       "rows": 560
     },
@@ -111,6 +107,10 @@
       "state": "OK",
       "rows": 560
     },
+    "NBIS": {
+      "state": "OK",
+      "rows": 560
+    },
     "NVDA": {
       "state": "OK",
       "rows": 560
@@ -124,16 +124,16 @@
       "rows": 560
     },
     "PURR": {
-      "state": "OK",
-      "rows": 560
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "QCOM": {
       "state": "OK",
       "rows": 560
     },
     "SECZ": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 560
     },
     "SMCI": {
       "state": "OK",
@@ -164,12 +164,11 @@
     "AMT",
     "AMZN",
     "APLD",
+    "ASST",
     "AXTI",
     "BMNR",
-    "COIN",
     "CRCL",
     "CRDO",
-    "HOOD",
     "HUM",
     "INTC",
     "IREN",
@@ -177,11 +176,12 @@
     "LITE",
     "MSFT",
     "MSTR",
+    "NBIS",
     "NVDA",
     "ORCL",
     "PLTR",
-    "PURR",
     "QCOM",
+    "SECZ",
     "SMCI",
     "SPCX",
     "TMUS",
