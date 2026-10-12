@@ -1,10 +1,11 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T18:32:08.859466+00:00",
+  "generated_at_utc": "2026-10-12T18:44:02.668176+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
+    "ASTS",
     "CBRS",
     "CCC",
     "CRDO",
@@ -22,7 +23,6 @@
     "SMCI",
     "VFC",
     "WDC",
-    "WOLF",
     "WTTR"
   ],
   "per_ticker": {
@@ -31,6 +31,10 @@
       "rows": 532
     },
     "AMAT": {
+      "state": "OK",
+      "rows": 555
+    },
+    "ASTS": {
       "state": "OK",
       "rows": 555
     },
@@ -102,10 +106,6 @@
       "state": "OK",
       "rows": 555
     },
-    "WOLF": {
-      "state": "OK",
-      "rows": 555
-    },
     "WTTR": {
       "state": "OK",
       "rows": 430
@@ -115,6 +115,7 @@
   "usable_150bars": [
     "AKAM",
     "AMAT",
+    "ASTS",
     "CBRS",
     "CCC",
     "CRDO",
@@ -132,7 +133,6 @@
     "SMCI",
     "VFC",
     "WDC",
-    "WOLF",
     "WTTR"
   ]
 }
