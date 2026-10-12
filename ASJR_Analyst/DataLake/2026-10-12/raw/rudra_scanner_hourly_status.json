@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T17:02:56.143127+00:00",
+  "generated_at_utc": "2026-10-12T17:09:08.023561+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
@@ -15,6 +15,7 @@
     "INTC",
     "IONQ",
     "MDT",
+    "META",
     "MMED",
     "MRVL",
     "MSFT",
@@ -22,7 +23,6 @@
     "QCOM",
     "SMCI",
     "WDC",
-    "WOLF",
     "WTTR"
   ],
   "per_ticker": {
@@ -74,6 +74,10 @@
       "state": "OK",
       "rows": 523
     },
+    "META": {
+      "state": "OK",
+      "rows": 553
+    },
     "MMED": {
       "state": "OK",
       "rows": 446
@@ -102,10 +106,6 @@
       "state": "OK",
       "rows": 553
     },
-    "WOLF": {
-      "state": "OK",
-      "rows": 553
-    },
     "WTTR": {
       "state": "OK",
       "rows": 428
@@ -125,6 +125,7 @@
     "INTC",
     "IONQ",
     "MDT",
+    "META",
     "MMED",
     "MRVL",
     "MSFT",
@@ -132,7 +133,6 @@
     "QCOM",
     "SMCI",
     "WDC",
-    "WOLF",
     "WTTR"
   ]
 }
