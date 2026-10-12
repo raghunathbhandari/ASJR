@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T13:32:18.622406+00:00",
+  "generated_at_utc": "2026-10-12T13:38:26.948023+00:00",
   "selected_tickers": [
     "AI",
     "AKAM",
@@ -10,18 +10,18 @@
     "CBRS",
     "CCC",
     "CRDO",
+    "DNA",
     "INTC",
     "IONQ",
-    "IREN",
     "MDT",
+    "META",
     "MMED",
     "MRVL",
     "MSFT",
+    "NVTS",
     "ORCL",
     "QCOM",
     "SMCI",
-    "SMR",
-    "TMUS",
     "WDC",
     "WTTR"
   ],
@@ -54,6 +54,10 @@
       "state": "OK",
       "rows": 550
     },
+    "DNA": {
+      "state": "OK",
+      "rows": 549
+    },
     "INTC": {
       "state": "OK",
       "rows": 550
@@ -62,13 +66,13 @@
       "state": "OK",
       "rows": 550
     },
-    "IREN": {
-      "state": "OK",
-      "rows": 550
-    },
     "MDT": {
       "state": "OK",
       "rows": 520
+    },
+    "META": {
+      "state": "OK",
+      "rows": 550
     },
     "MMED": {
       "state": "OK",
@@ -79,6 +83,10 @@
       "rows": 550
     },
     "MSFT": {
+      "state": "OK",
+      "rows": 550
+    },
+    "NVTS": {
       "state": "OK",
       "rows": 550
     },
@@ -94,14 +102,6 @@
       "state": "OK",
       "rows": 550
     },
-    "SMR": {
-      "state": "OK",
-      "rows": 550
-    },
-    "TMUS": {
-      "state": "OK",
-      "rows": 519
-    },
     "WDC": {
       "state": "OK",
       "rows": 550
@@ -111,7 +111,7 @@
       "rows": 425
     }
   },
-  "rows": 11150,
+  "rows": 11180,
   "usable_150bars": [
     "AI",
     "AKAM",
@@ -120,18 +120,18 @@
     "CBRS",
     "CCC",
     "CRDO",
+    "DNA",
     "INTC",
     "IONQ",
-    "IREN",
     "MDT",
+    "META",
     "MMED",
     "MRVL",
     "MSFT",
+    "NVTS",
     "ORCL",
     "QCOM",
     "SMCI",
-    "SMR",
-    "TMUS",
     "WDC",
     "WTTR"
   ]
