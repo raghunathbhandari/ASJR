@@ -1,7 +1,7 @@
 {
   "state": "PARTIAL",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T04:15:13.629279+00:00",
+  "generated_at_utc": "2026-10-12T04:21:31.232823+00:00",
   "selected_tickers": [
     "AAPL",
     "AKAM",
@@ -21,7 +21,6 @@
     "LITE",
     "MSFT",
     "MSTR",
-    "MU",
     "NVDA",
     "ORCL",
     "PLTR",
@@ -29,6 +28,7 @@
     "QCOM",
     "SECZ",
     "SMCI",
+    "SNDK",
     "SPCX",
     "TMUS",
     "WDC",
@@ -107,35 +107,35 @@
       "state": "OK",
       "rows": 560
     },
-    "MU": {
-      "state": "OK",
-      "rows": 560
-    },
     "NVDA": {
       "state": "OK",
       "rows": 560
     },
     "ORCL": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 560
     },
     "PLTR": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 560
     },
     "PURR": {
       "state": "TIMEOUT",
       "rows": 0
     },
     "QCOM": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 560
     },
     "SECZ": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 560
     },
     "SMCI": {
+      "state": "OK",
+      "rows": 560
+    },
+    "SNDK": {
       "state": "OK",
       "rows": 560
     },
@@ -156,7 +156,7 @@
       "rows": 439
     }
   },
-  "rows": 13573,
+  "rows": 15813,
   "usable_150bars": [
     "AAPL",
     "AKAM",
@@ -176,9 +176,13 @@
     "LITE",
     "MSFT",
     "MSTR",
-    "MU",
     "NVDA",
+    "ORCL",
+    "PLTR",
+    "QCOM",
+    "SECZ",
     "SMCI",
+    "SNDK",
     "SPCX",
     "TMUS",
     "WDC",
