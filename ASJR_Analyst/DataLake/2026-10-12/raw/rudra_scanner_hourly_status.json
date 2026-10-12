@@ -1,8 +1,9 @@
 {
   "state": "PARTIAL",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T00:08:17.314481+00:00",
+  "generated_at_utc": "2026-10-12T00:14:44.150384+00:00",
   "selected_tickers": [
+    "AAOI",
     "AAPL",
     "AKAM",
     "AMAT",
@@ -11,10 +12,8 @@
     "APLD",
     "ASTS",
     "AXTI",
-    "COIN",
     "CRCL",
     "CRDO",
-    "FWDI",
     "HUM",
     "INTC",
     "IREN",
@@ -32,9 +31,14 @@
     "SPCX",
     "TMUS",
     "WDC",
-    "WTTR"
+    "WTTR",
+    "XP"
   ],
   "per_ticker": {
+    "AAOI": {
+      "state": "OK",
+      "rows": 560
+    },
     "AAPL": {
       "state": "OK",
       "rows": 560
@@ -67,19 +71,11 @@
       "state": "OK",
       "rows": 560
     },
-    "COIN": {
-      "state": "OK",
-      "rows": 560
-    },
     "CRCL": {
       "state": "OK",
       "rows": 560
     },
     "CRDO": {
-      "state": "OK",
-      "rows": 560
-    },
-    "FWDI": {
       "state": "OK",
       "rows": 560
     },
@@ -120,12 +116,12 @@
       "rows": 560
     },
     "ORCL": {
-      "state": "TIMEOUT",
-      "rows": 0
-    },
-    "PLTR": {
       "state": "OK",
       "rows": 560
+    },
+    "PLTR": {
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "PURR": {
       "state": "OK",
@@ -154,10 +150,15 @@
     "WTTR": {
       "state": "OK",
       "rows": 439
+    },
+    "XP": {
+      "state": "OK",
+      "rows": 483
     }
   },
-  "rows": 15813,
+  "rows": 15736,
   "usable_150bars": [
+    "AAOI",
     "AAPL",
     "AKAM",
     "AMAT",
@@ -166,10 +167,8 @@
     "APLD",
     "ASTS",
     "AXTI",
-    "COIN",
     "CRCL",
     "CRDO",
-    "FWDI",
     "HUM",
     "INTC",
     "IREN",
@@ -179,13 +178,14 @@
     "MSFT",
     "MSTR",
     "NVDA",
-    "PLTR",
+    "ORCL",
     "PURR",
     "QCOM",
     "SMCI",
     "SPCX",
     "TMUS",
     "WDC",
-    "WTTR"
+    "WTTR",
+    "XP"
   ]
 }
