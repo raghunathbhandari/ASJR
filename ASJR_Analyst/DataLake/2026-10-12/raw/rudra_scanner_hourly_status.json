@@ -1,8 +1,9 @@
 {
   "state": "PARTIAL",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T04:21:31.232823+00:00",
+  "generated_at_utc": "2026-10-12T04:27:58.934967+00:00",
   "selected_tickers": [
+    "AAOI",
     "AAPL",
     "AKAM",
     "AMAT",
@@ -13,7 +14,6 @@
     "BMNR",
     "CRCL",
     "CRDO",
-    "FWDI",
     "HUM",
     "INTC",
     "IREN",
@@ -35,6 +35,10 @@
     "WTTR"
   ],
   "per_ticker": {
+    "AAOI": {
+      "state": "OK",
+      "rows": 560
+    },
     "AAPL": {
       "state": "OK",
       "rows": 560
@@ -72,10 +76,6 @@
       "rows": 560
     },
     "CRDO": {
-      "state": "OK",
-      "rows": 560
-    },
-    "FWDI": {
       "state": "OK",
       "rows": 560
     },
@@ -120,8 +120,8 @@
       "rows": 560
     },
     "PURR": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 560
     },
     "QCOM": {
       "state": "OK",
@@ -132,8 +132,8 @@
       "rows": 560
     },
     "SMCI": {
-      "state": "OK",
-      "rows": 560
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "SNDK": {
       "state": "OK",
@@ -158,6 +158,7 @@
   },
   "rows": 15813,
   "usable_150bars": [
+    "AAOI",
     "AAPL",
     "AKAM",
     "AMAT",
@@ -168,7 +169,6 @@
     "BMNR",
     "CRCL",
     "CRDO",
-    "FWDI",
     "HUM",
     "INTC",
     "IREN",
@@ -179,9 +179,9 @@
     "NVDA",
     "ORCL",
     "PLTR",
+    "PURR",
     "QCOM",
     "SECZ",
-    "SMCI",
     "SNDK",
     "SPCX",
     "TMUS",
