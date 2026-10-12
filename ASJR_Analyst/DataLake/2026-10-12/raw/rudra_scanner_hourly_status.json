@@ -1,12 +1,10 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T18:25:54.330889+00:00",
+  "generated_at_utc": "2026-10-12T18:32:08.859466+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
-    "ASTS",
-    "BORR",
     "CBRS",
     "CCC",
     "CRDO",
@@ -15,6 +13,7 @@
     "IONQ",
     "MDT",
     "META",
+    "MMED",
     "MRVL",
     "MSFT",
     "ORCL",
@@ -23,6 +22,7 @@
     "SMCI",
     "VFC",
     "WDC",
+    "WOLF",
     "WTTR"
   ],
   "per_ticker": {
@@ -33,14 +33,6 @@
     "AMAT": {
       "state": "OK",
       "rows": 555
-    },
-    "ASTS": {
-      "state": "OK",
-      "rows": 555
-    },
-    "BORR": {
-      "state": "OK",
-      "rows": 549
     },
     "CBRS": {
       "state": "OK",
@@ -74,6 +66,10 @@
       "state": "OK",
       "rows": 555
     },
+    "MMED": {
+      "state": "OK",
+      "rows": 448
+    },
     "MRVL": {
       "state": "OK",
       "rows": 555
@@ -106,17 +102,19 @@
       "state": "OK",
       "rows": 555
     },
+    "WOLF": {
+      "state": "OK",
+      "rows": 555
+    },
     "WTTR": {
       "state": "OK",
       "rows": 430
     }
   },
-  "rows": 11292,
+  "rows": 11191,
   "usable_150bars": [
     "AKAM",
     "AMAT",
-    "ASTS",
-    "BORR",
     "CBRS",
     "CCC",
     "CRDO",
@@ -125,6 +123,7 @@
     "IONQ",
     "MDT",
     "META",
+    "MMED",
     "MRVL",
     "MSFT",
     "ORCL",
@@ -133,6 +132,7 @@
     "SMCI",
     "VFC",
     "WDC",
+    "WOLF",
     "WTTR"
   ]
 }
