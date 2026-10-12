@@ -1,11 +1,10 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T17:39:05.302470+00:00",
+  "generated_at_utc": "2026-10-12T18:13:54.007812+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
-    "ASTS",
     "BORR",
     "CBRS",
     "CCC",
@@ -15,6 +14,7 @@
     "IONQ",
     "MDT",
     "META",
+    "MMED",
     "MRVL",
     "MSFT",
     "ORCL",
@@ -31,10 +31,6 @@
       "rows": 531
     },
     "AMAT": {
-      "state": "OK",
-      "rows": 554
-    },
-    "ASTS": {
       "state": "OK",
       "rows": 554
     },
@@ -74,6 +70,10 @@
       "state": "OK",
       "rows": 554
     },
+    "MMED": {
+      "state": "OK",
+      "rows": 447
+    },
     "MRVL": {
       "state": "OK",
       "rows": 554
@@ -111,11 +111,10 @@
       "rows": 429
     }
   },
-  "rows": 11271,
+  "rows": 11164,
   "usable_150bars": [
     "AKAM",
     "AMAT",
-    "ASTS",
     "BORR",
     "CBRS",
     "CCC",
@@ -125,6 +124,7 @@
     "IONQ",
     "MDT",
     "META",
+    "MMED",
     "MRVL",
     "MSFT",
     "ORCL",
