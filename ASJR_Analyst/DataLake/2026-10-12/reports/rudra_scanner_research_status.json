@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 12400,
-    "completed_rows": 12400,
+    "input_rows": 12431,
+    "completed_rows": 12431,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,16 +16,16 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 12400,
+    "no_wap_rows": 12431,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
   "detector_status": {
     "state": "OK",
-    "tickers": 16,
+    "tickers": 21,
     "emitted": 0,
     "blocked_context": 0,
-    "blocked_data": 16,
+    "blocked_data": 21,
     "blocked_session": 0,
     "mode": "RESEARCH_ONLY"
   },
@@ -43,10 +43,10 @@
   "context": {
     "state": "WAIT",
     "reason": "MIXED_OR_NEUTRAL_BENCHMARKS",
-    "timestamp": "2026-10-12 17:05:00+00:00",
+    "timestamp": "2026-10-12 17:10:00+00:00",
     "index_pct": {
-      "SPY": -0.0951,
-      "QQQ": -0.6736
+      "SPY": -0.0861,
+      "QQQ": -0.6802
     },
     "sector_etf": {
       "AKAM": "XLK",
@@ -81,7 +81,6 @@
       "CBRS",
       "CCC",
       "CRDO",
-      "DNA",
       "FIGS",
       "INTC",
       "IONQ",
@@ -94,6 +93,7 @@
       "QCOM",
       "SMCI",
       "WDC",
+      "WOLF",
       "WTTR",
       "SPY",
       "QQQ",
@@ -114,7 +114,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 12400,
+    "count": 12431,
     "source": "SAME_IBKR_APP"
   }
 }
