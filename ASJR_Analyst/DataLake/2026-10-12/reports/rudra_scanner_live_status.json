@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 13131,
-    "completed_rows": 13131,
+    "input_rows": 13157,
+    "completed_rows": 13157,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 13131,
+    "no_wap_rows": 13157,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -34,7 +34,7 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 16380,
+    "stored_rows": 16536,
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-12/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
@@ -43,10 +43,10 @@
   "context": {
     "state": "WAIT",
     "reason": "MIXED_OR_NEUTRAL_BENCHMARKS",
-    "timestamp": "2026-10-12 19:30:00+00:00",
+    "timestamp": "2026-10-12 19:35:00+00:00",
     "index_pct": {
-      "SPY": -0.1503,
-      "QQQ": -0.7654
+      "SPY": -0.0899,
+      "QQQ": -0.6669
     },
     "sector_etf": {
       "AKAM": "XLK",
@@ -80,6 +80,7 @@
       "AMAT",
       "CBRS",
       "CCC",
+      "CIEN",
       "CRDO",
       "FIGS",
       "INTC",
@@ -92,7 +93,6 @@
       "MSFT",
       "ORCL",
       "QCOM",
-      "QMCO",
       "SECZ",
       "SMCI",
       "WDC",
@@ -116,7 +116,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 13131,
+    "count": 13157,
     "source": "SAME_IBKR_APP"
   }
 }
