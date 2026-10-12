@@ -52,6 +52,7 @@ def main(argv=None):
     )
     parser.add_argument("--date", help="ET session date; must be today's scheduled Chakra session")
     parser.add_argument("--repo", default=str(Path(__file__).resolve().parents[1]))
+    parser.add_argument("--ibkr-direct", action="store_true", help="One-shot direct IBKR four-category scanner; no Chakra scan")
     parser.add_argument("--top", action="store_true", help="Short saved SMB-style Top In Play shortlist; no new scan")
     parser.add_argument("--status", action="store_true", help="Read current SSH request, do not queue")
     parser.add_argument("--premarket-test", action="store_true",
@@ -62,6 +63,10 @@ def main(argv=None):
                         help="Maximum waiting seconds; does NOT control broker API")
     args = parser.parse_args(argv)
     root = Path(args.repo).resolve()
+    if args.ibkr_direct:
+        from RudraScanner.ibkr_direct import run_direct
+        print(run_direct(limit=5,timeout=12),end="")
+        return 0
     if args.top:
         from datetime import datetime
         from zoneinfo import ZoneInfo
