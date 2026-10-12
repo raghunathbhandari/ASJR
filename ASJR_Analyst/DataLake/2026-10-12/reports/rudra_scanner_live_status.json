@@ -2,12 +2,12 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 13157,
-    "completed_rows": 13157,
+    "input_rows": 12675,
+    "completed_rows": 12675,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
-    "tickers": 26,
+    "tickers": 25,
     "min_periods": 9,
     "session_reset": false,
     "extended_hours_included": true,
@@ -16,16 +16,16 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 13157,
+    "no_wap_rows": 12675,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
   "detector_status": {
     "state": "OK",
-    "tickers": 21,
+    "tickers": 3,
     "emitted": 0,
     "blocked_context": 0,
-    "blocked_data": 21,
+    "blocked_data": 3,
     "blocked_session": 0,
     "mode": "RESEARCH_ONLY"
   },
@@ -34,7 +34,7 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 16536,
+    "stored_rows": 16692,
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-12/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
@@ -43,15 +43,13 @@
   "context": {
     "state": "WAIT",
     "reason": "MIXED_OR_NEUTRAL_BENCHMARKS",
-    "timestamp": "2026-10-12 19:35:00+00:00",
+    "timestamp": "2026-10-12 19:45:00+00:00",
     "index_pct": {
-      "SPY": -0.0899,
-      "QQQ": -0.6669
+      "SPY": -0.0925,
+      "QQQ": -0.7148
     },
     "sector_etf": {
       "AKAM": "XLK",
-      "MRVL": "XLK",
-      "WDC": "XLK",
       "AMAT": "SMH",
       "CRDO": "SMH",
       "INTC": "SMH",
@@ -65,9 +63,8 @@
   },
   "collection": {
     "requested": [
-      "LEVI",
+      "CRGY",
       "MDT",
-      "META",
       "MMED",
       "SPY",
       "QQQ",
@@ -80,22 +77,21 @@
       "AMAT",
       "CBRS",
       "CCC",
-      "CIEN",
       "CRDO",
+      "CRGY",
       "FIGS",
       "INTC",
       "IONQ",
-      "LEVI",
       "MDT",
-      "META",
       "MMED",
-      "MRVL",
       "MSFT",
       "ORCL",
       "QCOM",
       "SECZ",
       "SMCI",
+      "VFC",
       "WDC",
+      "WOLF",
       "WTTR",
       "SPY",
       "QQQ",
@@ -105,8 +101,6 @@
     ],
     "etfs": {
       "AKAM": "XLK",
-      "MRVL": "XLK",
-      "WDC": "XLK",
       "AMAT": "SMH",
       "CRDO": "SMH",
       "INTC": "SMH",
@@ -116,7 +110,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 13157,
+    "count": 12675,
     "source": "SAME_IBKR_APP"
   }
 }
