@@ -1,15 +1,13 @@
 {
   "state": "PARTIAL",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T01:18:07.718334+00:00",
+  "generated_at_utc": "2026-10-12T01:30:00.083772+00:00",
   "selected_tickers": [
-    "AAOI",
     "AAPL",
     "AKAM",
     "AMAT",
     "AMT",
     "AMZN",
-    "APLD",
     "AXTI",
     "BMNR",
     "COIN",
@@ -20,8 +18,10 @@
     "IREN",
     "JPM",
     "LITE",
+    "MRNA",
     "MSFT",
     "MSTR",
+    "MU",
     "NVDA",
     "ORCL",
     "PLTR",
@@ -35,10 +35,6 @@
     "WTTR"
   ],
   "per_ticker": {
-    "AAOI": {
-      "state": "OK",
-      "rows": 560
-    },
     "AAPL": {
       "state": "OK",
       "rows": 560
@@ -56,10 +52,6 @@
       "rows": 447
     },
     "AMZN": {
-      "state": "OK",
-      "rows": 560
-    },
-    "APLD": {
       "state": "OK",
       "rows": 560
     },
@@ -103,11 +95,19 @@
       "state": "OK",
       "rows": 560
     },
+    "MRNA": {
+      "state": "OK",
+      "rows": 560
+    },
     "MSFT": {
       "state": "OK",
       "rows": 560
     },
     "MSTR": {
+      "state": "OK",
+      "rows": 560
+    },
+    "MU": {
       "state": "OK",
       "rows": 560
     },
@@ -128,12 +128,12 @@
       "rows": 560
     },
     "QCOM": {
-      "state": "TIMEOUT",
-      "rows": 0
-    },
-    "SECZ": {
       "state": "OK",
       "rows": 560
+    },
+    "SECZ": {
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "SMCI": {
       "state": "OK",
@@ -158,13 +158,11 @@
   },
   "rows": 15813,
   "usable_150bars": [
-    "AAOI",
     "AAPL",
     "AKAM",
     "AMAT",
     "AMT",
     "AMZN",
-    "APLD",
     "AXTI",
     "BMNR",
     "COIN",
@@ -175,13 +173,15 @@
     "IREN",
     "JPM",
     "LITE",
+    "MRNA",
     "MSFT",
     "MSTR",
+    "MU",
     "NVDA",
     "ORCL",
     "PLTR",
     "PURR",
-    "SECZ",
+    "QCOM",
     "SMCI",
     "SPCX",
     "TMUS",
