@@ -54,7 +54,7 @@ def run_direct(host="127.0.0.1",port=4002,client_id=682,limit=10,timeout=12):
         worker=threading.Thread(target=app.run,daemon=True)
         worker.start()
         if not app.ready.wait(timeout=min(timeout,8)):
-            return "IBKR DIRECT | CONNECTION NOT READY\\n" + str(app.failures[:3]) + "\\n"
+            return "IBKR DIRECT | CONNECTION NOT READY\n" + str(app.failures[:3]) + "\n"
         lines=["IBKR DIRECT | 4 SCANNERS | "+datetime.now(UK).strftime("%H:%M UK")]
         # Request all four scanners together so Discord stays under its 30s limit.
         for i,code in enumerate(CODES):
@@ -89,7 +89,7 @@ def run_direct(host="127.0.0.1",port=4002,client_id=682,limit=10,timeout=12):
         if app.failures:
             lines.append("API ERRORS | "+str(app.failures[:5]))
         lines.append("DIRECT IBKR | NO TRADE ORDERS | NO SAVED DATA")
-        return "\\n".join(lines)+"\\n"
+        return "\n".join(lines)+"\n"
     finally:
         try: app.disconnect()
         except Exception: pass
