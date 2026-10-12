@@ -1,3 +1,14 @@
+## 2026-10-12 — Lessons from Chakra Top 5 and runtime review
+
+- Consult GitHub-synced DataLake logs before asking for SSH output. Find recent run-log filenames from commit changed-file lists, then fetch logs. GitHub logs are snapshots, not direct VPS access.
+- Chakra performs IBKR discovery, SMB Top 5 ranking, and saves `processed/rudra_smb_top5.txt` as part of its normal scanner cycles. Discord `--top` only reads the saved ranking; `--ibkr-raw` only reads saved raw data. Neither triggers ranking or broker requests. No automatic Top 5 Discord send.
+- The isolated Top 5 save unit test passed on VPS (1/1). Actual DataLake Top 5 file was subsequently observed at 16:39 UK, and synced GitHub commits include subsequent snapshots. Unit-test success alone does not prove live scheduling.
+- `!mbdstop` and `!mbdstart` are Discord commands, not SSH/Bash commands.
+- GitHub run logs on 2026-10-12 show start to DATA COMPLETE: 16:39:05–16:39:54 = 49 s; 16:40:35–16:41:27 = 52 s; 16:46:32–16:47:14 = 42 s. Latest 82-ticker IBKR 5m fetch: 16:46:37–16:46:59 = 22 s.
+- These timings exclude Git completion: each retrieved log ends at `GIT | File verification started`. Never report 42 seconds as confirmed total end-to-end job duration. Nor assume exact scheduling regularity without timestamps.
+- Avoid unnecessary restarts or code changes and clearly distinguish configured, committed, tested, and observed-live states.
+
+---
 ## 2026-10-12 16:35 UK — SMB TOP 5 PRECOMPUTED EVERY CHAKRA CYCLE (COMMITTED; VPS NOT YET VERIFIED)
 
 **User clarified desired behavior:** Every normal ~5-minute Chakra scanner cycle must automatically filter the latest saved four-code IBKR RAW source and persist the SMB Top 5 ranking without a manual request. Manual Discord `!runpy RudraScanner/scan_now\\.py --top` must ONLY READ this prepared ranking, not initiate filtering or any broker request. No scheduled Discord delivery.
