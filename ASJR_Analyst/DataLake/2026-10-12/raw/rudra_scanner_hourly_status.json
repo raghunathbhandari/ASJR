@@ -1,7 +1,7 @@
 {
-  "state": "PARTIAL",
+  "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T03:50:20.179383+00:00",
+  "generated_at_utc": "2026-10-12T04:02:29.589812+00:00",
   "selected_tickers": [
     "AAOI",
     "AAPL",
@@ -9,7 +9,6 @@
     "AMAT",
     "AMT",
     "AMZN",
-    "APLD",
     "ASTS",
     "BMNR",
     "CRCL",
@@ -27,6 +26,7 @@
     "PLTR",
     "PURR",
     "QCOM",
+    "SBET",
     "SECZ",
     "SMCI",
     "SPCX",
@@ -56,10 +56,6 @@
       "rows": 447
     },
     "AMZN": {
-      "state": "OK",
-      "rows": 560
-    },
-    "APLD": {
       "state": "OK",
       "rows": 560
     },
@@ -120,14 +116,18 @@
       "rows": 560
     },
     "PLTR": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 560
     },
     "PURR": {
       "state": "OK",
       "rows": 560
     },
     "QCOM": {
+      "state": "OK",
+      "rows": 560
+    },
+    "SBET": {
       "state": "OK",
       "rows": 560
     },
@@ -156,7 +156,7 @@
       "rows": 439
     }
   },
-  "rows": 15813,
+  "rows": 16373,
   "usable_150bars": [
     "AAOI",
     "AAPL",
@@ -164,7 +164,6 @@
     "AMAT",
     "AMT",
     "AMZN",
-    "APLD",
     "ASTS",
     "BMNR",
     "CRCL",
@@ -179,8 +178,10 @@
     "MSTR",
     "NVDA",
     "ORCL",
+    "PLTR",
     "PURR",
     "QCOM",
+    "SBET",
     "SECZ",
     "SMCI",
     "SPCX",
