@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 11517,
-    "completed_rows": 11517,
+    "input_rows": 11543,
+    "completed_rows": 11543,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 11517,
+    "no_wap_rows": 11543,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -43,10 +43,10 @@
   "context": {
     "state": "WAIT",
     "reason": "MIXED_OR_NEUTRAL_BENCHMARKS",
-    "timestamp": "2026-10-12 14:05:00+00:00",
+    "timestamp": "2026-10-12 14:10:00+00:00",
     "index_pct": {
-      "SPY": -0.0295,
-      "QQQ": -0.6043
+      "SPY": -0.0873,
+      "QQQ": -0.7161
     },
     "sector_etf": {
       "AKAM": "XLK",
@@ -65,8 +65,10 @@
   },
   "collection": {
     "requested": [
+      "AI",
       "MDT",
       "MMED",
+      "VZ",
       "SPY",
       "QQQ",
       "SMH",
@@ -78,7 +80,6 @@
       "AKAM",
       "AMAT",
       "ASTS",
-      "BORR",
       "CBRS",
       "CCC",
       "CRDO",
@@ -91,9 +92,10 @@
       "NVTS",
       "ORCL",
       "QCOM",
-      "SECZ",
       "SMCI",
+      "VZ",
       "WDC",
+      "WOLF",
       "WTTR",
       "SPY",
       "QQQ",
@@ -114,7 +116,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 11517,
+    "count": 11543,
     "source": "SAME_IBKR_APP"
   }
 }
