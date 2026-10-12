@@ -1,8 +1,9 @@
 {
   "state": "PARTIAL",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T10:15:59.446476+00:00",
+  "generated_at_utc": "2026-10-12T10:38:50.074119+00:00",
   "selected_tickers": [
+    "AAOI",
     "AAPL",
     "AKAM",
     "AMAT",
@@ -26,7 +27,6 @@
     "QCOM",
     "SECZ",
     "SMCI",
-    "SMR",
     "SOFI",
     "SPCX",
     "TMUS",
@@ -35,6 +35,10 @@
     "WTTR"
   ],
   "per_ticker": {
+    "AAOI": {
+      "state": "OK",
+      "rows": 547
+    },
     "AAPL": {
       "state": "OK",
       "rows": 547
@@ -77,7 +81,7 @@
     },
     "HUM": {
       "state": "OK",
-      "rows": 414
+      "rows": 415
     },
     "INTC": {
       "state": "OK",
@@ -116,8 +120,8 @@
       "rows": 547
     },
     "QCOM": {
-      "state": "OK",
-      "rows": 547
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "SECZ": {
       "state": "OK",
@@ -126,10 +130,6 @@
     "SMCI": {
       "state": "OK",
       "rows": 547
-    },
-    "SMR": {
-      "state": "TIMEOUT",
-      "rows": 0
     },
     "SOFI": {
       "state": "OK",
@@ -156,8 +156,9 @@
       "rows": 423
     }
   },
-  "rows": 15357,
+  "rows": 15358,
   "usable_150bars": [
+    "AAOI",
     "AAPL",
     "AKAM",
     "AMAT",
@@ -178,7 +179,6 @@
     "ORCL",
     "PLTR",
     "POET",
-    "QCOM",
     "SECZ",
     "SMCI",
     "SOFI",

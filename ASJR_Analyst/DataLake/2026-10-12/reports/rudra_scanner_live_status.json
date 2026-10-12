@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 15877,
-    "completed_rows": 15877,
+    "input_rows": 15913,
+    "completed_rows": 15913,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 15877,
+    "no_wap_rows": 15913,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -70,6 +70,7 @@
   },
   "collection": {
     "requested": [
+      "AAOI",
       "AAPL",
       "AMT",
       "AMZN",
@@ -82,7 +83,6 @@
       "NVDA",
       "PLTR",
       "POET",
-      "SMR",
       "SOFI",
       "SPCX",
       "TMUS",
@@ -99,6 +99,7 @@
       "XLY"
     ],
     "symbols": [
+      "AAOI",
       "AAPL",
       "AKAM",
       "AMAT",
@@ -122,7 +123,6 @@
       "QCOM",
       "SECZ",
       "SMCI",
-      "SMR",
       "SOFI",
       "SPCX",
       "TMUS",
@@ -161,7 +161,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 15877,
+    "count": 15913,
     "source": "SAME_IBKR_APP"
   }
 }
