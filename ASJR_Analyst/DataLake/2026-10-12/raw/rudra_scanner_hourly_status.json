@@ -1,19 +1,18 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T13:44:36.126078+00:00",
+  "generated_at_utc": "2026-10-12T13:50:52.743989+00:00",
   "selected_tickers": [
     "AI",
     "AKAM",
     "AMAT",
     "ASTS",
-    "BORR",
     "CBRS",
     "CCC",
     "CRDO",
     "INTC",
     "IONQ",
-    "IREN",
+    "LQDA",
     "MDT",
     "META",
     "MMED",
@@ -23,6 +22,7 @@
     "QCOM",
     "SMCI",
     "WDC",
+    "WOLF",
     "WTTR"
   ],
   "per_ticker": {
@@ -41,10 +41,6 @@
     "ASTS": {
       "state": "OK",
       "rows": 550
-    },
-    "BORR": {
-      "state": "OK",
-      "rows": 544
     },
     "CBRS": {
       "state": "OK",
@@ -66,9 +62,9 @@
       "state": "OK",
       "rows": 550
     },
-    "IREN": {
+    "LQDA": {
       "state": "OK",
-      "rows": 550
+      "rows": 487
     },
     "MDT": {
       "state": "OK",
@@ -106,24 +102,27 @@
       "state": "OK",
       "rows": 550
     },
+    "WOLF": {
+      "state": "OK",
+      "rows": 550
+    },
     "WTTR": {
       "state": "OK",
       "rows": 425
     }
   },
-  "rows": 11175,
+  "rows": 11118,
   "usable_150bars": [
     "AI",
     "AKAM",
     "AMAT",
     "ASTS",
-    "BORR",
     "CBRS",
     "CCC",
     "CRDO",
     "INTC",
     "IONQ",
-    "IREN",
+    "LQDA",
     "MDT",
     "META",
     "MMED",
@@ -133,6 +132,7 @@
     "QCOM",
     "SMCI",
     "WDC",
+    "WOLF",
     "WTTR"
   ]
 }

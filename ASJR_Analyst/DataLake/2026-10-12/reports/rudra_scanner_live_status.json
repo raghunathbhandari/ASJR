@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 11309,
-    "completed_rows": 11309,
+    "input_rows": 11320,
+    "completed_rows": 11320,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,17 +16,17 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 11309,
+    "no_wap_rows": 11320,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
   "detector_status": {
     "state": "OK",
-    "tickers": 21,
+    "tickers": 10,
     "emitted": 0,
     "blocked_context": 0,
     "blocked_data": 0,
-    "blocked_session": 21,
+    "blocked_session": 10,
     "mode": "RESEARCH_ONLY"
   },
   "events": [],
@@ -34,7 +34,7 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 14976,
+    "stored_rows": 15288,
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-12/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
@@ -42,9 +42,12 @@
   },
   "context": {
     "state": "WAIT",
-    "reason": "MISSING_BENCHMARK_OR_PREV_RTH_CLOSE",
-    "timestamp": null,
-    "index_pct": {},
+    "reason": "MIXED_OR_NEUTRAL_BENCHMARKS",
+    "timestamp": "2026-10-12 13:35:00+00:00",
+    "index_pct": {
+      "SPY": 0.0475,
+      "QQQ": -0.4659
+    },
     "sector_etf": {
       "AKAM": "XLK",
       "MRVL": "XLK",
@@ -62,7 +65,6 @@
   },
   "collection": {
     "requested": [
-      "IREN",
       "MDT",
       "META",
       "SPY",
@@ -76,13 +78,12 @@
       "AKAM",
       "AMAT",
       "ASTS",
-      "BORR",
       "CBRS",
       "CCC",
       "CRDO",
       "INTC",
       "IONQ",
-      "IREN",
+      "LQDA",
       "MDT",
       "META",
       "MMED",
@@ -92,6 +93,7 @@
       "QCOM",
       "SMCI",
       "WDC",
+      "WOLF",
       "WTTR",
       "SPY",
       "QQQ",
@@ -112,7 +114,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 11309,
+    "count": 11320,
     "source": "SAME_IBKR_APP"
   }
 }
