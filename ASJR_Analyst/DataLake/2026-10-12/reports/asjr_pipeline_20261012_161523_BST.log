@@ -33,3 +33,19 @@
 2026-10-12 16:16:00 BST | INFO | FILE | Saved asjr_snapshot | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-12/processed/asjr_snapshot.json
 2026-10-12 16:16:00 BST | INFO | RUN | DATA COMPLETE | universe=80 | intraday_rows=36466 | ticker_summary=80
 2026-10-12 16:16:00 BST | INFO | GIT | File verification started | count=7
+2026-10-12 16:16:02 BST | ERROR | RUN | FAILED
+Traceback (most recent call last):
+  File "/root/trading/ASJR/ASJR_Analyst/Tests/test_asjr_pipeline.py", line 638, in _run_asjr_manual_pipeline_unlocked
+    git_result = asjr_git.submit_datalake(
+  File "/root/trading/ASJR/ASJR_Analyst/Utils/asjr_git.py", line 105, in submit_datalake
+    _run_git(
+  File "/root/trading/ASJR/ASJR_Analyst/Utils/asjr_git.py", line 13, in _run_git
+    raise RuntimeError(
+RuntimeError: Git command failed: git pull --rebase origin main
+STDOUT:
+
+STDERR:
+From github.com:raghunathbhandari/ASJR
+ * branch              main       -> FETCH_HEAD
+fatal: Cannot rebase onto multiple branches.
+
