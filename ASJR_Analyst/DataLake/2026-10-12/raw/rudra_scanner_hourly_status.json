@@ -1,7 +1,7 @@
 {
   "state": "PARTIAL",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-12T11:23:14.427097+00:00",
+  "generated_at_utc": "2026-10-12T11:29:47.442537+00:00",
   "selected_tickers": [
     "AAPL",
     "AKAM",
@@ -20,13 +20,13 @@
     "JPM",
     "LITE",
     "MSFT",
+    "MU",
     "NVDA",
     "ORCL",
     "PLTR",
     "QCOM",
     "SECZ",
     "SMCI",
-    "SMR",
     "SNAP",
     "SOFI",
     "SPCX",
@@ -103,6 +103,10 @@
       "state": "OK",
       "rows": 548
     },
+    "MU": {
+      "state": "OK",
+      "rows": 548
+    },
     "NVDA": {
       "state": "OK",
       "rows": 548
@@ -116,18 +120,14 @@
       "rows": 548
     },
     "QCOM": {
-      "state": "OK",
-      "rows": 548
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "SECZ": {
       "state": "OK",
       "rows": 548
     },
     "SMCI": {
-      "state": "TIMEOUT",
-      "rows": 0
-    },
-    "SMR": {
       "state": "OK",
       "rows": 548
     },
@@ -175,12 +175,12 @@
     "JPM",
     "LITE",
     "MSFT",
+    "MU",
     "NVDA",
     "ORCL",
     "PLTR",
-    "QCOM",
     "SECZ",
-    "SMR",
+    "SMCI",
     "SNAP",
     "SOFI",
     "SPCX",
