@@ -17,6 +17,8 @@ ET = ZoneInfo("America/New_York")
 FIELDS = ["ticker", "session_date_et", "session", "minute", "cum_volume"]
 SEGMENTS = {"PRE": (240, 570), "RTH": (570, 960), "POST": (960, 1200)}
 MAX_SESSIONS = 5
+LOW_RVOL5_MAX = 0.58
+HIGH_RVOL5_MIN = 2.50
 
 
 def durable_reference_path(root):
@@ -204,11 +206,15 @@ def candidates(features):
     if not needed.issubset(features.columns):
         return features.iloc[0:0]
     minute = pd.to_numeric(features["minute"], errors="coerce")
+    rv = pd.to_numeric(features["rvol5"], errors="coerce")
     ok = (features["rvol5_ready"].eq(True)
           & pd.to_numeric(features["close"], errors="coerce").gt(
                 pd.to_numeric(features["ema9"], errors="coerce"))
           & pd.to_numeric(features["ema9"], errors="coerce").gt(
                 pd.to_numeric(features["vwap"], errors="coerce"))
-          & pd.to_numeric(features["rvol5"], errors="coerce").le(0.5)
+          & (rv.le(LOW_RVOL5_MAX) | rv.ge(HIGH_RVOL5_MIN))
           & ~(minute.ge(570) & minute.lt(600)))
-    return features[ok].copy()
+    result = features[ok].copy()
+    result["rvol5_signal"] = result["rvol5"].apply(
+        lambda value: "LOW_RVOL" if value <= LOW_RVOL5_MAX else "HIGH_RVOL")
+    return result
