@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 10929,
-    "completed_rows": 10929,
+    "input_rows": 10954,
+    "completed_rows": 10954,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 10929,
+    "no_wap_rows": 10954,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -71,7 +71,6 @@
     "symbols": [
       "AKAM",
       "AMAT",
-      "APLD",
       "ASTS",
       "BMBL",
       "CIFR",
@@ -86,6 +85,7 @@
       "QCOM",
       "S",
       "SMCI",
+      "SNDK",
       "UNH",
       "WDC",
       "WTTR",
@@ -107,7 +107,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 10929,
+    "count": 10954,
     "source": "SAME_IBKR_APP"
   }
 }
