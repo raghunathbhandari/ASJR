@@ -1,11 +1,12 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-13T00:51:16.777413+00:00",
+  "generated_at_utc": "2026-10-13T00:57:05.471831+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
     "BMNR",
+    "CBRS",
     "CRCL",
     "CRDO",
     "CRWV",
@@ -14,7 +15,6 @@
     "IREN",
     "MSFT",
     "MSTR",
-    "NBIS",
     "NVTS",
     "ORCL",
     "PURR",
@@ -34,6 +34,10 @@
       "rows": 560
     },
     "BMNR": {
+      "state": "OK",
+      "rows": 560
+    },
+    "CBRS": {
       "state": "OK",
       "rows": 560
     },
@@ -66,10 +70,6 @@
       "rows": 560
     },
     "MSTR": {
-      "state": "OK",
-      "rows": 560
-    },
-    "NBIS": {
       "state": "OK",
       "rows": 560
     },
@@ -111,6 +111,7 @@
     "AKAM",
     "AMAT",
     "BMNR",
+    "CBRS",
     "CRCL",
     "CRDO",
     "CRWV",
@@ -119,7 +120,6 @@
     "IREN",
     "MSFT",
     "MSTR",
-    "NBIS",
     "NVTS",
     "ORCL",
     "PURR",
