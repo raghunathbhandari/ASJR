@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-13T10:43:57.497820+00:00",
+  "generated_at_utc": "2026-10-13T10:49:45.772767+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
@@ -10,6 +10,7 @@
     "CRDO",
     "INTC",
     "IREN",
+    "JPM",
     "MRVL",
     "MSFT",
     "MU",
@@ -21,7 +22,6 @@
     "SNDK",
     "UNH",
     "WDC",
-    "WFC",
     "WTTR"
   ],
   "per_ticker": {
@@ -50,6 +50,10 @@
       "rows": 547
     },
     "IREN": {
+      "state": "OK",
+      "rows": 547
+    },
+    "JPM": {
       "state": "OK",
       "rows": 547
     },
@@ -97,16 +101,12 @@
       "state": "OK",
       "rows": 547
     },
-    "WFC": {
-      "state": "OK",
-      "rows": 528
-    },
     "WTTR": {
       "state": "OK",
       "rows": 426
     }
   },
-  "rows": 10777,
+  "rows": 10796,
   "usable_150bars": [
     "AKAM",
     "AMAT",
@@ -115,6 +115,7 @@
     "CRDO",
     "INTC",
     "IREN",
+    "JPM",
     "MRVL",
     "MSFT",
     "MU",
@@ -126,7 +127,6 @@
     "SNDK",
     "UNH",
     "WDC",
-    "WFC",
     "WTTR"
   ]
 }
