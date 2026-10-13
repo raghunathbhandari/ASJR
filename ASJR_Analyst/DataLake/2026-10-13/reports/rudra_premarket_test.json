@@ -1,16 +1,66 @@
 {
   "date_et": "2026-10-13",
   "signal_quality": {
-    "state": "NO_BARS"
+    "state": "NO_SIGNALS",
+    "count": 0,
+    "latest_completed": 0,
+    "latest_rvol_ready": 0,
+    "latest_vwap_ready": 0
   },
   "signal_events": [],
   "mode": "SHADOW_DIAGNOSTIC_NO_DISCORD",
   "history": {
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/state/rudra_premarket_rvol5.csv",
-    "ready5": 0,
+    "ready5": 448,
     "stored_rows": 132984,
     "saved": true
   },
-  "tickers": [],
+  "tickers": [
+    {
+      "ticker": "CAT",
+      "bar_et": "2026-10-13 13:15:00-04:00",
+      "session": "RTH",
+      "rvol5": 1.8948,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "FSLR",
+      "bar_et": "2026-10-13 13:15:00-04:00",
+      "session": "RTH",
+      "rvol5": null,
+      "rvol5_ready": false,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "INTC",
+      "bar_et": "2026-10-13 13:15:00-04:00",
+      "session": "RTH",
+      "rvol5": 0.9726,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "MU",
+      "bar_et": "2026-10-13 13:15:00-04:00",
+      "session": "RTH",
+      "rvol5": 1.1832,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "TSLA",
+      "bar_et": "2026-10-13 13:15:00-04:00",
+      "session": "RTH",
+      "rvol5": 0.5716,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    }
+  ],
   "notice": "Signal evaluation diagnostic; BUY WATCH Discord still separately gated. Refer to signal_quality and signal_events; no order is executed."
 }
