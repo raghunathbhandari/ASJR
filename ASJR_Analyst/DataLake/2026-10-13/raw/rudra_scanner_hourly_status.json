@@ -1,11 +1,12 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-13T11:47:19.948679+00:00",
+  "generated_at_utc": "2026-10-13T12:04:00.063622+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
     "ASTS",
+    "CIFR",
     "CRDO",
     "GS",
     "INTC",
@@ -13,7 +14,6 @@
     "MRNA",
     "MSFT",
     "MU",
-    "NBIS",
     "NVTS",
     "ORCL",
     "QCOM",
@@ -34,6 +34,10 @@
       "rows": 548
     },
     "ASTS": {
+      "state": "OK",
+      "rows": 548
+    },
+    "CIFR": {
       "state": "OK",
       "rows": 548
     },
@@ -62,10 +66,6 @@
       "rows": 548
     },
     "MU": {
-      "state": "OK",
-      "rows": 548
-    },
-    "NBIS": {
       "state": "OK",
       "rows": 548
     },
@@ -111,6 +111,7 @@
     "AKAM",
     "AMAT",
     "ASTS",
+    "CIFR",
     "CRDO",
     "GS",
     "INTC",
@@ -118,7 +119,6 @@
     "MRNA",
     "MSFT",
     "MU",
-    "NBIS",
     "NVTS",
     "ORCL",
     "QCOM",
