@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-13T10:26:27.914407+00:00",
+  "generated_at_utc": "2026-10-13T10:32:18.052434+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
@@ -17,10 +17,10 @@
     "NVTS",
     "ORCL",
     "QCOM",
-    "SECZ",
     "SMCI",
     "SNDK",
     "UNH",
+    "VFC",
     "WDC",
     "WTTR"
   ],
@@ -81,10 +81,6 @@
       "state": "OK",
       "rows": 547
     },
-    "SECZ": {
-      "state": "OK",
-      "rows": 547
-    },
     "SMCI": {
       "state": "OK",
       "rows": 547
@@ -97,6 +93,10 @@
       "state": "OK",
       "rows": 547
     },
+    "VFC": {
+      "state": "OK",
+      "rows": 509
+    },
     "WDC": {
       "state": "OK",
       "rows": 547
@@ -106,7 +106,7 @@
       "rows": 426
     }
   },
-  "rows": 10796,
+  "rows": 10758,
   "usable_150bars": [
     "AKAM",
     "AMAT",
@@ -122,10 +122,10 @@
     "NVTS",
     "ORCL",
     "QCOM",
-    "SECZ",
     "SMCI",
     "SNDK",
     "UNH",
+    "VFC",
     "WDC",
     "WTTR"
   ]
