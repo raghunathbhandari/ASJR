@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-13T00:10:38.612167+00:00",
+  "generated_at_utc": "2026-10-13T00:16:26.523372+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
@@ -10,11 +10,11 @@
     "CRCL",
     "CRDO",
     "FPS",
-    "FTI",
     "HAWK",
     "INTC",
     "IREN",
     "MSFT",
+    "MSTR",
     "NVTS",
     "ORCL",
     "PURR",
@@ -53,10 +53,6 @@
       "state": "OK",
       "rows": 560
     },
-    "FTI": {
-      "state": "OK",
-      "rows": 461
-    },
     "HAWK": {
       "state": "OK",
       "rows": 511
@@ -70,6 +66,10 @@
       "rows": 560
     },
     "MSFT": {
+      "state": "OK",
+      "rows": 560
+    },
+    "MSTR": {
       "state": "OK",
       "rows": 560
     },
@@ -106,7 +106,7 @@
       "rows": 435
     }
   },
-  "rows": 10904,
+  "rows": 11003,
   "usable_150bars": [
     "AKAM",
     "AMAT",
@@ -115,11 +115,11 @@
     "CRCL",
     "CRDO",
     "FPS",
-    "FTI",
     "HAWK",
     "INTC",
     "IREN",
     "MSFT",
+    "MSTR",
     "NVTS",
     "ORCL",
     "PURR",
