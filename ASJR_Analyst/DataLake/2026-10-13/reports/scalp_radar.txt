@@ -8,12 +8,12 @@ RVOL20 | INSUFFICIENT_20_FULL_RTH_SESSIONS
 DISCOVERY | COLLECTED | extra historical requests: 13
 RUDRA RADAR | 5M | 2026-10-13 | NOT A LIVE TRADE ALERT
 MODE | EXPERIMENTAL_RESEARCH | DISCORD DISABLED
-INPUT | 9654 bars | 25 tickers | 9654 completed
+INPUT | 9679 bars | 25 tickers | 9679 completed
 EMA9 | continuous across real available bars | status=OK
 VWAP | exact IBKR WAP RTH-reset | WAP_MISSING_OR_INCOMPLETE_RTH | valid bars=0
 RVOL20 | INSUFFICIENT_20_FULL_RTH_SESSIONS | valid bars=0
 TOP-DOWN | context gate | 0 tickers WAIT/mixed
 DETECTORS | OK | research candidates=0
 NO VERIFIED TRADING SIGNALS; missing WAP/context or detectors OFF.
-CATEGORIES | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-13/reports/rudra_scanner_categories.txt | {'TOP_IN_PLAY': 17, 'STRONG_MOMENTUM': 2, 'WEAK_SELLING': 6, 'REVERSAL_WATCH': 0, 'LOW_RVOL_WATCH': 3, 'UNCLASSIFIED': 2}
-TICKERS | AAOI, AKAM, AMAT, ASTS, AXTI, CRDO, INTC, IONQ, MRVL, MSFT, MSTR, MU, NBIS, NVTS, ORCL, QCOM, SMCI, SNDK, WDC, WTTR
+CATEGORIES | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-13/reports/rudra_scanner_categories.txt | {'TOP_IN_PLAY': 17, 'STRONG_MOMENTUM': 2, 'WEAK_SELLING': 2, 'REVERSAL_WATCH': 0, 'LOW_RVOL_WATCH': 7, 'UNCLASSIFIED': 1}
+TICKERS | AKAM, AMAT, ASTS, AXTI, BE, CRDO, INTC, MRVL, MSFT, MSTR, MU, NBIS, NVTS, ORCL, PURR, QCOM, SMCI, SNDK, WDC, WTTR
