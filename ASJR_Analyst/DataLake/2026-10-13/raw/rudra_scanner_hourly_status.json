@@ -1,11 +1,12 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-13T11:06:26.392711+00:00",
+  "generated_at_utc": "2026-10-13T11:12:16.660020+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
     "ASTS",
+    "CBRS",
     "CRDO",
     "INTC",
     "IREN",
@@ -16,7 +17,6 @@
     "NBIS",
     "NVTS",
     "ORCL",
-    "QBTS",
     "QCOM",
     "SMCI",
     "SNDK",
@@ -34,6 +34,10 @@
       "rows": 547
     },
     "ASTS": {
+      "state": "OK",
+      "rows": 547
+    },
+    "CBRS": {
       "state": "OK",
       "rows": 547
     },
@@ -77,10 +81,6 @@
       "state": "OK",
       "rows": 547
     },
-    "QBTS": {
-      "state": "OK",
-      "rows": 547
-    },
     "QCOM": {
       "state": "OK",
       "rows": 547
@@ -111,6 +111,7 @@
     "AKAM",
     "AMAT",
     "ASTS",
+    "CBRS",
     "CRDO",
     "INTC",
     "IREN",
@@ -121,7 +122,6 @@
     "NBIS",
     "NVTS",
     "ORCL",
-    "QBTS",
     "QCOM",
     "SMCI",
     "SNDK",
