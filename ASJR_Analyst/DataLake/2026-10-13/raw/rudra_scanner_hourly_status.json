@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-13T14:32:42.098105+00:00",
+  "generated_at_utc": "2026-10-13T14:44:29.883517+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
@@ -12,7 +12,6 @@
     "CRDO",
     "FUN",
     "INTC",
-    "MDB",
     "META",
     "MSFT",
     "NVTS",
@@ -21,6 +20,7 @@
     "SMCI",
     "SNAP",
     "SNDX",
+    "SPCX",
     "WDC",
     "WTTR"
   ],
@@ -61,10 +61,6 @@
       "state": "OK",
       "rows": 551
     },
-    "MDB": {
-      "state": "OK",
-      "rows": 550
-    },
     "META": {
       "state": "OK",
       "rows": 551
@@ -97,6 +93,10 @@
       "state": "OK",
       "rows": 463
     },
+    "SPCX": {
+      "state": "OK",
+      "rows": 551
+    },
     "WDC": {
       "state": "OK",
       "rows": 551
@@ -106,7 +106,7 @@
       "rows": 430
     }
   },
-  "rows": 10570,
+  "rows": 10571,
   "usable_150bars": [
     "AKAM",
     "AMAT",
@@ -117,7 +117,6 @@
     "CRDO",
     "FUN",
     "INTC",
-    "MDB",
     "META",
     "MSFT",
     "NVTS",
@@ -126,6 +125,7 @@
     "SMCI",
     "SNAP",
     "SNDX",
+    "SPCX",
     "WDC",
     "WTTR"
   ]
