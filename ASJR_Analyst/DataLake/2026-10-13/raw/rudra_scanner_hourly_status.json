@@ -1,22 +1,22 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-13T19:50:29.998848+00:00",
+  "generated_at_utc": "2026-10-13T20:02:43.226225+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
-    "ASTS",
     "BMBL",
-    "C",
     "CIFR",
     "CRDO",
     "FUN",
     "FWRG",
     "INTC",
+    "MMED",
     "MSFT",
     "OMDA",
     "ORCL",
     "QCOM",
+    "QDEL",
     "S",
     "SLDB",
     "SMCI",
@@ -33,17 +33,9 @@
       "state": "OK",
       "rows": 556
     },
-    "ASTS": {
-      "state": "OK",
-      "rows": 556
-    },
     "BMBL": {
       "state": "OK",
       "rows": 437
-    },
-    "C": {
-      "state": "OK",
-      "rows": 545
     },
     "CIFR": {
       "state": "OK",
@@ -65,6 +57,10 @@
       "state": "OK",
       "rows": 556
     },
+    "MMED": {
+      "state": "OK",
+      "rows": 449
+    },
     "MSFT": {
       "state": "OK",
       "rows": 556
@@ -80,6 +76,10 @@
     "QCOM": {
       "state": "OK",
       "rows": 556
+    },
+    "QDEL": {
+      "state": "OK",
+      "rows": 440
     },
     "S": {
       "state": "OK",
@@ -106,22 +106,22 @@
       "rows": 435
     }
   },
-  "rows": 10380,
+  "rows": 10168,
   "usable_150bars": [
     "AKAM",
     "AMAT",
-    "ASTS",
     "BMBL",
-    "C",
     "CIFR",
     "CRDO",
     "FUN",
     "FWRG",
     "INTC",
+    "MMED",
     "MSFT",
     "OMDA",
     "ORCL",
     "QCOM",
+    "QDEL",
     "S",
     "SLDB",
     "SMCI",

@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 12335,
-    "completed_rows": 12335,
+    "input_rows": 12116,
+    "completed_rows": 12116,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 12335,
+    "no_wap_rows": 12116,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -43,10 +43,10 @@
   "context": {
     "state": "WAIT",
     "reason": "MIXED_OR_NEUTRAL_BENCHMARKS",
-    "timestamp": "2026-10-13 19:40:00+00:00",
+    "timestamp": "2026-10-13 19:45:00+00:00",
     "index_pct": {
-      "SPY": 0.0566,
-      "QQQ": -0.3405
+      "SPY": 0.027,
+      "QQQ": -0.3646
     },
     "sector_etf": {
       "AKAM": "XLK",
@@ -63,6 +63,7 @@
   },
   "collection": {
     "requested": [
+      "MMED",
       "SPY",
       "QQQ",
       "SMH",
@@ -72,18 +73,18 @@
     "symbols": [
       "AKAM",
       "AMAT",
-      "ASTS",
       "BMBL",
-      "C",
       "CIFR",
       "CRDO",
       "FUN",
       "FWRG",
       "INTC",
+      "MMED",
       "MSFT",
       "OMDA",
       "ORCL",
       "QCOM",
+      "QDEL",
       "S",
       "SLDB",
       "SMCI",
@@ -107,7 +108,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 12335,
+    "count": 12116,
     "source": "SAME_IBKR_APP"
   }
 }
