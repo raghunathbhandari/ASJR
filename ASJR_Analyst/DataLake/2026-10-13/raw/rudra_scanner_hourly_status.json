@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-13T17:34:03.868886+00:00",
+  "generated_at_utc": "2026-10-13T17:40:18.342944+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
@@ -10,13 +10,13 @@
     "CIFR",
     "CRDO",
     "FUN",
-    "HELP",
     "INTC",
     "MLYS",
     "MSFT",
     "ORCL",
     "QCOM",
     "SGMT",
+    "SLDB",
     "SMCI",
     "SNDX",
     "STGW",
@@ -53,10 +53,6 @@
       "state": "OK",
       "rows": 456
     },
-    "HELP": {
-      "state": "OK",
-      "rows": 531
-    },
     "INTC": {
       "state": "OK",
       "rows": 554
@@ -80,6 +76,10 @@
     "SGMT": {
       "state": "OK",
       "rows": 496
+    },
+    "SLDB": {
+      "state": "OK",
+      "rows": 467
     },
     "SMCI": {
       "state": "OK",
@@ -106,7 +106,7 @@
       "rows": 433
     }
   },
-  "rows": 10262,
+  "rows": 10198,
   "usable_150bars": [
     "AKAM",
     "AMAT",
@@ -115,13 +115,13 @@
     "CIFR",
     "CRDO",
     "FUN",
-    "HELP",
     "INTC",
     "MLYS",
     "MSFT",
     "ORCL",
     "QCOM",
     "SGMT",
+    "SLDB",
     "SMCI",
     "SNDX",
     "STGW",
