@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-13T14:50:39.575835+00:00",
+  "generated_at_utc": "2026-10-13T14:56:49.136458+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
@@ -11,8 +11,9 @@
     "CIFR",
     "CRDO",
     "FUN",
+    "HELP",
     "INTC",
-    "MDB",
+    "INTR",
     "META",
     "MLYS",
     "MSFT",
@@ -20,7 +21,6 @@
     "QCOM",
     "SMCI",
     "SNDX",
-    "SPCX",
     "WDC",
     "WTTR"
   ],
@@ -57,13 +57,17 @@
       "state": "OK",
       "rows": 453
     },
+    "HELP": {
+      "state": "OK",
+      "rows": 531
+    },
     "INTC": {
       "state": "OK",
       "rows": 551
     },
-    "MDB": {
+    "INTR": {
       "state": "OK",
-      "rows": 550
+      "rows": 502
     },
     "META": {
       "state": "OK",
@@ -93,10 +97,6 @@
       "state": "OK",
       "rows": 463
     },
-    "SPCX": {
-      "state": "OK",
-      "rows": 551
-    },
     "WDC": {
       "state": "OK",
       "rows": 551
@@ -106,7 +106,7 @@
       "rows": 430
     }
   },
-  "rows": 10511,
+  "rows": 10443,
   "usable_150bars": [
     "AKAM",
     "AMAT",
@@ -116,8 +116,9 @@
     "CIFR",
     "CRDO",
     "FUN",
+    "HELP",
     "INTC",
-    "MDB",
+    "INTR",
     "META",
     "MLYS",
     "MSFT",
@@ -125,7 +126,6 @@
     "QCOM",
     "SMCI",
     "SNDX",
-    "SPCX",
     "WDC",
     "WTTR"
   ]
