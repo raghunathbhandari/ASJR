@@ -1,10 +1,11 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-13T13:11:58.747041+00:00",
+  "generated_at_utc": "2026-10-13T13:17:53.117003+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
+    "APLD",
     "ASTS",
     "BMBL",
     "CIFR",
@@ -19,7 +20,6 @@
     "QCOM",
     "S",
     "SMCI",
-    "SNDK",
     "UNH",
     "WDC",
     "WTTR"
@@ -27,89 +27,90 @@
   "per_ticker": {
     "AKAM": {
       "state": "OK",
-      "rows": 526
+      "rows": 527
     },
     "AMAT": {
       "state": "OK",
-      "rows": 549
+      "rows": 550
+    },
+    "APLD": {
+      "state": "OK",
+      "rows": 550
     },
     "ASTS": {
       "state": "OK",
-      "rows": 549
+      "rows": 550
     },
     "BMBL": {
       "state": "OK",
-      "rows": 430
+      "rows": 431
     },
     "CIFR": {
       "state": "OK",
-      "rows": 549
+      "rows": 550
     },
     "CRDO": {
       "state": "OK",
-      "rows": 549
+      "rows": 550
     },
     "CRWV": {
       "state": "OK",
-      "rows": 549
+      "rows": 550
     },
     "INTC": {
       "state": "OK",
-      "rows": 549
+      "rows": 550
     },
     "IREN": {
       "state": "OK",
-      "rows": 549
+      "rows": 550
     },
     "JPM": {
       "state": "OK",
-      "rows": 549
+      "rows": 550
     },
     "MSFT": {
       "state": "OK",
-      "rows": 549
+      "rows": 550
     },
     "MU": {
       "state": "OK",
-      "rows": 549
+      "rows": 550
     },
     "ORCL": {
       "state": "OK",
-      "rows": 549
+      "rows": 550
     },
     "QCOM": {
       "state": "OK",
-      "rows": 549
+      "rows": 550
     },
     "S": {
       "state": "OK",
-      "rows": 543
+      "rows": 544
     },
     "SMCI": {
       "state": "OK",
-      "rows": 549
-    },
-    "SNDK": {
-      "state": "OK",
-      "rows": 549
+      "rows": 550
     },
     "UNH": {
       "state": "OK",
-      "rows": 549
+      "rows": 550
     },
     "WDC": {
       "state": "OK",
-      "rows": 549
+      "rows": 550
     },
     "WTTR": {
       "state": "OK",
-      "rows": 428
+      "rows": 429
     }
   },
-  "rows": 10711,
+  "rows": 10731,
   "usable_150bars": [
     "AKAM",
     "AMAT",
+    "APLD",
     "ASTS",
     "BMBL",
     "CIFR",
@@ -124,7 +125,6 @@
     "QCOM",
     "S",
     "SMCI",
-    "SNDK",
     "UNH",
     "WDC",
     "WTTR"
