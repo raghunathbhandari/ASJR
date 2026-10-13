@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-13T12:32:00.350310+00:00",
+  "generated_at_utc": "2026-10-13T12:43:22.602905+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
@@ -14,7 +14,6 @@
     "IREN",
     "MSFT",
     "MU",
-    "NVTS",
     "ORCL",
     "QCOM",
     "S",
@@ -22,6 +21,7 @@
     "SNDK",
     "UNH",
     "WDC",
+    "WFC",
     "WTTR"
   ],
   "per_ticker": {
@@ -69,10 +69,6 @@
       "state": "OK",
       "rows": 549
     },
-    "NVTS": {
-      "state": "OK",
-      "rows": 549
-    },
     "ORCL": {
       "state": "OK",
       "rows": 549
@@ -101,12 +97,16 @@
       "state": "OK",
       "rows": 549
     },
+    "WFC": {
+      "state": "OK",
+      "rows": 530
+    },
     "WTTR": {
       "state": "OK",
       "rows": 428
     }
   },
-  "rows": 10823,
+  "rows": 10804,
   "usable_150bars": [
     "AKAM",
     "AMAT",
@@ -119,7 +119,6 @@
     "IREN",
     "MSFT",
     "MU",
-    "NVTS",
     "ORCL",
     "QCOM",
     "S",
@@ -127,6 +126,7 @@
     "SNDK",
     "UNH",
     "WDC",
+    "WFC",
     "WTTR"
   ]
 }
