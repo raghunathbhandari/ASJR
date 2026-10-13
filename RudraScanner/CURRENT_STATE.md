@@ -1,3 +1,9 @@
+## 2026-10-13 — BMBL missed-catalyst lesson (documentation only)
+
+Read **[CATALYST_DISCOVERY_GUIDE.md](CATALYST_DISCOVERY_GUIDE.md)** before changing AI news discovery, candidate selection, or IBKR scanner logic. BMBL's Oct 12 takeover report and ~50% rally were missed by AI/web research and absent from the saved IBKR/AI candidate CSVs. Saved scanner status showed 13 expired AI rows, 0 selected AI candidates, and 10 selected IBKR candidates. Do not infer the exact historical broker filter cause without 19:10–19:40 UK snapshots. Two parallel discovery branches are required in the future: sector-first AND independent market-wide event/mover discovery. Preserve sub-$5 exclusions for trading while retaining major catalysts as RESEARCH ONLY. **No bot logic, Discord alerts, or schedules changed.**
+
+---
+
 # RudraScanner — Current State / Start Here Next Session
 
 ## 2026-10-10 14:22 UTC — user reports existing Chakra bot restarted
