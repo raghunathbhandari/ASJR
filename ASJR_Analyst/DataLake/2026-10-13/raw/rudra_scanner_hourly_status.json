@@ -1,20 +1,20 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-13T00:39:40.577652+00:00",
+  "generated_at_utc": "2026-10-13T00:45:28.642401+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
     "BMNR",
-    "CBRS",
     "CRCL",
     "CRDO",
+    "CRWV",
+    "FWDI",
     "INTC",
     "IREN",
+    "MRVL",
     "MSFT",
     "MSTR",
-    "MU",
-    "NBIS",
     "NVTS",
     "ORCL",
     "PURR",
@@ -37,15 +37,19 @@
       "state": "OK",
       "rows": 560
     },
-    "CBRS": {
-      "state": "OK",
-      "rows": 560
-    },
     "CRCL": {
       "state": "OK",
       "rows": 560
     },
     "CRDO": {
+      "state": "OK",
+      "rows": 560
+    },
+    "CRWV": {
+      "state": "OK",
+      "rows": 560
+    },
+    "FWDI": {
       "state": "OK",
       "rows": 560
     },
@@ -57,19 +61,15 @@
       "state": "OK",
       "rows": 560
     },
+    "MRVL": {
+      "state": "OK",
+      "rows": 560
+    },
     "MSFT": {
       "state": "OK",
       "rows": 560
     },
     "MSTR": {
-      "state": "OK",
-      "rows": 560
-    },
-    "MU": {
-      "state": "OK",
-      "rows": 560
-    },
-    "NBIS": {
       "state": "OK",
       "rows": 560
     },
@@ -111,15 +111,15 @@
     "AKAM",
     "AMAT",
     "BMNR",
-    "CBRS",
     "CRCL",
     "CRDO",
+    "CRWV",
+    "FWDI",
     "INTC",
     "IREN",
+    "MRVL",
     "MSFT",
     "MSTR",
-    "MU",
-    "NBIS",
     "NVTS",
     "ORCL",
     "PURR",
