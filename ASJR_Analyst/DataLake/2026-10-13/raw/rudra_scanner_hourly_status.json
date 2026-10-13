@@ -1,7 +1,7 @@
 {
-  "state": "COMPLETE",
+  "state": "PARTIAL",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-13T20:02:43.226225+00:00",
+  "generated_at_utc": "2026-10-13T21:08:07.876347+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
@@ -27,86 +27,86 @@
   "per_ticker": {
     "AKAM": {
       "state": "OK",
-      "rows": 533
+      "rows": 534
     },
     "AMAT": {
       "state": "OK",
-      "rows": 556
+      "rows": 557
     },
     "BMBL": {
       "state": "OK",
-      "rows": 437
+      "rows": 438
     },
     "CIFR": {
       "state": "OK",
-      "rows": 556
+      "rows": 557
     },
     "CRDO": {
       "state": "OK",
-      "rows": 556
+      "rows": 557
     },
     "FUN": {
       "state": "OK",
-      "rows": 458
+      "rows": 459
     },
     "FWRG": {
       "state": "OK",
-      "rows": 437
+      "rows": 438
     },
     "INTC": {
       "state": "OK",
-      "rows": 556
+      "rows": 557
     },
     "MMED": {
       "state": "OK",
-      "rows": 449
+      "rows": 450
     },
     "MSFT": {
       "state": "OK",
-      "rows": 556
+      "rows": 557
     },
     "OMDA": {
       "state": "OK",
-      "rows": 488
+      "rows": 489
     },
     "ORCL": {
-      "state": "OK",
-      "rows": 556
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "QCOM": {
       "state": "OK",
-      "rows": 556
+      "rows": 557
     },
     "QDEL": {
-      "state": "OK",
-      "rows": 440
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "S": {
-      "state": "OK",
-      "rows": 550
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "SLDB": {
-      "state": "OK",
-      "rows": 469
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "SMCI": {
-      "state": "OK",
-      "rows": 556
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "SNDX": {
-      "state": "OK",
-      "rows": 468
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "WDC": {
-      "state": "OK",
-      "rows": 556
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "WTTR": {
-      "state": "OK",
-      "rows": 435
+      "state": "TIMEOUT",
+      "rows": 0
     }
   },
-  "rows": 10168,
+  "rows": 6150,
   "usable_150bars": [
     "AKAM",
     "AMAT",
@@ -119,14 +119,6 @@
     "MMED",
     "MSFT",
     "OMDA",
-    "ORCL",
-    "QCOM",
-    "QDEL",
-    "S",
-    "SLDB",
-    "SMCI",
-    "SNDX",
-    "WDC",
-    "WTTR"
+    "QCOM"
   ]
 }
