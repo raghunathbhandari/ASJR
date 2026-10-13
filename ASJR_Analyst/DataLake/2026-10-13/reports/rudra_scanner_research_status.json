@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 9579,
-    "completed_rows": 9579,
+    "input_rows": 9604,
+    "completed_rows": 9604,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 9579,
+    "no_wap_rows": 9604,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -64,11 +64,11 @@
     "requested": [
       "ASTS",
       "AXTI",
-      "IONQ",
       "MSTR",
       "NBIS",
       "NVTS",
       "PURR",
+      "RKLB",
       "SNDK",
       "SPY",
       "QQQ",
@@ -83,7 +83,6 @@
       "AXTI",
       "CRDO",
       "INTC",
-      "IONQ",
       "MRVL",
       "MSFT",
       "MSTR",
@@ -93,6 +92,7 @@
       "ORCL",
       "PURR",
       "QCOM",
+      "RKLB",
       "SMCI",
       "SNDK",
       "WDC",
@@ -116,7 +116,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 9579,
+    "count": 9604,
     "source": "SAME_IBKR_APP"
   }
 }
