@@ -1,13 +1,13 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-13T08:54:41.622488+00:00",
+  "generated_at_utc": "2026-10-13T09:00:29.612880+00:00",
   "selected_tickers": [
+    "AAOI",
     "AKAM",
     "AMAT",
     "ASTS",
     "AXTI",
-    "BE",
     "CRDO",
     "INTC",
     "MRVL",
@@ -17,14 +17,18 @@
     "NBIS",
     "NVTS",
     "ORCL",
-    "PURR",
     "QCOM",
     "SMCI",
     "SNDK",
+    "STM",
     "WDC",
     "WTTR"
   ],
   "per_ticker": {
+    "AAOI": {
+      "state": "OK",
+      "rows": 545
+    },
     "AKAM": {
       "state": "OK",
       "rows": 522
@@ -38,10 +42,6 @@
       "rows": 545
     },
     "AXTI": {
-      "state": "OK",
-      "rows": 545
-    },
-    "BE": {
       "state": "OK",
       "rows": 545
     },
@@ -81,10 +81,6 @@
       "state": "OK",
       "rows": 545
     },
-    "PURR": {
-      "state": "OK",
-      "rows": 545
-    },
     "QCOM": {
       "state": "OK",
       "rows": 545
@@ -94,6 +90,10 @@
       "rows": 545
     },
     "SNDK": {
+      "state": "OK",
+      "rows": 545
+    },
+    "STM": {
       "state": "OK",
       "rows": 545
     },
@@ -108,11 +108,11 @@
   },
   "rows": 10756,
   "usable_150bars": [
+    "AAOI",
     "AKAM",
     "AMAT",
     "ASTS",
     "AXTI",
-    "BE",
     "CRDO",
     "INTC",
     "MRVL",
@@ -122,10 +122,10 @@
     "NBIS",
     "NVTS",
     "ORCL",
-    "PURR",
     "QCOM",
     "SMCI",
     "SNDK",
+    "STM",
     "WDC",
     "WTTR"
   ]
