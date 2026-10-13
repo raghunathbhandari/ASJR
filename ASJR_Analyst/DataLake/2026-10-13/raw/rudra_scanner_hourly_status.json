@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-13T13:47:22.866725+00:00",
+  "generated_at_utc": "2026-10-13T13:53:33.265748+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
@@ -13,6 +13,7 @@
     "CRWV",
     "INTC",
     "IREN",
+    "META",
     "MSFT",
     "MU",
     "NBIS",
@@ -20,7 +21,6 @@
     "QCOM",
     "SMCI",
     "SNDX",
-    "VFC",
     "WDC",
     "WTTR"
   ],
@@ -65,6 +65,10 @@
       "state": "OK",
       "rows": 550
     },
+    "META": {
+      "state": "OK",
+      "rows": 550
+    },
     "MSFT": {
       "state": "OK",
       "rows": 550
@@ -93,10 +97,6 @@
       "state": "OK",
       "rows": 462
     },
-    "VFC": {
-      "state": "OK",
-      "rows": 512
-    },
     "WDC": {
       "state": "OK",
       "rows": 550
@@ -106,7 +106,7 @@
       "rows": 429
     }
   },
-  "rows": 10611,
+  "rows": 10649,
   "usable_150bars": [
     "AKAM",
     "AMAT",
@@ -118,6 +118,7 @@
     "CRWV",
     "INTC",
     "IREN",
+    "META",
     "MSFT",
     "MU",
     "NBIS",
@@ -125,7 +126,6 @@
     "QCOM",
     "SMCI",
     "SNDX",
-    "VFC",
     "WDC",
     "WTTR"
   ]
