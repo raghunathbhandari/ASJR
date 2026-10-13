@@ -89,8 +89,8 @@ class TestPremarketRVOL(unittest.TestCase):
             {"ticker": name, "close": 101, "ema9": 100, "vwap": 99,
              "rvol5": rv, "rvol5_ready": True, "minute": 620, "session": "RTH"}
             for name, rv in [
-                ("MSFT", 2.50), ("WTTR", 0.58), ("INTC", 0.59),
-                ("WDC", 2.49), ("AKAM", 0.40), ("GOOG", 3.0)]
+                ("MSFT", 2.00), ("WTTR", 0.58), ("INTC", 0.59),
+                ("WDC", 1.99), ("AKAM", 0.40), ("GOOG", 3.0)]
         ])
         output = candidates(frame)
         self.assertEqual(set(output["ticker"]), {"MSFT", "WTTR", "AKAM", "GOOG"})
