@@ -18,7 +18,7 @@ FIELDS = ["ticker", "session_date_et", "session", "minute", "cum_volume"]
 SEGMENTS = {"PRE": (240, 570), "RTH": (570, 960), "POST": (960, 1200)}
 MAX_SESSIONS = 5
 LOW_RVOL5_MAX = 0.58
-HIGH_RVOL5_MIN = 2.50
+HIGH_RVOL5_MIN = 2.00
 
 
 def durable_reference_path(root):
