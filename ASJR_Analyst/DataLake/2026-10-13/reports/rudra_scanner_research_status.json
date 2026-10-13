@@ -1,13 +1,13 @@
 {
-  "state": "INDICATORS_ONLY",
+  "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
-    "state": "MISSING",
-    "input_rows": 0,
-    "completed_rows": 0,
+    "state": "OK",
+    "input_rows": 12714,
+    "completed_rows": 12714,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
-    "tickers": 0,
+    "tickers": 25,
     "min_periods": 9,
     "session_reset": false,
     "extended_hours_included": true,
@@ -16,12 +16,12 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 0,
+    "no_wap_rows": 12714,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
   "detector_status": {
-    "state": "DISABLED",
+    "state": "DATA_NOT_READY",
     "tickers": 0,
     "emitted": 0,
     "blocked_context": 0,
@@ -34,7 +34,7 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 28548,
+    "stored_rows": 28782,
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-13/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
@@ -42,9 +42,12 @@
   },
   "context": {
     "state": "WAIT",
-    "reason": "NO_COMPLETED_BARS",
-    "timestamp": null,
-    "index_pct": {},
+    "reason": "MIXED_OR_NEUTRAL_BENCHMARKS",
+    "timestamp": "2026-10-13 19:55:00+00:00",
+    "index_pct": {
+      "SPY": -0.0013,
+      "QQQ": -0.3137
+    },
     "sector_etf": {
       "AKAM": "XLK",
       "AMAT": "SMH",
@@ -62,12 +65,21 @@
     "requested": [
       "AKAM",
       "AMAT",
+      "BMBL",
+      "CIFR",
       "CRDO",
-      "INTC",
+      "FUN",
+      "FWRG",
+      "MDA",
+      "MMED",
       "MSFT",
+      "OMDA",
       "ORCL",
       "QCOM",
+      "S",
+      "SLDB",
       "SMCI",
+      "SNDX",
       "WDC",
       "WTTR",
       "SPY",
@@ -79,12 +91,22 @@
     "symbols": [
       "AKAM",
       "AMAT",
+      "BMBL",
+      "CIFR",
       "CRDO",
+      "FUN",
+      "FWRG",
       "INTC",
+      "MDA",
+      "MMED",
       "MSFT",
+      "OMDA",
       "ORCL",
       "QCOM",
+      "S",
+      "SLDB",
       "SMCI",
+      "SNDX",
       "WDC",
       "WTTR",
       "SPY",
@@ -103,6 +125,8 @@
       "QCOM": "SMH",
       "WTTR": "XLE"
     },
-    "state": "DATA_NOT_READY"
+    "state": "COLLECTED",
+    "count": 12714,
+    "source": "SAME_IBKR_APP"
   }
 }

@@ -1,7 +1,7 @@
 {
-  "state": "PARTIAL",
+  "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-13T21:08:07.876347+00:00",
+  "generated_at_utc": "2026-10-13T21:27:13.734274+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
@@ -11,12 +11,12 @@
     "FUN",
     "FWRG",
     "INTC",
+    "MDA",
     "MMED",
     "MSFT",
     "OMDA",
     "ORCL",
     "QCOM",
-    "QDEL",
     "S",
     "SLDB",
     "SMCI",
@@ -27,86 +27,86 @@
   "per_ticker": {
     "AKAM": {
       "state": "OK",
-      "rows": 534
+      "rows": 535
     },
     "AMAT": {
       "state": "OK",
-      "rows": 557
+      "rows": 558
     },
     "BMBL": {
       "state": "OK",
-      "rows": 438
+      "rows": 439
     },
     "CIFR": {
       "state": "OK",
-      "rows": 557
+      "rows": 558
     },
     "CRDO": {
       "state": "OK",
-      "rows": 557
+      "rows": 558
     },
     "FUN": {
       "state": "OK",
-      "rows": 459
+      "rows": 460
     },
     "FWRG": {
       "state": "OK",
-      "rows": 438
+      "rows": 439
     },
     "INTC": {
       "state": "OK",
-      "rows": 557
+      "rows": 558
+    },
+    "MDA": {
+      "state": "OK",
+      "rows": 520
     },
     "MMED": {
       "state": "OK",
-      "rows": 450
+      "rows": 451
     },
     "MSFT": {
       "state": "OK",
-      "rows": 557
+      "rows": 558
     },
     "OMDA": {
       "state": "OK",
-      "rows": 489
+      "rows": 490
     },
     "ORCL": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 558
     },
     "QCOM": {
       "state": "OK",
-      "rows": 557
-    },
-    "QDEL": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "rows": 558
     },
     "S": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 552
     },
     "SLDB": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 471
     },
     "SMCI": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 558
     },
     "SNDX": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 470
     },
     "WDC": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 558
     },
     "WTTR": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 437
     }
   },
-  "rows": 6150,
+  "rows": 10286,
   "usable_150bars": [
     "AKAM",
     "AMAT",
@@ -116,9 +116,17 @@
     "FUN",
     "FWRG",
     "INTC",
+    "MDA",
     "MMED",
     "MSFT",
     "OMDA",
-    "QCOM"
+    "ORCL",
+    "QCOM",
+    "S",
+    "SLDB",
+    "SMCI",
+    "SNDX",
+    "WDC",
+    "WTTR"
   ]
 }
