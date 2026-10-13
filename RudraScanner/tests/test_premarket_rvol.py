@@ -83,6 +83,27 @@ class TestPremarketRVOL(unittest.TestCase):
         self.assertTrue(watch["session"].eq("PRE").any())
         self.assertTrue(watch["session"].eq("POST").any())
 
+    def test_v2_both_rvol_bands_and_all_tickers(self):
+        # Any DataLake ticker may qualify, not just the original three.
+        frame = pd.DataFrame([
+            {"ticker": name, "close": 101, "ema9": 100, "vwap": 99,
+             "rvol5": rv, "rvol5_ready": True, "minute": 620, "session": "RTH"}
+            for name, rv in [
+                ("MSFT", 2.50), ("WTTR", 0.58), ("INTC", 0.59),
+                ("WDC", 2.49), ("AKAM", 0.40), ("GOOG", 3.0)]
+        ])
+        output = candidates(frame)
+        self.assertEqual(set(output["ticker"]), {"MSFT", "WTTR", "AKAM", "GOOG"})
+        self.assertEqual(dict(zip(output["ticker"], output["rvol5_signal"])),
+                         {"MSFT": "HIGH_RVOL", "WTTR": "LOW_RVOL",
+                          "AKAM": "LOW_RVOL", "GOOG": "HIGH_RVOL"})
+        # Every alert requires both bullish price conditions.
+        frame.loc[frame.ticker == "MSFT", "ema9"] = 102
+        frame.loc[frame.ticker == "WTTR", "vwap"] = 102
+        frame.loc[frame.ticker == "GOOG", "minute"] = 575
+        frame.loc[frame.ticker == "AKAM", "rvol5_ready"] = False
+        self.assertTrue(candidates(frame).empty)
+
     def test_gap_in_current_session_is_not_approved(self):
         baseline = []
         for n in range(20):
