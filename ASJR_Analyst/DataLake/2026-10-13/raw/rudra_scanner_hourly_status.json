@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-13T19:01:14.314830+00:00",
+  "generated_at_utc": "2026-10-13T19:07:34.602953+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
@@ -10,9 +10,9 @@
     "CIFR",
     "CRDO",
     "FUN",
+    "FWRG",
     "INTC",
     "INTR",
-    "MLYS",
     "MSFT",
     "ORCL",
     "QCOM",
@@ -53,6 +53,10 @@
       "state": "OK",
       "rows": 457
     },
+    "FWRG": {
+      "state": "OK",
+      "rows": 436
+    },
     "INTC": {
       "state": "OK",
       "rows": 555
@@ -60,10 +64,6 @@
     "INTR": {
       "state": "OK",
       "rows": 506
-    },
-    "MLYS": {
-      "state": "OK",
-      "rows": 496
     },
     "MSFT": {
       "state": "OK",
@@ -106,7 +106,7 @@
       "rows": 434
     }
   },
-  "rows": 10282,
+  "rows": 10222,
   "usable_150bars": [
     "AKAM",
     "AMAT",
@@ -115,9 +115,9 @@
     "CIFR",
     "CRDO",
     "FUN",
+    "FWRG",
     "INTC",
     "INTR",
-    "MLYS",
     "MSFT",
     "ORCL",
     "QCOM",
