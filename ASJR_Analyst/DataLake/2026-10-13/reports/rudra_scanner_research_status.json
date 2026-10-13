@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 9504,
-    "completed_rows": 9504,
+    "input_rows": 9544,
+    "completed_rows": 9544,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 9504,
+    "no_wap_rows": 9544,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -34,7 +34,7 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 22152,
+    "stored_rows": 22230,
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-13/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
@@ -64,10 +64,10 @@
     "requested": [
       "ASTS",
       "AXTI",
+      "BE",
       "BMNR",
-      "IREN",
+      "IONQ",
       "MSTR",
-      "NBIS",
       "NVTS",
       "SNDK",
       "SPY",
@@ -81,15 +81,15 @@
       "AMAT",
       "ASTS",
       "AXTI",
+      "BE",
       "BMNR",
       "CRDO",
       "INTC",
-      "IREN",
+      "IONQ",
       "MRVL",
       "MSFT",
       "MSTR",
       "MU",
-      "NBIS",
       "NVTS",
       "ORCL",
       "QCOM",
@@ -116,7 +116,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 9504,
+    "count": 9544,
     "source": "SAME_IBKR_APP"
   }
 }
