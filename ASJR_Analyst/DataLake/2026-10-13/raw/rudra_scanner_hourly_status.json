@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-13T17:59:06.507037+00:00",
+  "generated_at_utc": "2026-10-13T18:05:22.573182+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
@@ -12,7 +12,6 @@
     "FUN",
     "HELP",
     "INTC",
-    "MLYS",
     "MSFT",
     "ORCL",
     "QCOM",
@@ -20,7 +19,8 @@
     "SLDB",
     "SMCI",
     "SNDX",
-    "TNGX",
+    "STGW",
+    "TTI",
     "WDC",
     "WTTR"
   ],
@@ -55,15 +55,11 @@
     },
     "HELP": {
       "state": "OK",
-      "rows": 531
+      "rows": 530
     },
     "INTC": {
       "state": "OK",
       "rows": 554
-    },
-    "MLYS": {
-      "state": "OK",
-      "rows": 495
     },
     "MSFT": {
       "state": "OK",
@@ -93,9 +89,13 @@
       "state": "OK",
       "rows": 466
     },
-    "TNGX": {
+    "STGW": {
       "state": "OK",
-      "rows": 462
+      "rows": 418
+    },
+    "TTI": {
+      "state": "OK",
+      "rows": 461
     },
     "WDC": {
       "state": "OK",
@@ -106,7 +106,7 @@
       "rows": 433
     }
   },
-  "rows": 10312,
+  "rows": 10233,
   "usable_150bars": [
     "AKAM",
     "AMAT",
@@ -117,7 +117,6 @@
     "FUN",
     "HELP",
     "INTC",
-    "MLYS",
     "MSFT",
     "ORCL",
     "QCOM",
@@ -125,7 +124,8 @@
     "SLDB",
     "SMCI",
     "SNDX",
-    "TNGX",
+    "STGW",
+    "TTI",
     "WDC",
     "WTTR"
   ]
