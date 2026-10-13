@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-13T14:56:49.136458+00:00",
+  "generated_at_utc": "2026-10-13T15:02:56.687087+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
@@ -10,16 +10,16 @@
     "BMBL",
     "CIFR",
     "CRDO",
+    "DPC",
     "FUN",
-    "HELP",
     "INTC",
-    "INTR",
     "META",
     "MLYS",
     "MSFT",
     "ORCL",
     "QCOM",
     "SMCI",
+    "SNAP",
     "SNDX",
     "WDC",
     "WTTR"
@@ -53,21 +53,17 @@
       "state": "OK",
       "rows": 551
     },
+    "DPC": {
+      "state": "OK",
+      "rows": 389
+    },
     "FUN": {
       "state": "OK",
       "rows": 453
     },
-    "HELP": {
-      "state": "OK",
-      "rows": 531
-    },
     "INTC": {
       "state": "OK",
       "rows": 551
-    },
-    "INTR": {
-      "state": "OK",
-      "rows": 502
     },
     "META": {
       "state": "OK",
@@ -93,6 +89,10 @@
       "state": "OK",
       "rows": 551
     },
+    "SNAP": {
+      "state": "OK",
+      "rows": 551
+    },
     "SNDX": {
       "state": "OK",
       "rows": 463
@@ -106,7 +106,7 @@
       "rows": 430
     }
   },
-  "rows": 10443,
+  "rows": 10350,
   "usable_150bars": [
     "AKAM",
     "AMAT",
@@ -115,16 +115,16 @@
     "BMBL",
     "CIFR",
     "CRDO",
+    "DPC",
     "FUN",
-    "HELP",
     "INTC",
-    "INTR",
     "META",
     "MLYS",
     "MSFT",
     "ORCL",
     "QCOM",
     "SMCI",
+    "SNAP",
     "SNDX",
     "WDC",
     "WTTR"
