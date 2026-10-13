@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-13T09:40:42.769133+00:00",
+  "generated_at_utc": "2026-10-13T09:46:30.930246+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
@@ -9,6 +9,7 @@
     "AXTI",
     "CRDO",
     "INTC",
+    "IREN",
     "MRVL",
     "MSFT",
     "MSTR",
@@ -17,10 +18,9 @@
     "NVTS",
     "ORCL",
     "QCOM",
-    "RKLB",
     "SMCI",
     "SNDK",
-    "VFC",
+    "UNH",
     "WDC",
     "WTTR"
   ],
@@ -46,6 +46,10 @@
       "rows": 546
     },
     "INTC": {
+      "state": "OK",
+      "rows": 546
+    },
+    "IREN": {
       "state": "OK",
       "rows": 546
     },
@@ -81,10 +85,6 @@
       "state": "OK",
       "rows": 546
     },
-    "RKLB": {
-      "state": "OK",
-      "rows": 546
-    },
     "SMCI": {
       "state": "OK",
       "rows": 546
@@ -93,9 +93,9 @@
       "state": "OK",
       "rows": 546
     },
-    "VFC": {
+    "UNH": {
       "state": "OK",
-      "rows": 508
+      "rows": 546
     },
     "WDC": {
       "state": "OK",
@@ -106,7 +106,7 @@
       "rows": 425
     }
   },
-  "rows": 10738,
+  "rows": 10776,
   "usable_150bars": [
     "AKAM",
     "AMAT",
@@ -114,6 +114,7 @@
     "AXTI",
     "CRDO",
     "INTC",
+    "IREN",
     "MRVL",
     "MSFT",
     "MSTR",
@@ -122,10 +123,9 @@
     "NVTS",
     "ORCL",
     "QCOM",
-    "RKLB",
     "SMCI",
     "SNDK",
-    "VFC",
+    "UNH",
     "WDC",
     "WTTR"
   ]
