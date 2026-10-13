@@ -1,13 +1,13 @@
 {
-  "state": "INDICATORS_ONLY",
+  "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
-    "state": "MISSING",
-    "input_rows": 0,
-    "completed_rows": 0,
+    "state": "OK",
+    "input_rows": 12049,
+    "completed_rows": 12049,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
-    "tickers": 0,
+    "tickers": 25,
     "min_periods": 9,
     "session_reset": false,
     "extended_hours_included": true,
@@ -16,16 +16,16 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 0,
+    "no_wap_rows": 12049,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
   "detector_status": {
-    "state": "DISABLED",
-    "tickers": 0,
+    "state": "OK",
+    "tickers": 13,
     "emitted": 0,
     "blocked_context": 0,
-    "blocked_data": 0,
+    "blocked_data": 13,
     "blocked_session": 0,
     "mode": "RESEARCH_ONLY"
   },
@@ -34,7 +34,7 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 25974,
+    "stored_rows": 26130,
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-13/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
@@ -42,9 +42,12 @@
   },
   "context": {
     "state": "WAIT",
-    "reason": "NO_COMPLETED_BARS",
-    "timestamp": null,
-    "index_pct": {},
+    "reason": "MIXED_OR_NEUTRAL_BENCHMARKS",
+    "timestamp": "2026-10-13 18:45:00+00:00",
+    "index_pct": {
+      "SPY": -0.0604,
+      "QQQ": -0.5255
+    },
     "sector_etf": {
       "AKAM": "XLK",
       "AMAT": "SMH",
@@ -60,16 +63,7 @@
   },
   "collection": {
     "requested": [
-      "AKAM",
-      "AMAT",
-      "CRDO",
-      "INTC",
-      "MSFT",
-      "ORCL",
-      "QCOM",
-      "SMCI",
-      "WDC",
-      "WTTR",
+      "INTR",
       "SPY",
       "QQQ",
       "SMH",
@@ -79,12 +73,22 @@
     "symbols": [
       "AKAM",
       "AMAT",
+      "ASTS",
+      "BMBL",
+      "CIFR",
       "CRDO",
+      "FUN",
       "INTC",
+      "INTR",
+      "MLYS",
       "MSFT",
       "ORCL",
       "QCOM",
+      "QDEL",
+      "SGMT",
+      "SLDB",
       "SMCI",
+      "SNDX",
       "WDC",
       "WTTR",
       "SPY",
@@ -103,6 +107,8 @@
       "QCOM": "SMH",
       "WTTR": "XLE"
     },
-    "state": "DATA_NOT_READY"
+    "state": "COLLECTED",
+    "count": 12049,
+    "source": "SAME_IBKR_APP"
   }
 }
