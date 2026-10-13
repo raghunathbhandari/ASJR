@@ -34,7 +34,7 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 22074,
+    "stored_rows": 22152,
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-13/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
@@ -63,11 +63,11 @@
   "collection": {
     "requested": [
       "ASTS",
+      "AXTI",
       "CBRS",
       "CRWV",
       "IREN",
       "MSTR",
-      "NBIS",
       "NVTS",
       "SNDK",
       "SPY",
@@ -80,6 +80,7 @@
       "AKAM",
       "AMAT",
       "ASTS",
+      "AXTI",
       "CBRS",
       "CRDO",
       "CRWV",
@@ -89,7 +90,6 @@
       "MSFT",
       "MSTR",
       "MU",
-      "NBIS",
       "NVTS",
       "ORCL",
       "QCOM",
