@@ -34,7 +34,7 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 21216,
+    "stored_rows": 21450,
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-13/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
@@ -63,9 +63,9 @@
   "collection": {
     "requested": [
       "ASTS",
+      "BE",
       "BMNR",
       "CBRS",
-      "CRCL",
       "FWDI",
       "IREN",
       "NBIS",
@@ -80,9 +80,9 @@
       "AKAM",
       "AMAT",
       "ASTS",
+      "BE",
       "BMNR",
       "CBRS",
-      "CRCL",
       "CRDO",
       "FWDI",
       "INTC",
