@@ -1,15 +1,15 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-14T07:15:10.720397+00:00",
+  "generated_at_utc": "2026-10-14T07:21:00.291071+00:00",
   "selected_tickers": [
-    "AG",
     "AKAM",
     "AMAT",
     "BE",
     "CBRS",
     "CRDO",
     "CRML",
+    "CRWV",
     "GME",
     "GOOGL",
     "INTC",
@@ -25,10 +25,6 @@
     "WTTR"
   ],
   "per_ticker": {
-    "AG": {
-      "state": "OK",
-      "rows": 560
-    },
     "AKAM": {
       "state": "OK",
       "rows": 537
@@ -50,6 +46,10 @@
       "rows": 560
     },
     "CRML": {
+      "state": "OK",
+      "rows": 560
+    },
+    "CRWV": {
       "state": "OK",
       "rows": 560
     },
@@ -108,13 +108,13 @@
   },
   "rows": 10996,
   "usable_150bars": [
-    "AG",
     "AKAM",
     "AMAT",
     "BE",
     "CBRS",
     "CRDO",
     "CRML",
+    "CRWV",
     "GME",
     "GOOGL",
     "INTC",
