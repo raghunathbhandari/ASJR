@@ -1,24 +1,24 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-14T13:27:57.151865+00:00",
+  "generated_at_utc": "2026-10-14T13:34:08.782633+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
+    "ASST",
     "BAC",
     "BSP",
     "CIFR",
     "CRDO",
-    "CRML",
     "CRWV",
-    "GFS",
     "INTC",
+    "IONQ",
     "LQDA",
     "MSFT",
     "NBIS",
     "ORCL",
     "QCOM",
-    "RIG",
+    "SKYD",
     "SMCI",
     "VSTM",
     "WDC",
@@ -30,6 +30,10 @@
       "rows": 527
     },
     "AMAT": {
+      "state": "OK",
+      "rows": 550
+    },
+    "ASST": {
       "state": "OK",
       "rows": 550
     },
@@ -49,19 +53,15 @@
       "state": "OK",
       "rows": 550
     },
-    "CRML": {
-      "state": "OK",
-      "rows": 550
-    },
     "CRWV": {
       "state": "OK",
       "rows": 550
     },
-    "GFS": {
+    "INTC": {
       "state": "OK",
       "rows": 550
     },
-    "INTC": {
+    "IONQ": {
       "state": "OK",
       "rows": 550
     },
@@ -85,9 +85,9 @@
       "state": "OK",
       "rows": 550
     },
-    "RIG": {
+    "SKYD": {
       "state": "OK",
-      "rows": 550
+      "rows": 539
     },
     "SMCI": {
       "state": "OK",
@@ -106,24 +106,24 @@
       "rows": 423
     }
   },
-  "rows": 10701,
+  "rows": 10690,
   "usable_150bars": [
     "AKAM",
     "AMAT",
+    "ASST",
     "BAC",
     "BSP",
     "CIFR",
     "CRDO",
-    "CRML",
     "CRWV",
-    "GFS",
     "INTC",
+    "IONQ",
     "LQDA",
     "MSFT",
     "NBIS",
     "ORCL",
     "QCOM",
-    "RIG",
+    "SKYD",
     "SMCI",
     "VSTM",
     "WDC",
