@@ -1,6 +1,6 @@
 {
   "day": "2026-10-14",
-  "generated_at_uk": "2026-10-14T02:14:15.548622+01:00",
+  "generated_at_uk": "2026-10-14T02:20:04.809893+01:00",
   "counts": {
     "TOP_IN_PLAY": 17,
     "STRONG_MOMENTUM": 0,
@@ -47,7 +47,7 @@
       "selection_reason": "scanner=TOP_PERC_GAIN,HOT_BY_VOLUME,MOST_ACTIVE"
     },
     {
-      "ticker": "BE",
+      "ticker": "GME",
       "categories": [
         "TOP_IN_PLAY"
       ],
@@ -65,14 +65,14 @@
       "selection_reason": "scanner=TOP_PERC_GAIN,HOT_BY_VOLUME,MOST_ACTIVE"
     },
     {
-      "ticker": "GME",
+      "ticker": "INTC",
       "categories": [
         "TOP_IN_PLAY"
       ],
       "discovery_priority": 7,
-      "source": "IBKR",
+      "source": "FIXED+AI+IBKR",
       "scanner_codes": "TOP_PERC_GAIN+HOT_BY_VOLUME+MOST_ACTIVE",
-      "ai_bias": "N/A",
+      "ai_bias": "WATCH",
       "price": null,
       "bar_time_uk": null,
       "change_5m_pct": null,
@@ -155,12 +155,12 @@
       "selection_reason": "scanner=TOP_PERC_GAIN,HOT_BY_VOLUME,MOST_ACTIVE"
     },
     {
-      "ticker": "ORCL",
+      "ticker": "SKYD",
       "categories": [
         "TOP_IN_PLAY"
       ],
       "discovery_priority": 7,
-      "source": "FIXED+IBKR",
+      "source": "IBKR",
       "scanner_codes": "TOP_PERC_LOSE+HOT_BY_VOLUME+MOST_ACTIVE",
       "ai_bias": "N/A",
       "price": null,
@@ -173,7 +173,7 @@
       "selection_reason": "scanner=TOP_PERC_LOSE,HOT_BY_VOLUME,MOST_ACTIVE"
     },
     {
-      "ticker": "SKYD",
+      "ticker": "SNDK",
       "categories": [
         "TOP_IN_PLAY"
       ],
@@ -245,14 +245,32 @@
       "selection_reason": "scanner=TOP_PERC_GAIN,HOT_BY_VOLUME"
     },
     {
-      "ticker": "INTC",
+      "ticker": "MSFT",
       "categories": [
         "TOP_IN_PLAY"
       ],
       "discovery_priority": 5,
-      "source": "FIXED+AI+IBKR",
+      "source": "FIXED+IBKR",
+      "scanner_codes": "TOP_PERC_LOSE+MOST_ACTIVE",
+      "ai_bias": "N/A",
+      "price": null,
+      "bar_time_uk": null,
+      "change_5m_pct": null,
+      "volume": null,
+      "vol_12bar": null,
+      "rvol20": null,
+      "data_state": "NO_FRESH_5M",
+      "selection_reason": "scanner=TOP_PERC_LOSE,MOST_ACTIVE"
+    },
+    {
+      "ticker": "ORCL",
+      "categories": [
+        "TOP_IN_PLAY"
+      ],
+      "discovery_priority": 5,
+      "source": "FIXED+IBKR",
       "scanner_codes": "HOT_BY_VOLUME+MOST_ACTIVE",
-      "ai_bias": "WATCH",
+      "ai_bias": "N/A",
       "price": null,
       "bar_time_uk": null,
       "change_5m_pct": null,
@@ -261,6 +279,24 @@
       "rvol20": null,
       "data_state": "NO_FRESH_5M",
       "selection_reason": "scanner=HOT_BY_VOLUME,MOST_ACTIVE"
+    },
+    {
+      "ticker": "SMCI",
+      "categories": [
+        "TOP_IN_PLAY"
+      ],
+      "discovery_priority": 5,
+      "source": "FIXED+IBKR",
+      "scanner_codes": "TOP_PERC_GAIN+MOST_ACTIVE",
+      "ai_bias": "N/A",
+      "price": null,
+      "bar_time_uk": null,
+      "change_5m_pct": null,
+      "volume": null,
+      "vol_12bar": null,
+      "rvol20": null,
+      "data_state": "NO_FRESH_5M",
+      "selection_reason": "scanner=TOP_PERC_GAIN,MOST_ACTIVE"
     },
     {
       "ticker": "WDC",
@@ -279,42 +315,6 @@
       "rvol20": null,
       "data_state": "NO_FRESH_5M",
       "selection_reason": "scanner=HOT_BY_VOLUME,MOST_ACTIVE"
-    },
-    {
-      "ticker": "MSFT",
-      "categories": [
-        "TOP_IN_PLAY"
-      ],
-      "discovery_priority": 3,
-      "source": "FIXED+IBKR",
-      "scanner_codes": "TOP_PERC_LOSE",
-      "ai_bias": "N/A",
-      "price": null,
-      "bar_time_uk": null,
-      "change_5m_pct": null,
-      "volume": null,
-      "vol_12bar": null,
-      "rvol20": null,
-      "data_state": "NO_FRESH_5M",
-      "selection_reason": "scanner=TOP_PERC_LOSE"
-    },
-    {
-      "ticker": "SMCI",
-      "categories": [
-        "TOP_IN_PLAY"
-      ],
-      "discovery_priority": 3,
-      "source": "FIXED+IBKR",
-      "scanner_codes": "MOST_ACTIVE",
-      "ai_bias": "N/A",
-      "price": null,
-      "bar_time_uk": null,
-      "change_5m_pct": null,
-      "volume": null,
-      "vol_12bar": null,
-      "rvol20": null,
-      "data_state": "NO_FRESH_5M",
-      "selection_reason": "scanner=MOST_ACTIVE"
     },
     {
       "ticker": "AKAM",
