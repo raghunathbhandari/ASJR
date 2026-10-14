@@ -76,6 +76,9 @@ def main(argv=None):
         loader = unittest.TestLoader()
         for filename in ("test_wap_capture.py", "test_premarket_live.py"):
             suite.addTests(loader.discover(str(folder), pattern=filename))
+        suite.addTests(loader.discover(
+            str(root / "ASJR_Analyst" / "Tests"),
+            pattern="test_discord_server_commands.py"))
         print("RUDRA-PREMARKET | OFFLINE WAP + RVOL5 TEST", flush=True)
         outcome = unittest.TextTestRunner(stream=sys.stdout, verbosity=1).run(suite)
         passed = outcome.wasSuccessful()
