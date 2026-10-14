@@ -1,7 +1,17 @@
 {
   "date_et": "2026-10-14",
   "signal_quality": {
-    "state": "NO_BARS"
+    "state": "NO_FRESH_COMPLETED_BAR",
+    "count": 0,
+    "asof_utc": "2026-10-14T14:32:17.650176+00:00",
+    "latest_seen": 5,
+    "newest_bar_et": "2026-10-14T10:15:00-04:00",
+    "latest_completed": 0,
+    "rejected_stale_or_not_closed": 5,
+    "latest_rvol_ready": 0,
+    "latest_vwap_ready": 0,
+    "latest_ema9_ready": 0,
+    "latest_positive_volume": 0
   },
   "signal_events": [],
   "mode": "EVALUATION_REPORT_ONLY",
