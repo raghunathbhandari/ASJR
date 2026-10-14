@@ -1,3 +1,63 @@
+## 2026-10-14 — Admin-only !runSCommand proposal IMPLEMENTED IN GITHUB, NOT YET CONNECTED TO EXTERNAL DISCORD BOT
+
+Purpose: user travelling with only Discord access wants safe VPS shell-equivalent diagnostics. We did **NOT** implement unrestricted remote command execution (a stolen Discord administrator account could otherwise execute arbitrary root commands). Instead built *predefined* administrative operations with exact no-shell argv, no arbitrary paths or parameters. This is separate from existing !gitpull, !gitpush, !mbdstart, !mbdstop and !runpy, which remain unchanged.
+
+Module: \`ASJR_Analyst/Utils/discord_server_commands.py\` exposes \`run_scommand(text, author_id, is_admin=False, guild_id=None, channel_id=None)\` and does not start a Discord bot or register any commands. To permit, caller MUST supply a true Discord guild Administrator permission, a numeric Discord author ID present in \`ASJR_DISCORD_GIT_ALLOWED_IDS\` (reuses existing per-user Git security), and a non-DM guild context. Optional \`ASJR_DISCORD_SCOMMAND_ALLOWED_CHANNEL_IDS\` restricts channels. No env ID means DENIED. No Discord-supplied executable, argv, shell, piped expressions, working directory, file path, or arbitrary Python file. Nonblocking flock prevents parallel server command runs. Output truncated/redacts potential secrets; timeouts and stdin=DEVNULL. The bot runs code locally on VPS; no SSH session, credential sharing or extra gateway/client is needed.
+
+**Commands (case-insensitive)**:
+\`\`\`text
+!runSCommand help
+!runSCommand bot
+!runSCommand uptime
+!runSCommand disk
+!runSCommand git
+!runSCommand version
+!runSCommand rvol
+!runSCommand top
+!runSCommand ibkr-raw
+!runSCommand tests
+!runSCommand final
+!runSCommand logs rvol 20
+!runSCommand logs errors 20
+!runSCommand logs all 20
+!runSCommand files reports
+!runSCommand files raw
+!runSCommand files processed
+!runSCommand files state
+\`\`\`
+Tests/final use the already-verified script path \`RudraScanner/scan_now.py\` with fixed flags, never arbitrary program calls. \`tests\` is offline; \`final\` checks offline WAP/RVOL tests and recent DataLake readiness but does not send a Discord alert. Log viewer reads only most recent dated DataLake day's non-symlink \`reports/asjr_pipeline_*.log\`; fixed topic and maximum 50 lines; unfiltered secrets redacted. File browser returns names only, not arbitrary file contents. NOTE: extension profiles must be code-reviewed before adding; do not turn this into unrestricted \`bash -c\` or \`shell=True\`. No destructive \`rm\`, \`sudo\`, service operations or mutation offered; existing trusted bot lifecycle and Git pull/push handle those separately.
+
+**External handler integration required ONCE:** Actual Discord on_message handler is on VPS outside this repository. GitHub commits alone do NOT activate the new \`!runSCommand\` prefix. After \`!gitpull\`, add the following to the external bot's existing handler (not a second Discord bot):
+
+\`\`\`python
+# Imports at top (if asyncio already imported, avoid duplicate import)
+import asyncio
+import sys
+sys.path.insert(0, "/root/trading/ASJR")
+from ASJR_Analyst.Utils.discord_server_commands import run_scommand
+
+# Place inside existing async def on_message(message):
+text = message.content
+if text.strip().lower().startswith("!runscommand"):
+    admin = bool(getattr(
+        getattr(message.author, "guild_permissions", None),
+        "administrator", False
+    ))
+    result = await asyncio.to_thread(
+        run_scommand, text, message.author.id,
+        is_admin=admin,
+        guild_id=message.guild.id if message.guild else None,
+        channel_id=message.channel.id,
+    )
+    await message.channel.send(result)
+    return
+\`\`\`
+The active bot must have \`ASJR_DISCORD_GIT_ALLOWED_IDS\` with the real user's numeric Discord ID, already used by Git commands. Optionally set \`ASJR_DISCORD_SCOMMAND_ALLOWED_CHANNEL_IDS\` to an approved Discord channel numeric ID. Restart existing Discord handler if necessary (NOT automatically done here). Run \`!runSCommand help\` from the approved admin user in the approved channel to check registration. If bot code differs, do not blindly patch it; inspect and integrate carefully.
+
+Test file: \`ASJR_Analyst/Tests/test_discord_server_commands.py\`; included in the existing \`RudraScanner/scan_now.py --self-test\` or \`--final-check\` fixed offline suites. **Tests committed, not executed on VPS yet**. Other components unchanged. Do not claim command already works in Discord prior to installing the external handler.
+
+---
+
 ## 2026-10-14 — Rudra-Premarket RVOL5 repairs (GITHUB COMMITTED; NOT VPS-VERIFIED)
 
 User enabled BOTH RVOL Discord and automatic historical new-ticker backfill in `RudraScanner/premarket_alert_config.json` (`enabled=true`, `auto_backfill=true`). No new sender: ONLY the canonical `ASJR_Analyst/Tests/test_asjr_pipeline.py::prepare_alert(result)` -> external Chakra `SN.send_to_discord(message)` -> `mark_alert_sent()`. Duplicate direct sender was removed. Alerts are independent of the old shadow RudraScanner/RVOL20 Discord gate. Confirmed LOW RVOL5 <=0.58 or HIGH >=2.00, strict completed-candle Price > EMA9 > actual broker-WAP VWAP, 09:30–09:59 ET excluded, no fabricated values.
