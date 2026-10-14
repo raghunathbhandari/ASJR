@@ -1,11 +1,12 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-14T11:41:58.028452+00:00",
+  "generated_at_utc": "2026-10-14T11:55:41.641713+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
     "BAC",
+    "CIFR",
     "CRDO",
     "CRML",
     "CRWV",
@@ -19,7 +20,6 @@
     "QCOM",
     "RIG",
     "SMCI",
-    "SNDK",
     "VSTM",
     "WDC",
     "WTTR"
@@ -34,6 +34,10 @@
       "rows": 548
     },
     "BAC": {
+      "state": "OK",
+      "rows": 548
+    },
+    "CIFR": {
       "state": "OK",
       "rows": 548
     },
@@ -89,10 +93,6 @@
       "state": "OK",
       "rows": 548
     },
-    "SNDK": {
-      "state": "OK",
-      "rows": 548
-    },
     "VSTM": {
       "state": "OK",
       "rows": 481
@@ -111,6 +111,7 @@
     "AKAM",
     "AMAT",
     "BAC",
+    "CIFR",
     "CRDO",
     "CRML",
     "CRWV",
@@ -124,7 +125,6 @@
     "QCOM",
     "RIG",
     "SMCI",
-    "SNDK",
     "VSTM",
     "WDC",
     "WTTR"
