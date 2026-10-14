@@ -25,16 +25,20 @@ def _exact_segment_vwap(joined):
         minute = part["minute"].astype(int)
         start = starts[session]
         expected = pd.Series(range(start, start + 5 * len(part), 5), index=part.index)
-        valid = (
-            minute.eq(expected)
-            & pd.to_numeric(part["wap"], errors="coerce").gt(0)
-            & pd.to_numeric(part["volume"], errors="coerce").gt(0)
-        )
-        valid_prefix = valid.cummin()
-        weighted = (part["wap"] * part["volume"]).cumsum()
-        total = part["volume"].cumsum()
-        joined.loc[part.index, "vwap"] = (weighted / total.where(total.gt(0))).where(valid_prefix)
-        joined.loc[part.index, "vwap_ready"] = valid_prefix.to_numpy()
+        volume = pd.to_numeric(part["volume"], errors="coerce")
+        wap = pd.to_numeric(part["wap"], errors="coerce")
+        # IBKR can supply genuine zero-trade 5m bars before the US open.
+        # A zero-volume bar adds no weight; carry forward the prior VWAP.
+        # A missing WAP on a POSITIVE-volume bar still invalidates the prefix.
+        valid = (minute.eq(expected) & volume.ge(0)
+                 & (volume.eq(0) | wap.gt(0)))
+        valid_prefix = valid.cummin().astype(bool)
+        weighted = (wap.where(volume.gt(0), 0).fillna(0) * volume).cumsum()
+        total = volume.cumsum()
+        ready = valid_prefix & total.gt(0)
+        joined.loc[part.index, "vwap"] = (
+            weighted / total.where(total.gt(0))).where(ready)
+        joined.loc[part.index, "vwap_ready"] = ready.to_numpy()
     return joined
 
 def evaluate(raw,root,day,now=None):
@@ -58,29 +62,53 @@ def evaluate(raw,root,day,now=None):
     frame=_exact_segment_vwap(frame)
     # Require newest completed 5m bar for each ticker. Never replay an old
     # matching bar after the setup ceases to hold.
-    latest=frame.sort_values("timestamp_et").groupby("ticker").tail(1)
+    newest = frame.sort_values("timestamp_et").groupby("ticker").tail(1)
     if now is None:
-        clock=pd.Timestamp.now(tz="UTC")
+        clock = pd.Timestamp.now(tz="UTC")
     else:
-        clock=pd.Timestamp(now)
+        clock = pd.Timestamp(now)
         if clock.tzinfo is None:
             raise ValueError("now must be timezone-aware")
-        clock=clock.tz_convert("UTC")
-    age=(clock-latest["timestamp_et"].dt.tz_convert("UTC")).dt.total_seconds()
-    latest=latest[(age>=300)&(age<=900)]
-    ready=latest["vwap_ready"].fillna(False)&latest["ema9_ready"].fillna(False)
-    matches=candidates(latest[ready])
-    events=[]
-    for _,x in matches.iterrows():
-        ts=pd.Timestamp(x["timestamp_et"])
-        events.append({"ticker":str(x["ticker"]),"bar_et":ts.isoformat(),
-                       "uk_time":ts.tz_convert(UK).strftime("%H:%M"),
-                       "rv5":round(float(x["rvol5"]),2)})
-    state="MATCHES" if events else "NO_SIGNALS"
-    return events,{"state":state,"count":len(events),
-                   "latest_completed":len(latest),
-                   "latest_rvol_ready":int(latest["rvol5_ready"].sum()),
-                   "latest_vwap_ready":int(latest["vwap_ready"].sum())}
+        clock = clock.tz_convert("UTC")
+    # IBKR timestamps denote candle START, not close. Evaluate only a
+    # completed bar, and reject results older than the normal Chakra cadence.
+    age = (clock - newest["timestamp_et"].dt.tz_convert("UTC")).dt.total_seconds()
+    latest = newest.loc[age.between(300, 900, inclusive="both")].copy()
+    vwap_ready = latest["vwap_ready"].fillna(False)
+    ema_ready = latest["ema9_ready"].fillna(False)
+    volume_ready = pd.to_numeric(latest["volume"], errors="coerce").gt(0)
+    ready = vwap_ready & ema_ready & volume_ready
+    matches = candidates(latest.loc[ready])
+    events = []
+    for _, x in matches.iterrows():
+        ts = pd.Timestamp(x["timestamp_et"])
+        events.append({"ticker": str(x["ticker"]), "bar_et": ts.isoformat(),
+                       "uk_time": ts.tz_convert(UK).strftime("%H:%M"),
+                       "rv5": round(float(x["rvol5"]), 2)})
+    if events:
+        state = "MATCHES"
+    elif latest.empty:
+        state = "NO_FRESH_COMPLETED_BAR"
+    elif not vwap_ready.any():
+        state = "WAP_MISSING_OR_SEGMENT_GAP"
+    elif not latest["rvol5_ready"].any():
+        state = "RVOL5_NOT_READY"
+    else:
+        state = "NO_SIGNALS"
+    return events, {
+        "state": state,
+        "count": len(events),
+        "asof_utc": clock.isoformat(),
+        "latest_seen": len(newest),
+        "newest_bar_et": (newest["timestamp_et"].max().isoformat()
+                          if not newest.empty else None),
+        "latest_completed": len(latest),
+        "rejected_stale_or_not_closed": len(newest) - len(latest),
+        "latest_rvol_ready": int(latest["rvol5_ready"].sum()),
+        "latest_vwap_ready": int(vwap_ready.sum()),
+        "latest_ema9_ready": int(ema_ready.sum()),
+        "latest_positive_volume": int(volume_ready.sum()),
+    }
 def prepare(events,root):
     """Reserve unsent keys; persist pending; only acknowledge after Discord success."""
     state=Path(root)/"ASJR_Analyst/state/rudra_premarket_delivery.json"
