@@ -109,6 +109,33 @@ def evaluate(raw,root,day,now=None):
         "latest_ema9_ready": int(ema_ready.sum()),
         "latest_positive_volume": int(volume_ready.sum()),
     }
+def fresh_for_dispatch(events, *, now=None, max_age_seconds=900):
+    """Fail closed before Chakra Discord formatting if the pipeline was slow.
+
+    Event candle times are starts. A valid alert is already completed and
+    no older than the same 15-minute freshness rule used during evaluation.
+    """
+    if now is None:
+        clock = pd.Timestamp.now(tz="UTC")
+    else:
+        clock = pd.Timestamp(now)
+        if clock.tzinfo is None:
+            raise ValueError("Dispatch time must be timezone-aware")
+        clock = clock.tz_convert("UTC")
+    fresh = []
+    for event in events or []:
+        try:
+            stamp = pd.Timestamp(event["bar_et"])
+            if stamp.tzinfo is None:
+                continue
+            age = (clock - stamp.tz_convert("UTC")).total_seconds()
+            if 300 <= age <= max_age_seconds:
+                fresh.append(event)
+        except (KeyError, ValueError, TypeError):
+            continue
+    return fresh
+
+
 def prepare(events,root):
     """Reserve unsent keys; persist pending; only acknowledge after Discord success."""
     state=Path(root)/"ASJR_Analyst/state/rudra_premarket_delivery.json"
