@@ -1,26 +1,26 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-14T09:52:28.977988+00:00",
+  "generated_at_utc": "2026-10-14T10:09:13.434149+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
+    "AXTI",
     "BMNR",
-    "CBRS",
     "CRDO",
     "CRML",
     "CRWV",
     "DELL",
     "HPE",
     "INTC",
+    "IREN",
     "LQDA",
     "MSFT",
-    "MU",
-    "NBIS",
     "ORCL",
     "QCOM",
     "SMCI",
     "SNDK",
+    "VSTM",
     "WDC",
     "WTTR"
   ],
@@ -33,11 +33,11 @@
       "state": "OK",
       "rows": 546
     },
-    "BMNR": {
+    "AXTI": {
       "state": "OK",
       "rows": 546
     },
-    "CBRS": {
+    "BMNR": {
       "state": "OK",
       "rows": 546
     },
@@ -65,19 +65,15 @@
       "state": "OK",
       "rows": 546
     },
+    "IREN": {
+      "state": "OK",
+      "rows": 546
+    },
     "LQDA": {
       "state": "OK",
       "rows": 491
     },
     "MSFT": {
-      "state": "OK",
-      "rows": 546
-    },
-    "MU": {
-      "state": "OK",
-      "rows": 546
-    },
-    "NBIS": {
       "state": "OK",
       "rows": 546
     },
@@ -97,6 +93,10 @@
       "state": "OK",
       "rows": 546
     },
+    "VSTM": {
+      "state": "OK",
+      "rows": 479
+    },
     "WDC": {
       "state": "OK",
       "rows": 546
@@ -106,26 +106,26 @@
       "rows": 423
     }
   },
-  "rows": 10719,
+  "rows": 10652,
   "usable_150bars": [
     "AKAM",
     "AMAT",
+    "AXTI",
     "BMNR",
-    "CBRS",
     "CRDO",
     "CRML",
     "CRWV",
     "DELL",
     "HPE",
     "INTC",
+    "IREN",
     "LQDA",
     "MSFT",
-    "MU",
-    "NBIS",
     "ORCL",
     "QCOM",
     "SMCI",
     "SNDK",
+    "VSTM",
     "WDC",
     "WTTR"
   ]
