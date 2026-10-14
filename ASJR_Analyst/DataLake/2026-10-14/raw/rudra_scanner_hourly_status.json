@@ -1,34 +1,20 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-14T05:52:57.508496+00:00",
+  "generated_at_utc": "2026-10-14T06:14:17.188616+00:00",
   "selected_tickers": [
-    "AAOI",
     "AKAM",
     "AMAT",
-    "ASML",
-    "AXTI",
-    "BMNR",
     "CRDO",
-    "CRML",
-    "GME",
     "INTC",
-    "IONQ",
-    "LQDA",
     "MSFT",
     "ORCL",
     "QCOM",
-    "SKYD",
     "SMCI",
-    "SNDK",
     "WDC",
     "WTTR"
   ],
   "per_ticker": {
-    "AAOI": {
-      "state": "OK",
-      "rows": 560
-    },
     "AKAM": {
       "state": "OK",
       "rows": 537
@@ -37,41 +23,13 @@
       "state": "OK",
       "rows": 560
     },
-    "ASML": {
-      "state": "OK",
-      "rows": 560
-    },
-    "AXTI": {
-      "state": "OK",
-      "rows": 560
-    },
-    "BMNR": {
-      "state": "OK",
-      "rows": 560
-    },
     "CRDO": {
-      "state": "OK",
-      "rows": 560
-    },
-    "CRML": {
-      "state": "OK",
-      "rows": 560
-    },
-    "GME": {
       "state": "OK",
       "rows": 560
     },
     "INTC": {
       "state": "OK",
       "rows": 560
-    },
-    "IONQ": {
-      "state": "OK",
-      "rows": 560
-    },
-    "LQDA": {
-      "state": "OK",
-      "rows": 500
     },
     "MSFT": {
       "state": "OK",
@@ -85,15 +43,7 @@
       "state": "OK",
       "rows": 560
     },
-    "SKYD": {
-      "state": "OK",
-      "rows": 538
-    },
     "SMCI": {
-      "state": "OK",
-      "rows": 560
-    },
-    "SNDK": {
       "state": "OK",
       "rows": 560
     },
@@ -106,26 +56,16 @@
       "rows": 439
     }
   },
-  "rows": 10974,
+  "rows": 5456,
   "usable_150bars": [
-    "AAOI",
     "AKAM",
     "AMAT",
-    "ASML",
-    "AXTI",
-    "BMNR",
     "CRDO",
-    "CRML",
-    "GME",
     "INTC",
-    "IONQ",
-    "LQDA",
     "MSFT",
     "ORCL",
     "QCOM",
-    "SKYD",
     "SMCI",
-    "SNDK",
     "WDC",
     "WTTR"
   ]
