@@ -58,6 +58,7 @@ def main(argv=None):
     parser.add_argument("--status", action="store_true", help="Read current SSH request, do not queue")
     parser.add_argument("--rvol-status", action="store_true", help="Short current RVOL5 data/readiness report, no broker request")
     parser.add_argument("--self-test", action="store_true", help="Run fixed offline WAP/RVOL5 regression tests; no IBKR calls")
+    parser.add_argument("--final-check", action="store_true", help="One-step offline regression + current RVOL5 data health; no broker calls")
     parser.add_argument("--premarket-test", action="store_true",
                         help="Report RVOL5 diagnostic after ONE existing full Chakra pipeline cycle; no Discord")
     parser.add_argument("--saved", action="store_true", help="Print saved report only, do not queue")
@@ -66,19 +67,56 @@ def main(argv=None):
                         help="Maximum waiting seconds; does NOT control broker API")
     args = parser.parse_args(argv)
     root = Path(args.repo).resolve()
-    if args.self_test:
-        # Fixed offline suite only, no arbitrary filename/module from Discord.
+    if args.self_test or args.final_check:
+        # This reads only two fixed repository test suites. Never run a
+        # user-provided script or make a new IBKR connection.
         import unittest
         suite = unittest.TestSuite()
         folder = Path(__file__).resolve().parent / "tests"
         loader = unittest.TestLoader()
         for filename in ("test_wap_capture.py", "test_premarket_live.py"):
             suite.addTests(loader.discover(str(folder), pattern=filename))
-        print("RUDRA-PREMARKET | OFFLINE WAP + RVOL5 SELF TEST", flush=True)
+        print("RUDRA-PREMARKET | OFFLINE WAP + RVOL5 TEST", flush=True)
         outcome = unittest.TextTestRunner(stream=sys.stdout, verbosity=1).run(suite)
-        print("RUDRA-PREMARKET | SELF TEST |",
-              "PASS" if outcome.wasSuccessful() else "FAIL", flush=True)
-        return 0 if outcome.wasSuccessful() else 2
+        passed = outcome.wasSuccessful()
+        print("OFFLINE TEST |", "PASS" if passed else "FAIL", flush=True)
+        if args.self_test or not passed:
+            return 0 if passed else 2
+
+        from datetime import datetime, timezone
+        from zoneinfo import ZoneInfo
+        import pandas as pd
+        from RudraScanner.premarket_live import enabled as discord_enabled
+        from RudraScanner.premarket_live_backfill import config_enabled
+        from RudraScanner.premarket_diagnostic import (
+            print_short_status, report_path,
+        )
+        day = args.date or datetime.now(ZoneInfo("America/New_York")).date().isoformat()
+        print("RUDRA-PREMARKET | FINAL CHECK |", day, flush=True)
+        report_status = print_short_status(root, day)
+        data_path = root / "ASJR_Analyst" / "DataLake" / day / "raw" / "intraday_5m.csv"
+        broker_wap = 0
+        if data_path.is_file():
+            raw = pd.read_csv(data_path, low_memory=False)
+            if {"Date", "WAP", "Volume"}.issubset(raw.columns):
+                rows = raw.loc[raw["Date"].astype(str).str.startswith(day)]
+                wap = pd.to_numeric(rows["WAP"], errors="coerce")
+                volume = pd.to_numeric(rows["Volume"], errors="coerce")
+                broker_wap = int((wap.gt(0) & volume.gt(0)).sum())
+        print("IBKR RAW | positive-volume real WAP bars today =", broker_wap)
+        path = report_path(root, day)
+        report = json.loads(path.read_text()) if path.is_file() else {}
+        q = report.get("signal_quality") or {}
+        report_age = (datetime.now(timezone.utc).timestamp() -
+                      path.stat().st_mtime) if path.is_file() else float("inf")
+        ready = (discord_enabled() and config_enabled(root)
+                 and report_status == 0 and -60 <= report_age <= 1200
+                 and broker_wap > 0
+                 and int(q.get("latest_vwap_ready") or 0) > 0)
+        print("RESULT |", "DATA PATH READY" if ready else "DATA PATH NOT READY")
+        print("DISCORD | Existing Chakra hook configured; "
+              "actual delivery requires a qualifying live signal")
+        return 0 if ready else 2
     if args.rvol_status:
         from datetime import datetime
         from zoneinfo import ZoneInfo
