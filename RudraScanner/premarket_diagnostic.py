@@ -72,3 +72,46 @@ def print_saved(root, day):
               "| RV5", label, "|", item["signal"])
     print(report.get("notice", ""))
     return 0
+
+
+def print_short_status(root, day):
+    """Small Discord-friendly read-only RVOL5 health report (no broker call)."""
+    from RudraScanner.premarket_live import enabled as alerts_enabled
+    from RudraScanner.premarket_live_backfill import config_enabled as backfill_enabled
+
+    print("RUDRA-PREMARKET |", day)
+    print("CONFIG | RVOL DISCORD", "ON" if alerts_enabled() else "OFF",
+          "| BACKFILL", "ON" if backfill_enabled(root) else "OFF")
+    path = report_path(root, day)
+    if not path.is_file():
+        print("DIAGNOSTIC | NO SAVED REPORT")
+        return 2
+    try:
+        record = json.loads(path.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        print("DIAGNOSTIC | CORRUPT")
+        return 2
+    age_seconds = (pd.Timestamp.now(tz="UTC").timestamp() - path.stat().st_mtime)
+    print("REPORT AGE | %.1f min | %s" % (age_seconds / 60.0,
+          "FRESH" if -60 <= age_seconds <= 1200 else "STALE"))
+    q = record.get("signal_quality") or {}
+    print("QUALITY |", q.get("state", "UNKNOWN"),
+          "| fresh", q.get("latest_completed", "?"),
+          "| RV5 ready", q.get("latest_rvol_ready", "?"),
+          "| VWAP ready", q.get("latest_vwap_ready", "?"))
+    print("BAR | newest", q.get("newest_bar_et", "N/A"),
+          "| checked UTC", q.get("asof_utc", "N/A"))
+    event_list = record.get("signal_events", [])
+    print("BUY WATCH CANDIDATES |", len(event_list))
+    for row in event_list[:5]:
+        print(row.get("ticker", "?"), "|", row.get("uk_time", "?"),
+              "UK | RV5", row.get("rv5", "?"))
+    ticker_map = {r.get("ticker"): r for r in record.get("tickers", [])}
+    for ticker in ("INTC", "WDC", "AKAM"):
+        item = ticker_map.get(ticker)
+        if item:
+            print(ticker, "| RV5", item.get("rvol5", "N/A"),
+                  "| history ready", item.get("rvol5_ready"),
+                  "| last ET", item.get("bar_et", "N/A"))
+    print("NOTE | candidates are not proof of Discord delivery")
+    return 0
