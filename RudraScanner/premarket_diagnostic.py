@@ -36,11 +36,12 @@ def save_diagnostic(rvol, status, root, day, *, events=None, signal_quality=None
         "date_et": str(day),
         "signal_quality": signal_quality or {"state": "NOT_EVALUATED"},
         "signal_events": list(events or []),
-        "mode": "SHADOW_DIAGNOSTIC_NO_DISCORD",
+        "mode": "EVALUATION_REPORT_ONLY",
         "history": status,
         "tickers": sorted(rows, key=lambda x: x["ticker"]),
-        "notice": ("Signal evaluation diagnostic; BUY WATCH Discord still separately gated. "
-                   "Refer to signal_quality and signal_events; no order is executed."),
+        "notice": ("This report checks RVOL and EMA9/VWAP readiness. It is NOT a Discord "
+                   "delivery receipt. Check the existing Chakra sender log for delivery; "
+                   "no order is executed."),
     }
     path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_suffix(".tmp")
