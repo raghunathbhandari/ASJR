@@ -57,6 +57,7 @@ def main(argv=None):
     parser.add_argument("--top", action="store_true", help="Short saved SMB-style Top In Play shortlist; no new scan")
     parser.add_argument("--status", action="store_true", help="Read current SSH request, do not queue")
     parser.add_argument("--rvol-status", action="store_true", help="Short current RVOL5 data/readiness report, no broker request")
+    parser.add_argument("--self-test", action="store_true", help="Run fixed offline WAP/RVOL5 regression tests; no IBKR calls")
     parser.add_argument("--premarket-test", action="store_true",
                         help="Report RVOL5 diagnostic after ONE existing full Chakra pipeline cycle; no Discord")
     parser.add_argument("--saved", action="store_true", help="Print saved report only, do not queue")
@@ -65,6 +66,19 @@ def main(argv=None):
                         help="Maximum waiting seconds; does NOT control broker API")
     args = parser.parse_args(argv)
     root = Path(args.repo).resolve()
+    if args.self_test:
+        # Fixed offline suite only, no arbitrary filename/module from Discord.
+        import unittest
+        suite = unittest.TestSuite()
+        folder = root / "RudraScanner" / "tests"
+        loader = unittest.TestLoader()
+        for filename in ("test_wap_capture.py", "test_premarket_live.py"):
+            suite.addTests(loader.discover(str(folder), pattern=filename))
+        print("RUDRA-PREMARKET | OFFLINE WAP + RVOL5 SELF TEST", flush=True)
+        outcome = unittest.TextTestRunner(stream=sys.stdout, verbosity=1).run(suite)
+        print("RUDRA-PREMARKET | SELF TEST |",
+              "PASS" if outcome.wasSuccessful() else "FAIL", flush=True)
+        return 0 if outcome.wasSuccessful() else 2
     if args.rvol_status:
         from datetime import datetime
         from zoneinfo import ZoneInfo
