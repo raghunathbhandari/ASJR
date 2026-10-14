@@ -1,15 +1,15 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-14T05:07:06.063439+00:00",
+  "generated_at_utc": "2026-10-14T05:12:56.233788+00:00",
   "selected_tickers": [
-    "AAOI",
     "AKAM",
     "AMAT",
     "BMNR",
     "CRDO",
     "CRML",
     "GME",
+    "GOOGL",
     "INTC",
     "IONQ",
     "LQDA",
@@ -25,10 +25,6 @@
     "WTTR"
   ],
   "per_ticker": {
-    "AAOI": {
-      "state": "OK",
-      "rows": 560
-    },
     "AKAM": {
       "state": "OK",
       "rows": 537
@@ -50,6 +46,10 @@
       "rows": 560
     },
     "GME": {
+      "state": "OK",
+      "rows": 560
+    },
+    "GOOGL": {
       "state": "OK",
       "rows": 560
     },
@@ -108,13 +108,13 @@
   },
   "rows": 10974,
   "usable_150bars": [
-    "AAOI",
     "AKAM",
     "AMAT",
     "BMNR",
     "CRDO",
     "CRML",
     "GME",
+    "GOOGL",
     "INTC",
     "IONQ",
     "LQDA",
