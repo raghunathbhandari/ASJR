@@ -48,6 +48,7 @@ if text.strip().lower().startswith("!runscommand"):
         is_admin=admin,
         guild_id=message.guild.id if message.guild else None,
         channel_id=message.channel.id,
+        allowed_ids={YOUR_NUMERIC_DISCORD_USER_ID},  # same ID used by !gitpull
     )
     await message.channel.send(result)
     return
