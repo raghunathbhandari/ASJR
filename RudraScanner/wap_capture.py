@@ -1,8 +1,8 @@
-"""Opt-in capture of IBKR's actual historical-bar WAP.
+"""Capture real IBKR historical-bar WAP on the existing Chakra connection.
 
-Original EWrapper callback runs unchanged. Match WAP using the bar's
-timestamp, never positionally: the six-field parser sorts timestamps
-and incoming callbacks need not arrive in sorted order.
+Callback observation happens BEFORE the legacy handler (which may normalize the
+bar). Join captured prices to parsed OHLCV by actual UTC candle timestamp.
+Never synthesize WAP from OHLC or attach it by row position.
 """
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ import pandas as pd
 
 
 def install_wap_capture(app):
-    """Tap the existing connected EWrapper; no new broker connection."""
+    """Install one callback tap; no extra client or broker requests."""
     if getattr(app, "_rudra_wap_capture_installed", False):
         return False
     handler = getattr(app, "historicalData", None)
@@ -21,19 +21,17 @@ def install_wap_capture(app):
     app._rudra_wap_sidecar = {}
 
     def wrapped(req_id, bar):
-        result = handler(req_id, bar)
-        try:
-            value = float(getattr(bar, "wap", float("nan")))
-            price = value if math.isfinite(value) and value > 0 else None
-        except (TypeError, ValueError, AttributeError):
-            price = None
-        # Only explicitly registered five-minute request IDs are tracked;
-        # do not retain every unrelated Gateway historical callback.
-        if req_id in app._rudra_wap_sidecar:
-            app._rudra_wap_sidecar[req_id].append(
-                (str(getattr(bar, "date", "")), price)
-            )
-        return result
+        # Capture first: downstream callbacks may mutate/reuse bar objects.
+        sidecar = getattr(app, "_rudra_wap_sidecar", None)
+        if isinstance(sidecar, dict) and req_id in sidecar:
+            try:
+                price = float(getattr(bar, "wap", float("nan")))
+                if not math.isfinite(price) or price <= 0:
+                    price = None
+            except (TypeError, ValueError, AttributeError):
+                price = None
+            sidecar[req_id].append((str(getattr(bar, "date", "")), price))
+        return handler(req_id, bar)
 
     app.historicalData = wrapped
     app._rudra_wap_capture_installed = True
@@ -41,16 +39,16 @@ def install_wap_capture(app):
 
 
 def _stamp(raw):
-    """IBKR formatDate=2 is epoch seconds, otherwise require tz suffix."""
+    """IBKR formatDate=2 is epoch seconds; otherwise require an explicit zone."""
     value = str(raw).strip()
     if not value:
         return None
     try:
         return pd.to_datetime(int(value), unit="s", utc=True)
-    except ValueError:
+    except (ValueError, OverflowError):
         try:
             stamp = pd.Timestamp(value)
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, OverflowError):
             return None
         if stamp.tzinfo is None:
             return None
@@ -58,24 +56,47 @@ def _stamp(raw):
 
 
 def attach_wap(app, req_id, parsed, rows):
-    """Attach real bar WAP only on exact timestamp/row-count match.
+    """Attach each verified broker WAP by candle start time.
 
-    Missing or duplicate timestamps are DATA NOT READY for VWAP. The
-    sidecar is consumed regardless of success to prevent memory growth.
+    A single unparseable/filtered broker row must not discard every valid
+    candle's WAP. Any unmatched/invalid candle remains NaN, so the downstream
+    VWAP prefix validation still fails closed on genuinely missing data.
     """
     sidecar = getattr(app, "_rudra_wap_sidecar", None)
     recorded = sidecar.pop(req_id, None) if isinstance(sidecar, dict) else None
-    if recorded is None or len(recorded) != len(rows) or len(parsed) != len(rows):
-        return parsed
-    lookup = {}
-    for start, price in recorded:
-        stamp = _stamp(start)
-        if stamp is None or stamp in lookup:
-            return parsed
-        lookup[stamp] = price
-    indexes = pd.to_datetime(parsed.index, utc=True, errors="coerce")
-    if indexes.isna().any() or any(t not in lookup for t in indexes):
+    if parsed is None or parsed.empty:
         return parsed
     out = parsed.copy()
-    out["WAP"] = [lookup[t] for t in indexes]
+    out["WAP"] = float("nan")
+    if recorded is None:
+        print(f"RUDRA WAP | reqId={req_id} | NOT_REGISTERED | parsed={len(parsed)}")
+        return out
+
+    lookup = {}
+    duplicates = set()
+    valid_prices = 0
+    for start, price in recorded:
+        stamp = _stamp(start)
+        if stamp is None:
+            continue
+        if stamp in lookup:
+            duplicates.add(stamp)
+        else:
+            lookup[stamp] = price
+        if price is not None:
+            valid_prices += 1
+    for stamp in duplicates:
+        lookup[stamp] = None
+
+    indices = pd.to_datetime(out.index, utc=True, errors="coerce")
+    values = [lookup.get(t) if not pd.isna(t) else None for t in indices]
+    out["WAP"] = pd.to_numeric(pd.Series(values, index=out.index), errors="coerce")
+    matched = int(out["WAP"].notna().sum())
+    state = "OK" if matched == len(out) else "PARTIAL_OR_MISSING"
+    print(
+        f"RUDRA WAP | reqId={req_id} | {state} | "
+        f"callbacks={len(recorded)} | parsed={len(out)} | "
+        f"broker_wap_positive={valid_prices} | matched={matched} | "
+        f"duplicate_times={len(duplicates)}"
+    )
     return out
