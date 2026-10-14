@@ -1,13 +1,14 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-14T04:38:20.114090+00:00",
+  "generated_at_utc": "2026-10-14T04:44:10.938885+00:00",
   "selected_tickers": [
     "AAOI",
     "AKAM",
     "AMAT",
     "AXTI",
     "CRDO",
+    "GME",
     "INTC",
     "IONQ",
     "IREN",
@@ -20,7 +21,6 @@
     "SKYD",
     "SMCI",
     "SNDK",
-    "SPCX",
     "WDC",
     "WTTR"
   ],
@@ -42,6 +42,10 @@
       "rows": 560
     },
     "CRDO": {
+      "state": "OK",
+      "rows": 560
+    },
+    "GME": {
       "state": "OK",
       "rows": 560
     },
@@ -93,10 +97,6 @@
       "state": "OK",
       "rows": 560
     },
-    "SPCX": {
-      "state": "OK",
-      "rows": 560
-    },
     "WDC": {
       "state": "OK",
       "rows": 560
@@ -113,6 +113,7 @@
     "AMAT",
     "AXTI",
     "CRDO",
+    "GME",
     "INTC",
     "IONQ",
     "IREN",
@@ -125,7 +126,6 @@
     "SKYD",
     "SMCI",
     "SNDK",
-    "SPCX",
     "WDC",
     "WTTR"
   ]
