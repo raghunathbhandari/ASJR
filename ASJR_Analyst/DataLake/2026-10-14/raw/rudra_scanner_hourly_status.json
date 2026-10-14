@@ -1,14 +1,14 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-14T10:32:41.590474+00:00",
+  "generated_at_utc": "2026-10-14T10:38:33.527162+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
+    "BE",
     "CRDO",
     "CRML",
     "CRWV",
-    "DELL",
     "HPE",
     "INTC",
     "LQDA",
@@ -33,6 +33,10 @@
       "state": "OK",
       "rows": 547
     },
+    "BE": {
+      "state": "OK",
+      "rows": 547
+    },
     "CRDO": {
       "state": "OK",
       "rows": 547
@@ -42,10 +46,6 @@
       "rows": 547
     },
     "CRWV": {
-      "state": "OK",
-      "rows": 547
-    },
-    "DELL": {
       "state": "OK",
       "rows": 547
     },
@@ -110,10 +110,10 @@
   "usable_150bars": [
     "AKAM",
     "AMAT",
+    "BE",
     "CRDO",
     "CRML",
     "CRWV",
-    "DELL",
     "HPE",
     "INTC",
     "LQDA",
