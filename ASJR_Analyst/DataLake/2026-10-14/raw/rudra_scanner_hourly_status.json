@@ -1,19 +1,19 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-14T09:34:55.838558+00:00",
+  "generated_at_utc": "2026-10-14T09:40:46.835403+00:00",
   "selected_tickers": [
-    "AAOI",
     "AKAM",
     "AMAT",
     "AXTI",
+    "BMNR",
+    "CBRS",
     "CRDO",
     "CRML",
     "CRWV",
     "DELL",
     "HPE",
     "INTC",
-    "IREN",
     "LQDA",
     "MSFT",
     "MU",
@@ -25,10 +25,6 @@
     "WTTR"
   ],
   "per_ticker": {
-    "AAOI": {
-      "state": "OK",
-      "rows": 546
-    },
     "AKAM": {
       "state": "OK",
       "rows": 523
@@ -38,6 +34,14 @@
       "rows": 546
     },
     "AXTI": {
+      "state": "OK",
+      "rows": 546
+    },
+    "BMNR": {
+      "state": "OK",
+      "rows": 546
+    },
+    "CBRS": {
       "state": "OK",
       "rows": 546
     },
@@ -62,10 +66,6 @@
       "rows": 546
     },
     "INTC": {
-      "state": "OK",
-      "rows": 546
-    },
-    "IREN": {
       "state": "OK",
       "rows": 546
     },
@@ -108,17 +108,17 @@
   },
   "rows": 10719,
   "usable_150bars": [
-    "AAOI",
     "AKAM",
     "AMAT",
     "AXTI",
+    "BMNR",
+    "CBRS",
     "CRDO",
     "CRML",
     "CRWV",
     "DELL",
     "HPE",
     "INTC",
-    "IREN",
     "LQDA",
     "MSFT",
     "MU",
