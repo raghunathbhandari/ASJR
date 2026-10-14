@@ -1,3 +1,13 @@
+## 2026-10-14 — Rudra-Premarket RVOL5 repairs (GITHUB COMMITTED; NOT VPS-VERIFIED)
+
+User enabled BOTH RVOL Discord and automatic historical new-ticker backfill in `RudraScanner/premarket_alert_config.json` (`enabled=true`, `auto_backfill=true`). No new sender: ONLY the canonical `ASJR_Analyst/Tests/test_asjr_pipeline.py::prepare_alert(result)` -> external Chakra `SN.send_to_discord(message)` -> `mark_alert_sent()`. Duplicate direct sender was removed. Alerts are independent of the old shadow RudraScanner/RVOL20 Discord gate. Confirmed LOW RVOL5 <=0.58 or HIGH >=2.00, strict completed-candle Price > EMA9 > actual broker-WAP VWAP, 09:30–09:59 ET excluded, no fabricated values.
+
+14 Oct real DataLake showed PRE prices/volumes and working RVOL5 baselines but missing WAP and sometimes 16-minute-old completed bars rejected by <=15-minute freshness. Corrections on GitHub: pre-handler WAP callback capture, exact timestamp joins and `RUDRA WAP` logs; premarket zero-volume candles carry prior verified VWAP while missing WAP on traded candles still fails; more actionable live signal diagnostics; update durable five-day reference BEFORE first signal evaluation; later scanner pass must not erase primary results; `fresh_for_dispatch` discards signals that grew stale by external Discord hook time. No bypass of the freshness gate. Added offline tests and `RudraScanner/scan_now.py --final-check` as **one Discord-allowed command** once user asks for final verification; it runs WAP/RVOL unit tests, reads latest diagnostic, measures raw positive-volume WAP and VWAP-ready bars, and reports DATA PATH READY/NOT READY. It never places trades, opens an IBKR client, or actually sends a Discord test alert.
+
+**Deployment**: GitHub commits do not prove VPS code was loaded. Do not request repeated tests while user is travelling. When user asks for ONE final test, confirm prior `!gitpull` + bot restart, then provide exactly `!runpy RudraScanner/scan_now\\.py --final-check`. Even a PASS verifies data readiness/offline tests, **not an actual delivered BUY WATCH**; only a qualifying live signal and Discord receipt can establish delivery. WAP source still needs live confirmation. Preserve the locked Rudra-Reversal and original Chakra hook.
+
+---
+
 ## 2026-10-12 — Lessons from Chakra Top 5 and runtime review
 
 - Consult GitHub-synced DataLake logs before asking for SSH output. Find recent run-log filenames from commit changed-file lists, then fetch logs. GitHub logs are snapshots, not direct VPS access.
