@@ -1,16 +1,198 @@
 {
   "date_et": "2026-10-14",
   "signal_quality": {
-    "state": "NO_BARS"
+    "state": "NO_FRESH_COMPLETED_BAR",
+    "count": 0,
+    "asof_utc": "2026-10-14T16:21:34.635913+00:00",
+    "latest_seen": 34,
+    "newest_bar_et": "2026-10-14T12:05:00-04:00",
+    "latest_completed": 0,
+    "rejected_stale_or_not_closed": 34,
+    "latest_rvol_ready": 0,
+    "latest_vwap_ready": 0,
+    "latest_ema9_ready": 0,
+    "latest_positive_volume": 0
   },
   "signal_events": [],
   "mode": "EVALUATION_REPORT_ONLY",
   "history": {
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/state/rudra_premarket_rvol5.csv",
-    "ready5": 0,
+    "ready5": 1730,
     "stored_rows": 192720,
     "saved": true
   },
-  "tickers": [],
+  "tickers": [
+    {
+      "ticker": "AKAM",
+      "bar_et": "2026-10-14 12:05:00-04:00",
+      "session": "RTH",
+      "rvol5": 2.0835,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "AMAT",
+      "bar_et": "2026-10-14 12:05:00-04:00",
+      "session": "RTH",
+      "rvol5": 1.3047,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "CAT",
+      "bar_et": "2026-10-14 12:05:00-04:00",
+      "session": "RTH",
+      "rvol5": 1.3028,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "CRDO",
+      "bar_et": "2026-10-14 12:05:00-04:00",
+      "session": "RTH",
+      "rvol5": 0.9631,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "FSLR",
+      "bar_et": "2026-10-14 12:05:00-04:00",
+      "session": "RTH",
+      "rvol5": 0.9778,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "INTC",
+      "bar_et": "2026-10-14 12:05:00-04:00",
+      "session": "RTH",
+      "rvol5": 0.9435,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "LRCX",
+      "bar_et": "2026-10-14 12:05:00-04:00",
+      "session": "RTH",
+      "rvol5": 1.1252,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "MCHP",
+      "bar_et": "2026-10-14 12:05:00-04:00",
+      "session": "RTH",
+      "rvol5": 1.1167,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "MRVL",
+      "bar_et": "2026-10-14 12:05:00-04:00",
+      "session": "RTH",
+      "rvol5": 0.6767,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "MSFT",
+      "bar_et": "2026-10-14 12:05:00-04:00",
+      "session": "RTH",
+      "rvol5": 0.9132,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "MU",
+      "bar_et": "2026-10-14 12:05:00-04:00",
+      "session": "RTH",
+      "rvol5": 0.8062,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "NXPI",
+      "bar_et": "2026-10-14 12:05:00-04:00",
+      "session": "RTH",
+      "rvol5": 0.816,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "OPRX",
+      "bar_et": "2026-10-14 12:05:00-04:00",
+      "session": "RTH",
+      "rvol5": 0.3923,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "ORCL",
+      "bar_et": "2026-10-14 12:05:00-04:00",
+      "session": "RTH",
+      "rvol5": 2.4852,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "QCOM",
+      "bar_et": "2026-10-14 12:05:00-04:00",
+      "session": "RTH",
+      "rvol5": 1.006,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "SMCI",
+      "bar_et": "2026-10-14 12:05:00-04:00",
+      "session": "RTH",
+      "rvol5": 1.033,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "TSLA",
+      "bar_et": "2026-10-14 12:05:00-04:00",
+      "session": "RTH",
+      "rvol5": 1.0296,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "WDC",
+      "bar_et": "2026-10-14 12:05:00-04:00",
+      "session": "RTH",
+      "rvol5": 0.7645,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "WTTR",
+      "bar_et": "2026-10-14 12:05:00-04:00",
+      "session": "RTH",
+      "rvol5": 0.9659,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    }
+  ],
   "notice": "This report checks RVOL and EMA9/VWAP readiness. It is NOT a Discord delivery receipt. Check the existing Chakra sender log for delivery; no order is executed."
 }
