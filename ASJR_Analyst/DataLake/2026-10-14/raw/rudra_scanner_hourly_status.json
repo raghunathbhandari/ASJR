@@ -1,10 +1,9 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-14T02:17:32.279073+00:00",
+  "generated_at_utc": "2026-10-14T02:23:21.871381+00:00",
   "selected_tickers": [
     "AAOI",
-    "AG",
     "AKAM",
     "AMAT",
     "AXTI",
@@ -21,15 +20,12 @@
     "QCOM",
     "SKYD",
     "SMCI",
+    "SPCX",
     "WDC",
     "WTTR"
   ],
   "per_ticker": {
     "AAOI": {
-      "state": "OK",
-      "rows": 560
-    },
-    "AG": {
       "state": "OK",
       "rows": 560
     },
@@ -97,6 +93,10 @@
       "state": "OK",
       "rows": 560
     },
+    "SPCX": {
+      "state": "OK",
+      "rows": 560
+    },
     "WDC": {
       "state": "OK",
       "rows": 560
@@ -109,7 +109,6 @@
   "rows": 10974,
   "usable_150bars": [
     "AAOI",
-    "AG",
     "AKAM",
     "AMAT",
     "AXTI",
@@ -126,6 +125,7 @@
     "QCOM",
     "SKYD",
     "SMCI",
+    "SPCX",
     "WDC",
     "WTTR"
   ]
