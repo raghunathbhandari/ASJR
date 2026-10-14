@@ -1,17 +1,17 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-14T07:21:00.291071+00:00",
+  "generated_at_utc": "2026-10-14T07:26:49.404138+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
+    "ASML",
+    "AXTI",
     "BE",
-    "CBRS",
     "CRDO",
     "CRML",
     "CRWV",
     "GME",
-    "GOOGL",
     "INTC",
     "IONQ",
     "LQDA",
@@ -33,11 +33,15 @@
       "state": "OK",
       "rows": 560
     },
-    "BE": {
+    "ASML": {
       "state": "OK",
       "rows": 560
     },
-    "CBRS": {
+    "AXTI": {
+      "state": "OK",
+      "rows": 560
+    },
+    "BE": {
       "state": "OK",
       "rows": 560
     },
@@ -54,10 +58,6 @@
       "rows": 560
     },
     "GME": {
-      "state": "OK",
-      "rows": 560
-    },
-    "GOOGL": {
       "state": "OK",
       "rows": 560
     },
@@ -110,13 +110,13 @@
   "usable_150bars": [
     "AKAM",
     "AMAT",
+    "ASML",
+    "AXTI",
     "BE",
-    "CBRS",
     "CRDO",
     "CRML",
     "CRWV",
     "GME",
-    "GOOGL",
     "INTC",
     "IONQ",
     "LQDA",
