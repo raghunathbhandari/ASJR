@@ -58,6 +58,42 @@ class PremarketLiveTests(unittest.TestCase):
             acknowledge(events, root)
             self.assertEqual(prepare(events, root), "")
 
+    def test_zero_volume_premarket_bar_carries_real_vwap(self):
+        # No trade in one explicit broker candle does not invalidate
+        # the cumulative WAP*volume / volume calculation.
+        old, today = fixture()
+        today[2]["volume"] = 0
+        today[2]["wap"] = float("nan")
+        with tempfile.TemporaryDirectory() as root:
+            reference = _clean_reference(
+                _complete_profiles(normalize_bars(pd.DataFrame(old)),
+                                   before_day=DAY), DAY)
+            dest = durable_reference_path(root)
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            reference.to_csv(dest, index=False)
+            clock = pd.Timestamp(f"{DAY} 04:20:30", tz=ET)
+            events, state = evaluate(pd.DataFrame(old + today), root, DAY,
+                                     now=clock)
+            self.assertEqual(state["state"], "MATCHES", state)
+            self.assertEqual(events[0]["ticker"], "INTC")
+            self.assertAlmostEqual(events[0]["rv5"], 0.3, places=2)
+
+    def test_gap_in_candles_disqualifies_session_vwap(self):
+        old, today = fixture()
+        today.pop(1)  # Missing 04:05 != explicitly zero-volume bar
+        with tempfile.TemporaryDirectory() as root:
+            reference = _clean_reference(
+                _complete_profiles(normalize_bars(pd.DataFrame(old)),
+                                   before_day=DAY), DAY)
+            dest = durable_reference_path(root)
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            reference.to_csv(dest, index=False)
+            clock = pd.Timestamp(f"{DAY} 04:20:30", tz=ET)
+            events, state = evaluate(pd.DataFrame(old + today), root, DAY,
+                                     now=clock)
+            self.assertEqual(events, [])
+            self.assertEqual(state["latest_vwap_ready"], 0)
+
     def test_missing_actual_wap_never_signals(self):
         old, today = fixture()
         today[-1]["wap"] = float("nan")
