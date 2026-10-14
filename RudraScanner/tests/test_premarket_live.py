@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from RudraScanner.premarket_live import evaluate, prepare, acknowledge
+from RudraScanner.premarket_live import evaluate, prepare, acknowledge, fresh_for_dispatch
 from RudraScanner.premarket_rvol import (
     normalize_bars, _complete_profiles, _clean_reference,
     durable_reference_path,
@@ -108,6 +108,16 @@ class PremarketLiveTests(unittest.TestCase):
             stamp = pd.Timestamp(f"{DAY} 04:20:30", tz=ET)
             events, _ = evaluate(pd.DataFrame(old + today), root, DAY, now=stamp)
             self.assertEqual(events, [])
+
+    def test_chakra_hook_rejects_expired_events(self):
+        event = {"ticker": "INTC",
+                 "bar_et": "2026-10-12T04:15:00-04:00",
+                 "uk_time": "09:15", "rv5": .4}
+        just_completed = pd.Timestamp(f"{DAY} 04:20:30", tz=ET)
+        self.assertEqual(fresh_for_dispatch([event], now=just_completed),
+                         [event])
+        slow_pipeline = pd.Timestamp(f"{DAY} 04:32:00", tz=ET)
+        self.assertEqual(fresh_for_dispatch([event], now=slow_pipeline), [])
 
     def test_stale_latest_bar_never_alerts(self):
         old, today = fixture()
