@@ -1,0 +1,34 @@
+2026-10-14 17:00:41 BST | INFO | RUN | VERSION | 2026.10.11.7
+2026-10-14 17:00:41 BST | INFO | RUN | START | trade_date=2026-10-14
+2026-10-14 17:00:41 BST | INFO | WATCHLIST | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-14/config/fixed_watchlist.csv | source=prepared
+2026-10-14 17:00:41 BST | INFO | RUN | OPTIONS | include_sector=True | git_submit=True | fetch_gapup_from_app=True
+2026-10-14 17:00:41 BST | INFO | FOREX | One-time downloader | ok=True | started=True | FOREX_DOWNLOAD | started | tmux=forex_download | log=/root/trading/ASJR/Backtesting/BacktestData/IBKR/Forex/logs/EURUSD_1y_download.log
+2026-10-14 17:00:41 BST | INFO | NQ | One-time downloader | ok=True | started=True | NQ_DOWNLOAD | started | tmux=nq_download | log=/root/trading/ASJR/Backtesting/BacktestData/OpenSource/NQ/logs/NQ_yfinance_download.log
+2026-10-14 17:00:41 BST | INFO | MOVERS | Fetch started
+2026-10-14 17:00:43 BST | INFO | MOVERS | Fetch completed | rows=58
+2026-10-14 17:00:43 BST | INFO | MOVERS | Tickers | BSP, LQDA, VSTM, HALO, NRIX, PHAT, AADX, LLY, CRWV, DOCN, WOLF, BLZE, BRUN, WULF, AFRM, UNIT, AEVA, HUT, PENG, DELL, IREN, INIO, BTDR, UUUU, WYFI, ASST, CIFR, CLSK, U, CORZ, KOD, SEI, SHAZ, NBIS, AAOI, ULCC, APLD, CMBT, IONQ, IE, NVTS, ASTS, PPTA, FPS, SMR, NEXT, RIOT, EQPT, SSRM, MXL, VSAT, SBET, FLEX, AKAM, FIGR, PRCT, ORCL, LGN
+2026-10-14 17:00:43 BST | INFO | UNIVERSE | Built | tickers=76
+2026-10-14 17:00:43 BST | INFO | FILE | Saved ibkr_gapup (movers) | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-14/raw/ibkr_gapup.csv
+2026-10-14 17:00:43 BST | INFO | YFINANCE | Daily 30D fetch started | tickers=76
+2026-10-14 17:00:45 BST | INFO | YFINANCE | Daily 30D fetch completed | rows=2280
+2026-10-14 17:00:45 BST | INFO | FILE | Saved daily_30d | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-14/raw/daily_30d.csv
+2026-10-14 17:00:45 BST | INFO | FEATURES | Daily summary built | rows=76
+2026-10-14 17:00:45 BST | INFO | RUDRA SCANNER | pre-5M WAP tap installed | mode=shadow
+2026-10-14 17:00:45 BST | INFO | IBKR | 5m fetch started | tickers=76 | duration=3 D | batch_size=5
+2026-10-14 17:12:07 BST | INFO | IBKR | 5m fetch completed | rows=0
+2026-10-14 17:12:07 BST | INFO | FILE | Saved intraday_5m | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-14/raw/intraday_5m.csv
+2026-10-14 17:12:07 BST | INFO | RUDRA-PREMARKET | SIGNAL SHADOW | {'state': 'NO_BARS'} | candidates=0
+2026-10-14 17:12:10 BST | INFO | RUDRA-PREMARKET | RVOL5 history | ready=0 | stored=192720
+2026-10-14 17:12:11 BST | INFO | RUDRA SCANNER | shadow=shadow | state=SHADOW_SAVED | selected=10 | sources={'FIXED': 10, 'AI': 0, 'IBKR': 0} | scans={'TOP_PERC_GAIN': 'EMPTY', 'TOP_PERC_LOSE': 'EMPTY', 'HOT_BY_VOLUME': 'EMPTY', 'MOST_ACTIVE': 'EMPTY'}
+2026-10-14 17:14:19 BST | INFO | RUDRA SCANNER | shadow 5M=INDICATORS_ONLY | selected=10 | wap=WAP_MISSING_OR_INCOMPLETE_RTH | report=/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-14/reports/scalp_radar.txt
+2026-10-14 17:14:59 BST | INFO | RUDRA SCANNER | 1H history | state=DATA_NOT_READY | rows=0
+2026-10-14 17:15:01 BST | INFO | RUDRA-PREMARKET | auto history | {'state': 'UP_TO_DATE_OR_ATTEMPTED', 'eligible_tickers': 58, 'skipped_attempted': 22, 'selected': []}
+2026-10-14 17:15:01 BST | INFO | FEATURES | Intraday summary built | rows=0
+2026-10-14 17:15:01 BST | INFO | YFINANCE | Sector/market fetch started
+2026-10-14 17:15:02 BST | INFO | YFINANCE | Sector/market fetch completed | rows=15
+2026-10-14 17:15:02 BST | INFO | FILE | Saved sector_market_daily | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-14/raw/sector_market_daily.csv
+2026-10-14 17:15:02 BST | INFO | RUDRA SCANNER | 5M research=INDICATORS_ONLY | candidates=0 | Discord GATED OFF
+2026-10-14 17:15:02 BST | INFO | FILE | Saved ticker_summary | rows=76 | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-14/processed/ticker_summary.csv
+2026-10-14 17:15:02 BST | INFO | FILE | Saved asjr_snapshot | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-14/processed/asjr_snapshot.json
+2026-10-14 17:15:02 BST | INFO | RUN | DATA COMPLETE | universe=76 | intraday_rows=0 | ticker_summary=76
+2026-10-14 17:15:02 BST | INFO | GIT | File verification started | count=7
