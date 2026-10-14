@@ -56,6 +56,7 @@ def main(argv=None):
     parser.add_argument("--ibkr-direct", action="store_true", help="One-shot direct IBKR four-category scanner; no Chakra scan")
     parser.add_argument("--top", action="store_true", help="Short saved SMB-style Top In Play shortlist; no new scan")
     parser.add_argument("--status", action="store_true", help="Read current SSH request, do not queue")
+    parser.add_argument("--rvol-status", action="store_true", help="Short current RVOL5 data/readiness report, no broker request")
     parser.add_argument("--premarket-test", action="store_true",
                         help="Report RVOL5 diagnostic after ONE existing full Chakra pipeline cycle; no Discord")
     parser.add_argument("--saved", action="store_true", help="Print saved report only, do not queue")
@@ -64,6 +65,12 @@ def main(argv=None):
                         help="Maximum waiting seconds; does NOT control broker API")
     args = parser.parse_args(argv)
     root = Path(args.repo).resolve()
+    if args.rvol_status:
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        from RudraScanner.premarket_diagnostic import print_short_status
+        day = args.date or datetime.now(ZoneInfo("America/New_York")).date().isoformat()
+        return print_short_status(root, day)
     if args.ibkr_raw:
         from datetime import datetime
         from zoneinfo import ZoneInfo
