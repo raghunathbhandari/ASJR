@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 11118,
-    "completed_rows": 11118,
+    "input_rows": 11143,
+    "completed_rows": 11143,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 11118,
+    "no_wap_rows": 11143,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -43,10 +43,10 @@
   "context": {
     "state": "SHORT",
     "reason": "AS_OF_5M_INDEX_CONFIRMED",
-    "timestamp": "2026-10-14 13:30:00+00:00",
+    "timestamp": "2026-10-14 13:35:00+00:00",
     "index_pct": {
-      "SPY": -0.3792,
-      "QQQ": -0.71
+      "SPY": -0.374,
+      "QQQ": -0.8163
     },
     "sector_etf": {
       "AKAM": "XLK",
@@ -61,50 +61,50 @@
     "sector_pct": {
       "AKAM": {
         "etf": "XLK",
-        "pct": -1.0649,
-        "vs_spy": -0.6858,
+        "pct": -1.3248,
+        "vs_spy": -0.9508,
         "bias": "SHORT"
       },
       "AMAT": {
         "etf": "SMH",
-        "pct": -1.6491,
-        "vs_spy": -1.2699,
+        "pct": -2.0146,
+        "vs_spy": -1.6406,
         "bias": "SHORT"
       },
       "CRDO": {
         "etf": "SMH",
-        "pct": -1.6491,
-        "vs_spy": -1.2699,
+        "pct": -2.0146,
+        "vs_spy": -1.6406,
         "bias": "SHORT"
       },
       "INTC": {
         "etf": "SMH",
-        "pct": -1.6491,
-        "vs_spy": -1.2699,
+        "pct": -2.0146,
+        "vs_spy": -1.6406,
         "bias": "SHORT"
       },
       "MSFT": {
         "etf": "XLK",
-        "pct": -1.0649,
-        "vs_spy": -0.6858,
+        "pct": -1.3248,
+        "vs_spy": -0.9508,
         "bias": "SHORT"
       },
       "ORCL": {
         "etf": "XLK",
-        "pct": -1.0649,
-        "vs_spy": -0.6858,
+        "pct": -1.3248,
+        "vs_spy": -0.9508,
         "bias": "SHORT"
       },
       "QCOM": {
         "etf": "SMH",
-        "pct": -1.6491,
-        "vs_spy": -1.2699,
+        "pct": -2.0146,
+        "vs_spy": -1.6406,
         "bias": "SHORT"
       },
       "WTTR": {
         "etf": "XLE",
-        "pct": 0.7145,
-        "vs_spy": 1.0937,
+        "pct": 0.2382,
+        "vs_spy": 0.6122,
         "bias": "WAIT"
       }
     },
@@ -112,7 +112,6 @@
   },
   "collection": {
     "requested": [
-      "SKYD",
       "SPY",
       "QQQ",
       "SMH",
@@ -122,6 +121,7 @@
     "symbols": [
       "AKAM",
       "AMAT",
+      "ASST",
       "BAC",
       "BSP",
       "CIFR",
@@ -135,7 +135,6 @@
       "NBIS",
       "ORCL",
       "QCOM",
-      "SKYD",
       "SMCI",
       "VSTM",
       "WDC",
@@ -157,7 +156,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 11118,
+    "count": 11143,
     "source": "SAME_IBKR_APP"
   }
 }
