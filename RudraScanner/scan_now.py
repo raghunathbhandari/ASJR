@@ -70,7 +70,7 @@ def main(argv=None):
         # Fixed offline suite only, no arbitrary filename/module from Discord.
         import unittest
         suite = unittest.TestSuite()
-        folder = root / "RudraScanner" / "tests"
+        folder = Path(__file__).resolve().parent / "tests"
         loader = unittest.TestLoader()
         for filename in ("test_wap_capture.py", "test_premarket_live.py"):
             suite.addTests(loader.discover(str(folder), pattern=filename))
