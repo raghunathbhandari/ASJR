@@ -722,9 +722,15 @@ def prepare_alert(result):
     _premarket_prepared_events = []
     original = alerts.prepare_alert(result)
     try:
-        from RudraScanner.premarket_live import enabled, prepare
+        from RudraScanner.premarket_live import (
+            enabled, prepare, fresh_for_dispatch,
+        )
         if enabled() and result:
-            events = result.get("rudra_premarket_events", [])
+            candidates = result.get("rudra_premarket_events", [])
+            events = fresh_for_dispatch(candidates)
+            if len(events) != len(candidates):
+                print("RUDRA-PREMARKET | DISPATCH FRESHNESS | fresh=%s stale=%s"
+                      % (len(events), len(candidates) - len(events)))
             additional = prepare(events, REPO_ROOT)
             if additional:
                 _premarket_prepared_events = events
