@@ -1,9 +1,8 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-14T12:07:52.130367+00:00",
+  "generated_at_utc": "2026-10-14T12:11:26.526238+00:00",
   "selected_tickers": [
-    "AAOI",
     "AKAM",
     "AMAT",
     "BAC",
@@ -15,6 +14,7 @@
     "LQDA",
     "MSFT",
     "NBIS",
+    "NVTS",
     "ORCL",
     "QCOM",
     "RIG",
@@ -25,10 +25,6 @@
     "WTTR"
   ],
   "per_ticker": {
-    "AAOI": {
-      "state": "OK",
-      "rows": 548
-    },
     "AKAM": {
       "state": "OK",
       "rows": 525
@@ -73,6 +69,10 @@
       "state": "OK",
       "rows": 548
     },
+    "NVTS": {
+      "state": "OK",
+      "rows": 548
+    },
     "ORCL": {
       "state": "OK",
       "rows": 548
@@ -108,7 +108,6 @@
   },
   "rows": 10690,
   "usable_150bars": [
-    "AAOI",
     "AKAM",
     "AMAT",
     "BAC",
@@ -120,6 +119,7 @@
     "LQDA",
     "MSFT",
     "NBIS",
+    "NVTS",
     "ORCL",
     "QCOM",
     "RIG",
