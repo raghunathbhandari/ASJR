@@ -1,13 +1,11 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-14T17:50:05.677551+00:00",
+  "generated_at_utc": "2026-10-14T17:56:30.165437+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
     "ASTS",
-    "BAC",
-    "BMBL",
     "BSP",
     "CIFR",
     "CORZ",
@@ -15,8 +13,10 @@
     "CRWV",
     "IBRX",
     "INTC",
+    "IONQ",
     "LQDA",
     "MSFT",
+    "NBIS",
     "ORCL",
     "QCOM",
     "SMCI",
@@ -36,14 +36,6 @@
     "ASTS": {
       "state": "OK",
       "rows": 554
-    },
-    "BAC": {
-      "state": "OK",
-      "rows": 554
-    },
-    "BMBL": {
-      "state": "OK",
-      "rows": 440
     },
     "BSP": {
       "state": "OK",
@@ -73,11 +65,19 @@
       "state": "OK",
       "rows": 554
     },
+    "IONQ": {
+      "state": "OK",
+      "rows": 554
+    },
     "LQDA": {
       "state": "OK",
       "rows": 499
     },
     "MSFT": {
+      "state": "OK",
+      "rows": 554
+    },
+    "NBIS": {
       "state": "OK",
       "rows": 554
     },
@@ -106,13 +106,11 @@
       "rows": 428
     }
   },
-  "rows": 10668,
+  "rows": 10782,
   "usable_150bars": [
     "AKAM",
     "AMAT",
     "ASTS",
-    "BAC",
-    "BMBL",
     "BSP",
     "CIFR",
     "CORZ",
@@ -120,8 +118,10 @@
     "CRWV",
     "IBRX",
     "INTC",
+    "IONQ",
     "LQDA",
     "MSFT",
+    "NBIS",
     "ORCL",
     "QCOM",
     "SMCI",
