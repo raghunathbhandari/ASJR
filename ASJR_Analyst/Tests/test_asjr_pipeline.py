@@ -265,26 +265,16 @@ def _run_asjr_manual_pipeline_unlocked(
         logger.info("FILE | Saved intraday_5m | %s", intraday_file)
 
         intraday = intraday_features.add_intraday_features(intraday_raw)
-        # Evaluate premaket signal on the raw verified IBKR WAP-based feature
-        # feed, never on legacy EMA20/wick features. Shadow by default.
-        try:
-            from RudraScanner.premarket_live import evaluate as evaluate_premarket
-            prem_raw = intraday_raw.rename(columns={
-                "Ticker":"ticker","Date":"datetime","Open":"open",
-                "High":"high","Low":"low","Close":"close",
-                "Volume":"volume","WAP":"wap",
-            })
-            prem_events, prem_quality = evaluate_premarket(
-                prem_raw, REPO_ROOT, paths.trading_day(trade_date))
-            logger.info("RUDRA-PREMARKET | SIGNAL SHADOW | %s | candidates=%s",
-                        prem_quality, len(prem_events))
-        except Exception:
-            prem_events, prem_quality = [], {"state":"ERROR"}
-            logger.exception("RUDRA-PREMARKET | signal shadow failed")
-        # Rudra-Premarket V1: rolling five-day same-session cumulative volume
-        # history, reusing the existing 5M feed and shared DataLake. Research
-        # calculation only until verified IBKR history and WAP VWAP are ready.
-        # Missing history never substitutes an RVOL of zero.
+        # Normalize real IBKR WAP bars once for both reference update and
+        # immediate RVOL5 evaluation. Never invent missing broker WAP.
+        prem_raw = intraday_raw.rename(columns={
+            "Ticker": "ticker", "Date": "datetime", "Open": "open",
+            "High": "high", "Low": "low", "Close": "close",
+            "Volume": "volume", "WAP": "wap",
+        })
+        # Update the durable five-day reference BEFORE signal evaluation;
+        # the first cycle after deployment should not incorrectly report
+        # NO_REFERENCE when the fetched 3D history can supply prior sessions.
         try:
             premarket_rvol, premarket_rvol_status = update_premarket_history(
                 prem_raw, REPO_ROOT, paths.trading_day(trade_date), save=True
@@ -298,6 +288,15 @@ def _run_asjr_manual_pipeline_unlocked(
             premarket_rvol = pd.DataFrame()
             premarket_rvol_status = {"state": "ERROR"}
             logger.exception("RUDRA-PREMARKET | RVOL5 history failed")
+        try:
+            from RudraScanner.premarket_live import evaluate as evaluate_premarket
+            prem_events, prem_quality = evaluate_premarket(
+                prem_raw, REPO_ROOT, paths.trading_day(trade_date))
+            logger.info("RUDRA-PREMARKET | PRIMARY 5M | %s | candidates=%s",
+                        prem_quality, len(prem_events))
+        except Exception:
+            prem_events, prem_quality = [], {"state": "ERROR"}
+            logger.exception("RUDRA-PREMARKET | primary 5M evaluation failed")
         # One-round diagnostic for the existing scan_now.py request.
         # Shadow-only, never sends Discord or changes the trading strategy.
         try:
@@ -416,10 +415,22 @@ def _run_asjr_manual_pipeline_unlocked(
                 both = (both.sort_values(["ticker", "datetime", "_has_wap"])
                         .drop_duplicates(["ticker", "datetime"], keep="last")
                         .drop(columns=["_has_wap"]))
-                prem_events, prem_quality = evaluate_premarket(
+                extended_events, extended_quality = evaluate_premarket(
                     both, REPO_ROOT, paths.trading_day(trade_date))
-                logger.info("RUDRA-PREMARKET | ALL SOURCES | %s | candidates=%s",
-                            prem_quality, len(prem_events))
+                # Slow AI/IBKR scanner discovery can finish long after the
+                # primary feed. Do not overwrite a correctly evaluated primary
+                # event just because this SECOND evaluation is stale.
+                by_key = {(e["ticker"], e["bar_et"]): e
+                          for e in (prem_events + extended_events)}
+                prem_events = list(by_key.values())
+                if extended_quality.get("latest_completed", 0):
+                    prem_quality = extended_quality
+                logger.info(
+                    "RUDRA-PREMARKET | ALL SOURCES | extended=%s | "
+                    "combined_candidates=%s | primary_kept=%s",
+                    extended_quality, len(prem_events),
+                    len(prem_events) - len(extended_events),
+                )
         except Exception:
             logger.exception("RUDRA-PREMARKET | extra ticker evaluation failed; preserving legacy candidates")
         # End of AI/IBKR premarket supplemental evaluation.
