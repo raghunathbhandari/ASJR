@@ -435,6 +435,31 @@ def _run_asjr_manual_pipeline_unlocked(
         except Exception:
             logger.exception("RUDRA-PREMARKET | final diagnostic update failed")
 
+        # User-enabled RVOL5 BUY WATCH: send only strict completed-bar matches.
+        # Keep the existing Chakra Discord sender and ACK only on success.
+        try:
+            from RudraScanner.premarket_live import (
+                enabled as premarket_alert_enabled,
+                prepare as prepare_premarket,
+                acknowledge as acknowledge_premarket,
+            )
+            if premarket_alert_enabled() and prem_events:
+                if alert_sender is None:
+                    logger.warning("RUDRA-PREMARKET | unsent candidates=%s | no Discord sender",
+                                   len(prem_events))
+                else:
+                    message = prepare_premarket(prem_events, REPO_ROOT)
+                    if message:
+                        delivered = alert_sender(message)
+                        if delivered is False:
+                            logger.error("RUDRA-PREMARKET | Discord sender returned failure; not acknowledged")
+                        else:
+                            acknowledge_premarket(prem_events, REPO_ROOT)
+                            logger.info("RUDRA-PREMARKET | Discord BUY WATCH sent | events=%s",
+                                        len(prem_events))
+        except Exception:
+            logger.exception("RUDRA-PREMARKET | Discord send failed; no ACK on exception")
+
         # Locked Reversal detection remains unchanged. ACTIVE mode
         # fetches and reuses a bounded 1H source for the same stock
         # candidates and preserves NQ on its independent Yahoo route.
