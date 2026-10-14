@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-14T04:26:41.001432+00:00",
+  "generated_at_utc": "2026-10-14T04:32:30.831239+00:00",
   "selected_tickers": [
     "AAOI",
     "AKAM",
@@ -11,10 +11,10 @@
     "GME",
     "INTC",
     "IONQ",
+    "IREN",
     "LQDA",
     "MSFT",
     "MSTR",
-    "NBIS",
     "ORCL",
     "QCOM",
     "SKYD",
@@ -57,6 +57,10 @@
       "state": "OK",
       "rows": 560
     },
+    "IREN": {
+      "state": "OK",
+      "rows": 560
+    },
     "LQDA": {
       "state": "OK",
       "rows": 500
@@ -66,10 +70,6 @@
       "rows": 560
     },
     "MSTR": {
-      "state": "OK",
-      "rows": 560
-    },
-    "NBIS": {
       "state": "OK",
       "rows": 560
     },
@@ -116,10 +116,10 @@
     "GME",
     "INTC",
     "IONQ",
+    "IREN",
     "LQDA",
     "MSFT",
     "MSTR",
-    "NBIS",
     "ORCL",
     "QCOM",
     "SKYD",
