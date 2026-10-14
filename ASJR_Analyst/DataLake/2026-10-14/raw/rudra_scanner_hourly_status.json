@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-14T12:34:57.973408+00:00",
+  "generated_at_utc": "2026-10-14T12:40:59.319290+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
@@ -11,11 +11,11 @@
     "CRML",
     "CRWV",
     "INTC",
+    "IONQ",
     "IREN",
     "LQDA",
     "MSFT",
     "NBIS",
-    "NVTS",
     "ORCL",
     "QCOM",
     "RIG",
@@ -57,6 +57,10 @@
       "state": "OK",
       "rows": 549
     },
+    "IONQ": {
+      "state": "OK",
+      "rows": 549
+    },
     "IREN": {
       "state": "OK",
       "rows": 549
@@ -70,10 +74,6 @@
       "rows": 549
     },
     "NBIS": {
-      "state": "OK",
-      "rows": 549
-    },
-    "NVTS": {
       "state": "OK",
       "rows": 549
     },
@@ -116,11 +116,11 @@
     "CRML",
     "CRWV",
     "INTC",
+    "IONQ",
     "IREN",
     "LQDA",
     "MSFT",
     "NBIS",
-    "NVTS",
     "ORCL",
     "QCOM",
     "RIG",
