@@ -1,5 +1,5 @@
 {
   "enabled": true,
-  "reason": "User approved both flags on 2026-10-14. RVOL Discord sending still requires canonical Chakra pipeline sender wiring and verification; this config change alone does not deliver alerts.",
+  "reason": "Approved 2026-10-14: RVOL5 BUY WATCH uses the existing Chakra prepare_alert/mark_alert_sent Discord hook; bounded same-app automatic history backfill enabled. Live WAP and message delivery still require VPS verification.",
   "auto_backfill": true
 }
