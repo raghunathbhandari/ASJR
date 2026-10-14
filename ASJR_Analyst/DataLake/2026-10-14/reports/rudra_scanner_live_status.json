@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 10433,
-    "completed_rows": 10433,
+    "input_rows": 10457,
+    "completed_rows": 10457,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 10433,
+    "no_wap_rows": 10457,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -60,7 +60,7 @@
   },
   "collection": {
     "requested": [
-      "DELL",
+      "AXTI",
       "HPE",
       "IREN",
       "NBIS",
@@ -74,11 +74,11 @@
     "symbols": [
       "AKAM",
       "AMAT",
+      "AXTI",
       "BAC",
       "CRDO",
       "CRML",
       "CRWV",
-      "DELL",
       "HPE",
       "INTC",
       "IREN",
@@ -109,7 +109,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 10433,
+    "count": 10457,
     "source": "SAME_IBKR_APP"
   }
 }
