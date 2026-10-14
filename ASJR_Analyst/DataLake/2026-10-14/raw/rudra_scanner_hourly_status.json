@@ -1,13 +1,11 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-14T19:59:07.046850+00:00",
+  "generated_at_utc": "2026-10-14T20:05:27.022495+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
-    "ASTS",
     "BAC",
-    "BMBL",
     "BSP",
     "CIFR",
     "CORZ",
@@ -15,7 +13,9 @@
     "CRWV",
     "INTC",
     "LQDA",
+    "MMED",
     "MSFT",
+    "NRIX",
     "ORCL",
     "PWP",
     "QCOM",
@@ -33,17 +33,9 @@
       "state": "OK",
       "rows": 556
     },
-    "ASTS": {
-      "state": "OK",
-      "rows": 556
-    },
     "BAC": {
       "state": "OK",
       "rows": 556
-    },
-    "BMBL": {
-      "state": "OK",
-      "rows": 442
     },
     "BSP": {
       "state": "OK",
@@ -73,9 +65,17 @@
       "state": "OK",
       "rows": 501
     },
+    "MMED": {
+      "state": "OK",
+      "rows": 454
+    },
     "MSFT": {
       "state": "OK",
       "rows": 556
+    },
+    "NRIX": {
+      "state": "OK",
+      "rows": 488
     },
     "ORCL": {
       "state": "OK",
@@ -106,13 +106,11 @@
       "rows": 430
     }
   },
-  "rows": 10590,
+  "rows": 10534,
   "usable_150bars": [
     "AKAM",
     "AMAT",
-    "ASTS",
     "BAC",
-    "BMBL",
     "BSP",
     "CIFR",
     "CORZ",
@@ -120,7 +118,9 @@
     "CRWV",
     "INTC",
     "LQDA",
+    "MMED",
     "MSFT",
+    "NRIX",
     "ORCL",
     "PWP",
     "QCOM",
