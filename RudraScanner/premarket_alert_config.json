@@ -1,5 +1,5 @@
 {
-  "enabled": false,
-  "reason": "Both Discord BUY WATCH and same-app automatic new-ticker backfill remain disabled until end-to-end VPS tests and verification",
-  "auto_backfill": false
+  "enabled": true,
+  "reason": "User approved both flags on 2026-10-14. RVOL Discord sending still requires canonical Chakra pipeline sender wiring and verification; this config change alone does not deliver alerts.",
+  "auto_backfill": true
 }
