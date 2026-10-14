@@ -34,7 +34,7 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 31824,
+    "stored_rows": 32058,
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-14/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
@@ -51,7 +51,6 @@
       "CRDO": "SMH",
       "INTC": "SMH",
       "MSFT": "XLK",
-      "MU": "SMH",
       "ORCL": "XLK",
       "QCOM": "SMH",
       "WTTR": "XLE"
@@ -61,6 +60,7 @@
   },
   "collection": {
     "requested": [
+      "ASML",
       "AXTI",
       "BMNR",
       "GME",
@@ -76,6 +76,7 @@
     "symbols": [
       "AKAM",
       "AMAT",
+      "ASML",
       "AXTI",
       "BMNR",
       "CRDO",
@@ -86,7 +87,6 @@
       "LQDA",
       "MSFT",
       "MSTR",
-      "MU",
       "ORCL",
       "QCOM",
       "SKYD",
@@ -106,7 +106,6 @@
       "CRDO": "SMH",
       "INTC": "SMH",
       "MSFT": "XLK",
-      "MU": "SMH",
       "ORCL": "XLK",
       "QCOM": "SMH",
       "WTTR": "XLE"
