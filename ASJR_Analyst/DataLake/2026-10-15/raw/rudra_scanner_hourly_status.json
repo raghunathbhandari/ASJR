@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-15T18:20:55.400119+00:00",
+  "generated_at_utc": "2026-10-15T18:46:06.547844+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
@@ -10,7 +10,6 @@
     "CRWV",
     "FMC",
     "INTC",
-    "IREN",
     "MSFT",
     "ORCL",
     "PENG",
@@ -22,7 +21,8 @@
     "VG",
     "VSTM",
     "WDC",
-    "WTTR"
+    "WTTR",
+    "WULF"
   ],
   "per_ticker": {
     "AKAM": {
@@ -50,10 +50,6 @@
       "rows": 522
     },
     "INTC": {
-      "state": "OK",
-      "rows": 555
-    },
-    "IREN": {
       "state": "OK",
       "rows": 555
     },
@@ -104,6 +100,10 @@
     "WTTR": {
       "state": "OK",
       "rows": 429
+    },
+    "WULF": {
+      "state": "OK",
+      "rows": 555
     }
   },
   "rows": 10698,
@@ -115,7 +115,6 @@
     "CRWV",
     "FMC",
     "INTC",
-    "IREN",
     "MSFT",
     "ORCL",
     "PENG",
@@ -127,6 +126,7 @@
     "VG",
     "VSTM",
     "WDC",
-    "WTTR"
+    "WTTR",
+    "WULF"
   ]
 }
