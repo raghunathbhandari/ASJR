@@ -1,16 +1,26 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-15T17:23:10.925323+00:00",
+  "generated_at_utc": "2026-10-15T17:29:32.569279+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
+    "CCC",
     "CRDO",
+    "CRWV",
+    "FMC",
     "INTC",
+    "IREN",
     "MSFT",
     "ORCL",
+    "PENG",
     "QCOM",
+    "QNT",
+    "RKLB",
     "SMCI",
+    "SMTC",
+    "VG",
+    "VSTM",
     "WDC",
     "WTTR"
   ],
@@ -23,11 +33,27 @@
       "state": "OK",
       "rows": 554
     },
+    "CCC": {
+      "state": "OK",
+      "rows": 480
+    },
     "CRDO": {
       "state": "OK",
       "rows": 554
     },
+    "CRWV": {
+      "state": "OK",
+      "rows": 554
+    },
+    "FMC": {
+      "state": "OK",
+      "rows": 521
+    },
     "INTC": {
+      "state": "OK",
+      "rows": 554
+    },
+    "IREN": {
       "state": "OK",
       "rows": 554
     },
@@ -39,13 +65,37 @@
       "state": "OK",
       "rows": 554
     },
+    "PENG": {
+      "state": "OK",
+      "rows": 554
+    },
     "QCOM": {
+      "state": "OK",
+      "rows": 554
+    },
+    "QNT": {
+      "state": "OK",
+      "rows": 554
+    },
+    "RKLB": {
       "state": "OK",
       "rows": 554
     },
     "SMCI": {
       "state": "OK",
       "rows": 554
+    },
+    "SMTC": {
+      "state": "OK",
+      "rows": 549
+    },
+    "VG": {
+      "state": "OK",
+      "rows": 554
+    },
+    "VSTM": {
+      "state": "OK",
+      "rows": 487
     },
     "WDC": {
       "state": "OK",
@@ -56,16 +106,26 @@
       "rows": 428
     }
   },
-  "rows": 5391,
+  "rows": 10752,
   "usable_150bars": [
     "AKAM",
     "AMAT",
+    "CCC",
     "CRDO",
+    "CRWV",
+    "FMC",
     "INTC",
+    "IREN",
     "MSFT",
     "ORCL",
+    "PENG",
     "QCOM",
+    "QNT",
+    "RKLB",
     "SMCI",
+    "SMTC",
+    "VG",
+    "VSTM",
     "WDC",
     "WTTR"
   ]
