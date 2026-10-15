@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 14254,
-    "completed_rows": 14254,
+    "input_rows": 14279,
+    "completed_rows": 14279,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 14254,
+    "no_wap_rows": 14279,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -34,7 +34,7 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 38376,
+    "stored_rows": 38454,
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-15/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
@@ -63,10 +63,10 @@
     "requested": [
       "AXTI",
       "BE",
+      "CBRS",
       "CRCL",
       "IREN",
       "NBIS",
-      "PL",
       "SNDK",
       "SPY",
       "QQQ",
@@ -79,6 +79,7 @@
       "AMAT",
       "AXTI",
       "BE",
+      "CBRS",
       "CRCL",
       "CRDO",
       "CRWV",
@@ -88,7 +89,6 @@
       "MU",
       "NBIS",
       "ORCL",
-      "PL",
       "QCOM",
       "RKLB",
       "SMCI",
@@ -113,7 +113,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 14254,
+    "count": 14279,
     "source": "SAME_IBKR_APP"
   }
 }
