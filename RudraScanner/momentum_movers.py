@@ -118,7 +118,7 @@ def show_leaders(label, frame, metric, limit):
                format(int(row["avg_volume"]), ",")))
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser(
         description="On-demand Qullamaggie-style momentum discovery, daily Yahoo closes"
     )
@@ -126,7 +126,7 @@ def main():
     parser.add_argument("--top", type=int, default=15)
     parser.add_argument("--min-price", type=float, default=10)
     parser.add_argument("--min-volume", type=int, default=1000000)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if not 1 <= args.top <= 50 or args.min_price <= 0 or args.min_volume < 0:
         parser.error("--top 1..50, --min-price >0, --min-volume >=0")
     day, names = tickers_from_datalake(args.date)
