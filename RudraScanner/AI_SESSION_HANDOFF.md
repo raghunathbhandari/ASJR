@@ -1,3 +1,24 @@
+## 2026-10-15 — LATEST SESSION HANDOFF: MONTHLY/QUARTERLY + IBKR SEVEN CODE
+
+**START HERE FOR THIS FEATURE:** [IBKR_SEVEN_CODE_DISCOVERY.md](IBKR_SEVEN_CODE_DISCOVERY.md) is the authoritative, detailed operational source. It supersedes older claims below that RudraScanner has only two ways of displaying discovery. These legacy modes are still supported, but there are now additional independent on-demand momentum reports.
+
+**Locked user constraints:** Discord-only `!runpy` through `RudraScanner/scan_now.py` allowlist; no arbitrary script path, no changes to external `/root/trading/utils/trading_sudarsan_chakra.py`, no new scheduler/alerts/trade orders, no changes to existing four-code Chakra cycles. New seven-code IBKR call is **an independent one-shot Gateway connection** (client 684), not the reused-app Chakra scan. Avoid competing desktop TWS sessions and additional notebook clients.
+
+**Discord run order:**
+```text
+!gitpull
+!runpy RudraScanner/scan_now\.py --ibkr-7
+!runpy RudraScanner/scan_now\.py --momentum-1m
+!runpy RudraScanner/scan_now\.py --momentum-3m
+```
+`--momentum` keeps the combined view. Each single-period report prints its own comma-separated WATCHLIST at the end. The 7-code cache supplements today's saved ASJR DataLake universe and feeds Yahoo Finance daily 21/63-session calculations; it is not an IBKR historical-return screener.
+
+**Proven in user Discord:** the original combined `--momentum` returned SUCCESS on Oct 15 ~19:03 UK, **118 candidates and 101 eligible** with both rankings/watchlists, before seven-code cache integration. **NOT PROVEN:** live support for `HIGH_VS_13W_HL`, `HIGH_VS_52W_HL`, `HIGH_LAST_VS_EMA50` on this Gateway, new seven-code on-demand call, enlarged universe, separate single-period command outputs. Await first actual `--ibkr-7` result. GitHub commit != VPS deployment != successful live broker scan.
+
+**Relevant files:** `RudraScanner/ibkr_seven_scanner.py`, `RudraScanner/momentum_movers.py`, `RudraScanner/scan_now.py`, local runtime `RudraScanner/state/ibkr_seven_latest.json`. Full failure-mode and verification checklist in canonical guide. Preserve all older handoff history below, but use this section for present scanner status.
+
+---
+
 # ASJR / Chakra / Rudra-Premarket — AI SESSION HANDOFF
 
 ## 2026-10-12 16:24 UK — VERIFIED RUDRA SCANNER TWO MODES AND CALLS
