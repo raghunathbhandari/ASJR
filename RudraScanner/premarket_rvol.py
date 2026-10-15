@@ -180,14 +180,23 @@ def update_history(bars, root, trading_day, *, save=False):
     if save and not reference.empty:
         target = reference_path(root, trading_day)
         target.parent.mkdir(parents=True, exist_ok=True)
-        temp = target.with_suffix(".tmp")
-        temp.write_text(reference.to_csv(index=False), encoding="utf-8")
-        os.replace(temp, target)
-        durable = durable_reference_path(root)
-        durable.parent.mkdir(parents=True, exist_ok=True)
-        durable_tmp = durable.with_suffix(".tmp")
-        durable_tmp.write_text(reference.to_csv(index=False), encoding="utf-8")
-        os.replace(durable_tmp, durable)
+        # Each concurrent pipeline invocation must own a distinct staging file.
+        # Reusing <target>.tmp lets another process rename it first and causes
+        # FileNotFoundError; os.replace remains atomic per completed file.
+        import tempfile
+        csv_data = reference.to_csv(index=False)
+        for destination in (target, durable_reference_path(root)):
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            fd, temp_name = tempfile.mkstemp(
+                prefix=destination.name + ".", suffix=".tmp",
+                dir=str(destination.parent))
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                    handle.write(csv_data)
+                os.replace(temp_name, destination)
+            finally:
+                if os.path.exists(temp_name):
+                    os.unlink(temp_name)
     current = calculate(bars, reference, trading_day=trading_day)
     return current, {
         "reference_file": str(source) if source else None,
