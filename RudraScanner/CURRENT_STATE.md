@@ -1,3 +1,9 @@
+## 2026-10-15 ~20:10 UK — RAW BROKER SCAN DESIGN CONFIRMED
+
+The user wants seven individually callable **RAW IBKR-ranked** scanner lists (`!runpy RudraScanner/scan_now\.py --ibkr-code CODE`) with comma-separated symbol watchlists. `--ibkr-codes` lists the seven allowable names. The two separate monthly/3-month reports (`--momentum-1m`, `--momentum-3m`) continue as **Yahoo-refined** research lists. Single-code calls do not overwrite full seven-code cache; `--ibkr-7` is used to populate it. Mock tests are added to the Discord `--self-test` path, but **real seven-code broker validation and individual-command outputs are pending**. See [canonical guide](IBKR_SEVEN_CODE_DISCOVERY.md). No changes to the four-code Chakra scheduler or its external launcher.
+
+---
+
 ## CURRENT MOMENTUM FEATURE CHECKPOINT — 2026-10-15 (latest)
 
 See **[IBKR_SEVEN_CODE_DISCOVERY.md](IBKR_SEVEN_CODE_DISCOVERY.md)** for the complete latest command-by-command runbook, seven IBKR scan types, actual vs unverified test evidence, state/cache locations, technical constraints, and next-agent checklist.
