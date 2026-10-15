@@ -55,6 +55,10 @@ def main(argv=None):
     parser.add_argument("--ibkr-raw", action="store_true", help="Read saved IBKR four-code scan rankings without another API call")
     parser.add_argument("--ibkr-direct", action="store_true", help="One-shot direct IBKR four-category scanner; no Chakra scan")
     parser.add_argument("--ibkr-7", action="store_true", help="Read-only, on-demand seven-code IBKR discovery; cache ticker universe")
+    from RudraScanner.ibkr_seven_scanner import CODES as IBKR_ALLOWED_CODES
+    parser.add_argument("--ibkr-codes", action="store_true", help="List supported named IBKR scanner codes; no broker call")
+    parser.add_argument("--ibkr-code", choices=IBKR_ALLOWED_CODES,
+                        help="On-demand ONE IBKR scanner category; full list, no snapshot overwrite")
     parser.add_argument("--ibkr-ema50", action="store_true", help="Direct read-only HIGH_LAST_VS_EMA50 list, up to 50 symbols")
     momentum_modes = parser.add_mutually_exclusive_group()
     momentum_modes.add_argument("--momentum", action="store_true", help="1M and 3M movers together")
@@ -141,6 +145,17 @@ def main(argv=None):
         from RudraScanner.momentum_movers import main as momentum_main
         period = "1m" if args.momentum_1m else ("3m" if args.momentum_3m else "both")
         return momentum_main(["--compact", "--period", period])
+    if args.ibkr_codes:
+        print("IBKR SCANNER | APPROVED CODES | 7")
+        for code in IBKR_ALLOWED_CODES:
+            print(code)
+        print("Usage: !runpy RudraScanner/scan_now\\.py --ibkr-code HIGH_LAST_VS_EMA50")
+        return 0
+    if args.ibkr_code:
+        from RudraScanner.ibkr_seven_scanner import run_ibkr_seven
+        report = run_ibkr_seven(codes=(args.ibkr_code,), preview=50)
+        print(report, end="")
+        return 0 if "RESULT | SUCCESS" in report else 2
     if args.ibkr_7:
         from RudraScanner.ibkr_seven_scanner import run_ibkr_seven
         report = run_ibkr_seven()
