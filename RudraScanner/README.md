@@ -1,3 +1,7 @@
+> **2026-10-15 current user decision:** Seven broker codes are **RAW IBKR scanner rankings**, individually callable using `!runpy RudraScanner/scan_now\.py --ibkr-code HIGH_LAST_VS_EMA50` (replace with any code from `--ibkr-codes`). Monthly `--momentum-1m` and quarterly `--momentum-3m` are separately **refined** using Yahoo daily adjusted returns and liquidity gates. All direct results have comma-separated ticker lists. Live IBKR support for each category still needs testing. [Full guide](IBKR_SEVEN_CODE_DISCOVERY.md).
+
+---
+
 > **LATEST — 2026-10-15: Qullamaggie-style 1M/3M Momentum + on-demand seven-code IBKR discovery.** Read the canonical [IBKR_SEVEN_CODE_DISCOVERY.md](IBKR_SEVEN_CODE_DISCOVERY.md) and updated [AI_SESSION_HANDOFF.md](AI_SESSION_HANDOFF.md) before using older guidance below. Both 1M/3M rankings and copy-ready watchlists were confirmed in the **combined** Discord run (118 candidates / 101 eligible on Oct 15); independent 1M/3M commands and live seven-code broker results still require their first posted VPS evidence. The seven-code `--ibkr-7` command is **on demand and creates its own temporary IBKR API connection**, unlike the normal Chakra four-code scans. It does not modify the external Chakra hook. Commands: `!gitpull`, `!runpy RudraScanner/scan_now\.py --ibkr-7`, `--momentum-1m`, `--momentum-3m` (always include the same allowed `!runpy RudraScanner/scan_now\.py` prefix). No SSH required from the user.
 
 ---
