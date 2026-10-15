@@ -68,12 +68,15 @@ class TestDiscordServerCommands(unittest.TestCase):
             "!runSCommand sudo",
             "!runSCommand version; rm -rf /",
             "!runSCommand tests && rm -rf /",
-            "!runSCommand logs ../../etc/passwd",
             "!runSCommand rvol --repo /tmp",
             "!runSCommand python -c print(1)",
         ):
             with self.subTest(payload=payload):
                 self.assertIn("DENIED", self.run_command(payload))
+        # The logs parser rejects a path as invalid syntax (USAGE), without
+        # reading arbitrary files or calling a subprocess.
+        self.assertIn("USAGE", self.run_command(
+            "!runSCommand logs ../../etc/passwd"))
         shell.assert_not_called()
 
     @patch.object(c, "_run", return_value=(0, "clean"))
