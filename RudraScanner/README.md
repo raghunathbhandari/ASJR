@@ -1,3 +1,7 @@
+> **LATEST — 2026-10-15: Qullamaggie-style 1M/3M Momentum + on-demand seven-code IBKR discovery.** Read the canonical [IBKR_SEVEN_CODE_DISCOVERY.md](IBKR_SEVEN_CODE_DISCOVERY.md) and updated [AI_SESSION_HANDOFF.md](AI_SESSION_HANDOFF.md) before using older guidance below. Both 1M/3M rankings and copy-ready watchlists were confirmed in the **combined** Discord run (118 candidates / 101 eligible on Oct 15); independent 1M/3M commands and live seven-code broker results still require their first posted VPS evidence. The seven-code `--ibkr-7` command is **on demand and creates its own temporary IBKR API connection**, unlike the normal Chakra four-code scans. It does not modify the external Chakra hook. Commands: `!gitpull`, `!runpy RudraScanner/scan_now\.py --ibkr-7`, `--momentum-1m`, `--momentum-3m` (always include the same allowed `!runpy RudraScanner/scan_now\.py` prefix). No SSH required from the user.
+
+---
+
 # RudraScanner — canonical instructions and implementation plan
 
 Updated: 10 October 2026, Europe/London.
