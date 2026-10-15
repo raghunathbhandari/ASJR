@@ -32,6 +32,16 @@ If Git reports local tracked modifications, do **not** reset, stash, or overwrit
 ```
 This makes a **new short-lived read-only** localhost API connection to the existing IBKR Gateway and queries seven categories. It is **not** the normal four-code saved-data reader. Look for `SNAPSHOT | SAVED`, `UNIQUE DISCOVERED`, and per-code `DONE` / `TIMEOUT` / `API ERROR` / `NOT ADVERTISED`.
 
+**Code-based IBKR results (new individual scan):** List allowed codes without an IBKR call:
+```text
+!runpy RudraScanner/scan_now\.py --ibkr-codes
+```
+Run any of the seven codes individually and display its direct IBKR-ranked list (up to 50 symbols):
+```text
+!runpy RudraScanner/scan_now\.py --ibkr-code HIGH_LAST_VS_EMA50
+```
+Replace the value with an exact code name from section 4, such as `HIGH_VS_13W_HL` or `HOT_BY_VOLUME`. Only the seven allowlisted codes are accepted. A single-code call is a short-lived read-only IBKR API connection. Its result is **native IBKR rank**, **not** the Yahoo 1M/3M momentum filter. The full comma-separated symbol list is printed at the end; individual code calls **do not overwrite** the seven-code shared cache. Use `--ibkr-7` to refresh the shared discovery universe.
+
 **Step C — Return just the monthly report:**
 ```text
 !runpy RudraScanner/scan_now\.py --momentum-1m
@@ -108,6 +118,13 @@ Existing Chakra ~5-minute scanner: 4 native IBKR codes
 - No IBKR 1M/3M performance statistic is fetched by the seven-code call. Percentage-return ranking always comes from subsequent Yahoo daily data. No historical IBKR 5m import is initiated here.
 - **No broker orders**: code uses scanner requests/cancel/disconnect only. It does not call `placeOrder` or `run_asjr_manual_pipeline`.
 
+### 4A. Critical operator distinction: direct vs refined
+
+- **Direct code-based list:** `--ibkr-code CODE` shows the selected broker scanner's native ranking and applies its own US stock / minimum $10 broker request configuration. It is **not** filtered again by Yahoo return %, 20-day volume, EMA or business quality. One code = one ranked watchlist, with up to 50 ticker symbols.
+- **Refined period-based list:** `--momentum-1m` / `--momentum-3m` fetch Yahoo adjusted daily OHLC/volume for the union of saved ASJR symbols and recently discovered 7-code IBKR symbols. It **does** apply at least $10 latest daily price, 20-day mean volume >=1 million, at least 65 daily rows, the BEAT/ONDS exclusion, then sorts by 21-/63-session return respectively. Each emits a Top 15 watchlist.
+- **No direct-to-refined implicit refresh:** calling a single `--ibkr-code` does not replace the previously saved 7-code universe. To add *new* IBKR symbols to refined rankings, run `--ibkr-7` first. Otherwise refined lists use the saved ASJR base plus any already-valid full-discovery cache.
+- *Do not interpret* `HIGH_LAST_VS_EMA50` as guaranteed price > EMA50 until IBKR confirms exactly how it ranks; the broker code is authoritative, and tests of our code are not proof that a Gateway supports that scanner.
+
 ### 5. Momentum ranking rules (V1, as implemented)
 
 | Rule | Exact behavior |
@@ -156,6 +173,8 @@ Potentially extended or low-quality names can rank highly. Example: a +90% three
 | Output clipped in Discord | Run monthly and 3-month commands separately; full lists should be at each report's end. Some bot message limits can still trim very large output |
 
 Never recover with destructive Git resets, new bot processes, changes to external Chakra launcher, or fabricated Yahoo/IBKR signals. The GitHub code and runtime cache are separate. Subsequent manual scans need the broker client-684 connection, which could contend with the existing pipeline.
+
+**Offline tests added 2026-10-15:** `RudraScanner/tests/test_ibkr_seven_scanner.py` checks seven allowlisted choices, simulated per-code 50-row broker callbacks, full seven-code cache, single-code cache immutability, unknown code rejection and `--ibkr-codes` output. Included in the existing `scan_now.py --self-test` suite. These tests still require VPS execution; passing mocked tests cannot prove live IBKR Gateway accepts all seven scan codes.
 
 ### 8. Next-agent acceptance checklist (no assumptions)
 
