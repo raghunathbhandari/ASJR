@@ -87,7 +87,8 @@ def main(argv=None):
         # Use a fresh loader for every discovery and pin the common repo root,
         # otherwise the second test folder triggers "Path must be within
         # the project" on Python 3.10.
-        for filename in ("test_wap_capture.py", "test_premarket_live.py"):
+        for filename in ("test_wap_capture.py", "test_premarket_live.py",
+                         "test_ibkr_seven_scanner.py"):
             suite.addTests(unittest.TestLoader().discover(
                 str(folder), pattern=filename, top_level_dir=str(root)))
         suite.addTests(unittest.TestLoader().discover(
