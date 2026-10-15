@@ -1,13 +1,13 @@
 {
   "day": "2026-10-15",
-  "generated_at_uk": "2026-10-15T01:47:06.393699+01:00",
+  "generated_at_uk": "2026-10-15T01:52:59.013855+01:00",
   "counts": {
-    "TOP_IN_PLAY": 16,
+    "TOP_IN_PLAY": 17,
     "STRONG_MOMENTUM": 0,
     "WEAK_SELLING": 0,
     "REVERSAL_WATCH": 0,
     "LOW_RVOL_WATCH": 0,
-    "UNCLASSIFIED": 4
+    "UNCLASSIFIED": 3
   },
   "rows": [
     {
@@ -227,6 +227,24 @@
       "selection_reason": "scanner=HOT_BY_VOLUME,MOST_ACTIVE"
     },
     {
+      "ticker": "AMAT",
+      "categories": [
+        "TOP_IN_PLAY"
+      ],
+      "discovery_priority": 3,
+      "source": "FIXED+IBKR",
+      "scanner_codes": "TOP_PERC_LOSE",
+      "ai_bias": "N/A",
+      "price": null,
+      "bar_time_uk": null,
+      "change_5m_pct": null,
+      "volume": null,
+      "vol_12bar": null,
+      "rvol20": null,
+      "data_state": "NO_FRESH_5M",
+      "selection_reason": "scanner=TOP_PERC_LOSE"
+    },
+    {
       "ticker": "CRDO",
       "categories": [
         "TOP_IN_PLAY"
@@ -300,24 +318,6 @@
     },
     {
       "ticker": "AKAM",
-      "categories": [
-        "UNCLASSIFIED"
-      ],
-      "discovery_priority": 0,
-      "source": "FIXED",
-      "scanner_codes": "",
-      "ai_bias": "N/A",
-      "price": null,
-      "bar_time_uk": null,
-      "change_5m_pct": null,
-      "volume": null,
-      "vol_12bar": null,
-      "rvol20": null,
-      "data_state": "NO_FRESH_5M",
-      "selection_reason": "fixed watchlist"
-    },
-    {
-      "ticker": "AMAT",
       "categories": [
         "UNCLASSIFIED"
       ],
