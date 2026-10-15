@@ -54,6 +54,7 @@ def main(argv=None):
     parser.add_argument("--repo", default=str(Path(__file__).resolve().parents[1]))
     parser.add_argument("--ibkr-raw", action="store_true", help="Read saved IBKR four-code scan rankings without another API call")
     parser.add_argument("--ibkr-direct", action="store_true", help="One-shot direct IBKR four-category scanner; no Chakra scan")
+    parser.add_argument("--ibkr-7", action="store_true", help="Read-only, on-demand seven-code IBKR discovery; cache ticker universe")
     momentum_modes = parser.add_mutually_exclusive_group()
     momentum_modes.add_argument("--momentum", action="store_true", help="1M and 3M movers together")
     momentum_modes.add_argument("--momentum-1m", action="store_true", help="1-month movers and copy-ready watchlist")
@@ -139,6 +140,11 @@ def main(argv=None):
         from RudraScanner.momentum_movers import main as momentum_main
         period = "1m" if args.momentum_1m else ("3m" if args.momentum_3m else "both")
         return momentum_main(["--compact", "--period", period])
+    if args.ibkr_7:
+        from RudraScanner.ibkr_seven_scanner import run_ibkr_seven
+        report = run_ibkr_seven()
+        print(report, end="" if report.endswith("\\n") else "\\n")
+        return 0 if "SNAPSHOT | SAVED" in report else 2
     if args.ibkr_raw:
         from datetime import datetime
         from zoneinfo import ZoneInfo
