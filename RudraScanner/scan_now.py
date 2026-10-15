@@ -143,7 +143,7 @@ def main(argv=None):
     if args.ibkr_7:
         from RudraScanner.ibkr_seven_scanner import run_ibkr_seven
         report = run_ibkr_seven()
-        print(report, end="" if report.endswith("\\n") else "\\n")
+        print(report, end="")
         return 0 if "SNAPSHOT | SAVED" in report else 2
     if args.ibkr_raw:
         from datetime import datetime
