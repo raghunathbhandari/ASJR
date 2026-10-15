@@ -134,7 +134,7 @@ def main(argv=None):
         return print_short_status(root, day)
     if args.momentum:
         from RudraScanner.momentum_movers import main as momentum_main
-        return momentum_main()
+        return momentum_main([])
     if args.ibkr_raw:
         from datetime import datetime
         from zoneinfo import ZoneInfo
