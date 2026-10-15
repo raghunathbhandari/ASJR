@@ -1,3 +1,28 @@
+## 2026-10-15 20:15 UK — FIRST LIVE SEVEN-CODE FEATURE VALIDATION: EMA50 SINGLE CODE WORKING
+
+**User-provided live Discord evidence (do not generalise to all seven):**
+
+```text
+!runpy RudraScanner/scan_now\.py --ibkr-code HIGH_LAST_VS_EMA50
+RUNPY | SUCCESS | Exit: 0
+IBKR SCANNER | SINGLE HIGH_LAST_VS_EMA50 | 2026-10-15 20:15 UK | ON-DEMAND
+CODE PARAMETERS | RECEIVED
+HIGH_LAST_VS_EMA50 | DONE | 46 | [46 raw-ranked symbols]
+UNIQUE DISCOVERED | 46
+SNAPSHOT | UNCHANGED | single scanner, no cache writes
+API ERRORS | -1:2172 The version of the application you are running, 10 ;
+             HIGH_LAST_VS_EMA50:165 Historical Market Data Service query message:50 ou...
+READ-ONLY | NO CHAKRA RUN | NO ORDERS
+RESULT | SUCCESS
+WATCHLIST | HIGH_LAST_VS_EMA50 | [46 comma-separated symbols]
+```
+
+**Verified:** The existing allowlisted `scan_now.py` Discord entrypoint accepted the individual-code flag; IBKR Gateway responded to parameter discovery; this **one** scan delivered 46 symbol rows, `scannerDataEnd` completed, exit code 0, full comma-separated watchlist output, and it did **not** overwrite the shared seven-code cache. It used the distinct temporary client, so this is not evidence for the scheduled Chakra client. Because errors `2172` and `165` also appeared, describe this as **successful result with API warnings**, not a clean no-error run. The user-pasted `165` text is truncated; do not invent its complete meaning. Confirm IBKR support and actual output for each of the other six codes separately. The scan is **native broker ranking**, not a guarantee of fundamentals, price > $10 in the market, or successful Qullamaggie entry.
+
+**Next operator step (Discord, on demand):** check other codes individually such as `--ibkr-code HIGH_VS_13W_HL` and `--ibkr-code HIGH_VS_52W_HL`, then `--ibkr-7` when suitable. Monitor API errors and avoid parallel repeated calls while Chakra is importing. Run the two **refined** `--momentum-1m` / `--momentum-3m` reports separately. No code or Chakra changes required by this single result.
+
+---
+
 ## 2026-10-15 ~20:10 UK — SEVEN DIRECT RAW IBKR CODES VS TWO REFINED MOMENTUM REPORTS
 
 **User confirmed design:** seven native scanner **RAW IBKR** lists, one list per approved broker code (`--ibkr-code CODE`) with comma-separated ticker watchlist at the end; `--ibkr-codes` lists all seven names locally. They remain unrefined IBKR scanner rankings. Monthly `--momentum-1m` and quarterly `--momentum-3m` are **separate Yahoo-refined** Top 15 lists. `--ibkr-7` generates the aggregate broker cache used to broaden later refined research; a single code call does not alter the aggregate cache. Example Discord: `!runpy RudraScanner/scan_now\.py --ibkr-code HIGH_LAST_VS_EMA50`. Other exact names are documented in [canonical guide](../RudraScanner/IBKR_SEVEN_CODE_DISCOVERY.md). All seven code implementations have unit tests using mock IBKR only; live Gateway code support is unverified. Existing 4-code Chakra/5m job and external launcher are untouched.
