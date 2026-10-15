@@ -73,12 +73,17 @@ def main(argv=None):
         import unittest
         suite = unittest.TestSuite()
         folder = Path(__file__).resolve().parent / "tests"
-        loader = unittest.TestLoader()
+        # A TestLoader remembers its first discover() top-level directory.
+        # Use a fresh loader for every discovery and pin the common repo root,
+        # otherwise the second test folder triggers "Path must be within
+        # the project" on Python 3.10.
         for filename in ("test_wap_capture.py", "test_premarket_live.py"):
-            suite.addTests(loader.discover(str(folder), pattern=filename))
-        suite.addTests(loader.discover(
+            suite.addTests(unittest.TestLoader().discover(
+                str(folder), pattern=filename, top_level_dir=str(root)))
+        suite.addTests(unittest.TestLoader().discover(
             str(root / "ASJR_Analyst" / "Tests"),
-            pattern="test_discord_server_commands.py"))
+            pattern="test_discord_server_commands.py",
+            top_level_dir=str(root)))
         print("RUDRA-PREMARKET | OFFLINE WAP + RVOL5 TEST", flush=True)
         outcome = unittest.TextTestRunner(stream=sys.stdout, verbosity=1).run(suite)
         passed = outcome.wasSuccessful()
