@@ -1,3 +1,25 @@
+# 2026-10-15 — CURRENT RUDRA MOMENTUM + SEVEN-CODE IBKR HANDOFF (LATEST; READ BEFORE OLDER SCANNER SECTIONS)
+
+**Authoritative complete guide:** [RudraScanner/IBKR_SEVEN_CODE_DISCOVERY.md](../RudraScanner/IBKR_SEVEN_CODE_DISCOVERY.md). The linked document contains command runbook, source files, architecture, seven code parameters/statuses, actual user-confirmed evidence, security boundaries, failure recovery, and next-agent checklist. Historical scanner passages below record their original time; older statements that the system has exactly two report modes, that `!runSCommand` was not connected, or that no new independent client exists must not be treated as current for the **on-demand** seven-code feature.
+
+**User request and outcome:** Qullamaggie-inspired 1-month (21-session) and 3-month (63-session) top movers ranked by Yahoo adjusted daily closes; each displays a comma-separated watchlist at the end. Current inputs: saved ASJR DataLake candidates plus the same-day, up-to-24h, on-demand seven-code IBKR ticker cache (if present). Minimum Yahoo adjusted daily price $10, mean 20-day daily volume 1m, 65 daily observations; exclude BEAT and ONDS. Still a momentum discovery list, **not** a trade-entry, fundamental-quality or catalyst screen.
+
+**Discord commands only:**
+```text
+!gitpull
+!runpy RudraScanner/scan_now\.py --ibkr-7
+!runpy RudraScanner/scan_now\.py --momentum-1m
+!runpy RudraScanner/scan_now\.py --momentum-3m
+!runpy RudraScanner/scan_now\.py --momentum
+```
+The seven codes are `TOP_PERC_GAIN`, `TOP_PERC_LOSE`, `HOT_BY_VOLUME`, `MOST_ACTIVE`, `HIGH_VS_13W_HL`, `HIGH_VS_52W_HL`, `HIGH_LAST_VS_EMA50`. Unlike existing `--ibkr-raw`/`--top` cached readers and Chakra's scheduled four codes, `--ibkr-7` starts a **short-lived separate read-only IBKR API client ID 684** on localhost:4002 and scans in batches of three, caching returned symbols at `RudraScanner/state/ibkr_seven_latest.json`. This has separate session, runtime and broker availability risks. No automatic scheduling, order placement, DataLake imports, or new Discord alerts.
+
+**Evidence:** user-posted Discord `--momentum` result at 2026-10-15 19:03 UK: **SUCCESS exit 0, 118 candidate symbols, 101 eligible, both rankings and copy-ready watchlists**. This success predates the seven-code extension. The new separate `--momentum-1m`, `--momentum-3m` and `--ibkr-7` integration was **committed in GitHub but had no user-shared live output at this handoff**. Do NOT claim seven IBKR codes are actually accepted/returning rows until per-code statuses are received. All three new paths need first live acceptance; existing scheduled four-code scanner remains separate. Do not edit `/root/trading/utils/trading_sudarsan_chakra.py` and do not run its installer.
+
+**Latest implementation commits through 2026-10-15:** `a64bf7e7` separate periods, `ba40bb1d` seven-code scanner, `e7a5a1c` seven-code cache in Yahoo ranking, `d9747353` final watchlist formatting. Documentation revisions are newer. All future handoffs: link the canonical guide, state actual Discord result, and do not repeat outdated October 10–12 deployment labels as current.
+
+---
+
 ## 2026-10-14 — Admin-only !runSCommand proposal IMPLEMENTED IN GITHUB, NOT YET CONNECTED TO EXTERNAL DISCORD BOT
 
 Purpose: user travelling with only Discord access wants safe VPS shell-equivalent diagnostics. We did **NOT** implement unrestricted remote command execution (a stolen Discord administrator account could otherwise execute arbitrary root commands). Instead built *predefined* administrative operations with exact no-shell argv, no arbitrary paths or parameters. This is separate from existing !gitpull, !gitpush, !mbdstart, !mbdstop and !runpy, which remain unchanged.
