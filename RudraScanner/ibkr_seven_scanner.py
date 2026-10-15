@@ -37,7 +37,7 @@ ERROR_END_CODES = {162, 200, 321, 354, 10167, 10168}
 
 def _valid_symbol(value):
     name = str(value).upper().strip()
-    return name if re.fullmatch(r"[A-Z][A-Z0-9.\\-]{0,7}", name) and name not in EXCLUDED else None
+    return name if re.fullmatch(r"[A-Z][A-Z0-9.-]{0,7}", name) and name not in EXCLUDED else None
 
 
 def _save_snapshot(rows, statuses):
@@ -205,8 +205,6 @@ def run_ibkr_seven(*, host="127.0.0.1", port=4002, client_id=684,
             saved = _save_snapshot(ordered, statuses)
         except OSError as exc:
             lines.append("CACHE ERROR | %s" % type(exc).__name__)
-        if seen:
-            lines.append("WATCHLIST PREVIEW | " + ", ".join(seen[:30]))
         lines.append("SNAPSHOT | %s | full results from completed scans" %
                      ("SAVED" if saved else "NOT SAVED"))
         if app.errors:
@@ -214,6 +212,8 @@ def run_ibkr_seven(*, host="127.0.0.1", port=4002, client_id=684,
                 "%s:%s %s" % (c, err, msg[:50])
                 for c, err, msg in app.errors[:4]))
         lines.append("READ-ONLY | NO CHAKRA RUN | NO ORDERS")
+        if seen:
+            lines.append("WATCHLIST | IBKR FIRST 30 | " + ", ".join(seen[:30]))
         return "\n".join(lines) + "\n"
     except (OSError, ValueError, RuntimeError) as exc:
         return "IBKR 7-CODE | CONNECTION/SCANNER ERROR | %s: %s" % (
