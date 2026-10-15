@@ -132,6 +132,8 @@ def main(argv=None):
     parser.add_argument("--date", help="DataLake universe date YYYY-MM-DD")
     parser.add_argument("--top", type=int, default=15)
     parser.add_argument("--compact", action="store_true", help="Short output for Discord")
+    parser.add_argument("--period", choices=("1m", "3m", "both"), default="both",
+                        help="Show only one momentum period or both (default)")
     parser.add_argument("--min-price", type=float, default=10)
     parser.add_argument("--min-volume", type=int, default=1000000)
     args = parser.parse_args(argv)
@@ -151,14 +153,21 @@ def main(argv=None):
     print("ELIGIBLE | %d | exclude penny/illiquid stocks, BEAT and ONDS" % len(result))
     print("PERIODS | 1M=21 sessions | 3M=63 sessions | closes may lag live market")
     print("This is discovery, NOT an entry signal or fundamentals screen.")
-    monthly = show_leaders("1-MONTH MOMENTUM", result, "month", args.top,
-                           compact=args.compact)
-    quarterly = show_leaders("3-MONTH MOMENTUM", result, "quarter", args.top,
-                             compact=args.compact)
-    combined = list(dict.fromkeys(monthly + quarterly))
-    print("\nWATCHLIST | 1-MONTH | " + ", ".join(monthly))
-    print("WATCHLIST | 3-MONTH | " + ", ".join(quarterly))
-    print("WATCHLIST | COMBINED UNIQUE | " + ", ".join(combined))
+    monthly = []
+    quarterly = []
+    if args.period in ("1m", "both"):
+        monthly = show_leaders("1-MONTH MOMENTUM", result, "month", args.top,
+                               compact=args.compact)
+    if args.period in ("3m", "both"):
+        quarterly = show_leaders("3-MONTH MOMENTUM", result, "quarter", args.top,
+                                 compact=args.compact)
+    if monthly:
+        print("\nWATCHLIST | 1-MONTH | " + ", ".join(monthly))
+    if quarterly:
+        print("\nWATCHLIST | 3-MONTH | " + ", ".join(quarterly))
+    if args.period == "both":
+        combined = list(dict.fromkeys(monthly + quarterly))
+        print("WATCHLIST | COMBINED UNIQUE | " + ", ".join(combined))
     return 0
 
 
