@@ -1,3 +1,15 @@
+## CURRENT MOMENTUM FEATURE CHECKPOINT — 2026-10-15 (latest)
+
+See **[IBKR_SEVEN_CODE_DISCOVERY.md](IBKR_SEVEN_CODE_DISCOVERY.md)** for the complete latest command-by-command runbook, seven IBKR scan types, actual vs unverified test evidence, state/cache locations, technical constraints, and next-agent checklist.
+
+**Verified by user:** Discord `!runpy RudraScanner/scan_now\.py --momentum` on Oct 15 produced both 1-month and 3-month Top 15 lists with copy-ready watchlist, exit 0, ASJR base universe 118, eligible 101. **Not yet user-verified:** separate `--momentum-1m` and `--momentum-3m` runs; new independent on-demand `--ibkr-7` API queries for seven categories and their reported symbol cache. Seven-code enrichment is committed, but has not been proven on the actual Gateway.
+
+**Discord-only steps:** `!gitpull`, then `!runpy RudraScanner/scan_now\.py --ibkr-7`, `!runpy RudraScanner/scan_now\.py --momentum-1m`, `!runpy RudraScanner/scan_now\.py --momentum-3m`. The new seven-code API client 684 uses a separate short-lived Gateway connection; the existing scheduled four-code Chakra scanner/locked hook are unchanged. No new scheduled 5-minute scans or Discord alerts. Never edit external `trading_sudarsan_chakra.py` for this feature.
+
+Earlier 2026-10-10 through 2026-10-13 checkpoints below remain historical, not a current assertion about today's momentum feature.
+
+---
+
 ## 2026-10-13 — BMBL missed-catalyst lesson (documentation only)
 
 Read **[CATALYST_DISCOVERY_GUIDE.md](CATALYST_DISCOVERY_GUIDE.md)** before changing AI news discovery, candidate selection, or IBKR scanner logic. BMBL's Oct 12 takeover report and ~50% rally were missed by AI/web research and absent from the saved IBKR/AI candidate CSVs. Saved scanner status showed 13 expired AI rows, 0 selected AI candidates, and 10 selected IBKR candidates. Do not infer the exact historical broker filter cause without 19:10–19:40 UK snapshots. Two parallel discovery branches are required in the future: sector-first AND independent market-wide event/mover discovery. Preserve sub-$5 exclusions for trading while retaining major catalysts as RESEARCH ONLY. **No bot logic, Discord alerts, or schedules changed.**
