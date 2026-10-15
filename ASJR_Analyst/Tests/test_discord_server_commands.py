@@ -18,6 +18,11 @@ class TestDiscordServerCommands(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
+        # !runSCommand tests already owns the production flock. Offline
+        # authorization tests must never contend with its live lock.
+        self.lock_patch = patch.object(c, "LOCK_PATH", self.root / "test_scommand.lock")
+        self.lock_patch.start()
+        self.addCleanup(self.lock_patch.stop)
         (self.root / "ASJR_Analyst" / "DataLake").mkdir(parents=True)
         self.kw = {
             "is_admin": True, "guild_id": GUILD, "channel_id": CHANNEL,
