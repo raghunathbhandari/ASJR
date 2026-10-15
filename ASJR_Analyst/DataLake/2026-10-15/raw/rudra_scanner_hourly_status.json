@@ -1,18 +1,18 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-15T01:28:15.435918+00:00",
+  "generated_at_utc": "2026-10-15T01:34:17.260857+00:00",
   "selected_tickers": [
-    "AAOI",
     "AKAM",
     "AMAT",
     "AXTI",
-    "BMNR",
+    "BE",
     "CIFR",
     "CRCL",
     "CRDO",
     "CRWV",
     "INTC",
+    "MRVL",
     "MSFT",
     "MU",
     "NBIS",
@@ -25,10 +25,6 @@
     "WTTR"
   ],
   "per_ticker": {
-    "AAOI": {
-      "state": "OK",
-      "rows": 560
-    },
     "AKAM": {
       "state": "OK",
       "rows": 537
@@ -41,7 +37,7 @@
       "state": "OK",
       "rows": 560
     },
-    "BMNR": {
+    "BE": {
       "state": "OK",
       "rows": 560
     },
@@ -62,6 +58,10 @@
       "rows": 560
     },
     "INTC": {
+      "state": "OK",
+      "rows": 560
+    },
+    "MRVL": {
       "state": "OK",
       "rows": 560
     },
@@ -108,16 +108,16 @@
   },
   "rows": 11051,
   "usable_150bars": [
-    "AAOI",
     "AKAM",
     "AMAT",
     "AXTI",
-    "BMNR",
+    "BE",
     "CIFR",
     "CRCL",
     "CRDO",
     "CRWV",
     "INTC",
+    "MRVL",
     "MSFT",
     "MU",
     "NBIS",
