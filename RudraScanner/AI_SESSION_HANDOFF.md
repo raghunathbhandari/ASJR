@@ -1,3 +1,16 @@
+### 2026-10-15 ~20:10 UK — USER CONFIRMED: ALL 7 INDIVIDUAL IBKR LISTS ARE RAW, MOMENTUM LISTS REFINED
+
+**Locked separation:** All seven broker codes queried via `!runpy RudraScanner/scan_now\.py --ibkr-code CODE` return the code's **native IBKR scanner ranking**, no Yahoo 21-/63-session refining. Each individual result prints a comma-separated ticker list, up to 50, without overwriting the full seven-code snapshot. The seven code names can be read via `--ibkr-codes` (no broker). `--ibkr-7` runs all 7 and saves their combined discovery universe. `--momentum-1m` and `--momentum-3m` remain **refined** rankings computed from Yahoo adjusted 21-/63-session price performance with $10/1m-volume/history gates. Raw IBKR code scans are not trading entries; the $10 input is the IBKR scanner request filter.
+
+Direct code example:
+```text
+!runpy RudraScanner/scan_now\.py --ibkr-code HIGH_LAST_VS_EMA50
+```
+
+**Status:** code and mock-based seven-code tests committed, but user has not yet shown a first Gateway API result for the seven new individual code path. The code can report NOT ADVERTISED/API ERROR for unsupported codes. Do not promise seven live passes. Detailed guide: [IBKR_SEVEN_CODE_DISCOVERY.md](IBKR_SEVEN_CODE_DISCOVERY.md). Do not edit external Chakra hook or add scheduling.
+
+---
+
 ## 2026-10-15 — LATEST SESSION HANDOFF: MONTHLY/QUARTERLY + IBKR SEVEN CODE
 
 **START HERE FOR THIS FEATURE:** [IBKR_SEVEN_CODE_DISCOVERY.md](IBKR_SEVEN_CODE_DISCOVERY.md) is the authoritative, detailed operational source. It supersedes older claims below that RudraScanner has only two ways of displaying discovery. These legacy modes are still supported, but there are now additional independent on-demand momentum reports.
