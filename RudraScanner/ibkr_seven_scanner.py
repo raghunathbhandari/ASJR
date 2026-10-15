@@ -89,7 +89,15 @@ def load_saved_tickers(*, max_age_seconds=86400, date=None):
 
 
 def run_ibkr_seven(*, host="127.0.0.1", port=4002, client_id=684,
-                   per_code=50, timeout_per_batch=8, preview=5):
+                   per_code=50, timeout_per_batch=8, preview=5,
+                   codes=None):
+    # Restrict any single-scan requests to the fixed, reviewed scanner codes.
+    selected = tuple(CODES if codes is None else codes)
+    if not selected or len(set(selected)) != len(selected) or any(
+        code not in CODES for code in selected
+    ):
+        return "IBKR SCANNER | DENIED | invalid scanner selection\n"
+    single = len(selected) == 1
     from ibapi.client import EClient
     from ibapi.wrapper import EWrapper
     from ibapi.scanner import ScannerSubscription
@@ -101,8 +109,8 @@ def run_ibkr_seven(*, host="127.0.0.1", port=4002, client_id=684,
             self.parameters_ready = threading.Event()
             self.parameters_xml = ""
             self.request_to_code = {}
-            self.done = {code: threading.Event() for code in CODES}
-            self.rows = {code: [] for code in CODES}
+            self.done = {code: threading.Event() for code in selected}
+            self.rows = {code: [] for code in selected}
             self.errors = []
 
         def nextValidId(self, orderId):
@@ -140,9 +148,11 @@ def run_ibkr_seven(*, host="127.0.0.1", port=4002, client_id=684,
         worker = threading.Thread(target=app.run, daemon=True)
         worker.start()
         if not app.connected.wait(7):
-            return "IBKR 7-CODE | GATEWAY NOT READY\n" + str(app.errors[:3])
+            return "IBKR SCANNER | GATEWAY NOT READY\n" + str(app.errors[:3])
 
-        lines = ["IBKR SEVEN | %s UK | ON-DEMAND" % datetime.now(UK).strftime("%Y-%m-%d %H:%M")]
+        lines = ["IBKR SCANNER | %s | %s UK | ON-DEMAND" %
+                 ("SINGLE " + selected[0] if single else "SEVEN CODES",
+                  datetime.now(UK).strftime("%Y-%m-%d %H:%M"))]
         try:
             app.reqScannerParameters()
             params_received = app.parameters_ready.wait(3)
@@ -154,8 +164,8 @@ def run_ibkr_seven(*, host="127.0.0.1", port=4002, client_id=684,
         # The parameter XML advertises more scans than are necessarily
         # executable via the API. Attempt subscriptions even when advertised.
         statuses = {}
-        for start in range(0, len(CODES), 3):
-            batch = CODES[start:start + 3]
+        for start in range(0, len(selected), 3):
+            batch = selected[start:start + 3]
             requested = []
             for i, code in enumerate(batch):
                 if params_received and code not in xml:
@@ -190,33 +200,46 @@ def run_ibkr_seven(*, host="127.0.0.1", port=4002, client_id=684,
                     pass
 
         ordered = {}
-        for code in CODES:
+        for code in selected:
             ordered[code] = sorted(set(app.rows[code]), key=lambda item: item[0])
             shortlist = [sym for _, sym in ordered[code]][:preview]
             lines.append("%s | %s | %d | %s" %
                          (code, statuses.get(code, "UNKNOWN"), len(ordered[code]),
                           ", ".join(shortlist) if shortlist else "-"))
-        seen = list(dict.fromkeys(sym for code in CODES
+        seen = list(dict.fromkeys(sym for code in selected
                                   if statuses.get(code) == "DONE"
                                   for _, sym in ordered[code]))
         lines.append("UNIQUE DISCOVERED | %d" % len(seen))
-        saved = False
-        try:
-            saved = _save_snapshot(ordered, statuses)
-        except OSError as exc:
-            lines.append("CACHE ERROR | %s" % type(exc).__name__)
-        lines.append("SNAPSHOT | %s | full results from completed scans" %
-                     ("SAVED" if saved else "NOT SAVED"))
+        if single:
+            # Do not replace the complete seven-code snapshot with a partial
+            # universe: this direct code-specific call is output-only.
+            lines.append("SNAPSHOT | UNCHANGED | single scanner, no cache writes")
+        else:
+            saved = False
+            try:
+                saved = _save_snapshot(ordered, statuses)
+            except OSError as exc:
+                lines.append("CACHE ERROR | %s" % type(exc).__name__)
+            lines.append("SNAPSHOT | %s | full results from completed scans" %
+                         ("SAVED" if saved else "NOT SAVED"))
         if app.errors:
             lines.append("API ERRORS | " + " ; ".join(
                 "%s:%s %s" % (c, err, msg[:50])
                 for c, err, msg in app.errors[:4]))
         lines.append("READ-ONLY | NO CHAKRA RUN | NO ORDERS")
+        if single:
+            lines.append("RESULT | %s" %
+                         ("SUCCESS" if statuses.get(selected[0]) == "DONE" and seen
+                          else "NOT READY"))
         if seen:
-            lines.append("WATCHLIST | IBKR FIRST 30 | " + ", ".join(seen[:30]))
+            if single:
+                lines.append("WATCHLIST | %s | %s" %
+                             (selected[0], ", ".join(seen[:50])))
+            else:
+                lines.append("WATCHLIST | IBKR FIRST 30 | " + ", ".join(seen[:30]))
         return "\n".join(lines) + "\n"
     except (OSError, ValueError, RuntimeError) as exc:
-        return "IBKR 7-CODE | CONNECTION/SCANNER ERROR | %s: %s" % (
+        return "IBKR SCANNER | CONNECTION/SCANNER ERROR | %s: %s" % (
             type(exc).__name__, str(exc)[:160])
     finally:
         try:
