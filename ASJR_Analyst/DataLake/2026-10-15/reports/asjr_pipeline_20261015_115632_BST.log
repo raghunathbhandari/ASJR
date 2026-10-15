@@ -1,0 +1,35 @@
+2026-10-15 11:57:57 BST | INFO | RUN | VERSION | 2026.10.11.7
+2026-10-15 11:58:38 BST | INFO | RUN | START | trade_date=2026-10-15
+2026-10-15 11:59:01 BST | INFO | WATCHLIST | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-15/config/fixed_watchlist.csv | source=prepared
+2026-10-15 11:59:01 BST | INFO | RUN | OPTIONS | include_sector=True | git_submit=True | fetch_gapup_from_app=True
+2026-10-15 11:59:23 BST | ERROR | FOREX | One-time downloader launch failed
+Traceback (most recent call last):
+  File "/root/trading/ASJR/ASJR_Analyst/Tests/test_asjr_pipeline.py", line 129, in _run_asjr_manual_pipeline_unlocked
+    forex_launch = launch_forex_download_once()
+  File "/root/trading/ASJR/Backtesting/DataLoader/forex_download_hook.py", line 28, in launch_forex_download_once
+    proc = subprocess.run(
+  File "/usr/local/lib/python3.10/subprocess.py", line 505, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+  File "/usr/local/lib/python3.10/subprocess.py", line 1154, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+  File "/usr/local/lib/python3.10/subprocess.py", line 2022, in _communicate
+    self._check_timeout(endtime, orig_timeout, stdout, stderr)
+  File "/usr/local/lib/python3.10/subprocess.py", line 1198, in _check_timeout
+    raise TimeoutExpired(
+subprocess.TimeoutExpired: Command '['bash', '/root/trading/ASJR/Backtesting/DataLoader/run_forex_download_tmux.sh']' timed out after 15 seconds
+2026-10-15 12:00:26 BST | ERROR | NQ | One-time downloader launch failed
+Traceback (most recent call last):
+  File "/root/trading/ASJR/ASJR_Analyst/Tests/test_asjr_pipeline.py", line 146, in _run_asjr_manual_pipeline_unlocked
+    nq_launch = launch_nq_download_once()
+  File "/root/trading/ASJR/Backtesting/DataLoader/nq_download_hook.py", line 23, in launch_nq_download_once
+    proc = subprocess.run(
+  File "/usr/local/lib/python3.10/subprocess.py", line 505, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+  File "/usr/local/lib/python3.10/subprocess.py", line 1154, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+  File "/usr/local/lib/python3.10/subprocess.py", line 2022, in _communicate
+    self._check_timeout(endtime, orig_timeout, stdout, stderr)
+  File "/usr/local/lib/python3.10/subprocess.py", line 1198, in _check_timeout
+    raise TimeoutExpired(
+subprocess.TimeoutExpired: Command '['bash', '/root/trading/ASJR/Backtesting/DataLoader/run_nq_download_tmux.sh']' timed out after 15 seconds
+2026-10-15 12:00:46 BST | INFO | MOVERS | Fetch started
