@@ -143,9 +143,19 @@ def main(argv=None):
     if not names:
         print("MOMENTUM | NO SAVED DATALAKE UNIVERSE")
         return 2
+    # On-demand IBKR seven-code discovery supplements the usual saved ASJR
+    # universe. It is consumed only when the snapshot is dated today in ET
+    # and less than 24 hours old; never make a hidden new broker connection.
+    from RudraScanner.ibkr_seven_scanner import load_saved_tickers
+    ibkr_tickers = load_saved_tickers(date=day)
+    ibkr_new = len(set(ibkr_tickers) - set(names))
+    names = sorted(set(names).union(ibkr_tickers))
     print("RUDRA MOMENTUM | %s UK | UNIVERSE %s | %d tickers" %
           (datetime.now(UK).strftime("%Y-%m-%d %H:%M"), day, len(names)))
-    print("SOURCE | ASJR saved tickers + Yahoo adjusted daily closes; not IBKR scanner")
+    print("SOURCE | ASJR saved universe + %d new IBKR seven-code tickers; Yahoo adjusted daily prices" %
+          ibkr_new)
+    print("IBKR SNAPSHOT | %s" % ("CURRENT ET DAY" if ibkr_tickers else
+                                  "UNAVAILABLE OR STALE; ASJR UNIVERSE ONLY"))
     result = rankings(download_daily(names), args.min_price, args.min_volume)
     if result.empty:
         print("NO ELIGIBLE DATA | check Yahoo access, history, price/volume filters")
