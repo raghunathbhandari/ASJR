@@ -1,3 +1,9 @@
+## 2026-10-15 ~20:10 UK — SEVEN DIRECT RAW IBKR CODES VS TWO REFINED MOMENTUM REPORTS
+
+**User confirmed design:** seven native scanner **RAW IBKR** lists, one list per approved broker code (`--ibkr-code CODE`) with comma-separated ticker watchlist at the end; `--ibkr-codes` lists all seven names locally. They remain unrefined IBKR scanner rankings. Monthly `--momentum-1m` and quarterly `--momentum-3m` are **separate Yahoo-refined** Top 15 lists. `--ibkr-7` generates the aggregate broker cache used to broaden later refined research; a single code call does not alter the aggregate cache. Example Discord: `!runpy RudraScanner/scan_now\.py --ibkr-code HIGH_LAST_VS_EMA50`. Other exact names are documented in [canonical guide](../RudraScanner/IBKR_SEVEN_CODE_DISCOVERY.md). All seven code implementations have unit tests using mock IBKR only; live Gateway code support is unverified. Existing 4-code Chakra/5m job and external launcher are untouched.
+
+---
+
 # 2026-10-15 — CURRENT RUDRA MOMENTUM + SEVEN-CODE IBKR HANDOFF (LATEST; READ BEFORE OLDER SCANNER SECTIONS)
 
 **Authoritative complete guide:** [RudraScanner/IBKR_SEVEN_CODE_DISCOVERY.md](../RudraScanner/IBKR_SEVEN_CODE_DISCOVERY.md). The linked document contains command runbook, source files, architecture, seven code parameters/statuses, actual user-confirmed evidence, security boundaries, failure recovery, and next-agent checklist. Historical scanner passages below record their original time; older statements that the system has exactly two report modes, that `!runSCommand` was not connected, or that no new independent client exists must not be treated as current for the **on-demand** seven-code feature.
