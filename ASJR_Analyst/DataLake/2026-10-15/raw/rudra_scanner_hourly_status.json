@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-15T01:40:11.605161+00:00",
+  "generated_at_utc": "2026-10-15T01:46:06.413117+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
@@ -11,11 +11,11 @@
     "CRCL",
     "CRDO",
     "CRWV",
+    "GOOG",
     "INTC",
     "MSFT",
     "MU",
     "NBIS",
-    "NEM",
     "ORCL",
     "QCOM",
     "RKLB",
@@ -57,6 +57,10 @@
       "state": "OK",
       "rows": 560
     },
+    "GOOG": {
+      "state": "OK",
+      "rows": 560
+    },
     "INTC": {
       "state": "OK",
       "rows": 560
@@ -70,10 +74,6 @@
       "rows": 560
     },
     "NBIS": {
-      "state": "OK",
-      "rows": 560
-    },
-    "NEM": {
       "state": "OK",
       "rows": 560
     },
@@ -116,11 +116,11 @@
     "CRCL",
     "CRDO",
     "CRWV",
+    "GOOG",
     "INTC",
     "MSFT",
     "MU",
     "NBIS",
-    "NEM",
     "ORCL",
     "QCOM",
     "RKLB",
