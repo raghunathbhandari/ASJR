@@ -694,6 +694,14 @@ def run_asjr_manual_pipeline(*args, **kwargs):
     Scheduled Chakra acquires this lock. A manual run_now process already
     owns the same OS flock; only its own call may bypass re-acquisition.
     """
+    # External Chakra supplies its existing IBKR client. Never launch the
+    # scanner with app=None; fail explicitly without changing the VPS hook.
+    app = kwargs.get("app", args[0] if args else None)
+    if app is None:
+        raise RuntimeError(
+            "ASJR IBKR unavailable: Chakra passed app=None; check the "
+            "existing IBKR Gateway connection before the next cycle"
+        )
     import fcntl
     lock_path = REPO_ROOT / ".chakra_run_now.lock"
     if os.environ.get("ASJR_MANUAL_RUN_LOCK_HELD") == "1":
