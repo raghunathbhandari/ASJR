@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 12221,
-    "completed_rows": 12221,
+    "input_rows": 12271,
+    "completed_rows": 12271,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 12221,
+    "no_wap_rows": 12271,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -43,10 +43,10 @@
   "context": {
     "state": "WAIT",
     "reason": "MIXED_OR_NEUTRAL_BENCHMARKS",
-    "timestamp": "2026-10-15 17:10:00+00:00",
+    "timestamp": "2026-10-15 17:20:00+00:00",
     "index_pct": {
-      "SPY": 0.0702,
-      "QQQ": -0.6407
+      "SPY": 0.1052,
+      "QQQ": -0.5886
     },
     "sector_etf": {
       "AKAM": "XLK",
@@ -110,7 +110,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 12221,
+    "count": 12271,
     "source": "SAME_IBKR_APP"
   }
 }
