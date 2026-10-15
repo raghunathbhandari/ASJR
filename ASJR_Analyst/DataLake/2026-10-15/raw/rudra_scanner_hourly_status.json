@@ -1,14 +1,13 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-15T18:14:13.124749+00:00",
+  "generated_at_utc": "2026-10-15T18:20:55.400119+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
     "CCC",
     "CRDO",
     "CRWV",
-    "DELL",
     "FMC",
     "INTC",
     "IREN",
@@ -16,10 +15,11 @@
     "ORCL",
     "PENG",
     "QCOM",
-    "QNT",
     "RKLB",
     "SMCI",
     "SMTC",
+    "TH",
+    "VG",
     "VSTM",
     "WDC",
     "WTTR"
@@ -27,93 +27,92 @@
   "per_ticker": {
     "AKAM": {
       "state": "OK",
-      "rows": 531
+      "rows": 532
     },
     "AMAT": {
       "state": "OK",
-      "rows": 554
+      "rows": 555
     },
     "CCC": {
       "state": "OK",
-      "rows": 480
+      "rows": 481
     },
     "CRDO": {
       "state": "OK",
-      "rows": 554
+      "rows": 555
     },
     "CRWV": {
       "state": "OK",
-      "rows": 554
-    },
-    "DELL": {
-      "state": "OK",
-      "rows": 554
+      "rows": 555
     },
     "FMC": {
       "state": "OK",
-      "rows": 521
+      "rows": 522
     },
     "INTC": {
       "state": "OK",
-      "rows": 554
+      "rows": 555
     },
     "IREN": {
       "state": "OK",
-      "rows": 554
+      "rows": 555
     },
     "MSFT": {
       "state": "OK",
-      "rows": 554
+      "rows": 555
     },
     "ORCL": {
       "state": "OK",
-      "rows": 554
+      "rows": 555
     },
     "PENG": {
       "state": "OK",
-      "rows": 554
+      "rows": 555
     },
     "QCOM": {
       "state": "OK",
-      "rows": 554
-    },
-    "QNT": {
-      "state": "OK",
-      "rows": 554
+      "rows": 555
     },
     "RKLB": {
       "state": "OK",
-      "rows": 554
+      "rows": 555
     },
     "SMCI": {
       "state": "OK",
-      "rows": 554
+      "rows": 555
     },
     "SMTC": {
       "state": "OK",
-      "rows": 549
+      "rows": 550
+    },
+    "TH": {
+      "state": "OK",
+      "rows": 481
+    },
+    "VG": {
+      "state": "OK",
+      "rows": 555
     },
     "VSTM": {
       "state": "OK",
-      "rows": 487
+      "rows": 488
     },
     "WDC": {
       "state": "OK",
-      "rows": 554
+      "rows": 555
     },
     "WTTR": {
       "state": "OK",
-      "rows": 428
+      "rows": 429
     }
   },
-  "rows": 10752,
+  "rows": 10698,
   "usable_150bars": [
     "AKAM",
     "AMAT",
     "CCC",
     "CRDO",
     "CRWV",
-    "DELL",
     "FMC",
     "INTC",
     "IREN",
@@ -121,10 +120,11 @@
     "ORCL",
     "PENG",
     "QCOM",
-    "QNT",
     "RKLB",
     "SMCI",
     "SMTC",
+    "TH",
+    "VG",
     "VSTM",
     "WDC",
     "WTTR"
