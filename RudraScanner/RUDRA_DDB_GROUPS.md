@@ -1,3 +1,8 @@
+## 2026-10-16 — Latest user reporting preference
+Use the last 39-ticker Rudra-DDB Group A/B report as the fixed table base. Fundamental result: PASS when latest verified report shows profit OR positive YoY revenue growth; FAIL only when verified report shows neither. Dilution risk remains its own separate flagged column and does not by itself change fundamental PASS. **Do not show a generic PENDING status in the finished user-facing report**; obtain missing issuer data first. If verification is unavailable, disclose that clearly as unverified rather than mislabeling PASS or FAIL. Preserve current DD columns and holdings.
+
+---
+
 ## 2026-10-16 — USER UPDATED FUNDAMENTAL PASS POLICY (SUPERSEDES PRIOR DILUTION BLOCK)
 **Fundamental PASS criterion:** confirmed profitability OR positive revenue growth qualifies for fundamental PASS under user's simplified screen. Report which test passed and filing period/source. Positive revenue level alone without growth/profit is not evidence of strength; clarify in edge cases. **Dilution is a separate FLAG/AUDIT informational column, NOT an automatic fundamental FAIL, HOLD, or trading prohibition.** Check offerings/convertible shares/warrants and flag risk without blocking PASS. Serious solvency or financial distress still warrants separate caution. Never invent company data or give PASS without verified profitability or positive growth. AKAM: already evidenced Q2 2026 net income $79.4M and revenue +5% YoY, hence **FUNDAMENTAL PASS**, with convertible financing risk flagged separately; user currently holds AKAM (quantity/cost not provided). The previously documented stricter gate requiring dilution clearance is superseded for scoring, though trading confirmation still requires price structure.
 
