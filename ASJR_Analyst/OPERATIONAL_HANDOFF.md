@@ -1,3 +1,13 @@
+## 2026-10-16 — NEW VERIFIED AI→VPS BRIDGE + RESEARCH (READ THIS BEFORE OLDER SECTIONS)
+
+**Authoritative up-to-date details:** [RudraScanner/AI_SESSION_HANDOFF.md](../RudraScanner/AI_SESSION_HANDOFF.md) (first section) and [RudraScanner/ResearchBridge/README.md](../RudraScanner/ResearchBridge/README.md).
+
+AI→VPS without repeated Discord: ChatGPT GitHub connector creates typed allowlisted requests in `RudraScanner/ResearchBridge/requests/`; systemd `asjr-research-bridge.service` polls and runs approved Yahoo/health jobs on VPS, pushes status JSON to `RudraScanner/ResearchBridge/results/`. **Verified live Oct 16:** health `research-2026101608501` SUCCESS, and actual Yahoo batch2 `research-2026101610002` SUCCESS (10/10 daily+intraday). The original raw-data CSV publisher was missing; a strictly scoped `research_46_publish` extension and `--bridge-refresh` are now committed, **but not VPS verified**. Batch3,4,5,finalize,export all queued; check their GitHub JSON results, do not assume completion. Most recently all remained PENDING. Current research universe is October 15 HIGH_LAST_VS_EMA50 46 tickers, only US mid/large caps eligible (>= $2B); prioritize RVOL, momentum, EMA, candles, bases, market/sector and catalyst. Candidate discovery and raw percent returns are NOT validated predictive scores.
+
+If needed, user can deploy updated worker without touching Chakra by `!gitpull`, then `!runpy RudraScanner/scan_now\.py --bridge-refresh`. The separate external `!runSCommand` handler remains old (unknown operation), but `scan_now.py` route is proven for `--bridge-start`; health and Yahoo batch2 results prove VPS bridge works. Keep current trading launcher and schedules unchanged; no unrestricted shell/SSH; prototype root worker requires security hardening.
+
+---
+
 ## 2026-10-16 — NEW: FORWARD STOCK-MOVER RESEARCH BACKTEST (CODE COMMITTED, NOT VPS-VERIFIED)
 
 **Priority is now early high-probability stock discovery; do not expand Chakra data imports.** Authoritative study plan: [RudraScanner/LEAD_MOVER_BACKTEST.md](../RudraScanner/LEAD_MOVER_BACKTEST.md). Read that file for exact signals, simulated exits, sample bias, and acceptance checks.
