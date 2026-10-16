@@ -1,0 +1,10 @@
+{
+  "completed_utc": "2026-10-16T10:22:48.820795+00:00",
+  "exit_code": 1,
+  "id": "research-2026101611006",
+  "operation": "research_46_finalize",
+  "started_utc": "2026-10-16T10:22:48.565262+00:00",
+  "status": "FAILED",
+  "stderr_tail": "Traceback (most recent call last):\n  File \"/root/trading/ASJR/RudraScanner/research_ema50_46.py\", line 333, in <module>\n    raise SystemExit(main())\n  File \"/root/trading/ASJR/RudraScanner/research_ema50_46.py\", line 329, in main\n    return finalize() if args.finalize else collect_batch(args.batch)\n  File \"/root/trading/ASJR/RudraScanner/research_ema50_46.py\", line 265, in finalize\n    daily = _load(\"daily\", symbol)\n  File \"/root/trading/ASJR/RudraScanner/research_ema50_46.py\", line 137, in _load\n    if frame.index.tz is None:\nAttributeError: 'Index' object has no attribute 'tz'\n",
+  "stdout_tail": ""
+}
