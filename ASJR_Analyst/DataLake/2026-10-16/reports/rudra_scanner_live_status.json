@@ -2,12 +2,12 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 8507,
-    "completed_rows": 8507,
+    "input_rows": 9852,
+    "completed_rows": 9852,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
-    "tickers": 15,
+    "tickers": 26,
     "min_periods": 9,
     "session_reset": false,
     "extended_hours_included": true,
@@ -16,17 +16,17 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 8507,
+    "no_wap_rows": 9852,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
   "detector_status": {
     "state": "OK",
-    "tickers": 10,
+    "tickers": 20,
     "emitted": 0,
     "blocked_context": 0,
     "blocked_data": 0,
-    "blocked_session": 10,
+    "blocked_session": 20,
     "mode": "RESEARCH_ONLY"
   },
   "events": [],
@@ -34,7 +34,7 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 47970,
+    "stored_rows": 48204,
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-16/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
@@ -51,8 +51,10 @@
       "CRDO": "SMH",
       "INTC": "SMH",
       "MSFT": "XLK",
+      "MU": "SMH",
       "ORCL": "XLK",
       "QCOM": "SMH",
+      "TSLA": "XLY",
       "WTTR": "XLE"
     },
     "sector_pct": {},
@@ -60,28 +62,47 @@
   },
   "collection": {
     "requested": [
+      "CBRS",
+      "CRWV",
+      "FLY",
+      "IREN",
+      "MSTR",
+      "RKLB",
+      "SPCX",
       "SPY",
       "QQQ",
       "SMH",
       "XLE",
-      "XLK"
+      "XLK",
+      "XLY"
     ],
     "symbols": [
+      "AAOI",
       "AKAM",
       "AMAT",
+      "CBRS",
       "CRDO",
+      "CRWV",
+      "FLY",
       "INTC",
+      "IREN",
       "MSFT",
+      "MSTR",
+      "MU",
       "ORCL",
       "QCOM",
+      "RKLB",
       "SMCI",
+      "SPCX",
+      "TSLA",
       "WDC",
       "WTTR",
       "SPY",
       "QQQ",
       "SMH",
       "XLE",
-      "XLK"
+      "XLK",
+      "XLY"
     ],
     "etfs": {
       "AKAM": "XLK",
@@ -89,12 +110,14 @@
       "CRDO": "SMH",
       "INTC": "SMH",
       "MSFT": "XLK",
+      "MU": "SMH",
       "ORCL": "XLK",
       "QCOM": "SMH",
+      "TSLA": "XLY",
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 8507,
+    "count": 9852,
     "source": "SAME_IBKR_APP"
   }
 }
