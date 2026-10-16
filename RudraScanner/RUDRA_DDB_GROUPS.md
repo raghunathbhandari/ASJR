@@ -75,3 +75,6 @@ Screened 560 saved daily historical series (S&P 500 membership plus supplied nam
 
 **Opposite rotation not yet validated:** no compelling pair among financially provisional tested-range names from a different sector. Prior Group A/Group B remain exploratory as before; do not represent the nine retested stocks as verified inverse groups, or confuse sector anticorrelation with reliably alternating individual stocks. Prior 1-year 25%+ swing counts do NOT establish two-sided repeated tests. The stock universe is expandable, with future sector diversification and out-of-sample multi-cycle checks required.
 
+
+## Research priority update — 2026-10-16
+Group A is now the main expansion priority. Keep original Group B (CBOE ZTS V CME CDW) unchanged as secondary/opposite-phase benchmarks; no need to add B tickers unless stronger evidence appears. Prioritize auditing CIEN (4 support/2 resistance, 37.7%), TER (4/2, 34.6%), LRCX (2/3, 31.8%), VRT (2/3, 28.4%) and PANW (2/2, 27.0%) as potential additions to Primary Group A, NOT approved primary or proven current-bottom entries. Validate split-adjusted prices, independent retest dates, 25-50% completed alternating legs, multiple-year recurrence, current phase and financial statements before promotion. Preserve original A names for comparison; no bot or trading changes authorized.
