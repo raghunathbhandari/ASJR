@@ -1,28 +1,18 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-16T00:02:15.868021+00:00",
+  "generated_at_utc": "2026-10-16T00:08:13.252812+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
-    "CCC",
     "CRDO",
-    "CRWV",
-    "FMC",
     "INTC",
-    "MMED",
     "MSFT",
     "ORCL",
-    "PENG",
     "QCOM",
-    "RKLB",
     "SMCI",
-    "SMTC",
-    "VG",
-    "VSTM",
     "WDC",
-    "WTTR",
-    "WULF"
+    "WTTR"
   ],
   "per_ticker": {
     "AKAM": {
@@ -33,29 +23,13 @@
       "state": "OK",
       "rows": 560
     },
-    "CCC": {
-      "state": "OK",
-      "rows": 486
-    },
     "CRDO": {
       "state": "OK",
       "rows": 560
     },
-    "CRWV": {
-      "state": "OK",
-      "rows": 560
-    },
-    "FMC": {
-      "state": "OK",
-      "rows": 527
-    },
     "INTC": {
       "state": "OK",
       "rows": 560
-    },
-    "MMED": {
-      "state": "OK",
-      "rows": 462
     },
     "MSFT": {
       "state": "OK",
@@ -65,33 +39,13 @@
       "state": "OK",
       "rows": 560
     },
-    "PENG": {
-      "state": "OK",
-      "rows": 560
-    },
     "QCOM": {
-      "state": "OK",
-      "rows": 560
-    },
-    "RKLB": {
       "state": "OK",
       "rows": 560
     },
     "SMCI": {
       "state": "OK",
       "rows": 560
-    },
-    "SMTC": {
-      "state": "OK",
-      "rows": 555
-    },
-    "VG": {
-      "state": "OK",
-      "rows": 560
-    },
-    "VSTM": {
-      "state": "OK",
-      "rows": 493
     },
     "WDC": {
       "state": "OK",
@@ -100,33 +54,19 @@
     "WTTR": {
       "state": "OK",
       "rows": 434
-    },
-    "WULF": {
-      "state": "OK",
-      "rows": 560
     }
   },
-  "rows": 10774,
+  "rows": 5451,
   "usable_150bars": [
     "AKAM",
     "AMAT",
-    "CCC",
     "CRDO",
-    "CRWV",
-    "FMC",
     "INTC",
-    "MMED",
     "MSFT",
     "ORCL",
-    "PENG",
     "QCOM",
-    "RKLB",
     "SMCI",
-    "SMTC",
-    "VG",
-    "VSTM",
     "WDC",
-    "WTTR",
-    "WULF"
+    "WTTR"
   ]
 }

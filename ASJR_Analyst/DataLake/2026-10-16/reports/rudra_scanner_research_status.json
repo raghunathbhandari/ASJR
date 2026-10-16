@@ -2,12 +2,12 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 14135,
-    "completed_rows": 14135,
+    "input_rows": 8492,
+    "completed_rows": 8492,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
-    "tickers": 25,
+    "tickers": 15,
     "min_periods": 9,
     "session_reset": false,
     "extended_hours_included": true,
@@ -16,17 +16,17 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 14135,
+    "no_wap_rows": 8492,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
   "detector_status": {
     "state": "OK",
-    "tickers": 20,
+    "tickers": 10,
     "emitted": 0,
     "blocked_context": 0,
     "blocked_data": 0,
-    "blocked_session": 20,
+    "blocked_session": 10,
     "mode": "RESEARCH_ONLY"
   },
   "events": [],
@@ -35,7 +35,7 @@
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
     "stored_rows": 43680,
-    "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-15/processed/rudra_scanner_rvol20_baseline.csv",
+    "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-16/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
     "output": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-16/processed/rudra_scanner_rvol20_baseline.csv"
@@ -60,9 +60,6 @@
   },
   "collection": {
     "requested": [
-      "CCC",
-      "CRWV",
-      "MMED",
       "SPY",
       "QQQ",
       "SMH",
@@ -72,24 +69,14 @@
     "symbols": [
       "AKAM",
       "AMAT",
-      "CCC",
       "CRDO",
-      "CRWV",
-      "FMC",
       "INTC",
-      "MMED",
       "MSFT",
       "ORCL",
-      "PENG",
       "QCOM",
-      "RKLB",
       "SMCI",
-      "SMTC",
-      "VG",
-      "VSTM",
       "WDC",
       "WTTR",
-      "WULF",
       "SPY",
       "QQQ",
       "SMH",
@@ -107,7 +94,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 14135,
+    "count": 8492,
     "source": "SAME_IBKR_APP"
   }
 }
