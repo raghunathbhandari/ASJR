@@ -1,3 +1,8 @@
+## 2026-10-16 — Fundamental report fallback (user confirmed)
+For each ticker, use the newest verified published financial report. If the current quarter's audit is pending or not yet available, use the **last completed quarterly financial report** as the fundamental evidence base; label the fiscal quarter and publication date. Fundamental PASS = reported profitability OR positive year-over-year revenue growth; FAIL only when latest available verified quarter establishes neither. Keep dilution/financing separately flagged, even when Fundamental PASS. Do not invent outcomes or quietly use an older quarter without identifying it. If no verified quarterly report is accessible, state unverified rather than fabricate PASS/FAIL. Use established 39-ticker A/B master table format.
+
+---
+
 ## 2026-10-16 — Latest user reporting preference
 Use the last 39-ticker Rudra-DDB Group A/B report as the fixed table base. Fundamental result: PASS when latest verified report shows profit OR positive YoY revenue growth; FAIL only when verified report shows neither. Dilution risk remains its own separate flagged column and does not by itself change fundamental PASS. **Do not show a generic PENDING status in the finished user-facing report**; obtain missing issuer data first. If verification is unavailable, disclose that clearly as unverified rather than mislabeling PASS or FAIL. Preserve current DD columns and holdings.
 
