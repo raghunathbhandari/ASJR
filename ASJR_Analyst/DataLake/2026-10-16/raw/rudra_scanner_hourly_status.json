@@ -1,11 +1,11 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-16T10:28:42.855571+00:00",
+  "generated_at_utc": "2026-10-16T10:34:41.923443+00:00",
   "selected_tickers": [
+    "AAOI",
     "AKAM",
     "AMAT",
-    "CRCL",
     "CRDO",
     "CRWV",
     "INTC",
@@ -14,26 +14,26 @@
     "MSFT",
     "MSTR",
     "NBIS",
+    "NFLX",
     "ORCL",
     "QCOM",
     "SMCI",
     "SPCX",
     "TSLA",
-    "USAR",
     "VRNS",
     "WDC",
     "WTTR"
   ],
   "per_ticker": {
+    "AAOI": {
+      "state": "OK",
+      "rows": 547
+    },
     "AKAM": {
       "state": "OK",
       "rows": 524
     },
     "AMAT": {
-      "state": "OK",
-      "rows": 547
-    },
-    "CRCL": {
       "state": "OK",
       "rows": 547
     },
@@ -69,6 +69,10 @@
       "state": "OK",
       "rows": 547
     },
+    "NFLX": {
+      "state": "OK",
+      "rows": 547
+    },
     "ORCL": {
       "state": "OK",
       "rows": 547
@@ -89,10 +93,6 @@
       "state": "OK",
       "rows": 547
     },
-    "USAR": {
-      "state": "OK",
-      "rows": 547
-    },
     "VRNS": {
       "state": "OK",
       "rows": 493
@@ -108,9 +108,9 @@
   },
   "rows": 10739,
   "usable_150bars": [
+    "AAOI",
     "AKAM",
     "AMAT",
-    "CRCL",
     "CRDO",
     "CRWV",
     "INTC",
@@ -119,12 +119,12 @@
     "MSFT",
     "MSTR",
     "NBIS",
+    "NFLX",
     "ORCL",
     "QCOM",
     "SMCI",
     "SPCX",
     "TSLA",
-    "USAR",
     "VRNS",
     "WDC",
     "WTTR"
