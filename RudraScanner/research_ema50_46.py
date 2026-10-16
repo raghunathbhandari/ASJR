@@ -268,6 +268,7 @@ def _intraday_features(frame):
 def _publish_study():
     """Commit only study outputs through scratch clone; never stage live worktree."""
     artifacts = [OUT / "research_metrics_46.csv", OUT / "RESEARCH_REPORT.md"]
+    artifacts.extend([OUT / "DDB_3MONTH_MULTI_SWING_46.csv", OUT / "DDB_3MONTH_MULTI_SWING_46.md"])
     from RudraScanner.research_46_patterns import NEW_FILES
     artifacts.extend(OUT / name for name in NEW_FILES)
     for kind in ("daily", "five_minute"):
@@ -386,6 +387,9 @@ def finalize():
     print(f"FILES | {OUT.relative_to(ROOT)}/research_metrics_46.csv")
     print(f"FILES | {OUT.relative_to(ROOT)}/RESEARCH_REPORT.md")
     if not covered_daily:
+        return 2
+    from RudraScanner.research_ddb_46 import run as ddb_screen
+    if ddb_screen():
         return 2
     from RudraScanner.research_46_patterns import analyze as analyze_patterns
     if analyze_patterns():
