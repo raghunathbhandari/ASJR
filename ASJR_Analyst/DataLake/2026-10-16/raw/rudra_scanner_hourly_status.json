@@ -1,12 +1,12 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-16T03:45:59.999241+00:00",
+  "generated_at_utc": "2026-10-16T03:51:55.093241+00:00",
   "selected_tickers": [
+    "AAOI",
     "AKAM",
     "AMAT",
-    "BMNR",
-    "COIN",
+    "COHR",
     "CRCL",
     "CRDO",
     "CRWV",
@@ -14,17 +14,21 @@
     "IONQ",
     "MSFT",
     "MSTR",
-    "MU",
     "ORCL",
     "QCOM",
     "SMCI",
     "SNDK",
     "SPCX",
     "TSLA",
+    "USAR",
     "WDC",
     "WTTR"
   ],
   "per_ticker": {
+    "AAOI": {
+      "state": "OK",
+      "rows": 560
+    },
     "AKAM": {
       "state": "OK",
       "rows": 537
@@ -33,11 +37,7 @@
       "state": "OK",
       "rows": 560
     },
-    "BMNR": {
-      "state": "OK",
-      "rows": 560
-    },
-    "COIN": {
+    "COHR": {
       "state": "OK",
       "rows": 560
     },
@@ -69,10 +69,6 @@
       "state": "OK",
       "rows": 560
     },
-    "MU": {
-      "state": "OK",
-      "rows": 560
-    },
     "ORCL": {
       "state": "OK",
       "rows": 560
@@ -97,6 +93,10 @@
       "state": "OK",
       "rows": 560
     },
+    "USAR": {
+      "state": "OK",
+      "rows": 560
+    },
     "WDC": {
       "state": "OK",
       "rows": 560
@@ -108,10 +108,10 @@
   },
   "rows": 11051,
   "usable_150bars": [
+    "AAOI",
     "AKAM",
     "AMAT",
-    "BMNR",
-    "COIN",
+    "COHR",
     "CRCL",
     "CRDO",
     "CRWV",
@@ -119,13 +119,13 @@
     "IONQ",
     "MSFT",
     "MSTR",
-    "MU",
     "ORCL",
     "QCOM",
     "SMCI",
     "SNDK",
     "SPCX",
     "TSLA",
+    "USAR",
     "WDC",
     "WTTR"
   ]
