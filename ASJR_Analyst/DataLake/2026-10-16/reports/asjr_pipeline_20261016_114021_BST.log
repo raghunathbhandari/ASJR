@@ -33,3 +33,85 @@
 2026-10-16 11:41:17 BST | INFO | FILE | Saved asjr_snapshot | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-16/processed/asjr_snapshot.json
 2026-10-16 11:41:17 BST | INFO | RUN | DATA COMPLETE | universe=25 | intraday_rows=9526 | ticker_summary=25
 2026-10-16 11:41:17 BST | INFO | GIT | File verification started | count=7
+2026-10-16 11:41:19 BST | ERROR | RUN | FAILED
+Traceback (most recent call last):
+  File "/root/trading/ASJR/ASJR_Analyst/Tests/test_asjr_pipeline.py", line 649, in _run_asjr_manual_pipeline_unlocked
+    git_result = asjr_git.submit_datalake(
+  File "/root/trading/ASJR/ASJR_Analyst/Utils/asjr_git.py", line 105, in submit_datalake
+    _run_git(
+  File "/root/trading/ASJR/ASJR_Analyst/Utils/asjr_git.py", line 13, in _run_git
+    raise RuntimeError(
+RuntimeError: Git command failed: git pull --rebase origin main
+STDOUT:
+
+STDERR:
+From github.com:raghunathbhandari/ASJR
+ * branch              main       -> FETCH_HEAD
+error: The following untracked working tree files would be overwritten by checkout:
+	RudraScanner/ResearchData/EMA50_2026-10-15/RESEARCH_REPORT.md
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/ACN.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/AEHL.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/BSP.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/CAI.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/CBRL.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/CDNA.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/CVI.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/DNA.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/DXC.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/EFOR.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/FIGS.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/FVNNU.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/GIBO.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/GME.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/GRAL.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/IBTA.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/IOVA.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/KOD.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/KSS.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/MAMK.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/MPC.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/MRNA.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/NTSK.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/NVAX.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/ODD.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/OPCH.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/PCRX.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/PD.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/PICS.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/PMI.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/PRGO.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/PTC.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/RCEL.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/RGC.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/RXO.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/SG.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/SHOP.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/SIG.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/SUJA.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/SVRN.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/TBCH.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/TEAM.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/VEEV.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/VIA.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/VNCE.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/daily/XP.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/five_minute/ACN.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/five_minute/AEHL.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/five_minute/BSP.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/five_minute/CAI.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/five_minute/CBRL.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/five_minute/CDNA.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/five_minute/CVI.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/five_minute/DNA.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/five_minute/DXC.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/five_minute/EFOR.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/five_minute/FIGS.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/five_minute/FVNNU.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/five_minute/GIBO.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/five_minute/GME.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/five_minute/GRAL.csv.gz
+	RudraScanner/ResearchData/EMA50_2026-10-15/five_minute/IBTA.csv.gz
+	RudraScanner/ResearchData/EMA50_202
+Aborting
+error: could not detach HEAD
+
