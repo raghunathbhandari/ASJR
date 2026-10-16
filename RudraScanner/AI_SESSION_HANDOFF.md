@@ -1,3 +1,18 @@
+## 2026-10-16 — USER CONFIRMED RUDRA-DDB MASTER LIST + FUNDAMENTAL GATE
+
+**Trigger:** when user writes "Rudra-DDB", present both full expanded groups with all available columns: Group, ticker, sector, 3M historical bottom, 3M historical top, 3M range %, 3M completed legs >=7%, 3M bottom/top *candidate* pivot counts, 1Y >=25% swings and 1Y range once available, last verified close and timestamp, % above 3M bottom, color, DD status, fundamental status and dilution risk. For missing annual data mark PENDING, not 0. Source: `RudraScanner/ResearchData/DDB_OPPOSITE_2026-10-16/DDB_39_3M_RANGE_SCREEN_2026-10-16.csv`; annual 39-stock collector `RudraScanner/research_ddb_39_1y.py` and GitHub workflow pending verified output. Historical extremes are NOT validated two-sided AOI. Color: GREEN <=2% above bottom; YELLOW >2%-5%; AMBER >5%; below range RED. DD WATCH is NOT a buy order. Do not substitute cached close for live quotes.
+
+**Locked groups (39):**
+- A (22): INTC, AKAM, WDC, STX, KLAC, CIEN, TER, LRCX, VRT, PANW, AMD, QCOM, TSM, SWKS, CRWD, ETN, KEYS, FLEX, GLW, COHR, ASML, AMAT.
+- B (17): CBOE, ZTS, V, CME, CDW, PGR, AJG, JKHY, O, YUM, VRSK, MRSH, NSC, PEP, PAYX, NEE, MCK.
+Original 5+5 historical classification preserved separately as described below.
+
+**User trading exclusion:** weak fundamentals, distressed balance sheets, or material unmitigated shareholder dilution risk => NO TRADE. Keep any such names in research reference only (for correlation) rather than silently deleting them. Full issuer-filing audit required for each company; don't infer 39 fundamental passes. Check 10-K/10-Q, cash flow, debt/maturities, outstanding shares, ATM/convertible/equity-unit offerings, shelf registrations, warrants, secondary issuance, capital needs and earnings. Use labels PASS / HOLD_RISK / PENDING_VERIFY, and source+as-of dates. Correlation/technical ranges do not override this gate.
+
+**Verified initial flags at 2026-10-16:** INTC HOLD_RISK: Q2 2026 10-Q describes net losses, escrowed government shares and conditional DOC warrants; review dilution effects before investing: https://www.intc.com/filings-reports/all-sec-filings/content/0000050863-26-000157/intc-20260627.htm . NEE HOLD_REVIEW: Mar 3 2026 SEC filing describes $2.3bn equity units with future mandatory purchases of common stock: https://www.sec.gov/Archives/edgar/data/753308/000075330826000020/nee-20260303.htm . WDC operating cash flow was $3.929bn FY2026 vs $1.691bn FY2025, encouraging but NOT a comprehensive PASS: https://investor.wdc.com/static-files/885b2c03-508d-491d-8555-281fa5214179 . Other 36 company-specific diligence not yet completed => PENDING_VERIFY. Not all potential dilution is automatically disqualifying; assess magnitude and financing need rather than claim no risk.
+
+---
+
 ## LATEST 2026-10-16 — DDB 39-NAME INTC EXPANSION + VERIFIED AI↔VPS GUIDE
 Read [RUDRA_DDB_INTC_EXPANSION_2026-10-16.md](RUDRA_DDB_INTC_EXPANSION_2026-10-16.md) FIRST for original vs expanded candidate membership, historical 545-instrument INTC comparisons, tested pivot clusters, Visa 4H correction, necessary fundamentals/range validation and safe GitHub↔VPS bridge workflow. New DDB calculation is NOT currently an allowlisted bridge job. No direct SSH or arbitrary Discord shell; research bridge supports only its reviewed operations. No trading-bot changes made.
 
