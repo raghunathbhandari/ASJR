@@ -1,3 +1,22 @@
+## 2026-10-16 — VERIFIED COMPLETE 46-TICKER SCORING REPORT (LATEST)
+
+**User's ask:** rank the 46 names returned from Oct 15 HIGH_LAST_VS_EMA50 using swing/momentum evidence, prioritize RVOL, and document for next AI session. **DELIVERED AND VERIFIED IN GITHUB:**
+
+- [Full Markdown rank and research guide](ResearchData/EMA50_2026-10-15/SCORING_REPORT_46.md)
+- [Scored 46-ticker CSV with factor breakdown and capitalization status](ResearchData/EMA50_2026-10-15/SCORING_RANKING_46.csv)
+- [Original 46-ticker computed OHLCV metric CSV](ResearchData/EMA50_2026-10-15/research_metrics_46.csv) and 93 total pushed evidence files including compressed Yahoo daily and 5-minute candles.
+- Completed bridge request `research-2026101611051` reported `SUCCESS` and explicitly `PUBLISH | SUCCESS | 93 research files pushed`. **No manual Discord/SSH data collection needed to complete.**
+- Dataset coverage: daily 46/46; 5-minute 45/46; prior 20 sessions same-clock-slot RVOL 43/46; MAMK no valid 5-minute history and zero latest daily volume.
+- **Technical-only normalized index**, not probability or finalized seven-factor score. Points: RVOL25, momentum20, MA15, last-bar candle patterns15, consolidation10 (85 max). Overextension penalty; normalize by observed max to /100. Sector5 and catalysts10 **not scored** because the collector does not supply systematic dated evidence. Check report for full thresholds, risk flags and 46 sorted rows.
+- Verified $2B+ cap cohort in the report: 20 symbols, top are SHOP71, TEAM71, SIG68, CDNA67, MPC67, CVI66, NTSK65, VEEV65; source market caps are Oct 14/15 public snapshots. Raw technical leader PD71 excluded ($1.34B small-cap), EFOR69 cap unverified. Do not silently include unverified-cap names. Some additional eligible names may remain unverified; not the same as proven small-cap.
+- Technical index is **not validated**, is partly based on the **last 5-minute bar**, and must NOT be presented as pre-breakout predictive probability. Continue research on historical *before-move* sequences and non-winner controls, matched capitalization as of historical date, dated catalysts and sector context.
+- Public catalyst examples: VEEV Oct 13 expanded IQVIA partnership, documented flat-base breakout and earnings; CDNA Q2 revenue +52% year-over-year raised guidance; sector rotation towards healthcare from technology/energy on Oct 15. Keep the news time separate from entry suitability.
+- Collector encountered mixed EDT/EST parsing; patched `research_ema50_46.py`, finalize succeeded. To bypass an old in-memory bridge exporter import-path bug, newer collector `--finalize` publishes approved files using an isolated scratch Git clone. Export success is **directly verified** via 93 files. Worker import error handler patch exists on GitHub but old systemd process may not yet have reloaded; do not assume it has. User does not need to run more batch/CSV commands for this completed study.
+
+**Next research task:** use published daily/5-minute data to reconstruct pre-breakout volume regime and sweep/base frequency over trailing 20 sessions; incorporate catalysts and market/sector without hindsight; compare to failed controls and train/test out-of-sample. Preserve Chakra trading code and schedules.
+
+---
+
 ## 2026-10-16 — QUEUE STALL ROOT CAUSE FOUND AND FIXED (VERIFIED)
 
 **Diagnosis:** Five queued jobs were named `research-20261016101302`, `...101402`, `...101502`, `...101602`, `...101902`. They contained **14 digits after `research-`**, but `safe_job()` requires **exactly 13 numeric digits**, total ID length 22. The worker silently rejected them without producing result JSON, which looked like stalled VPS execution. No VPS/service restart was necessary.
