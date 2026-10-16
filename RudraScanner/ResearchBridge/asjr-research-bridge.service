@@ -1,0 +1,23 @@
+[Unit]
+Description=ASJR Rudra Research Bridge (GitHub job worker)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/trading/ASJR
+ExecStart=/root/trading/venv_new/bin/python -u /root/trading/ASJR/RudraScanner/research_bridge_worker.py --interval 60
+Restart=on-failure
+RestartSec=20
+Environment=PYTHONUNBUFFERED=1
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/root/trading/ASJR/RudraScanner/ResearchData
+# Existing GitHub credentials and checkout are available to the running account.
+# Running as root matches legacy /root layout. Prefer a dedicated non-root
+# checkout and service account before enabling production data collection.
+
+[Install]
+WantedBy=multi-user.target
