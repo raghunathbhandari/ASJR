@@ -1,3 +1,13 @@
+## RUDRA-DDB — LOCKED TIME WINDOW (2026-10-16)
+
+**User explicitly clarified:** DDB fall / drawdown MUST be recent and its up-and-down cycle occur **within the last three months**, not a 52-week or multi-year peak-to-current drawdown. Apply to every future DDB shortlist/report.
+
+Scan a rolling ~63 US trading-session / calendar three-month window, use the peak date within that period (with a meaningful preceding upswing), calculate exact peak-to-trough and peak-to-current decline, and document dates, percent rally before peak, downside size, and current stabilization/CHOCH. Prefer ~15–20%+ corrections as candidate threshold only; threshold not yet user locked. Score company durability/profitability/cash flow independently and mark deteriorating fundamentals. Rising EMA9/EMA20, liquidity sweep, bullish CHOCH, sector/index recovery are entry confirmations, not assumed simply from drawdown. Reject examples whose only cheapness refers to a high made beyond this window. Previously cited -40%/-60% 52-week drawdowns do NOT qualify without new 3-month timing verification. User's examples INTC, WDC, AKAM are still to be tested against this updated window, not automatically qualified.
+
+**Rudra-DDB = Discounted (last 3 months), Durable business, Breakout/reversal confirmation**, separate from the original 46-stock IBKR EMA50 raw momentum rankings.
+
+---
+
 ## 2026-10-16 — VERIFIED COMPLETE 46-TICKER SCORING REPORT (LATEST)
 
 **User's ask:** rank the 46 names returned from Oct 15 HIGH_LAST_VS_EMA50 using swing/momentum evidence, prioritize RVOL, and document for next AI session. **DELIVERED AND VERIFIED IN GITHUB:**
