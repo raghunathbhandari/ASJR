@@ -32,6 +32,7 @@ HELP = (
     "!runSCommand rvol | top | ibkr-raw | tests | final\n"
     "!runSCommand logs [all|rvol|errors] [1..50]\n"
     "!runSCommand files [reports|raw|processed|state]\n"
+    "!runSCommand bridge-start | bridge-status\n"
     "Read-only tools/tests only. Git pull/push remain !gitpull / !gitpush."
 )
 SECRET = re.compile(
@@ -178,6 +179,8 @@ def _execute(tokens, root):
     python = str(PYTHON)
     scan = "RudraScanner/scan_now.py"
     commands = {
+        "bridge-start": ([python, "RudraScanner/ResearchBridge/install_bridge.py"], 45),
+        "bridge-status": (["systemctl", "is-active", "asjr-research-bridge.service"], 10),
         "uptime": (["uptime"], 10),
         "disk": (["df", "-h", str(root)], 10),
         "git": (["git", "status", "--short", "--untracked-files=no"], 10),
