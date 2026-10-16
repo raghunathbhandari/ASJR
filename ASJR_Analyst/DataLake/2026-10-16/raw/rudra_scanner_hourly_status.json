@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-16T02:36:26.162651+00:00",
+  "generated_at_utc": "2026-10-16T02:47:50.771204+00:00",
   "selected_tickers": [
     "AAOI",
     "AKAM",
@@ -9,18 +9,18 @@
     "AXTI",
     "CRCL",
     "CRDO",
-    "CRML",
     "CRWV",
     "INTC",
+    "IONQ",
     "MSFT",
     "MSTR",
+    "NBIS",
     "ORCL",
     "QCOM",
     "SMCI",
     "SNDK",
     "SPCX",
     "TSLA",
-    "USAR",
     "WDC",
     "WTTR"
   ],
@@ -49,10 +49,6 @@
       "state": "OK",
       "rows": 560
     },
-    "CRML": {
-      "state": "OK",
-      "rows": 560
-    },
     "CRWV": {
       "state": "OK",
       "rows": 560
@@ -61,11 +57,19 @@
       "state": "OK",
       "rows": 560
     },
+    "IONQ": {
+      "state": "OK",
+      "rows": 560
+    },
     "MSFT": {
       "state": "OK",
       "rows": 560
     },
     "MSTR": {
+      "state": "OK",
+      "rows": 560
+    },
+    "NBIS": {
       "state": "OK",
       "rows": 560
     },
@@ -93,10 +97,6 @@
       "state": "OK",
       "rows": 560
     },
-    "USAR": {
-      "state": "OK",
-      "rows": 560
-    },
     "WDC": {
       "state": "OK",
       "rows": 560
@@ -114,18 +114,18 @@
     "AXTI",
     "CRCL",
     "CRDO",
-    "CRML",
     "CRWV",
     "INTC",
+    "IONQ",
     "MSFT",
     "MSTR",
+    "NBIS",
     "ORCL",
     "QCOM",
     "SMCI",
     "SNDK",
     "SPCX",
     "TSLA",
-    "USAR",
     "WDC",
     "WTTR"
   ]
