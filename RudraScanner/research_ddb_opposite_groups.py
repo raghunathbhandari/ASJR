@@ -41,7 +41,17 @@ def universe():
                     break
         except Exception as exc:print(f'UNIVERSE ERROR {kind} {type(exc).__name__}: {str(exc)[:70]}',flush=True)
     if not sources:
-        raise RuntimeError('Both broad universe sources inaccessible; refuse to claim broad-market coverage')
+        # Public GitHub CSV fallback for reproducible broad constituent discovery.
+        try:
+            tab=pd.read_csv('https://raw.githubusercontent.com/fja05680/sp500/master/sp500.csv')
+            col=next((c for c in tab.columns if str(c).lower() in ('symbol','ticker')),None)
+            if col:
+                additional={v.replace('.','-').upper() for v in tab[col].dropna().astype(str) if re.fullmatch(r'[A-Za-z]{1,6}(?:[.-][A-Za-z])?',v)}
+                names|=additional
+                sources.append(f'sp500_github={len(additional)}')
+        except Exception as exc:print(f'FALLBACK FAILED {type(exc).__name__}',flush=True)
+    if not sources:
+        raise RuntimeError('All broad universe sources inaccessible; refuse to claim broad-market coverage')
     (OUT/'UNIVERSE_SOURCE.txt').write_text('Sources: '+', '.join(sources)+'\nSymbols: '+str(len(names))+'\n')
     return sorted(names), sources
 
@@ -50,7 +60,7 @@ def price_history(names):
     for k in range(0,len(names),20):
         group=names[k:k+20]
         try:
-            x=yf.download(' '.join(group),period='120d',interval='1d',auto_adjust=True,progress=False,threads=False,group_by='ticker')
+            x=yf.download(' '.join(group),period='6mo',interval='1d',auto_adjust=True,progress=False,threads=False,group_by='ticker')
             for s in group:
                 try:
                     f=x[s] if isinstance(x.columns,pd.MultiIndex) else x
