@@ -1,3 +1,22 @@
+## VERIFIED LIVE and RESEARCH EXPORT UPDATE — October 16, 2026
+
+- GitHub bridge health result `results/research-2026101608501.json` is `SUCCESS` (Python 3.10.15, VPS execution confirmed).
+- Batch 2 collection result `results/research-2026101610002.json` is `SUCCESS` (10/10 daily + 10/10 5-minute Yahoo data).
+- Subsequent requests for batches 3, 4, 5, finalize, and `research_46_publish` are queued.
+- The first worker version published **only status JSON**. New `research_46_publish` operation writes the dated OHLCV compressed files, `research_metrics_46.csv` and `RESEARCH_REPORT.md` to GitHub from an isolated temporary clone. It does not stage live DataLake or Chakra code.
+- **To deploy the new operation once** via the existing working Discord script allowlist:
+
+```text
+!gitpull
+!runpy RudraScanner/scan_now\.py --bridge-refresh
+```
+
+- The refresh restarts **only** `asjr-research-bridge.service`. It does not restart `trading_bot` or Discord.
+- Confirm successful `research_46_publish` result in `results/research-20261016101902.json` and verify `ResearchData/EMA50_2026-10-15/research_metrics_46.csv` is present before claiming complete data availability.
+- Data history and calculations require a further scientific audit: Yahoo 5-minute bars might cover fewer than 20 same-time-of-day sessions for some symbols; null/unknown metrics must not be scored as success. Catalyst and historical capitalization are not part of OHLCV exports.
+
+---
+
 ## ACTIVATE VIA EXISTING WORKING DISCORD RUNPY (2026-10-16)
 
 The external Discord `!runSCommand` handler was not reloaded after
