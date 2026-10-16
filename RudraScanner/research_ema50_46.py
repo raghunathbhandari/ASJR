@@ -114,9 +114,13 @@ def collect_batch(batch):
                 subset = _completed_bars(_frame(downloaded, symbol), intraday)
                 entry = status["symbol_status"].setdefault(symbol, {})
                 entry[kind] = len(subset)
+                target = OUT / kind / f"{symbol}.csv.gz"
                 if len(subset):
-                    _save(subset, OUT / kind / f"{symbol}.csv.gz")
+                    _save(subset, target)
                 else:
+                    # Failed refresh must not masquerade as fresh data.
+                    if target.exists():
+                        target.unlink()
                     status["errors"].append(f"{kind}:{symbol}:NO_VALID_BARS")
                 print(f"{symbol} {kind} rows={len(subset)}", flush=True)
     (OUT / f"batch_{batch}.json").write_text(json.dumps(status, indent=2) + "\n")
@@ -267,11 +271,17 @@ def finalize():
         record.update(_intraday_features(five))
         entries.append(record)
     OUT.mkdir(parents=True, exist_ok=True)
+    missing_batches = [i for i in range(1, BATCHES + 1) if not (OUT / f"batch_{i}.json").exists()]
+    if missing_batches:
+        print(f"INCOMPLETE | run collection batches first: {missing_batches}", flush=True)
+        return 2
     df = pd.DataFrame(entries)
     df.to_csv(OUT / "research_metrics_46.csv", index=False)
     covered_daily = int(df["daily_status"].eq("OK").sum())
     covered_5m = int(df["five_minute_status"].eq("OK").sum())
-    full_slots = int(df["rvol20day_same_slot"].notna().sum())
+    full_slots = int(df["rvol20day_same_slot"].notna().sum()) if "rvol20day_same_slot" in df else 0
+    if "return_20d_pct" not in df:
+        df["return_20d_pct"] = float("nan")
     sorted_df = df.sort_values("return_20d_pct", ascending=False, na_position="last")
     lines = [
         "# Rudra 46 — historical data collection",
