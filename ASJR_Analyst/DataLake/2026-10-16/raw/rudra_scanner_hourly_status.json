@@ -1,11 +1,13 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-16T00:55:50.129359+00:00",
+  "generated_at_utc": "2026-10-16T01:01:45.331787+00:00",
   "selected_tickers": [
     "AAOI",
     "AKAM",
     "AMAT",
+    "AMD",
+    "AXTI",
     "BMNR",
     "CRDO",
     "CRWV",
@@ -19,8 +21,6 @@
     "QCOM",
     "SMCI",
     "SNDK",
-    "SPCX",
-    "USAR",
     "WDC",
     "WTTR"
   ],
@@ -34,6 +34,14 @@
       "rows": 537
     },
     "AMAT": {
+      "state": "OK",
+      "rows": 560
+    },
+    "AMD": {
+      "state": "OK",
+      "rows": 560
+    },
+    "AXTI": {
       "state": "OK",
       "rows": 560
     },
@@ -89,14 +97,6 @@
       "state": "OK",
       "rows": 560
     },
-    "SPCX": {
-      "state": "OK",
-      "rows": 560
-    },
-    "USAR": {
-      "state": "OK",
-      "rows": 560
-    },
     "WDC": {
       "state": "OK",
       "rows": 560
@@ -111,6 +111,8 @@
     "AAOI",
     "AKAM",
     "AMAT",
+    "AMD",
+    "AXTI",
     "BMNR",
     "CRDO",
     "CRWV",
@@ -124,8 +126,6 @@
     "QCOM",
     "SMCI",
     "SNDK",
-    "SPCX",
-    "USAR",
     "WDC",
     "WTTR"
   ]
