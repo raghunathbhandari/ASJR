@@ -1,34 +1,30 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-16T00:26:08.116362+00:00",
+  "generated_at_utc": "2026-10-16T00:32:10.873358+00:00",
   "selected_tickers": [
-    "AAOI",
     "AKAM",
     "AMAT",
     "AMD",
-    "BMNR",
     "BRUN",
     "CRDO",
     "CRWV",
     "FWDI",
     "INTC",
+    "IONQ",
     "IREN",
     "MKSI",
+    "MRVL",
     "MSFT",
+    "NBIS",
     "ORCL",
     "QCOM",
     "SMCI",
     "SNDK",
-    "USAR",
     "WDC",
     "WTTR"
   ],
   "per_ticker": {
-    "AAOI": {
-      "state": "OK",
-      "rows": 560
-    },
     "AKAM": {
       "state": "OK",
       "rows": 537
@@ -38,10 +34,6 @@
       "rows": 560
     },
     "AMD": {
-      "state": "OK",
-      "rows": 560
-    },
-    "BMNR": {
       "state": "OK",
       "rows": 560
     },
@@ -65,6 +57,10 @@
       "state": "OK",
       "rows": 560
     },
+    "IONQ": {
+      "state": "OK",
+      "rows": 560
+    },
     "IREN": {
       "state": "OK",
       "rows": 560
@@ -73,7 +69,15 @@
       "state": "OK",
       "rows": 464
     },
+    "MRVL": {
+      "state": "OK",
+      "rows": 560
+    },
     "MSFT": {
+      "state": "OK",
+      "rows": 560
+    },
+    "NBIS": {
       "state": "OK",
       "rows": 560
     },
@@ -93,10 +97,6 @@
       "state": "OK",
       "rows": 560
     },
-    "USAR": {
-      "state": "OK",
-      "rows": 560
-    },
     "WDC": {
       "state": "OK",
       "rows": 560
@@ -108,24 +108,24 @@
   },
   "rows": 10942,
   "usable_150bars": [
-    "AAOI",
     "AKAM",
     "AMAT",
     "AMD",
-    "BMNR",
     "BRUN",
     "CRDO",
     "CRWV",
     "FWDI",
     "INTC",
+    "IONQ",
     "IREN",
     "MKSI",
+    "MRVL",
     "MSFT",
+    "NBIS",
     "ORCL",
     "QCOM",
     "SMCI",
     "SNDK",
-    "USAR",
     "WDC",
     "WTTR"
   ]
