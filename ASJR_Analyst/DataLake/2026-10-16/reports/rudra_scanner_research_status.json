@@ -2,12 +2,12 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 8492,
-    "completed_rows": 8492,
+    "input_rows": 14259,
+    "completed_rows": 14259,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
-    "tickers": 15,
+    "tickers": 25,
     "min_periods": 9,
     "session_reset": false,
     "extended_hours_included": true,
@@ -16,17 +16,17 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 8492,
+    "no_wap_rows": 14259,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
   "detector_status": {
     "state": "OK",
-    "tickers": 10,
+    "tickers": 20,
     "emitted": 0,
     "blocked_context": 0,
     "blocked_data": 0,
-    "blocked_session": 10,
+    "blocked_session": 20,
     "mode": "RESEARCH_ONLY"
   },
   "events": [],
@@ -34,7 +34,7 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 43680,
+    "stored_rows": 45006,
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-16/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
@@ -60,6 +60,15 @@
   },
   "collection": {
     "requested": [
+      "BMNR",
+      "BRUN",
+      "BTDR",
+      "CRWV",
+      "IREN",
+      "QUBT",
+      "RDW",
+      "SNDK",
+      "USAR",
       "SPY",
       "QQQ",
       "SMH",
@@ -69,12 +78,22 @@
     "symbols": [
       "AKAM",
       "AMAT",
+      "BMNR",
+      "BRUN",
+      "BTDR",
       "CRDO",
+      "CRWV",
       "INTC",
+      "IREN",
+      "MKSI",
       "MSFT",
       "ORCL",
       "QCOM",
+      "QUBT",
+      "RDW",
       "SMCI",
+      "SNDK",
+      "USAR",
       "WDC",
       "WTTR",
       "SPY",
@@ -94,7 +113,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 8492,
+    "count": 14259,
     "source": "SAME_IBKR_APP"
   }
 }
