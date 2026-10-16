@@ -2,12 +2,12 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 14267,
-    "completed_rows": 14267,
+    "input_rows": 14814,
+    "completed_rows": 14814,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
-    "tickers": 25,
+    "tickers": 26,
     "min_periods": 9,
     "session_reset": false,
     "extended_hours_included": true,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 14267,
+    "no_wap_rows": 14814,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -34,7 +34,7 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 46332,
+    "stored_rows": 46878,
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-16/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
@@ -53,6 +53,7 @@
       "MSFT": "XLK",
       "ORCL": "XLK",
       "QCOM": "SMH",
+      "TSLA": "XLY",
       "WTTR": "XLE"
     },
     "sector_pct": {},
@@ -61,9 +62,8 @@
   "collection": {
     "requested": [
       "AAOI",
-      "AMD",
-      "AXTI",
       "BMNR",
+      "CRCL",
       "CRWV",
       "FWDI",
       "IONQ",
@@ -74,15 +74,15 @@
       "QQQ",
       "SMH",
       "XLE",
-      "XLK"
+      "XLK",
+      "XLY"
     ],
     "symbols": [
       "AAOI",
       "AKAM",
       "AMAT",
-      "AMD",
-      "AXTI",
       "BMNR",
+      "CRCL",
       "CRDO",
       "CRWV",
       "FWDI",
@@ -95,13 +95,15 @@
       "QCOM",
       "SMCI",
       "SNDK",
+      "TSLA",
       "WDC",
       "WTTR",
       "SPY",
       "QQQ",
       "SMH",
       "XLE",
-      "XLK"
+      "XLK",
+      "XLY"
     ],
     "etfs": {
       "AKAM": "XLK",
@@ -111,10 +113,11 @@
       "MSFT": "XLK",
       "ORCL": "XLK",
       "QCOM": "SMH",
+      "TSLA": "XLY",
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 14267,
+    "count": 14814,
     "source": "SAME_IBKR_APP"
   }
 }
