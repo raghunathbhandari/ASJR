@@ -1,20 +1,20 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-16T02:06:50.306238+00:00",
+  "generated_at_utc": "2026-10-16T02:12:45.139473+00:00",
   "selected_tickers": [
+    "AAOI",
     "AKAM",
     "AMAT",
-    "AMD",
     "AXTI",
-    "BMNR",
     "CRCL",
     "CRDO",
+    "CRML",
     "CRWV",
     "INTC",
-    "IONQ",
     "MSFT",
     "MSTR",
+    "NVDA",
     "ORCL",
     "QCOM",
     "SMCI",
@@ -25,6 +25,10 @@
     "WTTR"
   ],
   "per_ticker": {
+    "AAOI": {
+      "state": "OK",
+      "rows": 560
+    },
     "AKAM": {
       "state": "OK",
       "rows": 537
@@ -33,15 +37,7 @@
       "state": "OK",
       "rows": 560
     },
-    "AMD": {
-      "state": "OK",
-      "rows": 560
-    },
     "AXTI": {
-      "state": "OK",
-      "rows": 560
-    },
-    "BMNR": {
       "state": "OK",
       "rows": 560
     },
@@ -53,6 +49,10 @@
       "state": "OK",
       "rows": 560
     },
+    "CRML": {
+      "state": "OK",
+      "rows": 560
+    },
     "CRWV": {
       "state": "OK",
       "rows": 560
@@ -61,15 +61,15 @@
       "state": "OK",
       "rows": 560
     },
-    "IONQ": {
-      "state": "OK",
-      "rows": 560
-    },
     "MSFT": {
       "state": "OK",
       "rows": 560
     },
     "MSTR": {
+      "state": "OK",
+      "rows": 560
+    },
+    "NVDA": {
       "state": "OK",
       "rows": 560
     },
@@ -108,18 +108,18 @@
   },
   "rows": 11051,
   "usable_150bars": [
+    "AAOI",
     "AKAM",
     "AMAT",
-    "AMD",
     "AXTI",
-    "BMNR",
     "CRCL",
     "CRDO",
+    "CRML",
     "CRWV",
     "INTC",
-    "IONQ",
     "MSFT",
     "MSTR",
+    "NVDA",
     "ORCL",
     "QCOM",
     "SMCI",
