@@ -1,11 +1,12 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-16T06:58:01.979481+00:00",
+  "generated_at_utc": "2026-10-16T07:03:58.160384+00:00",
   "selected_tickers": [
     "AAOI",
     "AKAM",
     "AMAT",
+    "AXTI",
     "CRCL",
     "CRDO",
     "CRWV",
@@ -14,11 +15,10 @@
     "IONQ",
     "MSFT",
     "MSTR",
-    "MU",
-    "NBIS",
     "ORCL",
     "QCOM",
     "SMCI",
+    "SNDK",
     "SPCX",
     "TSLA",
     "WDC",
@@ -34,6 +34,10 @@
       "rows": 537
     },
     "AMAT": {
+      "state": "OK",
+      "rows": 560
+    },
+    "AXTI": {
       "state": "OK",
       "rows": 560
     },
@@ -69,14 +73,6 @@
       "state": "OK",
       "rows": 560
     },
-    "MU": {
-      "state": "OK",
-      "rows": 560
-    },
-    "NBIS": {
-      "state": "OK",
-      "rows": 560
-    },
     "ORCL": {
       "state": "OK",
       "rows": 560
@@ -86,6 +82,10 @@
       "rows": 560
     },
     "SMCI": {
+      "state": "OK",
+      "rows": 560
+    },
+    "SNDK": {
       "state": "OK",
       "rows": 560
     },
@@ -111,6 +111,7 @@
     "AAOI",
     "AKAM",
     "AMAT",
+    "AXTI",
     "CRCL",
     "CRDO",
     "CRWV",
@@ -119,11 +120,10 @@
     "IONQ",
     "MSFT",
     "MSTR",
-    "MU",
-    "NBIS",
     "ORCL",
     "QCOM",
     "SMCI",
+    "SNDK",
     "SPCX",
     "TSLA",
     "WDC",
