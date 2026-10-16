@@ -66,3 +66,12 @@ Do **not** discard stocks whose fundamentals or two-sided range tests are not ve
 - A move substantially beyond 50% is not inherently disqualifying, but distinguish explosive/outlier price moves from repeatable 25–50% rotations; avoid speculative penny or weak-balance-sheet names. Do not translate every large one-way swing into a tested tradable range.
 - Refresh tier whenever new completed candles/financial evidence arrive. Research only; no new bot automation or order modifications.
 
+
+
+## Broad-market strict DDB rescreen result — 2026-10-16
+Source: `RudraScanner/ResearchData/DDB_OPPOSITE_2026-10-16/DDB_STRICT_RETESTED_GROUPS_REPORT.md`.
+
+Screened 560 saved daily historical series (S&P 500 membership plus supplied names and ETFs); used last 64 completed daily candles through Oct 15, 2026. Hard mechanical range: 2+ independently spaced confirmed support pivots, 2+ resistance pivots, within 7% tolerances, plus 2+ completed alternating range legs of 25-50%. **9 stocks passed structural price test**, of which **5 have provisional Yahoo-based $2B+ and positive earnings/cash flow fundamental flags**: CIEN 4/2 touches +37.7%, TER 4/2 +34.6%, LRCX 2/3 +31.8%, VRT 2/3 +28.4%, PANW 2/2 +27.0%. They are **PRIMARY_RESEARCH_PENDING_AUDIT, NOT verified primary buy-ready**. Remaining structural names AEHL, FVNNU, DNA, COHR stay SECONDARY. Historical level centers as saved in report need adjusted-price/corporate-action validation.
+
+**Opposite rotation not yet validated:** no compelling pair among financially provisional tested-range names from a different sector. Prior Group A/Group B remain exploratory as before; do not represent the nine retested stocks as verified inverse groups, or confuse sector anticorrelation with reliably alternating individual stocks. Prior 1-year 25%+ swing counts do NOT establish two-sided repeated tests. The stock universe is expandable, with future sector diversification and out-of-sample multi-cycle checks required.
+
