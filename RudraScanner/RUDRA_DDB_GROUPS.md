@@ -54,3 +54,15 @@ in-sample selection bias. All source statistics are historical, not predictive.
 
 **RETROACTIVE STATUS:** The saved RUDRA_DDB_GROUPS_1Y_SWINGS_AOI.md calculated bottom from the ten lowest closes of 64 days and future top from the sole 64-day maximum. Those numbers have NOT passed both-boundary retest validation; therefore **withdraw their status as actionable AOI and price targets until re-screened**. Retain as historical price references only. The existing Group A/B tickers remain exploratory and are NOT all assumed to pass fundamental or boundary tests.
 
+
+
+## PRIMARY vs SECONDARY DDB lists — user clarification 2026-10-16
+
+Do **not** discard stocks whose fundamentals or two-sided range tests are not verified. Maintain both tiers, separately for Group A and B:
+
+- **PRIMARY TOP WATCHLIST** (must satisfy ALL): verifiably fundamentally strong/durable company; recent multi-swing range with >=2 independent, meaningfully separated tests of BOTH bottom support and top resistance; typical recurring trough-to-peak upside **at least 25% and preferably 25–50%** within the relevant three-month regime; current attractive AOI supported by verified retests; bullish setup/CHOCH required before any actual trade. Estimate actual repeated cycle amplitudes from validated paired swings, not theoretical distance to one untested historical high. Explicitly record support test count, resistance test count, and measured recurring range gain.
+- **SECONDARY RESEARCH WATCHLIST**: promising discounted/strong business, large swing or inverse-group candidate but not yet confirmed on any primary gate. Keep it visible and label clearly which checks are pending/failed, and what would promote it.
+- Historical Group A (INTC AKAM WDC STX KLAC) and Group B (CBOE ZTS V CME CDW) stay in their group membership regardless of primary/secondary tier pending formal rescreen. **Do not claim these names presently qualify for PRIMARY** without verified financial and range test evidence.
+- A move substantially beyond 50% is not inherently disqualifying, but distinguish explosive/outlier price moves from repeatable 25–50% rotations; avoid speculative penny or weak-balance-sheet names. Do not translate every large one-way swing into a tested tradable range.
+- Refresh tier whenever new completed candles/financial evidence arrive. Research only; no new bot automation or order modifications.
+
