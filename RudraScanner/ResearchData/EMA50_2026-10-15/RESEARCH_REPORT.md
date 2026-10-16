@@ -1,6 +1,6 @@
 # Rudra 46 — historical data collection
 Source: User-pasted IBKR HIGH_LAST_VS_EMA50 scan, 2026-10-15 20:15 UK
-Report time UTC: 2026-10-16T10:56:13.072418+00:00
+Report time UTC: 2026-10-16T12:49:42.585147+00:00
 
 Daily metrics coverage: 46/46
 5-minute metrics coverage: 45/46
