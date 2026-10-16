@@ -18,6 +18,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 REPO = Path("/root/trading/ASJR")
+# Script is launched by absolute path from systemd, so package root is not
+# automatically importable when publishing isolated research evidence.
+if str(REPO) not in sys.path:
+    sys.path.insert(0, str(REPO))
 REQ_DIR = "RudraScanner/ResearchBridge/requests"
 RESULT_DIR = "RudraScanner/ResearchBridge/results"
 JOB_TYPES = {"health_check", "research_46_batch", "research_46_finalize", "research_46_publish"}
@@ -44,7 +48,12 @@ def safe_job(obj, file_id):
 def run_job(obj):
     operation = obj["operation"]
     if operation == "research_46_publish":
-        return publish_research_files()
+        try:
+            return publish_research_files()
+        except Exception as exc:
+            # An export failure must be reported, not infinitely retried and
+            # block every following research job.
+            return {"status": "FAILED", "error": type(exc).__name__}
     if operation == "health_check":
         return {"status": "SUCCESS", "python": sys.version.split()[0],
                 "repo_present": (REPO / "RudraScanner/scan_now.py").is_file()}
