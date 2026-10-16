@@ -1,13 +1,14 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-16T00:20:05.743883+00:00",
+  "generated_at_utc": "2026-10-16T00:26:08.116362+00:00",
   "selected_tickers": [
+    "AAOI",
     "AKAM",
     "AMAT",
+    "AMD",
     "BMNR",
     "BRUN",
-    "BTDR",
     "CRDO",
     "CRWV",
     "FWDI",
@@ -15,7 +16,6 @@
     "IREN",
     "MKSI",
     "MSFT",
-    "NBIS",
     "ORCL",
     "QCOM",
     "SMCI",
@@ -25,11 +25,19 @@
     "WTTR"
   ],
   "per_ticker": {
+    "AAOI": {
+      "state": "OK",
+      "rows": 560
+    },
     "AKAM": {
       "state": "OK",
       "rows": 537
     },
     "AMAT": {
+      "state": "OK",
+      "rows": 560
+    },
+    "AMD": {
       "state": "OK",
       "rows": 560
     },
@@ -40,10 +48,6 @@
     "BRUN": {
       "state": "OK",
       "rows": 547
-    },
-    "BTDR": {
-      "state": "OK",
-      "rows": 560
     },
     "CRDO": {
       "state": "OK",
@@ -70,10 +74,6 @@
       "rows": 464
     },
     "MSFT": {
-      "state": "OK",
-      "rows": 560
-    },
-    "NBIS": {
       "state": "OK",
       "rows": 560
     },
@@ -108,11 +108,12 @@
   },
   "rows": 10942,
   "usable_150bars": [
+    "AAOI",
     "AKAM",
     "AMAT",
+    "AMD",
     "BMNR",
     "BRUN",
-    "BTDR",
     "CRDO",
     "CRWV",
     "FWDI",
@@ -120,7 +121,6 @@
     "IREN",
     "MKSI",
     "MSFT",
-    "NBIS",
     "ORCL",
     "QCOM",
     "SMCI",
