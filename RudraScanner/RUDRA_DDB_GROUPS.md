@@ -2,6 +2,8 @@
 Last updated: 2026-10-16
 Data cutoff: completed US session 2026-10-15 (not live quotes)
 
+> **2026-10-16 EXPANDED RESEARCH (39 candidates):** Original approved Group A/B membership below remains unchanged; the new INTC-relative expanded candidate lists, 545-instrument correlation screen, smaller-swing/4H Visa lessons and verified GitHub↔VPS access instructions are in [RUDRA_DDB_INTC_EXPANSION_2026-10-16.md](RUDRA_DDB_INTC_EXPANSION_2026-10-16.md). New names are exploratory, not qualified primary trading ranges.
+
 ## Group A — Discounted / bottom-side research
 INTC, AKAM, WDC, STX, KLAC
 
