@@ -1,3 +1,10 @@
+## RUDRA-DDB HARD FILTERS — 2026-10-16 (IMPORTANT)
+The user has locked TWO mandatory DDB gates: (1) **fundamentally strong tickers only**: verify durable earnings/cash-flow/balance sheet/business model; if uncertain, do not treat as investable, (2) **BOTH sides of proposed price range must have been TESTED MULTIPLE TIMES**. Conservative research default: >=2 independent nonconsecutive significant price reactions at bottom support zone AND >=2 at top resistance zone, separated by material intervening swings, not one-off highs/lows or neighboring candles. Unverified test counts mean NO VALID RANGE/AOI/TARGET. 25%+ historical one-year swing-leg count is NOT evidence of recurring support/resistance tests. 3-month recent multi-swing remains necessary. Exact price-level thresholds need ATR/tolerance-aware independent test verification, not simply the 10 smallest closes or a single highest close.
+
+**WARNING / RETRACTION:** Previous DDB Groups 1Y AOI table calculated bottoms via ten lowest closes and tops via one highest close. Those are exploratory historical references only, no longer actionable price zones or target percentages, pending hard-filter revalidation. Official document: RudraScanner/RUDRA_DDB_GROUPS.md. Group A & B are exploratory, not eligible trading calls without passes.
+
+---
+
 ## OFFICIAL RUDRA-DDB GROUPS — 2026-10-16
 The user approved two named research watchlists, saved at **RudraScanner/RUDRA_DDB_GROUPS.md**:
 - **Group A (discounted/bottom research): INTC, AKAM, WDC, STX, KLAC.**
