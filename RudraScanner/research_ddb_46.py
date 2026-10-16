@@ -52,6 +52,23 @@ def run():
         p=pivots(values)
         confirmed_highs=[(i,float(values[i])) for i,k in p if k=='HIGH']
         confirmed_lows=[(i,float(values[i])) for i,k in p if k=='LOW']
+        # Major legs: only consecutive confirmed pivots; include last unfinished
+        # pivot-to-latest close as a provisional leg, clearly marked separately.
+        legs=[]
+        for (start,_),(end,_) in zip(p,p[1:]):
+            pct_move=100.0*(values[end]/values[start]-1.0)
+            legs.append((start,end,pct_move,False))
+        provisional=None
+        if p and p[-1][0]<len(values)-1:
+            start=p[-1][0]
+            pct_move=100.0*(values[-1]/values[start]-1.0)
+            provisional=(start,len(values)-1,pct_move,True)
+        big=[x for x in legs if abs(x[2])>=25]
+        mid=[x for x in legs if 25<=abs(x[2])<=50]
+        huge=[x for x in legs if abs(x[2])>50]
+        up=[x for x in big if x[2]>0]
+        down=[x for x in big if x[2]<0]
+        provisional_big=bool(provisional and abs(provisional[2])>=25)
         # Most recent peak must occur within the same rolling ~3m window.
         hiidx=int(np.argmax(values))
         peak_to_current=round((last/hi-1)*100,2)
@@ -68,6 +85,16 @@ def run():
            'swing_reversals_6p5pct':len(p),
            'confirmed_highs':len(confirmed_highs),
            'confirmed_lows':len(confirmed_lows),
+           'major_25pct_confirmed_total':len(big),
+           'major_25_to_50pct_confirmed':len(mid),
+           'major_over_50pct_confirmed':len(huge),
+           'major_25pct_up_confirmed':len(up),
+           'major_25pct_down_confirmed':len(down),
+           'provisional_25pct_last_leg':int(provisional_big),
+           'major_25pct_including_provisional':len(big)+int(provisional_big),
+           'major_legs_trace':'; '.join(
+               f"{str(d.index[a].date())}>{str(d.index[b].date())}:{z:+.1f}%"
+               for a,b,z,_ in big),
            'last5_return_pct':recent_5_return,
            'ema9_up_5d':bool(e9.iloc[-1]>e9.iloc[-6]),
            'ema20_up_5d':bool(e20.iloc[-1]>e20.iloc[-6]),
@@ -105,6 +132,21 @@ def run():
         lines.append(f"| {r.ticker} | {r.high_3m:.2f} | {r.close:.2f} | "
                      f"{r.drawdown_from_high_pct:.1f}% | {r.range_position_pct:.1f}% | "
                      f"{int(r.swing_reversals_6p5pct)} | {'YES' if r.bottom_confirming else 'NO'} |")
+    lines+=['', '## All 46 symbols: major 25%+ confirmed moves',
+            'A major move is one completed leg between successive zigzag turning points;',
+            '25-50% and over-50% are separate bins, counted once per leg.',
+            'Latest unfinished leg is recorded separately as provisional.',
+            '',
+            '| Ticker | Data | 25%+ | Up | Down | 25–50% | >50% | Provisional 25%+ | 3m range position |',
+            '|---|---|---:|---:|---:|---:|---:|---:|---:|']
+    for _,r in frame.iterrows():
+        if r.status != 'OK':
+            lines.append(f"| {r.ticker} | {r.status} | — | — | — | — | — | — | — |")
+            continue
+        lines.append(f"| {r.ticker} | OK | {int(r.major_25pct_confirmed_total)} | "
+                     f"{int(r.major_25pct_up_confirmed)} | {int(r.major_25pct_down_confirmed)} | "
+                     f"{int(r.major_25_to_50pct_confirmed)} | {int(r.major_over_50pct_confirmed)} | "
+                     f"{int(r.provisional_25pct_last_leg)} | {r.range_position_pct:.1f}% |")
     lines+=['','See CSV for full 46 names, dates, indicator flags and dated swing trace.',
             'Zigzag is descriptive and threshold-sensitive; validate candle structure.',
             'Do not classify missing/illiquid names as qualifying.']
