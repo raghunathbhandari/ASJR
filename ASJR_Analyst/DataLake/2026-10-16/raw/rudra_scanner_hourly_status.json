@@ -1,11 +1,10 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-16T10:52:43.432247+00:00",
+  "generated_at_utc": "2026-10-16T10:58:39.542055+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
-    "CRCL",
     "CRDO",
     "CRWV",
     "INTC",
@@ -22,7 +21,8 @@
     "TSLA",
     "VRNS",
     "WDC",
-    "WTTR"
+    "WTTR",
+    "ZETA"
   ],
   "per_ticker": {
     "AKAM": {
@@ -30,10 +30,6 @@
       "rows": 524
     },
     "AMAT": {
-      "state": "OK",
-      "rows": 547
-    },
-    "CRCL": {
       "state": "OK",
       "rows": 547
     },
@@ -104,13 +100,16 @@
     "WTTR": {
       "state": "OK",
       "rows": 423
+    },
+    "ZETA": {
+      "state": "OK",
+      "rows": 547
     }
   },
   "rows": 10739,
   "usable_150bars": [
     "AKAM",
     "AMAT",
-    "CRCL",
     "CRDO",
     "CRWV",
     "INTC",
@@ -127,6 +126,7 @@
     "TSLA",
     "VRNS",
     "WDC",
-    "WTTR"
+    "WTTR",
+    "ZETA"
   ]
 }
