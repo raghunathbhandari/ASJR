@@ -1,0 +1,32 @@
+name: Rudra DDB 39 Annual Historical Research
+on:
+  push:
+    paths:
+      - '.github/workflows/rudra_ddb_39_1y.yml'
+      - 'RudraScanner/research_ddb_39_1y.py'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  research-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install historical research libraries
+        run: pip install --quiet numpy pandas yfinance
+      - name: Calculate 39 ticker historical swings
+        run: python -m RudraScanner.research_ddb_39_1y
+      - name: Publish research CSV only
+        run: |
+          git config user.name "ASJR Research Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add RudraScanner/ResearchData/DDB_OPPOSITE_2026-10-16/DDB_39_1Y_*.csv
+          if ! git diff --cached --quiet; then
+            git commit -m "Research: DDB 39 ticker 1Y swing data"
+            git pull --rebase
+            git push
+          fi
