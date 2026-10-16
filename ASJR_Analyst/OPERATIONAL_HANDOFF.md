@@ -1,3 +1,8 @@
+## 2026-10-16 — DDB 39 ticker research and safe VPS bridge guide
+New canonical companion document: [RudraScanner/RUDRA_DDB_INTC_EXPANSION_2026-10-16.md](../RudraScanner/RUDRA_DDB_INTC_EXPANSION_2026-10-16.md). Documents expanded INTC-similar (A) and INTC-inverse (B) candidate watchlists, same-session historical correlation/turning-point computations, Visa sub-25% 4H correction, limitations of unverified support/top tests, and exact established AI→GitHub→VPS research bridge controls. Expanded research analyzed GitHub saved data in AI session, **not an executed DDB VPS job**. The current worker has no DDB operation allowlisted; approve/deploy a scoped extension before any new VPS research run. Leave Chakra/Discord schedules untouched.
+
+---
+
 ## 2026-10-16 — NEW VERIFIED AI→VPS BRIDGE + RESEARCH (READ THIS BEFORE OLDER SECTIONS)
 
 **Authoritative up-to-date details:** [RudraScanner/AI_SESSION_HANDOFF.md](../RudraScanner/AI_SESSION_HANDOFF.md) (first section) and [RudraScanner/ResearchBridge/README.md](../RudraScanner/ResearchBridge/README.md).
