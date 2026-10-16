@@ -1,3 +1,12 @@
+## OFFICIAL RUDRA-DDB GROUPS — 2026-10-16
+The user approved two named research watchlists, saved at **RudraScanner/RUDRA_DDB_GROUPS.md**:
+- **Group A (discounted/bottom research): INTC, AKAM, WDC, STX, KLAC.**
+- **Group B (strong/top research): CBOE, ZTS, V, CME, CDW.**
+Study rolling 3-month repeated 25%+ swings, current relative range position and historical opposing sector/stock dynamics. A/B roles can switch and are not direct trading calls. Same-position table rows are NOT proven inversely correlated trading pairs. Research data cutoff 2026-10-15. Fundamental durability, support/sweep, bullish CHOCH, catalysts, out-of-sample correlation validation required before trading. No trading bot or schedule modifications.
+Source: RudraScanner/ResearchData/DDB_OPPOSITE_2026-10-16/DDB_TWO_GROUPS_REPORT.md
+
+---
+
 ## RUDRA-DDB — MULTIPLE SWINGS WITHIN THREE MONTHS (2026-10-16, LATEST)
 
 **Important clarification from user:** DDB is about a **rolling three-month up/down structure with multiple repeated swings**, NOT only a single rise then a single fall. Example supplied by user: **INTC repeatedly traded up and down in roughly the $88–$125 range**. Treat those bounds as user-provided reference points, **not independently validated highs/lows, dates or a current quote**. Reconstruct the real dated sequence from price candles before applying scores.
