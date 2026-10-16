@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 9977,
-    "completed_rows": 9977,
+    "input_rows": 10002,
+    "completed_rows": 10002,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 9977,
+    "no_wap_rows": 10002,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -51,6 +51,7 @@
       "CRDO": "SMH",
       "INTC": "SMH",
       "MSFT": "XLK",
+      "MU": "SMH",
       "ORCL": "XLK",
       "QCOM": "SMH",
       "TSLA": "XLY",
@@ -62,7 +63,6 @@
   "collection": {
     "requested": [
       "AAOI",
-      "CRCL",
       "IONQ",
       "IREN",
       "MSTR",
@@ -80,7 +80,6 @@
       "AAOI",
       "AKAM",
       "AMAT",
-      "CRCL",
       "CRDO",
       "CRWV",
       "INTC",
@@ -88,6 +87,7 @@
       "IREN",
       "MSFT",
       "MSTR",
+      "MU",
       "NBIS",
       "ORCL",
       "QCOM",
@@ -110,13 +110,14 @@
       "CRDO": "SMH",
       "INTC": "SMH",
       "MSFT": "XLK",
+      "MU": "SMH",
       "ORCL": "XLK",
       "QCOM": "SMH",
       "TSLA": "XLY",
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 9977,
+    "count": 10002,
     "source": "SAME_IBKR_APP"
   }
 }
