@@ -1,3 +1,38 @@
+## Verified deployment status — 2026-10-16 09:35 UK
+
+**NOT OPERATIONAL YET.** Code and health-check request exist on GitHub,
+but the result `results/research-2026101608501.json` is absent.
+The user confirmed `!gitpull` succeeded and `!runSCommand bot`
+reported tmux `trading_bot` running. However,
+`!runSCommand bridge-start` returned
+`DENIED | Unknown admin operation`: the already-running external
+Discord command handler has not loaded the revised allowlist.
+`!gitpull` alone does not reload a running Python module.
+
+**Current limitation:** This chat can create job-request JSON in GitHub,
+but cannot claim to execute VPS research until the worker is activated
+and returns a successful health-check result. As implemented, v1 publishes
+only job-status JSON, not research CSV or OHLCV data.
+
+**External Discord handler:** ASJR GitHub contains
+`ASJR_Analyst/Utils/discord_server_commands.py`, but the external bot
+entry point and its service reload procedure are not established by the
+handoff. `!mbdstop` / `!mbdstart` control `trading_bot`, **not**
+a verified standalone Discord service restart. Never ask for a blind
+Chakra or Discord restart. If administrator SSH is available, use the
+read-only `--once` worker health test described below before enabling a
+persistent service. Do not claim a direct connection until a GitHub result
+is received. No secrets or Discord Admin ID should be posted in chat.
+
+**Production safety requirements before enabling:** isolate the
+worker from root privileges and the live trading worktree, restrict
+GitHub request-writing privileges, guard against replay/concurrent workers,
+and permit publication of approved research outputs only. The current
+prototype assumes a writable root-based ASJR environment and is not
+production-hardened.
+
+---
+
 # Rudra AI ↔ VPS Research Bridge (v1)
 
 **Goal:** AI writes a fixed JSON job to GitHub main, the VPS polls it,
