@@ -1,3 +1,13 @@
+## RUDRA-DDB — MULTIPLE SWINGS WITHIN THREE MONTHS (2026-10-16, LATEST)
+
+**Important clarification from user:** DDB is about a **rolling three-month up/down structure with multiple repeated swings**, NOT only a single rise then a single fall. Example supplied by user: **INTC repeatedly traded up and down in roughly the $88–$125 range**. Treat those bounds as user-provided reference points, **not independently validated highs/lows, dates or a current quote**. Reconstruct the real dated sequence from price candles before applying scores.
+
+Measure for all DDB candidates: (1) all material swing highs/lows over last ~63 U.S. sessions, with dates and prices; (2) number of complete rallies and pullbacks; (3) per-leg percent up/down and cumulative traded range; (4) higher highs/lower highs, higher lows/lower lows, and range compression/expansion; (5) proximity of *current* price to recurrent support and resistance; (6) multiple liquidity sweeps/reclaims and bullish CHOCH with volume/time-of-day; (7) momentum in **latest** leg vs prior legs; (8) stock/index/sector relative strength plus financial durability and contemporaneous catalysts. Mark unverified figures and avoid counting noise as material swings. Repeated range swings can indicate consolidation, distribution or volatile chop, not necessarily a bullish setup. Require price stabilization and verified bullish shift, at attractive levels, before upgrading to DDB recovery.
+
+Older rule remains: recent three-month lookback is **locked**; older 52-week drawdown alone cannot qualify. The user examples INTC, WDC, AKAM should be evaluated with the SAME three-month multi-swing methodology. Do not turn user-supplied $88–$125 example into a locked support/target zone without historical verification.
+
+---
+
 ## RUDRA-DDB — LOCKED TIME WINDOW (2026-10-16)
 
 **User explicitly clarified:** DDB fall / drawdown MUST be recent and its up-and-down cycle occur **within the last three months**, not a 52-week or multi-year peak-to-current drawdown. Apply to every future DDB shortlist/report.
