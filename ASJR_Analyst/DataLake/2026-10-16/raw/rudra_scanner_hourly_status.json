@@ -1,13 +1,12 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-16T00:49:55.865020+00:00",
+  "generated_at_utc": "2026-10-16T00:55:50.129359+00:00",
   "selected_tickers": [
     "AAOI",
     "AKAM",
     "AMAT",
-    "AMD",
-    "BRUN",
+    "BMNR",
     "CRDO",
     "CRWV",
     "FWDI",
@@ -15,6 +14,7 @@
     "IONQ",
     "MSFT",
     "MSTR",
+    "NVDA",
     "ORCL",
     "QCOM",
     "SMCI",
@@ -37,13 +37,9 @@
       "state": "OK",
       "rows": 560
     },
-    "AMD": {
+    "BMNR": {
       "state": "OK",
       "rows": 560
-    },
-    "BRUN": {
-      "state": "OK",
-      "rows": 547
     },
     "CRDO": {
       "state": "OK",
@@ -70,6 +66,10 @@
       "rows": 560
     },
     "MSTR": {
+      "state": "OK",
+      "rows": 560
+    },
+    "NVDA": {
       "state": "OK",
       "rows": 560
     },
@@ -106,13 +106,12 @@
       "rows": 434
     }
   },
-  "rows": 11038,
+  "rows": 11051,
   "usable_150bars": [
     "AAOI",
     "AKAM",
     "AMAT",
-    "AMD",
-    "BRUN",
+    "BMNR",
     "CRDO",
     "CRWV",
     "FWDI",
@@ -120,6 +119,7 @@
     "IONQ",
     "MSFT",
     "MSTR",
+    "NVDA",
     "ORCL",
     "QCOM",
     "SMCI",
