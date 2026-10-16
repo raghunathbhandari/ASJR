@@ -65,6 +65,10 @@ def main(argv=None):
                         help="One of five fixed, Yahoo-only research collection batches")
     parser.add_argument("--research-46-finalize", action="store_true",
                         help="Finalize research results after all five batches; no broker call")
+    parser.add_argument("--bridge-start", action="store_true",
+                        help="One-time install/start of fixed ASJR research bridge service; no Chakra restart")
+    parser.add_argument("--bridge-check", action="store_true",
+                        help="Run one bridge polling iteration and report health, without installing service")
     parser.add_argument("--ibkr-ema50", action="store_true", help="Direct read-only HIGH_LAST_VS_EMA50 list, up to 50 symbols")
     momentum_modes = parser.add_mutually_exclusive_group()
     momentum_modes.add_argument("--momentum", action="store_true", help="1M and 3M movers together")
@@ -153,6 +157,15 @@ def main(argv=None):
         from RudraScanner.momentum_movers import main as momentum_main
         period = "1m" if args.momentum_1m else ("3m" if args.momentum_3m else "both")
         return momentum_main(["--compact", "--period", period])
+    if args.bridge_start:
+        from RudraScanner.ResearchBridge.install_bridge import main as bridge_install
+        return bridge_install()
+    if args.bridge_check:
+        from RudraScanner.research_bridge_worker import main as bridge_worker
+        # Called with a pinned argument set, never Discord-supplied shell.
+        import unittest.mock
+        with unittest.mock.patch.object(sys, "argv", ["bridge-worker", "--once"]):
+            return bridge_worker()
     if args.research_46_batch is not None or args.research_46_finalize:
         from RudraScanner.research_ema50_46 import main as research_main
         if args.research_46_batch is not None:
