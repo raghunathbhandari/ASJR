@@ -268,6 +268,8 @@ def _intraday_features(frame):
 def _publish_study():
     """Commit only study outputs through scratch clone; never stage live worktree."""
     artifacts = [OUT / "research_metrics_46.csv", OUT / "RESEARCH_REPORT.md"]
+    from RudraScanner.research_46_patterns import NEW_FILES
+    artifacts.extend(OUT / name for name in NEW_FILES)
     for kind in ("daily", "five_minute"):
         artifacts.extend(OUT / kind / f"{symbol}.csv.gz" for symbol in NAMES
                          if (OUT / kind / f"{symbol}.csv.gz").is_file())
@@ -384,6 +386,9 @@ def finalize():
     print(f"FILES | {OUT.relative_to(ROOT)}/research_metrics_46.csv")
     print(f"FILES | {OUT.relative_to(ROOT)}/RESEARCH_REPORT.md")
     if not covered_daily:
+        return 2
+    from RudraScanner.research_46_patterns import analyze as analyze_patterns
+    if analyze_patterns():
         return 2
     return 0 if _publish_study() else 2
 
