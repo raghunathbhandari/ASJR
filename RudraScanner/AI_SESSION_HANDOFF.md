@@ -1,3 +1,23 @@
+## 2026-10-16 — QUEUE STALL ROOT CAUSE FOUND AND FIXED (VERIFIED)
+
+**Diagnosis:** Five queued jobs were named `research-20261016101302`, `...101402`, `...101502`, `...101602`, `...101902`. They contained **14 digits after `research-`**, but `safe_job()` requires **exactly 13 numeric digits**, total ID length 22. The worker silently rejected them without producing result JSON, which looked like stalled VPS execution. No VPS/service restart was necessary.
+
+**Corrective action through ChatGPT GitHub connector:**
+- Deleted the five malformed requests (not their data; no executed output existed).
+- Created valid replacement IDs (all exactly 22 characters):
+  - Batch3 `research-2026101611003`
+  - Batch4 `research-2026101611004`
+  - Batch5 `research-2026101611005`
+  - Finalize `research-2026101611006`
+  - CSV/OHLCV export `research-2026101611007`
+- **LIVE VERIFIED:** Batch3 `results/research-2026101611003.json` completed **SUCCESS** on VPS at `2026-10-16T10:19:25Z`, daily 10/10 and 5-minute 10/10, 0 errors, and result automatically pushed to GitHub. This proves fixed queue processing and Git push, without user Discord intervention.
+- Other four replacement jobs were **PENDING** at first verification. Check new IDs, not the deleted legacy IDs.
+- Going forward validate `/^research-[0-9]{13}$/` **before creating** a GitHub request. Processing sequence is lexicographic job ID order (one job per worker tick). A successful request commit is NOT a successful VPS execution.
+
+**Do not reconfigure/restart Chakra, Discord, or the research worker for this issue.** Follow subsequent job result JSONs and then `RudraScanner/ResearchData/EMA50_2026-10-15/research_metrics_46.csv`. Publish date/time and data completeness; never invent 5m RVOL values for missing history.
+
+---
+
 # 2026-10-16 — AI→VPS RESEARCH BRIDGE VERIFIED; 46-TICKER STUDY CONTINUING (READ FIRST)
 
 **User's current priority:** resume disciplined mid/large-cap swing & momentum research and ensure fresh AI sessions can submit approved data-collection jobs without repeated Discord manual commands. **Do not modify Chakra's external launcher** `/root/trading/utils/trading_sudarsan_chakra.py`, schedule, trading behavior or alerts. Repository `raghunathbhandari/ASJR`, main; VPS `/root/trading/ASJR`; venv `/root/trading/venv_new/bin/python`.
