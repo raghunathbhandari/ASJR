@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 """ON-DEMAND research only: collect dated Yahoo candles for 46 EMA50 IBKR symbols.
 
-No IBKR connection, no Chakra changes, no scheduled tasks, no orders, no Git
-commands. Run five batches, then --finalize. All outputs live in an isolated,
-Git-trackable RudraScanner/ResearchData directory.
+No IBKR connection, no Chakra changes, no scheduled tasks or orders. Five
+batches collect data; finalize calculates metrics and publishes only approved
+research artifacts through an isolated Git clone, not the live worktree.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import math
+import shutil
+import subprocess
+import tempfile
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -260,6 +264,65 @@ def _intraday_features(frame):
     }
 
 
+
+def _publish_study():
+    """Commit only study outputs through scratch clone; never stage live worktree."""
+    artifacts = [OUT / "research_metrics_46.csv", OUT / "RESEARCH_REPORT.md"]
+    for kind in ("daily", "five_minute"):
+        artifacts.extend(OUT / kind / f"{symbol}.csv.gz" for symbol in NAMES
+                         if (OUT / kind / f"{symbol}.csv.gz").is_file())
+    if any(not f.is_file() or f.is_symlink() or f.stat().st_size > 3000000
+           for f in artifacts):
+        print("PUBLISH | REJECTED | missing, symlink or oversized research file", flush=True)
+        return False
+    with tempfile.TemporaryDirectory(prefix="asjr_46_export_") as folder:
+        checkout = Path(folder) / "repo"
+        def g(*args, timeout=65):
+            return subprocess.run(["git", *args], cwd=checkout,
+                                  stdout=subprocess.DEVNULL,
+                                  stderr=subprocess.DEVNULL, timeout=timeout).returncode
+        clone = subprocess.run(["git", "clone", "-q", "--shared", "--no-checkout",
+                                str(ROOT), str(checkout)], capture_output=True, timeout=65)
+        if clone.returncode:
+            print("PUBLISH | FAILED | isolated clone", flush=True)
+            return False
+        origin = subprocess.run(["git", "remote", "get-url", "origin"], cwd=ROOT,
+                                capture_output=True, text=True, timeout=10)
+        url = origin.stdout.strip()
+        if origin.returncode or not (
+            url.startswith("git@github.com:raghunathbhandari/ASJR") or
+            url.startswith("https://github.com/raghunathbhandari/ASJR")
+        ):
+            print("PUBLISH | FAILED | unexpected git origin", flush=True)
+            return False
+        g("remote", "set-url", "origin", url)
+        g("config", "user.name", "ASJR Research Bridge")
+        g("config", "user.email", "asjr-research-bridge@users.noreply.github.com")
+        names = [str(f.relative_to(ROOT)) for f in artifacts]
+        for attempt in range(3):
+            if g("fetch", "-q", "origin", "main") or g("checkout", "-q", "-B", "export", "FETCH_HEAD"):
+                print("PUBLISH | FAILED | fetch or checkout", flush=True)
+                return False
+            for item in artifacts:
+                target = checkout / item.relative_to(ROOT)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(item, target)
+            if g("add", "--", *names):
+                print("PUBLISH | FAILED | stage", flush=True)
+                return False
+            if g("diff", "--cached", "--quiet") == 0:
+                print(f"PUBLISH | SUCCESS | already tracked {len(artifacts)} files", flush=True)
+                return True
+            if g("commit", "-qm", "Publish 46-stock Yahoo research metrics and historical candles"):
+                print("PUBLISH | FAILED | commit", flush=True)
+                return False
+            if not g("push", "-q", "origin", "HEAD:refs/heads/main", timeout=90):
+                print(f"PUBLISH | SUCCESS | {len(artifacts)} research files pushed", flush=True)
+                return True
+            time.sleep(attempt + 1)
+    print("PUBLISH | FAILED | push retries exhausted", flush=True)
+    return False
+
 def finalize():
     if len(NAMES) != 46 or len(set(NAMES)) != 46:
         raise ValueError("IBKR 46-name universe was altered")
@@ -320,7 +383,9 @@ def finalize():
           f"| same-slot RVOL20 {full_slots}/46", flush=True)
     print(f"FILES | {OUT.relative_to(ROOT)}/research_metrics_46.csv")
     print(f"FILES | {OUT.relative_to(ROOT)}/RESEARCH_REPORT.md")
-    return 0 if covered_daily else 2
+    if not covered_daily:
+        return 2
+    return 0 if _publish_study() else 2
 
 
 def main(argv=None):
