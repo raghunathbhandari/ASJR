@@ -92,6 +92,16 @@ class TestDiscordServerCommands(unittest.TestCase):
         argv = shell.call_args.args[0]
         self.assertEqual(argv[-2:], ["RudraScanner/scan_now.py", "--rvol-status"])
 
+    @patch.object(c, "_run", return_value=(0, "BRIDGE INSTALL | SUCCESS"))
+    def test_bridge_start_fixed_admin_operation(self, shell):
+        self.assertIn("BRIDGE-START", self.run_command("!runSCommand bridge-start"))
+        self.assertEqual(shell.call_args.args[0][-1], "RudraScanner/ResearchBridge/install_bridge.py")
+
+    @patch.object(c, "_run", return_value=(0, "active"))
+    def test_bridge_status_fixed_admin_operation(self, shell):
+        self.assertIn("exit=0", self.run_command("!runSCommand bridge-status"))
+        self.assertEqual(shell.call_args.args[0], ["systemctl", "is-active", "asjr-research-bridge.service"])
+
     @patch.object(c, "_run", return_value=(0, ""))
     def test_tmux_status(self, shell):
         self.assertIn("RUNNING", self.run_command("!runSCommand bot"))
