@@ -1,3 +1,16 @@
+## IMPORTANT RVOL SCORING CORRECTION — October 16, 2026
+
+**Do not interpret the headline 0–100 technical index as independent breakout signals.** The source file captured the last 5-minute bar of the October 15 session: **43/45** intraday series have their last bar at 15:55 ET. The 20 ticker profiles separately verified as US mid/large-cap ALL show final 5m RVOL5 >2x, precisely because comparing a high-volume near-close bar against the preceding 5/20 bars is not time-of-day normalized. This is a **systematic volume seasonal artifact** and may artificially boost the relative-volume factor of our initial technical scores. Use `rvol20day_same_slot` and `rvol5day_same_slot` to gauge genuinely unusual volume for this particular clock time; evaluate pre-breakout RVOL at earlier dated bars, not just last bar.
+
+Same-time-slot 20-session RVOL vs 5-bar RVOL for five leaders:
+TEAM 1.39x vs 4.19x; SHOP 1.01x vs 2.85x; SIG 2.41x vs 3.29x; CDNA 1.19x vs 3.49x; VEEV 1.08x vs 2.63x.
+
+Across the **20 verified-cap $2B+ names** on October 15, cross-sectional Pearson correlations (n=20, **not** stock-to-stock time-series correlations) are: 5-day return vs final-bar RVOL5 **−0.12**, 5-day return vs same-slot RVOL20 **+0.26**, 20-day return vs same-slot RVOL20 **−0.17**, 20-day return vs 10-day high/low range **+0.55**. These data show *no useful direct cross-sectional linear relationship* between final-bar RVOL and swing gains on this one date. Do not infer predictive power from this snapshot.
+
+Next-stage study: `RudraScanner/research_46_patterns.py` generates 63-session **daily-return** correlations (not raw-price correlations), normalized price paths, dated historical +20%-next20-session cases and nonwinner controls. It is wired into the collector `research_ema50_46.py --finalize` to publish a five-file report bundle. The job must actually run the **updated** local collector; a prior VPS run `research-2026101612051` returned SUCCESS but pushed only 93 files (old collector), so the new pattern report was NOT yet produced. Do not claim its future findings before seeing committed files.
+
+---
+
 # Rudra 46 — Swing and Momentum Technical Research Ranking
 *Research date: 16 October 2026. Data cutoff: completed US regular session 15 October 2026. Baseline: exact 46 symbols from IBKR HIGH_LAST_VS_EMA50 discovery at 20:15 UK, 15 October.*
 
