@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-16T04:03:45.181910+00:00",
+  "generated_at_utc": "2026-10-16T04:09:21.482915+00:00",
   "selected_tickers": [
     "AAOI",
     "AKAM",
@@ -11,6 +11,7 @@
     "CRDO",
     "CRWV",
     "INTC",
+    "IONQ",
     "IREN",
     "MSFT",
     "MSTR",
@@ -20,7 +21,6 @@
     "SNDK",
     "SPCX",
     "TSLA",
-    "USAR",
     "WDC",
     "WTTR"
   ],
@@ -54,6 +54,10 @@
       "rows": 560
     },
     "INTC": {
+      "state": "OK",
+      "rows": 560
+    },
+    "IONQ": {
       "state": "OK",
       "rows": 560
     },
@@ -93,10 +97,6 @@
       "state": "OK",
       "rows": 560
     },
-    "USAR": {
-      "state": "OK",
-      "rows": 560
-    },
     "WDC": {
       "state": "OK",
       "rows": 560
@@ -116,6 +116,7 @@
     "CRDO",
     "CRWV",
     "INTC",
+    "IONQ",
     "IREN",
     "MSFT",
     "MSTR",
@@ -125,7 +126,6 @@
     "SNDK",
     "SPCX",
     "TSLA",
-    "USAR",
     "WDC",
     "WTTR"
   ]
