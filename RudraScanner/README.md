@@ -1,3 +1,19 @@
+## 2026-10-16 — NEW: FORWARD STOCK-MOVER RESEARCH BACKTEST (CODE COMMITTED, NOT VPS-VERIFIED)
+
+**Priority is now early high-probability stock discovery; do not expand Chakra data imports.** Authoritative study plan: [LEAD_MOVER_BACKTEST.md](../LEAD_MOVER_BACKTEST.md). Read that file for exact signals, simulated exits, sample bias, and acceptance checks.
+
+New separate **research-only** file `RudraScanner/lead_mover_backtest.py`, allowed through `!runpy RudraScanner/scan_now\.py --mover-study`. Input universe is current ASJR saved tickers plus same-date fresh seven-code cache; Yahoo adjusted **two-year daily bars** (not live IBKR candles); exclude current unfinished US trading day, require >=252 trading sessions. Backtest at each EOD: baseline vs 4 setups (TREND, HIGH_13W, TIGHT_BASE, BREAKOUT). Entry NEXT session OPEN; success +10% reached **before** -5% stop within 20 sessions, else exit after day20; stop-first on same-day ambiguous high+low. TRAIN/test chronological split per ticker, newest 126 sessions reserved for TEST; 20-bar non-overlap per setup/ticker. Outputs TEST sample counts, hit percentages, mean simulated P/L before fees, and current candidate watchlists by factor. No market claims/results until live study completes. **Today's survivor-symbol cohort is biased**; no historical point-in-time IBKR memberships/catalysts, no full market or validated probabilities.
+
+Discord only:
+```text
+!gitpull
+!runpy RudraScanner/scan_now\.py --self-test
+!runpy RudraScanner/scan_now\.py --mover-study
+```
+New offline regression file `RudraScanner/tests/test_lead_mover_backtest.py` is wired into existing `--self-test`. **Neither these tests nor the full Yahoo study have been run/verified on VPS yet.** Running study may exceed Discord command timeout if Yahoo fetch is slow; inspect outcome, don't guess. No changes to original Chakra hook, existing schedules or import logic. The 7 native codes remain raw IBKR; `--momentum-1m` and `--momentum-3m` remain separate refined rankings. Do not claim findings or ≥60% accuracy based on committed code.
+
+---
+
 > **2026-10-15 current user decision:** Seven broker codes are **RAW IBKR scanner rankings**, individually callable using `!runpy RudraScanner/scan_now\.py --ibkr-code HIGH_LAST_VS_EMA50` (replace with any code from `--ibkr-codes`). Monthly `--momentum-1m` and quarterly `--momentum-3m` are separately **refined** using Yahoo daily adjusted returns and liquidity gates. All direct results have comma-separated ticker lists. Live IBKR support for each category still needs testing. [Full guide](IBKR_SEVEN_CODE_DISCOVERY.md).
 
 ---
