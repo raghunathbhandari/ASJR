@@ -1,0 +1,31 @@
+name: Rudra DDB Validated Tested Ranges
+on:
+  push:
+    paths:
+      - '.github/workflows/rudra_ddb_validated_ranges.yml'
+      - 'RudraScanner/research_ddb_validated_ranges.py'
+permissions:
+  contents: write
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install research dependencies
+        run: pip install --quiet numpy pandas yfinance
+      - name: Validate repeated support resistance and sector inverses
+        run: python -m RudraScanner.research_ddb_validated_ranges
+      - name: Commit only research output files
+        run: |
+          git config user.name "ASJR Research Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add RudraScanner/ResearchData/DDB_OPPOSITE_2026-10-16/DDB_VALIDATED* RudraScanner/ResearchData/DDB_OPPOSITE_2026-10-16/DDB_PRIMARY_SECONDARY_CANDIDATES.csv RudraScanner/ResearchData/DDB_OPPOSITE_2026-10-16/DDB_STRICT_RETESTED_GROUPS_REPORT.md
+          if ! git diff --cached --quiet; then
+            git commit -m "Research: validate two-sided 25-50 pct ranges and inverse sectors"
+            git pull --rebase
+            git push
+          fi
