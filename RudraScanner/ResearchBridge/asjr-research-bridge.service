@@ -13,8 +13,6 @@ Environment=PYTHONUNBUFFERED=1
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=full
-ProtectHome=read-only
-ReadWritePaths=/root/trading/ASJR/RudraScanner/ResearchData
 # Existing GitHub credentials and checkout are available to the running account.
 # Running as root matches legacy /root layout. Prefer a dedicated non-root
 # checkout and service account before enabling production data collection.
