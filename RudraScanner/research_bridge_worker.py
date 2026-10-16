@@ -7,6 +7,7 @@ git clone to avoid modifying the live ASJR worktree.
 """
 from __future__ import annotations
 import argparse
+import shutil
 import json
 import os
 import subprocess
@@ -19,7 +20,7 @@ from pathlib import Path
 REPO = Path("/root/trading/ASJR")
 REQ_DIR = "RudraScanner/ResearchBridge/requests"
 RESULT_DIR = "RudraScanner/ResearchBridge/results"
-JOB_TYPES = {"health_check", "research_46_batch", "research_46_finalize"}
+JOB_TYPES = {"health_check", "research_46_batch", "research_46_finalize", "research_46_publish"}
 MAX_JOBS_PER_TICK = 1
 
 def git(*args, cwd=REPO, timeout=90):
@@ -42,6 +43,8 @@ def safe_job(obj, file_id):
 
 def run_job(obj):
     operation = obj["operation"]
+    if operation == "research_46_publish":
+        return publish_research_files()
     if operation == "health_check":
         return {"status": "SUCCESS", "python": sys.version.split()[0],
                 "repo_present": (REPO / "RudraScanner/scan_now.py").is_file()}
@@ -64,6 +67,50 @@ def run_job(obj):
         return {"status": "FAILED", "error": "TIMEOUT"}
     except Exception as exc:
         return {"status": "FAILED", "error": type(exc).__name__}
+
+
+def publish_research_files():
+    """Push only allowlisted research data files using an isolated git clone."""
+    from RudraScanner.research_ema50_46 import NAMES
+    source = REPO / "RudraScanner/ResearchData/EMA50_2026-10-15"
+    files = [source / "research_metrics_46.csv", source / "RESEARCH_REPORT.md"]
+    if not all(p.is_file() and not p.is_symlink() for p in files):
+        return {"status": "FAILED", "error": "FINALIZE_REQUIRED"}
+    for kind in ("daily", "five_minute"):
+        files.extend(source / kind / (symbol + ".csv.gz") for symbol in NAMES
+                     if (source / kind / (symbol + ".csv.gz")).is_file())
+    if any(p.is_symlink() or p.stat().st_size > 3000000 for p in files):
+        return {"status": "FAILED", "error": "UNSAFE_EXPORT"}
+    with tempfile.TemporaryDirectory(prefix="asjr_research_export_") as temp:
+        folder = Path(temp) / "repo"
+        cp = subprocess.run(["git", "clone", "-q", "--no-checkout", "--shared",
+                             str(REPO), str(folder)], capture_output=True, timeout=90)
+        if cp.returncode: return {"status": "FAILED", "error": "CLONE"}
+        origin = git("remote", "get-url", "origin")
+        if origin.returncode or "github.com" not in origin.stdout:
+            return {"status": "FAILED", "error": "ORIGIN"}
+        git("remote", "set-url", "origin", origin.stdout.strip(), cwd=folder)
+        git("config", "user.name", "ASJR Research Bridge", cwd=folder)
+        git("config", "user.email", "asjr-research-bridge@users.noreply.github.com", cwd=folder)
+        for attempt in range(4):
+            if git("fetch", "-q", "origin", "main", cwd=folder).returncode:
+                return {"status": "FAILED", "error": "FETCH"}
+            if git("checkout", "-q", "-B", "export-tmp", "FETCH_HEAD", cwd=folder).returncode:
+                return {"status": "FAILED", "error": "CHECKOUT"}
+            for path in files:
+                dest = folder / path.relative_to(REPO)
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(path, dest)
+            if git("add", "--", *(str(p.relative_to(REPO)) for p in files), cwd=folder).returncode:
+                return {"status": "FAILED", "error": "GIT_ADD"}
+            if git("diff", "--cached", "--quiet", cwd=folder).returncode == 0:
+                return {"status": "SUCCESS", "files": len(files), "git": "UNCHANGED"}
+            if git("commit", "-qm", "Research 46 OHLCV evidence", cwd=folder).returncode:
+                return {"status": "FAILED", "error": "COMMIT"}
+            if git("push", "-q", "origin", "HEAD:refs/heads/main", cwd=folder).returncode == 0:
+                return {"status": "SUCCESS", "files": len(files), "git": "PUSHED"}
+            time.sleep(attempt + 1)
+    return {"status": "FAILED", "error": "PUSH"}
 
 def publish(job_id, report):
     target = f"{RESULT_DIR}/{job_id}.json"
