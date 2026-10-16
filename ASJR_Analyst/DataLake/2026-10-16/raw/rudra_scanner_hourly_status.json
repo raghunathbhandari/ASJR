@@ -1,11 +1,12 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-16T00:38:05.544833+00:00",
+  "generated_at_utc": "2026-10-16T00:43:59.875992+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
     "AMD",
+    "BMNR",
     "BRUN",
     "CRDO",
     "CRWV",
@@ -13,14 +14,13 @@
     "INTC",
     "IONQ",
     "IREN",
-    "MRVL",
     "MSFT",
-    "MU",
     "NBIS",
     "ORCL",
     "QCOM",
     "SMCI",
     "SNDK",
+    "SPCX",
     "WDC",
     "WTTR"
   ],
@@ -34,6 +34,10 @@
       "rows": 560
     },
     "AMD": {
+      "state": "OK",
+      "rows": 560
+    },
+    "BMNR": {
       "state": "OK",
       "rows": 560
     },
@@ -65,15 +69,7 @@
       "state": "OK",
       "rows": 560
     },
-    "MRVL": {
-      "state": "OK",
-      "rows": 560
-    },
     "MSFT": {
-      "state": "OK",
-      "rows": 560
-    },
-    "MU": {
       "state": "OK",
       "rows": 560
     },
@@ -97,6 +93,10 @@
       "state": "OK",
       "rows": 560
     },
+    "SPCX": {
+      "state": "OK",
+      "rows": 560
+    },
     "WDC": {
       "state": "OK",
       "rows": 560
@@ -111,6 +111,7 @@
     "AKAM",
     "AMAT",
     "AMD",
+    "BMNR",
     "BRUN",
     "CRDO",
     "CRWV",
@@ -118,14 +119,13 @@
     "INTC",
     "IONQ",
     "IREN",
-    "MRVL",
     "MSFT",
-    "MU",
     "NBIS",
     "ORCL",
     "QCOM",
     "SMCI",
     "SNDK",
+    "SPCX",
     "WDC",
     "WTTR"
   ]
