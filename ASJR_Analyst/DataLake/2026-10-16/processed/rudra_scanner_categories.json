@@ -1,6 +1,6 @@
 {
   "day": "2026-10-16",
-  "generated_at_uk": "2026-10-16T02:54:56.700281+01:00",
+  "generated_at_uk": "2026-10-16T03:00:52.602847+01:00",
   "counts": {
     "TOP_IN_PLAY": 18,
     "STRONG_MOMENTUM": 0,
@@ -27,6 +27,24 @@
       "rvol20": null,
       "data_state": "NO_FRESH_5M",
       "selection_reason": "scanner=TOP_PERC_GAIN,HOT_BY_VOLUME,MOST_ACTIVE"
+    },
+    {
+      "ticker": "BMNR",
+      "categories": [
+        "TOP_IN_PLAY"
+      ],
+      "discovery_priority": 7,
+      "source": "IBKR",
+      "scanner_codes": "TOP_PERC_LOSE+HOT_BY_VOLUME+MOST_ACTIVE",
+      "ai_bias": "N/A",
+      "price": null,
+      "bar_time_uk": null,
+      "change_5m_pct": null,
+      "volume": null,
+      "vol_12bar": null,
+      "rvol20": null,
+      "data_state": "NO_FRESH_5M",
+      "selection_reason": "scanner=TOP_PERC_LOSE,HOT_BY_VOLUME,MOST_ACTIVE"
     },
     {
       "ticker": "CRCL",
@@ -65,14 +83,14 @@
       "selection_reason": "scanner=TOP_PERC_LOSE,HOT_BY_VOLUME,MOST_ACTIVE"
     },
     {
-      "ticker": "FWDI",
+      "ticker": "INTC",
       "categories": [
         "TOP_IN_PLAY"
       ],
       "discovery_priority": 7,
-      "source": "IBKR",
+      "source": "FIXED+AI+IBKR",
       "scanner_codes": "TOP_PERC_LOSE+HOT_BY_VOLUME+MOST_ACTIVE",
-      "ai_bias": "N/A",
+      "ai_bias": "WATCH",
       "price": null,
       "bar_time_uk": null,
       "change_5m_pct": null,
@@ -83,14 +101,14 @@
       "selection_reason": "scanner=TOP_PERC_LOSE,HOT_BY_VOLUME,MOST_ACTIVE"
     },
     {
-      "ticker": "INTC",
+      "ticker": "IONQ",
       "categories": [
         "TOP_IN_PLAY"
       ],
       "discovery_priority": 7,
-      "source": "FIXED+AI+IBKR",
+      "source": "IBKR",
       "scanner_codes": "TOP_PERC_LOSE+HOT_BY_VOLUME+MOST_ACTIVE",
-      "ai_bias": "WATCH",
+      "ai_bias": "N/A",
       "price": null,
       "bar_time_uk": null,
       "change_5m_pct": null,
@@ -117,24 +135,6 @@
       "rvol20": null,
       "data_state": "NO_FRESH_5M",
       "selection_reason": "scanner=TOP_PERC_LOSE,HOT_BY_VOLUME,MOST_ACTIVE"
-    },
-    {
-      "ticker": "NVDA",
-      "categories": [
-        "TOP_IN_PLAY"
-      ],
-      "discovery_priority": 7,
-      "source": "IBKR",
-      "scanner_codes": "TOP_PERC_GAIN+HOT_BY_VOLUME+MOST_ACTIVE",
-      "ai_bias": "N/A",
-      "price": null,
-      "bar_time_uk": null,
-      "change_5m_pct": null,
-      "volume": null,
-      "vol_12bar": null,
-      "rvol20": null,
-      "data_state": "NO_FRESH_5M",
-      "selection_reason": "scanner=TOP_PERC_GAIN,HOT_BY_VOLUME,MOST_ACTIVE"
     },
     {
       "ticker": "SNDK",
