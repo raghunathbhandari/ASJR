@@ -133,11 +133,14 @@ def _load(kind, symbol):
     if not path.is_file():
         return pd.DataFrame()
     try:
-        frame = pd.read_csv(path, index_col=0, parse_dates=True)
-        if frame.index.tz is None:
-            frame.index = frame.index.tz_localize(ET)
-        else:
-            frame.index = frame.index.tz_convert(ET)
+        # Yahoo bars span EDT/EST and pandas can produce a plain object Index
+        # with mixed UTC offsets. Force a single UTC datetime representation
+        # before converting to New York time to preserve bar chronology.
+        frame = pd.read_csv(path, index_col=0)
+        parsed = pd.to_datetime(frame.index, utc=True, errors="coerce")
+        good = ~pd.isna(parsed)
+        frame = frame.loc[good].copy()
+        frame.index = parsed[good].tz_convert(ET)
         return frame.sort_index()
     except (OSError, ValueError, TypeError):
         return pd.DataFrame()
