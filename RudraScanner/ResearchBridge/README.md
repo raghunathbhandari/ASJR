@@ -1,3 +1,34 @@
+## ACTIVATE VIA EXISTING WORKING DISCORD RUNPY (2026-10-16)
+
+The external Discord `!runSCommand` handler was not reloaded after
+`bridge-start` was added, returning UNKNOWN ADMIN OPERATION. Do **not**
+restart Chakra or patch the external Discord process.
+
+The already-working allowlisted `scan_now.py` now exposes two fixed
+one-shot operations requiring no Discord handler reload:
+
+```text
+!gitpull
+!runpy RudraScanner/scan_now\.py --bridge-start
+!runpy RudraScanner/scan_now\.py --bridge-check
+```
+
+`--bridge-start` invokes the fixed no-arguments service installer.
+It requires the existing Discord runner process to have sufficient OS
+permissions for /etc/systemd/system/; if denied, do not relax Discord
+permissions or make the entire bot root. A safer one-time external SSH
+admin installation is required instead.
+
+`--bridge-check` runs one worker polling iteration. **Do not run it
+while the background systemd worker is active**, since v1 does not have
+a durable multi-process lock.
+
+V1 still lacks verified data CSV publishing; first validate the queued
+health-check JSON. This is a prototype; use a non-root dedicated account
+and isolated checkout for future hardened deployment.
+
+---
+
 ## Verified deployment status — 2026-10-16 09:35 UK
 
 **NOT OPERATIONAL YET.** Code and health-check request exist on GitHub,
