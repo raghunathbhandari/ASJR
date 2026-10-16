@@ -1,3 +1,8 @@
+## LATEST 2026-10-16 — DDB 39-NAME INTC EXPANSION + VERIFIED AI↔VPS GUIDE
+Read [RUDRA_DDB_INTC_EXPANSION_2026-10-16.md](RUDRA_DDB_INTC_EXPANSION_2026-10-16.md) FIRST for original vs expanded candidate membership, historical 545-instrument INTC comparisons, tested pivot clusters, Visa 4H correction, necessary fundamentals/range validation and safe GitHub↔VPS bridge workflow. New DDB calculation is NOT currently an allowlisted bridge job. No direct SSH or arbitrary Discord shell; research bridge supports only its reviewed operations. No trading-bot changes made.
+
+---
+
 ## RUDRA-DDB HARD FILTERS — 2026-10-16 (IMPORTANT)
 The user has locked TWO mandatory DDB gates: (1) **fundamentally strong tickers only**: verify durable earnings/cash-flow/balance sheet/business model; if uncertain, do not treat as investable, (2) **BOTH sides of proposed price range must have been TESTED MULTIPLE TIMES**. Conservative research default: >=2 independent nonconsecutive significant price reactions at bottom support zone AND >=2 at top resistance zone, separated by material intervening swings, not one-off highs/lows or neighboring candles. Unverified test counts mean NO VALID RANGE/AOI/TARGET. 25%+ historical one-year swing-leg count is NOT evidence of recurring support/resistance tests. 3-month recent multi-swing remains necessary. Exact price-level thresholds need ATR/tolerance-aware independent test verification, not simply the 10 smallest closes or a single highest close.
 
