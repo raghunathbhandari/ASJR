@@ -69,9 +69,9 @@ def main():
             if git(folder,"diff","--cached","--quiet").returncode==0:
                 print(f"NQ IMPORT | SUCCESS | {len(ny)} candles | UNCHANGED | {dest}")
                 return 0
-            if git(folder,"commit","-qm","Research: NQ {args.date} 5m Yahoo candles").returncode: continue
+            if git(folder,"commit","-qm",f"Research: NQ {args.date} 5m Yahoo candles").returncode: continue
             if git(folder,"push","-q","origin","HEAD:refs/heads/main").returncode==0:
-                print(f"NQ IMPORT | SUCCESS | {len(ny)} candles | PUSHED | {DEST}")
+                print(f"NQ IMPORT | SUCCESS | {len(ny)} candles | PUSHED | {dest}")
                 print(f"First {ny.index[0]} | Last {ny.index[-1]}")
                 return 0
     print("NQ IMPORT | FAILED | could not publish to GitHub");return 1
