@@ -24,7 +24,7 @@ if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 REQ_DIR = "RudraScanner/ResearchBridge/requests"
 RESULT_DIR = "RudraScanner/ResearchBridge/results"
-JOB_TYPES = {"health_check", "research_46_batch", "research_46_finalize", "research_46_publish", "gann_nq_20261016"}
+JOB_TYPES = {"health_check", "research_46_batch", "research_46_finalize", "research_46_publish", "gann_nq_20261016", "gann_nq_october_2026"}
 MAX_JOBS_PER_TICK = 1
 
 def git(*args, cwd=REPO, timeout=90):
@@ -57,7 +57,10 @@ def run_job(obj):
     if operation == "health_check":
         return {"status": "SUCCESS", "python": sys.version.split()[0],
                 "repo_present": (REPO / "RudraScanner/scan_now.py").is_file()}
-    if operation == "gann_nq_20261016":
+    if operation == "gann_nq_october_2026":
+        cmd = [sys.executable, "RudraScanner/gann_october_import.py"]
+        timeout = 300
+    elif operation == "gann_nq_20261016":
         cmd = [sys.executable, "RudraScanner/gann_nq_import.py"]
         timeout = 180
     elif operation == "research_46_batch":
