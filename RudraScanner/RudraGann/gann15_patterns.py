@@ -172,5 +172,89 @@ def plot_signal(d:pd.DataFrame,signals:pd.DataFrame,number:int=0,candles:int=10)
     plt.show()
     return fig
 
+
+def print_full_day(d:pd.DataFrame, signals:pd.DataFrame):
+    """Print ALL complete 15-minute candles and mark signal, entry and exit bars."""
+    marked={}
+    for k,s in signals.iterrows():
+        marked.setdefault(int(s.signal_ix),[]).append(f"SIGNAL {k+1} {s.direction} {s.candle_pattern}")
+        marked.setdefault(int(s.signal_ix)+1,[]).append(f"ENTRY {k+1} PURPLE")
+        marked.setdefault(int(s.exit_ix),[]).append(f"EXIT {k+1} {s.result}")
+    full=d[["Open","High","Low","Close"]].copy()
+    full.insert(0,"NY_time",[t.strftime("%H:%M") for t in d.index])
+    full["Marker"]=["; ".join(marked.get(i,[])) for i in range(len(full))]
+    print(full.to_string(index=False))
+    if signals.empty:
+        print("NO SIGNALS: no entries or exits to mark.")
+    else:
+        summary=signals[["signal_time_ny","direction","candle_pattern","reason",
+                        "entry_time_ny","entry","SL","TP","result","exit_time_ny",
+                        "exit_price","gain_loss_pct","R"]].copy()
+        print("\\nSIGNAL AND TRADE SUMMARY")
+        print(summary.to_string(index=False))
+    return full
+
+
+def plot_full_day(d:pd.DataFrame, signals:pd.DataFrame, title:str="Rudra-Gann 15m Full Day"):
+    """Plot EVERY complete 15m candle, horizontal Gann lines and all entry/exit markers.
+
+    Purple triangle = actual next-bar opening entry assumption.
+    Green X = take-profit, Red X = stop-loss, gray X = end-of-data mark.
+    The display is research only; full-session bars need not be continuous around
+    exchange market breaks, and intrabar OHLC cannot establish order of TP/SL.
+    """
+    import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D
+    import mplfinance as mpf
+
+    if d.empty:raise ValueError("No bars to plot")
+    fig, axes = mpf.plot(d,type="candle",style="yahoo",volume=False,
+                         show_nontrading=False,returnfig=True,
+                         figsize=(19,8), title=title,
+                         xrotation=45,datetime_format="%H:%M",
+                         tight_layout=True)
+    ax=axes[0]
+    levels=sorted({float(x) for x in signals["gann"]}) if not signals.empty else gann_levels(float(d.Low.min()),float(d.High.max()))
+    low=float(d.Low.min());high=float(d.High.max())
+    for level in levels:
+        if low-60 <= level <= high+60:
+            ax.axhline(level,color="goldenrod",linestyle="--",linewidth=1.1,alpha=.85)
+            ax.text(len(d)-0.5,level,f" G {level:.0f}",color="darkgoldenrod",
+                    ha="right",va="bottom",fontsize=9)
+
+    for k,s in signals.iterrows():
+        ent=int(s.signal_ix)+1
+        out=int(s.exit_ix)
+        if 0<=ent<len(d):
+            ax.scatter([ent],[float(s.entry)],marker="^" if s.direction=="BUY" else "v",
+                       s=140,facecolor="purple",edgecolor="white",linewidth=1.0,zorder=8)
+            ax.annotate(f" E{k+1}",(ent,float(s.entry)),xytext=(5,12 if s.direction=="BUY" else -18),
+                        textcoords="offset points",color="purple",fontsize=9,fontweight="bold")
+        if 0<=out<len(d):
+            color="green" if s.result=="TP" else "red" if s.result=="SL" else "gray"
+            ax.scatter([out],[float(s.exit_price)],marker="x",s=145,c=color,
+                       linewidth=2.7,zorder=9)
+            ax.annotate(f" X{k+1} {s.result}",(out,float(s.exit_price)),xytext=(6,-15),
+                        textcoords="offset points",color=color,fontsize=9,fontweight="bold")
+
+    ax.legend(handles=[
+        Line2D([0],[0],color="goldenrod",linestyle="--",label="Gann lines"),
+        Line2D([0],[0],marker="^",linestyle="None",markerfacecolor="purple",
+               markeredgecolor="white",markersize=11,label="Entry (purple)"),
+        Line2D([0],[0],marker="x",linestyle="None",color="green",markersize=11,label="TP exit"),
+        Line2D([0],[0],marker="x",linestyle="None",color="red",markersize=11,label="SL exit"),
+        Line2D([0],[0],marker="x",linestyle="None",color="gray",markersize=11,label="END exit"),
+    ],loc="best",fontsize=9)
+    plt.show()
+    return fig
+
+
+def full_day(date:str="2026-10-16",root:Path=ROOT,**kwargs):
+    """One notebook call: complete 15m CSV, pattern report and whole-day chart."""
+    d,signals=run(date,root=root,**kwargs)
+    print_full_day(d,signals)
+    plot_full_day(d,signals,title=f"NQ | {date} | 15-minute | Full Day | Gann/TA-Lib")
+    return d,signals
+
 if __name__=="__main__":
     run()
