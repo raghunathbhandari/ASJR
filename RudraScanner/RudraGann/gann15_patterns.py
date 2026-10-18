@@ -236,15 +236,9 @@ PATTERNS_NEXT={"Morning Star":"BUY","Evening Star":"SELL","Hammer":"BUY","Invert
                "Shooting Star":"SELL","Hanging Man":"SELL"}
 
 def run(date:str="2026-10-15", root:Path=ROOT, **kwargs):
+    """Collect signals; full_day() owns display order and output."""
     d=load_15m(date,root)
     signals=scan(d,**kwargs)
-    print(f"RUDRA GANN | {date} | 15m | {len(d)} complete candles | {len(signals)} signals")
-    if not signals.empty:
-        for _,s in signals.iterrows():
-            print(f"{s.signal_time_ny} | {s.direction} | {s.candle_pattern} | G{s.gann:.0f}")
-            print(f"  Signal reason: {s.reason}")
-            print(f"  Assumed signal candle CLOSE entry {s.entry:.2f} | SL {s.SL:.2f} | TP {s.TP:.2f} | {s.result} | gain/loss {s.gain_loss_pct:+.3f}% | {s.R:+.2f}R")
-        print(f"TOTAL | {signals.R.sum():+.2f}R gross | index-point % not account return; fees/slippage excluded")
     return d,signals
 
 def plot_signal(d:pd.DataFrame,signals:pd.DataFrame,number:int=0,candles:int=10):
@@ -268,38 +262,38 @@ def plot_signal(d:pd.DataFrame,signals:pd.DataFrame,number:int=0,candles:int=10)
 
 
 def print_full_day(d:pd.DataFrame, signals:pd.DataFrame):
-    """Print only detected signal candles and trade outcomes, not all OHLC bars."""
-    if signals.empty:
-        print("NO SIGNALS | no entry/exit")
-        return pd.DataFrame()
+    """Summary -> three signal reasons -> concise signal table -> chart heading."""
+    count=len(signals)
+    winners=int((signals["result"]=="TP").sum()) if count else 0
+    losers=int((signals["result"]=="SL").sum()) if count else 0
+    pending=count-winners-losers
+    decided=winners+losers
+    rate=(100*winners/decided) if decided else 0.
+    print("SUMMARY")
+    print(f"{count} signals | {rate:.1f}% win rate (resolved trades) | {winners} good | {losers} fail | {pending} END/unresolved")
+    print("Note: overlapping signals are independent tests, not one-position portfolio returns.")
+    print("\\n---\\n")
+    for num,(_,s) in enumerate(signals.iterrows(),1):
+        print(f"SIGNAL {num} | {s.direction} | {s.candle_pattern} | {s.signal_time_ny}")
+        print(f"  Reason 1: Gann {s.gann:.0f} retest/proximity and reversal setup")
+        print(f"  Reason 2: {s.reason}")
+        print(f"  Reason 3: Confirmed 15m signal close {s.signal_close:.2f}; assumed entry at close")
+        print(f"  Outcome: {s.result} | {s.gain_loss_pct:+.3f}% | {s.R:+.2f}R")
+        print()
+    print("---\\nSIGNALS TABLE")
     rows=[]
-    for k,s in signals.iterrows():
-        ix=int(s.signal_ix)
-        candle=d.iloc[ix]
-        rows.append({
-            "signal_time_ny":s.signal_time_ny,
-            "direction":s.direction,
-            "pattern":s.candle_pattern,
-            "gann":s.gann,
-            "signal_open":float(candle.Open),
-            "signal_high":float(candle.High),
-            "signal_low":float(candle.Low),
-            "signal_close":float(candle.Close),
-            "reason":s.reason,
-            "entry_time_ny":s.entry_time_ny,
-            "entry":s.entry,
-            "SL":s.SL,
-            "TP":s.TP,
-            "result":s.result,
-            "exit_time_ny":s.exit_time_ny,
-            "exit_price":s.exit_price,
-            "gain_loss_pct":s.gain_loss_pct,
-            "R":s.R,
-        })
-    summary=pd.DataFrame(rows)
-    print("\\nSIGNAL CANDLES AND TRADE RESULTS")
-    print(summary.to_string(index=False))
-    return summary
+    for num,(_,s) in enumerate(signals.iterrows(),1):
+        b=d.iloc[int(s.signal_ix)]
+        rows.append({"#":num,"NY time":s.signal_time_ny,
+                     "Side":s.direction,"Pattern":s.candle_pattern,
+                     "Gann":s.gann,"O":b.Open,"H":b.High,"L":b.Low,"C":b.Close,
+                     "Entry":s.entry,"SL":s.SL,"TP":s.TP,
+                     "Result":s.result,"Gain/Loss %":s.gain_loss_pct,"R":s.R})
+    result=pd.DataFrame(rows)
+    if count:print(result.to_string(index=False))
+    else:print("No confirmed reversal signals.")
+    print("\\n---\\nCHART")
+    return result
 
 def plot_full_day(d:pd.DataFrame, signals:pd.DataFrame, title:str="Rudra-Gann 15m Full Day"):
     """Plot EVERY complete 15m candle, horizontal Gann lines and all entry/exit markers.
