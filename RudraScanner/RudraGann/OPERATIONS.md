@@ -1,3 +1,21 @@
+## 2026-10-18 — Local Jupyter 15m TA-Lib scanner (NEW)
+
+File `RudraScanner/RudraGann/gann15_patterns.py` committed (independent of older 5m `strategy.py`). Uses **TA-Lib** Morning Star, Evening Star, Hammer, Inverted Hammer, Shooting Star, Hanging Man, Engulfing and Harami candlestick detectors. Reads existing 5m Yahoo session CSV, constructs aligned 15m candles only from 3 contiguous 5m candles. Gann fixed odd/even square levels. Pattern and level proximity ±15 default plus close direction required. Executes *hypothetical* trade at NEXT 15m open, stop beyond observed pattern extreme, 2R TP, stop-first OHLC if ambiguous. Signal result includes NY and UK signal time, pattern name, Gann line, detailed reason, entry, SL, TP, result, R and NQ index-movement gain/loss %. Not actual account return; ignores commissions/slippage. Visual plotting is **8–10 inline candlesticks** with Gann line using mplfinance. No live orders or bot changes. These are NEW exploratory 15m pattern rules, not the old 5m breakout/retest state machine; do not conflate backtests.
+
+Windows clone path: `D:\\Trading\\OmJRTrading\\JRTrading\\ASJR_Trading\\RudraGann\\ASJR`; notebook: `D:\\Trading\\OmJRTrading\\JRTrading\\ASJR_Trading\\gann.ipynb`. In PowerShell run `git -C "D:\\Trading\\OmJRTrading\\JRTrading\\ASJR_Trading\\RudraGann\\ASJR" pull origin main`. In notebook:
+```python
+%pip install TA-Lib mplfinance pandas numpy matplotlib
+import sys
+sys.path.insert(0, r"D:\\Trading\\OmJRTrading\\JRTrading\\ASJR_Trading\\RudraGann\\ASJR")
+from RudraScanner.RudraGann.gann15_patterns import run, plot_signal
+bars, signals = run("2026-10-15")
+for i in range(len(signals)):
+    plot_signal(bars, signals, i, candles=10)
+```
+No sign-off for V1 strategy replacing any live trading logic. Validate results visually and check source gaps/rolls.
+
+---
+
 # Rudra-Gann — Data, VPS Bridge, Admin Commands and Strategy Handoff
 Updated: 2026-10-18. READ THIS FIRST IN THE NEXT SESSION.
 
