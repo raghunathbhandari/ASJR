@@ -207,7 +207,8 @@ def scan(d:pd.DataFrame, proximity:float=15.0, context_bars:int=3,
                     outcome="SL";exit_ix=j;exit_price=stop;break
                 if (x.High>=target if direction=="BUY" else x.Low<=target):
                     outcome="TP";exit_ix=j;exit_price=target;break
-            if any(not (exit_ix<t["signal_ix"] or i>t["exit_ix"]) for t in result):
+            # This is a signal-review chart: preserve valid signals even if paper holding periods overlap.
+            if any(t["signal_ix"] == i and t["direction"] == direction for t in result):
                 continue
             signed=(exit_price-entry) if direction=="BUY" else (entry-exit_price)
             result.append({
