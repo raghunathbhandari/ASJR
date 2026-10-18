@@ -71,6 +71,8 @@ def main(argv=None):
                         help="One-time install/start of fixed ASJR research bridge service; no Chakra restart")
     parser.add_argument("--bridge-refresh", action="store_true",
                         help="Reload only the research bridge service to deploy approved research export; no Chakra restart")
+    parser.add_argument("--gann-test", action="store_true",
+                        help="Read-only Rudra-Gann candle-pattern backtest from saved NQ 5m data")
     parser.add_argument("--gann-nq-import", action="store_true",
                         help="One-time NQ Oct16 Yahoo 5m research import, no Chakra")
     parser.add_argument("--bridge-check", action="store_true",
@@ -166,6 +168,9 @@ def main(argv=None):
     if args.git_safe_sync:
         from RudraScanner.git_safe_sync import main as safe_sync_main
         return safe_sync_main()
+    if args.gann_test:
+        from RudraScanner.RudraGann.strategy import main as gann_test_main
+        return gann_test_main()
     if args.gann_nq_import:
         from RudraScanner.gann_nq_import import main as gann_import_main
         return gann_import_main()
