@@ -1,3 +1,9 @@
+## 2026-10-18 — OPERATIONAL HANDOFF AND VERIFIED DATA AUDIT
+
+**First read:** [Rudra-Gann OPERATIONS.md](https://github.com/raghunathbhandari/ASJR/blob/main/RudraScanner/RudraGann/OPERATIONS.md) for verified data-source folders, imported CSV SHA256, basic audit results, GitHub→VPS bridge limitations, approved Discord/admin commands, safe SSH worktree commands, and precise Gann candle confirmation rules. As of Oct 18 user-confirmed audit: 627,688 real 1m rows, no malformed timestamps/duplicates/order/OHLC errors; 33 ASJR 5m session files. Gap/roll/resampling audit remains pending. **Data collection only until user authorizes backtest.**
+
+---
+
 ## 2026-10-18 — IMPORTANT NQ BARS SOURCE AND COPY STATE
 
 **READ `RudraScanner/RudraGann/STRATEGY.md` first (historical source index at top).** GitHub public `kfccolonel1/BARS` contains stitched NQ 1-minute CSVs: `NQ/1min/NQ_1min_2025-01-01_2025-12-31_stitched.csv` (353,233 rows catalog) and `NQ/1min/NQ_1min_2026-01-01_2026-10-08_stitched.csv` (274,455 rows catalog). URL prefix `https://raw.githubusercontent.com/kfccolonel1/BARS/main/`; catalog at `https://github.com/kfccolonel1/BARS/blob/main/catalog.json`. 2026-10-09–16 covered by prior ASJR 5m imports. Research-only code `RudraScanner/RudraGann/import_bars_sources.py` committed to GitHub to copy both original CSV files via isolated scratch clone into `RudraScanner/ResearchData/Gann/Source/BARS/`. **Do not claim large files copied until VPS command succeeds and GitHub content exists.** Execute via isolated research checkout, never live diverged ASJR. Source has unadjusted futures roll jumps; verify provenance, integrity, gaps, session alignment and cross-source price compatibility before Gann backtests. Source folder may remain absent until import. Current focus: 1-year NQ 5m Gann candle confirmation tests.
