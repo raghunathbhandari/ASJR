@@ -231,9 +231,20 @@ def plot_full_day(d:pd.DataFrame, signals:pd.DataFrame, title:str="Rudra-Gann 15
     import mplfinance as mpf
 
     if d.empty:raise ValueError("No bars to plot")
-    fig, axes = mpf.plot(d,type="candle",style="yahoo",volume=False,
+    dark_style = mpf.make_mpf_style(
+        base_mpf_style="nightclouds",
+        facecolor="#111111",
+        figcolor="#111111",
+        edgecolor="#666666",
+        gridcolor="#333333",
+        gridstyle="-",
+        rc={"axes.labelcolor":"white", "xtick.color":"white",
+            "ytick.color":"white", "text.color":"white",
+            "axes.titlecolor":"white"},
+    )
+    fig, axes = mpf.plot(d,type="candle",style=dark_style,volume=False,
                          show_nontrading=False,returnfig=True,
-                         figsize=(19,8), title=title,
+                         figsize=(13,5), title=title,
                          xrotation=45,datetime_format="%H:%M",
                          tight_layout=True)
     ax=axes[0]
@@ -241,8 +252,8 @@ def plot_full_day(d:pd.DataFrame, signals:pd.DataFrame, title:str="Rudra-Gann 15
     low=float(d.Low.min());high=float(d.High.max())
     for level in levels:
         if low-60 <= level <= high+60:
-            ax.axhline(level,color="goldenrod",linestyle="--",linewidth=1.1,alpha=.85)
-            ax.text(len(d)-0.5,level,f" G {level:.0f}",color="darkgoldenrod",
+            ax.axhline(level,color="gold",linestyle="--",linewidth=1.1,alpha=.85)
+            ax.text(len(d)-0.5,level,f" G {level:.0f}",color="gold",
                     ha="right",va="bottom",fontsize=9)
 
     for k,s in signals.iterrows():
