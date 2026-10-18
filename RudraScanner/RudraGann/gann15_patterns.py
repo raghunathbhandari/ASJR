@@ -71,6 +71,88 @@ def detect_patterns(d:pd.DataFrame)->pd.DataFrame:
         df[name] = score
     return df
 
+# ================================================================
+# EDIT SIGNAL RULES HERE: each filter returns True (PASS) / False.
+# TA-Lib detection is separate from Gann, structure and risk filters.
+# ================================================================
+
+def pattern_is_direction(name: str, score: int, side: str) -> bool:
+    """True when TA-Lib named candle pattern supports BUY or SELL."""
+    if score == 0:
+        return False
+    detected = ("BUY" if score > 0 else "SELL") if name in ("Engulfing", "Harami") else PATTERNS_NEXT[name]
+    return detected == side and ((score > 0) == (side == "BUY"))
+
+
+def find_candle_patterns(scores: pd.DataFrame, candle_index: int, side: str):
+    """All confirmed third-party TA-Lib patterns at this candle for a side."""
+    matches = []
+    for name in scores.columns:
+        score = int(scores.iloc[candle_index][name])
+        if pattern_is_direction(name, score, side):
+            matches.append((name, score))
+    return matches
+
+
+def filter_gann_touch(context: pd.DataFrame, level: float, proximity: float) -> bool:
+    """Gann touched or within proximity in the context-window candles."""
+    low, high = float(context.Low.min()), float(context.High.max())
+    if low <= level <= high:
+        return True
+    distance = min(float(abs(context.High - level).min()),
+                   float(abs(context.Low - level).min()))
+    return distance <= proximity
+
+
+def gann_distance(context: pd.DataFrame, level: float) -> float:
+    """Distance in NQ points (zero when any candle crosses the line)."""
+    if float(context.Low.min()) <= level <= float(context.High.max()):
+        return 0.0
+    return min(float(abs(context.High - level).min()),
+               float(abs(context.Low - level).min()))
+
+
+def filter_close_on_gann_side(candle, level: float, side: str) -> bool:
+    """SELL closes below resistance; BUY closes above support."""
+    return bool(candle.Close < level if side == "SELL" else candle.Close > level)
+
+
+def filter_reversal_candle(candle, side: str) -> bool:
+    """SELL red candle; BUY green candle. Touch alone is never an entry."""
+    return bool(candle.Close < candle.Open if side == "SELL"
+                else candle.Close > candle.Open)
+
+
+def filter_structure_break(candle, previous_candle, side: str) -> bool:
+    """SELL close breaks previous 15m low; BUY breaks previous 15m high."""
+    return bool(candle.Close < previous_candle.Low if side == "SELL"
+                else candle.Close > previous_candle.High)
+
+
+def filter_strong_body(candle, min_body_ratio: float = 0.40) -> bool:
+    """True when real body is >=40% of the full candle range."""
+    span = float(candle.High - candle.Low)
+    return span > 0 and abs(float(candle.Close - candle.Open)) / span >= min_body_ratio
+
+
+def filter_retest_after_pattern(d: pd.DataFrame, anchor: int, signal_index: int,
+                                level: float, side: str, proximity: float) -> bool:
+    """TA-Lib pattern -> subsequent higher-high/lower-low retest near Gann."""
+    segment = d.iloc[anchor + 1:signal_index]
+    if segment.empty:
+        return False
+    if side == "SELL":
+        extremum = float(segment.High.max())
+        return extremum > float(d.iloc[anchor].High) and abs(extremum-level) <= proximity+25
+    extremum = float(segment.Low.min())
+    return extremum < float(d.iloc[anchor].Low) and abs(extremum-level) <= proximity+25
+
+
+def filter_risk(risk: float, max_risk: float = 150.0) -> bool:
+    """Allow 1 NQ tick minimum and limited index-point stop distance."""
+    return 0.25 <= risk <= max_risk
+
+
 def scan(d:pd.DataFrame, proximity:float=15.0, context_bars:int=3,
          rr:float=2.0, sl_buffer:float=0.25, max_risk:float=150.0,
          require_close_side:bool=True)->pd.DataFrame:
@@ -85,33 +167,17 @@ def scan(d:pd.DataFrame, proximity:float=15.0, context_bars:int=3,
     for i in range(max(3,context_bars-1),len(d)-1):
         if i<=busy:continue
         b=d.iloc[i]
-        choices=[]
-        for name,(base_direction,_) in []:pass
-        for name in scores.columns:
-            val=int(scores.iloc[i][name])
-            if not val: continue
-            direction = ("BUY" if val>0 else "SELL") if name in ("Engulfing","Harami") else PATTERNS_NEXT[name]
-            if direction=="BUY" and val<0 or direction=="SELL" and val>0:continue
-            choices.append((direction,name,val))
+        choices=[(side,name,score) for side in ("BUY","SELL")
+                 for name,score in find_candle_patterns(scores,i,side)]
         if not choices: continue
         ctx=d.iloc[max(0,i-context_bars+1):i+1]
         for level in lvls:
-            distance=min(float(abs(ctx.High-level).min()), float(abs(ctx.Low-level).min()))
-            # Include wick overlap even if no exact high/low near line.
-            if float(ctx.Low.min())<=level<=float(ctx.High.max()):distance=0
-            if distance>proximity:continue
+            if not filter_gann_touch(ctx,level,proximity):continue
+            distance=gann_distance(ctx,level)
             for direction,name,score in choices:
-                if require_close_side and ((direction=="BUY" and b.Close<=level) or (direction=="SELL" and b.Close>=level)):
-                    continue
-                # Pattern reversal check: bar closes bullish/bearish; some 3-bar patterns may do this naturally.
-                if (direction=="BUY" and b.Close<=b.Open) or (direction=="SELL" and b.Close>=b.Open):continue
-                # Structure must break AFTER the retest to confirm the right-side V.
-                # SELL: confirmation close strictly below preceding 15m LOW.
-                # BUY: confirmation close strictly above preceding 15m HIGH.
-                # No future bars consulted; avoids early sells while HH continues.
-                prior=d.iloc[i-1]
-                if direction=="SELL" and not (b.Close<prior.Low):continue
-                if direction=="BUY" and not (b.Close>prior.High):continue
+                if require_close_side and not filter_close_on_gann_side(b,level,direction):continue
+                if not filter_reversal_candle(b,direction):continue
+                if not filter_structure_break(b,d.iloc[i-1],direction):continue
                 # The TA-Lib pattern candle itself is the directional right-side signal.
                 # Close-price entry is an idealized fill after full candle confirmation.
                 entry=float(b.Close)
@@ -120,7 +186,7 @@ def scan(d:pd.DataFrame, proximity:float=15.0, context_bars:int=3,
                 pattern_bars=d.iloc[max(0,i-length+1):i+1]
                 stop=round((float(pattern_bars.Low.min())-sl_buffer)*4)/4 if direction=="BUY" else round((float(pattern_bars.High.max())+sl_buffer)*4)/4
                 risk=(entry-stop) if direction=="BUY" else (stop-entry)
-                if not (0.25<=risk<=max_risk):continue
+                if not filter_risk(risk,max_risk):continue
                 target=round((entry+rr*risk if direction=="BUY" else entry-rr*risk)*4)/4
                 outcome="END";exit_ix=len(d)-1;exit_price=float(d.Close.iloc[-1])
                 for j in range(i+1,len(d)):
@@ -156,44 +222,24 @@ def scan(d:pd.DataFrame, proximity:float=15.0, context_bars:int=3,
         b=d.iloc[i]
         prev=d.iloc[i-1]
         for direction in ("SELL","BUY"):
-            if direction=="SELL" and not (b.Close<b.Open and b.Close<prev.Low):
-                continue
-            if direction=="BUY" and not (b.Close>b.Open and b.Close>prev.High):
-                continue
-            # Require a reasonably strong directional confirmation bar.
-            span=float(b.High-b.Low)
-            if span<=0 or abs(float(b.Close-b.Open))/span<0.4:
-                continue
+            if not filter_reversal_candle(b,direction):continue
+            if not filter_structure_break(b,prev,direction):continue
+            if not filter_strong_body(b):continue
             found=None
             for anchor in range(max(1,i-5),i-1):
-                names=[]
-                for name in scores.columns:
-                    val=int(scores.iloc[anchor][name])
-                    if val==0: continue
-                    detected=("BUY" if val>0 else "SELL") if name in ("Engulfing","Harami") else PATTERNS_NEXT[name]
-                    if detected==direction and ((val>0)==(direction=="BUY")):
-                        names.append(name)
+                names=[name for name,_ in find_candle_patterns(scores,anchor,direction)]
                 if not names:continue
                 for level in lvls:
-                    segment=d.iloc[anchor+1:i]
-                    if segment.empty:continue
+                    if not filter_retest_after_pattern(d,anchor,i,level,direction,proximity):continue
+                    if require_close_side and not filter_close_on_gann_side(b,level,direction):continue
+                    entry=float(b.Close)
                     if direction=="SELL":
-                        peak=float(segment.High.max())
-                        prior_peak=float(d.iloc[anchor].High)
-                        retest_ok=(peak>prior_peak and abs(peak-level)<=proximity+25)
-                        side_ok=(not require_close_side or b.Close<level)
                         stop=math.ceil((float(b.High)+sl_buffer)*4)/4
-                        entry=float(b.Close)
                         risk=stop-entry
                     else:
-                        trough=float(segment.Low.min())
-                        prior_trough=float(d.iloc[anchor].Low)
-                        retest_ok=(trough<prior_trough and abs(trough-level)<=proximity+25)
-                        side_ok=(not require_close_side or b.Close>level)
                         stop=math.floor((float(b.Low)-sl_buffer)*4)/4
-                        entry=float(b.Close)
                         risk=entry-stop
-                    if retest_ok and side_ok and 0.25<=risk<=max_risk:
+                    if filter_risk(risk,max_risk):
                         found=(anchor,names[0],level,entry,stop,risk)
                         break
                 if found:break
