@@ -174,26 +174,38 @@ def plot_signal(d:pd.DataFrame,signals:pd.DataFrame,number:int=0,candles:int=10)
 
 
 def print_full_day(d:pd.DataFrame, signals:pd.DataFrame):
-    """Print ALL complete 15-minute candles and mark signal, entry and exit bars."""
-    marked={}
-    for k,s in signals.iterrows():
-        marked.setdefault(int(s.signal_ix),[]).append(f"SIGNAL {k+1} {s.direction} {s.candle_pattern}")
-        marked.setdefault(int(s.signal_ix)+1,[]).append(f"ENTRY {k+1} PURPLE")
-        marked.setdefault(int(s.exit_ix),[]).append(f"EXIT {k+1} {s.result}")
-    full=d[["Open","High","Low","Close"]].copy()
-    full.insert(0,"NY_time",[t.strftime("%H:%M") for t in d.index])
-    full["Marker"]=["; ".join(marked.get(i,[])) for i in range(len(full))]
-    print(full.to_string(index=False))
+    """Print only detected signal candles and trade outcomes, not all OHLC bars."""
     if signals.empty:
-        print("NO SIGNALS: no entries or exits to mark.")
-    else:
-        summary=signals[["signal_time_ny","direction","candle_pattern","reason",
-                        "entry_time_ny","entry","SL","TP","result","exit_time_ny",
-                        "exit_price","gain_loss_pct","R"]].copy()
-        print("\\nSIGNAL AND TRADE SUMMARY")
-        print(summary.to_string(index=False))
-    return full
-
+        print("NO SIGNALS | no entry/exit")
+        return pd.DataFrame()
+    rows=[]
+    for k,s in signals.iterrows():
+        ix=int(s.signal_ix)
+        candle=d.iloc[ix]
+        rows.append({
+            "signal_time_ny":s.signal_time_ny,
+            "direction":s.direction,
+            "pattern":s.candle_pattern,
+            "gann":s.gann,
+            "signal_open":float(candle.Open),
+            "signal_high":float(candle.High),
+            "signal_low":float(candle.Low),
+            "signal_close":float(candle.Close),
+            "reason":s.reason,
+            "entry_time_ny":s.entry_time_ny,
+            "entry":s.entry,
+            "SL":s.SL,
+            "TP":s.TP,
+            "result":s.result,
+            "exit_time_ny":s.exit_time_ny,
+            "exit_price":s.exit_price,
+            "gain_loss_pct":s.gain_loss_pct,
+            "R":s.R,
+        })
+    summary=pd.DataFrame(rows)
+    print("\\nSIGNAL CANDLES AND TRADE RESULTS")
+    print(summary.to_string(index=False))
+    return summary
 
 def plot_full_day(d:pd.DataFrame, signals:pd.DataFrame, title:str="Rudra-Gann 15m Full Day"):
     """Plot EVERY complete 15m candle, horizontal Gann lines and all entry/exit markers.
