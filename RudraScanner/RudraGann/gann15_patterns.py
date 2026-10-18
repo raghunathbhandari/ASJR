@@ -186,10 +186,13 @@ def scan(d:pd.DataFrame, proximity:float=15.0, context_bars:int=3,
                 pattern_bars=d.iloc[max(0,i-length+1):i+1]
                 stop=round((float(pattern_bars.Low.min())-sl_buffer)*4)/4 if direction=="BUY" else round((float(pattern_bars.High.max())+sl_buffer)*4)/4
                 risk=(entry-stop) if direction=="BUY" else (stop-entry)
-                if not filter_risk(risk,max_risk):continue
+                if risk<=0:continue
+                risk_ok=filter_risk(risk,max_risk)
                 target=round((entry+rr*risk if direction=="BUY" else entry-rr*risk)*4)/4
-                outcome="END";exit_ix=len(d)-1;exit_price=float(d.Close.iloc[-1])
-                for j in range(i+1,len(d)):
+                outcome="END" if risk_ok else "SKIP_RISK"
+                exit_ix=len(d)-1 if risk_ok else i
+                exit_price=float(d.Close.iloc[-1]) if risk_ok else entry
+                for j in (range(i+1,len(d)) if risk_ok else []):
                     x=d.iloc[j]
                     hit_stop = x.Low<=stop if direction=="BUY" else x.High>=stop
                     hit_tp = x.High>=target if direction=="BUY" else x.Low<=target
@@ -205,7 +208,7 @@ def scan(d:pd.DataFrame, proximity:float=15.0, context_bars:int=3,
                     "gann":level,"signal_close":float(b.Close),"entry_time_ny":str(d.index[i]),"entry_ix":i,"entry":entry,
                     "SL":stop,"TP":target,"result":outcome,"exit_time_ny":str(d.index[exit_ix]),
                     "exit_price":exit_price,"gain_loss_pct":round(signed/entry*100,4),
-                    "R":round(signed/risk,3),"signal_ix":i,"exit_ix":exit_ix,
+                    "R":round(signed/risk,3),"signal_ix":i,"exit_ix":exit_ix,"risk_ok":risk_ok,
                 })
                 busy=exit_ix
                 break
@@ -312,11 +315,13 @@ def print_full_day(d:pd.DataFrame, signals:pd.DataFrame):
     count=len(signals)
     winners=int((signals["result"]=="TP").sum()) if count else 0
     losers=int((signals["result"]=="SL").sum()) if count else 0
-    pending=count-winners-losers
+    rejected=int((signals["result"]=="SKIP_RISK").sum()) if count else 0
+    pending=count-winners-losers-rejected
     decided=winners+losers
     rate=(100*winners/decided) if decided else 0.
     print("SUMMARY")
-    print(f"{count} signals | {rate:.1f}% win rate (resolved trades) | {winners} good | {losers} fail | {pending} END/unresolved")
+    print(f"{count} signals | {rate:.1f}% win rate (resolved trades) | {winners} good | {losers} fail | {pending} END/unresolved | {rejected} risk-rejected")
+    print("Orange circles = valid pattern/structure signal rejected by risk limit (not an entry).")
     print("Note: overlapping signals are independent tests, not one-position portfolio returns.")
     print("\\n---\\n")
     for num,(_,s) in enumerate(signals.iterrows(),1):
@@ -383,11 +388,12 @@ def plot_full_day(d:pd.DataFrame, signals:pd.DataFrame, title:str="Rudra-Gann 15
         ent=int(s.entry_ix)
         out=int(s.exit_ix)
         if 0<=ent<len(d):
-            ax.scatter([ent],[float(s.entry)],marker="^" if s.direction=="BUY" else "v",
-                       s=140,facecolor="purple",edgecolor="white",linewidth=1.0,zorder=8)
+            is_skipped=s.result=="SKIP_RISK"
+            ax.scatter([ent],[float(s.entry)],marker="o" if is_skipped else ("^" if s.direction=="BUY" else "v"),
+                       s=140,facecolor="orange" if is_skipped else "purple",edgecolor="white",linewidth=1.0,zorder=8)
             ax.annotate(f" E{k+1}",(ent,float(s.entry)),xytext=(5,12 if s.direction=="BUY" else -18),
                         textcoords="offset points",color="purple",fontsize=9,fontweight="bold")
-        if 0<=out<len(d):
+        if 0<=out<len(d) and s.result!="SKIP_RISK":
             color="green" if s.result=="TP" else "red" if s.result=="SL" else "gray"
             ax.scatter([out],[float(s.exit_price)],marker="x",s=145,c=color,
                        linewidth=2.7,zorder=9)
@@ -401,6 +407,8 @@ def plot_full_day(d:pd.DataFrame, signals:pd.DataFrame, title:str="Rudra-Gann 15
         Line2D([0],[0],marker="x",linestyle="None",color="green",markersize=11,label="TP exit"),
         Line2D([0],[0],marker="x",linestyle="None",color="red",markersize=11,label="SL exit"),
         Line2D([0],[0],marker="x",linestyle="None",color="gray",markersize=11,label="END exit"),
+        Line2D([0],[0],marker="o",linestyle="None",markerfacecolor="orange",
+               markeredgecolor="white",markersize=10,label="Signal rejected by risk"),
     ],loc="best",fontsize=9)
     plt.show()
     return fig
