@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""One-off, fixed NQ=F 5-minute Yahoo import for 2026-10-16.
+"""NQ=F 5-minute Yahoo import for a user-selected research date.
 Publishes research CSV only via isolated scratch clone; never touches Chakra.
 """
 import io
+import argparse
+from datetime import date, timedelta
 import subprocess
 import tempfile
 from pathlib import Path
@@ -10,13 +12,20 @@ import pandas as pd
 import yfinance as yf
 
 REPO=Path("/root/trading/ASJR")
-DEST=Path("RudraScanner/ResearchData/Gann/NQ_2026-10-16_5m.csv")
+DEST_ROOT=Path("RudraScanner/ResearchData/Gann")
 
 def git(cwd,*args):
     return subprocess.run(["git",*args],cwd=cwd,capture_output=True,text=True,timeout=90)
 
 def main():
-    df=yf.download("NQ=F",start="2026-10-15",end="2026-10-18",
+    parser=argparse.ArgumentParser()
+    parser.add_argument("--date",default="2026-10-16",help="NY session YYYY-MM-DD")
+    args=parser.parse_args()
+    session=date.fromisoformat(args.date)
+    dest=DEST_ROOT/f"NQ_{session:%Y-%m-%d}_5m.csv"
+    start=(session-timedelta(days=1)).isoformat()
+    end=(session+timedelta(days=2)).isoformat()
+    df=yf.download("NQ=F",start=start,end=end,
                    interval="5m",prepost=True,auto_adjust=False,
                    progress=False,threads=False,multi_level_index=False)
     if df is None or df.empty:
@@ -28,10 +37,10 @@ def main():
         print("NQ IMPORT | FAILED | timezone missing")
         return 1
     ny=df.tz_convert("America/New_York")
-    ny=ny[ny.index.strftime("%Y-%m-%d")=="2026-10-16"]
+    ny=ny[ny.index.strftime("%Y-%m-%d")==args.date]
     cols=["Open","High","Low","Close","Volume"]
     if ny.empty or any(c not in ny for c in cols):
-        print("NQ IMPORT | FAILED | no Oct16 5m OHLCV")
+        print("NQ IMPORT | FAILED | no requested session 5m OHLCV")
         return 1
     ny=ny[cols].dropna(subset=cols[:4])
     if len(ny)<20 or ny.index.duplicated().any() or not ny.index.is_monotonic_increasing:
@@ -53,14 +62,14 @@ def main():
         for attempt in range(4):
             if git(folder,"fetch","-q","origin","main").returncode: continue
             if git(folder,"checkout","-q","-B","nq-import-tmp","FETCH_HEAD").returncode: continue
-            target=folder/DEST
+            target=folder/dest
             target.parent.mkdir(parents=True,exist_ok=True)
             ny.to_csv(target)
-            if git(folder,"add","--",str(DEST)).returncode: continue
+            if git(folder,"add","--",str(dest)).returncode: continue
             if git(folder,"diff","--cached","--quiet").returncode==0:
-                print(f"NQ IMPORT | SUCCESS | {len(ny)} candles | UNCHANGED | {DEST}")
+                print(f"NQ IMPORT | SUCCESS | {len(ny)} candles | UNCHANGED | {dest}")
                 return 0
-            if git(folder,"commit","-qm","Research: NQ 2026-10-16 5m Yahoo candles").returncode: continue
+            if git(folder,"commit","-qm","Research: NQ {args.date} 5m Yahoo candles").returncode: continue
             if git(folder,"push","-q","origin","HEAD:refs/heads/main").returncode==0:
                 print(f"NQ IMPORT | SUCCESS | {len(ny)} candles | PUSHED | {DEST}")
                 print(f"First {ny.index[0]} | Last {ny.index[-1]}")
