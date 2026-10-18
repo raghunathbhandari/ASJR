@@ -2,6 +2,7 @@
 """Research-only deterministic Gann 5m signal scanner. No look-ahead or orders."""
 from __future__ import annotations
 import math
+import argparse
 from pathlib import Path
 import pandas as pd
 
@@ -74,9 +75,13 @@ def scan(d,zone=15,overshoot=25,lookback=24,confirm_bars=4,
     return accepted
 
 def main():
-    if not SOURCE.exists():
-        print("RUDRA GANN | DATA MISSING |",SOURCE);return 2
-    d=load()
+    parser=argparse.ArgumentParser()
+    parser.add_argument("--date",default="2026-10-16",help="NY session YYYY-MM-DD")
+    args=parser.parse_args()
+    source=SOURCE.parent/f"NQ_{args.date}_5m.csv"
+    if not source.exists():
+        print("RUDRA GANN | DATA MISSING |",source);return 2
+    d=load(source)
     trades=scan(d)
     print(f"RUDRA GANN | SELL | 5M candle confirmation | {len(d)} bars | {len(trades)} trades")
     print("GANN |",levels(d.Low.min(),d.High.max()))
