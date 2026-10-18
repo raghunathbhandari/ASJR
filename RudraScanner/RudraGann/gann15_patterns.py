@@ -75,7 +75,7 @@ def scan(d:pd.DataFrame, proximity:float=15.0, context_bars:int=3,
          rr:float=2.0, sl_buffer:float=0.25, max_risk:float=150.0,
          require_close_side:bool=True)->pd.DataFrame:
     """Pattern must occur close to level (past 3 candles), match direction;
-    entry after next directional candle closes (research close-price fill assumption). Exits begin following candle.
+    signal candle closes on right side of V; simulated entry at that close, exits begin on next candle.
     Scan is research heuristic, not identical to older 5m V1 breaker state machine.
     """
     if len(d)<6: return pd.DataFrame()
@@ -105,25 +105,18 @@ def scan(d:pd.DataFrame, proximity:float=15.0, context_bars:int=3,
                     continue
                 # Pattern reversal check: bar closes bullish/bearish; some 3-bar patterns may do this naturally.
                 if (direction=="BUY" and b.Close<=b.Open) or (direction=="SELL" and b.Close>=b.Open):continue
-                # Right-side V: confirmed reversal then another directional candle.
-                # Sell = falling side of inverted V; buy = rising side of V.
-                nxt=d.iloc[i+1]
-                if direction=="SELL" and not (nxt.Close<nxt.Open and nxt.Close<b.Close):continue
-                if direction=="BUY" and not (nxt.Close>nxt.Open and nxt.Close>b.Close):continue
-                entry=float(nxt.Close)  # idealized close fill, NOT next-bar open
+                # The TA-Lib pattern candle itself is the directional right-side signal.
+                # Close-price entry is an idealized fill after full candle confirmation.
+                entry=float(b.Close)
                 # Two/three-candle pattern extremes including confirmation; risk known before entry.
                 length=3 if name in ("Morning Star","Evening Star") else 2 if name in ("Engulfing","Harami") else 1
                 pattern_bars=d.iloc[max(0,i-length+1):i+1]
                 stop=round((float(pattern_bars.Low.min())-sl_buffer)*4)/4 if direction=="BUY" else round((float(pattern_bars.High.max())+sl_buffer)*4)/4
-                # Reject formation if the intended stop was touched in entry candle
-                # before the hypothetical end-of-candle fill.
-                if direction=="SELL" and nxt.High>=stop:continue
-                if direction=="BUY" and nxt.Low<=stop:continue
                 risk=(entry-stop) if direction=="BUY" else (stop-entry)
                 if not (0.25<=risk<=max_risk):continue
                 target=round((entry+rr*risk if direction=="BUY" else entry-rr*risk)*4)/4
                 outcome="END";exit_ix=len(d)-1;exit_price=float(d.Close.iloc[-1])
-                for j in range(i+2,len(d)):
+                for j in range(i+1,len(d)):
                     x=d.iloc[j]
                     hit_stop = x.Low<=stop if direction=="BUY" else x.High>=stop
                     hit_tp = x.High>=target if direction=="BUY" else x.Low<=target
@@ -135,8 +128,8 @@ def scan(d:pd.DataFrame, proximity:float=15.0, context_bars:int=3,
                 result.append({
                     "signal_time_ny":str(d.index[i]),"signal_time_uk":str(d.index[i].tz_convert("Europe/London")),
                     "direction":direction,"candle_pattern":name,"pattern_score":score,
-                    "reason":f"{name}; Gann {level:.0f} within {distance:.2f} pts over last {context_bars} bars; confirmed close {'above' if direction=='BUY' else 'below'} line; next {'bullish rising V' if direction=='BUY' else 'bearish falling inverted-V'} candle closes for assumed entry",
-                    "gann":level,"signal_close":float(b.Close),"entry_time_ny":str(d.index[i+1]),"entry_ix":i+1,"entry":entry,
+                    "reason":f"{name}; Gann {level:.0f} within {distance:.2f} pts over last {context_bars} bars; confirmed close {'above' if direction=='BUY' else 'below'} line; {'bullish rising V' if direction=='BUY' else 'bearish falling inverted-V'} signal candle CLOSE (assumed fill)",
+                    "gann":level,"signal_close":float(b.Close),"entry_time_ny":str(d.index[i]),"entry_ix":i,"entry":entry,
                     "SL":stop,"TP":target,"result":outcome,"exit_time_ny":str(d.index[exit_ix]),
                     "exit_price":exit_price,"gain_loss_pct":round(signed/entry*100,4),
                     "R":round(signed/risk,3),"signal_ix":i,"exit_ix":exit_ix,
@@ -160,7 +153,7 @@ def run(date:str="2026-10-15", root:Path=ROOT, **kwargs):
         for _,s in signals.iterrows():
             print(f"{s.signal_time_ny} | {s.direction} | {s.candle_pattern} | G{s.gann:.0f}")
             print(f"  Signal reason: {s.reason}")
-            print(f"  Assumed bearish/bullish candle CLOSE entry {s.entry:.2f} | SL {s.SL:.2f} | TP {s.TP:.2f} | {s.result} | gain/loss {s.gain_loss_pct:+.3f}% | {s.R:+.2f}R")
+            print(f"  Assumed signal candle CLOSE entry {s.entry:.2f} | SL {s.SL:.2f} | TP {s.TP:.2f} | {s.result} | gain/loss {s.gain_loss_pct:+.3f}% | {s.R:+.2f}R")
         print(f"TOTAL | {signals.R.sum():+.2f}R gross | index-point % not account return; fees/slippage excluded")
     return d,signals
 
@@ -221,7 +214,7 @@ def print_full_day(d:pd.DataFrame, signals:pd.DataFrame):
 def plot_full_day(d:pd.DataFrame, signals:pd.DataFrame, title:str="Rudra-Gann 15m Full Day"):
     """Plot EVERY complete 15m candle, horizontal Gann lines and all entry/exit markers.
 
-    Purple triangle = next directional 15m candle CLOSE (idealized fill).
+    Purple triangle = TA-Lib signal 15m candle CLOSE (idealized fill).
     Green X = take-profit, Red X = stop-loss, gray X = end-of-data mark.
     The display is research only; full-session bars need not be continuous around
     exchange market breaks, and intrabar OHLC cannot establish order of TP/SL.
