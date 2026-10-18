@@ -1,3 +1,19 @@
+## 2026-10-18 — IMPORTANT AI LEARNING: LIVE GIT DIVERGENCE (UNRESOLVED)
+
+**User requirement:** Solve recurrent VPS/GitHub divergence permanently with one controlled, safe operation; do not repeatedly ask for ad-hoc SSH commands or recommend destructive Git shortcuts. Always use Discord's already-allowed entry point `!runpy RudraScanner/scan_now\\.py ...`; directly calling new scripts yields `RUNPY | DENIED | Script not allowed`.
+
+**Observed evidence (Oct 18):** Live VPS `/root/trading/ASJR` reported `git rev-list --left-right --count HEAD...origin/main` = `5 73`. Its five local-only commits were 64c25bac, baed1819, 413431fc, 22426f01, a549c6f7 (all Oct 16 DataLake commits). Numerous tracked DataLake raw/processed/reports files were locally modified, and research, alerts, history, lock and DataLake files were untracked. `!gitpull` failed with code 128: diverging branches cannot fast-forward. The problem is **not** fixed by retrying pull or using `--ff-only`.
+
+**Preservation rule:** Never automatically use `git reset --hard`, `git clean`, force push, blind stash, rebases or merges in the live Chakra checkout. Do not overwrite, delete or misclassify untracked market datasets/state. Inspect local commits and working tree first, preserve both remote and local changes, and account for concurrent Chakra writes. A correct permanent resolution requires a dedicated, concurrency-safe synchronization design, tested recovery of all five commits and dirty files, and subsequent verification of live Git push/pull. Do not claim a permanent fix from a research-only workaround.
+
+**Safe immediate workaround actually tested:** User created isolated detached worktree `/root/trading/ASJR-Gann` at remote commit 08451752. Running `/root/trading/venv_new/bin/python RudraScanner/gann_nq_import.py` there succeeded: Yahoo `NQ=F`, October 16, 2026, **203 five-minute candles**, NY first 00:05 and last 16:55; pushed `RudraScanner/ResearchData/Gann/NQ_2026-10-16_5m.csv` to GitHub. Independently verified CSV on GitHub. This DOES NOT repair live Git divergence. Live Chakra was not restarted.
+
+**New interim command (GitHub committed, NOT VPS verified):** `!runpy RudraScanner/scan_now\\.py --git-safe-sync` (code commit 7cc34001) creates/refreshes isolated `/root/trading/ASJR-Synced` worktree, leaving live checkout untouched. Requires deployment via a safe path because live `!gitpull` fails. This is a research code availability aid, **NOT** live repo history reconciliation. Do not claim the command is installed or working on VPS without output.
+
+**Future AI task:** Design/test one-shot, safe *live* repair separate from active trading data ingestion. Prioritize backup/snapshot, coordination with bot Git writes, non-destructive conflict handling, checkpoint/rollback, no data loss, and explicit validation of the final main history and subsequent cycles. If conflicts cannot be safely resolved automatically, abort and report precise blocker rather than pretending success. Favor minimal operator interaction and supported allowlisted Discord paths. Keep NQ/Gann strategy research separate from Git maintenance.
+
+---
+
 ## LOCKED 2026-10-16 — RUDRA-DDB OFFICIAL MASTER LIST (USER CONFIRMED)
 
 **This supersedes older draft/10-ticker lists and older fundamental Pending statements.** Official universe is **39 tickers, Group A 22 + Group B 17**. Group A: INTC, AKAM, WDC, STX, KLAC, CIEN, TER, LRCX, VRT, PANW, AMD, QCOM, TSM, SWKS, CRWD, ETN, KEYS, FLEX, GLW, COHR, ASML, AMAT. Group B: CBOE, ZTS, V, CME, CDW, PGR, AJG, JKHY, O, YUM, VRSK, MRSH, NSC, PEP, PAYX, NEE, MCK.
