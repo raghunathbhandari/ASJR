@@ -65,6 +65,8 @@ def main(argv=None):
                         help="One of five fixed, Yahoo-only research collection batches")
     parser.add_argument("--research-46-finalize", action="store_true",
                         help="Finalize research results after all five batches; no broker call")
+    parser.add_argument("--git-safe-sync", action="store_true",
+                        help="Prepare up-to-date isolated research worktree; never change live Chakra checkout")
     parser.add_argument("--bridge-start", action="store_true",
                         help="One-time install/start of fixed ASJR research bridge service; no Chakra restart")
     parser.add_argument("--bridge-refresh", action="store_true",
@@ -161,6 +163,9 @@ def main(argv=None):
         from RudraScanner.momentum_movers import main as momentum_main
         period = "1m" if args.momentum_1m else ("3m" if args.momentum_3m else "both")
         return momentum_main(["--compact", "--period", period])
+    if args.git_safe_sync:
+        from RudraScanner.git_safe_sync import main as safe_sync_main
+        return safe_sync_main()
     if args.gann_nq_import:
         from RudraScanner.gann_nq_import import main as gann_import_main
         return gann_import_main()
