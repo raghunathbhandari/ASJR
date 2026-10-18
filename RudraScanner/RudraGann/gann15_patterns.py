@@ -144,6 +144,88 @@ def scan(d:pd.DataFrame, proximity:float=15.0, context_bars:int=3,
                 busy=exit_ix
                 break
             if i<=busy:break
+    # Delayed confirmation: a TA-Lib reversal pattern can appear BEFORE the
+    # Gann retest has finished. Do not enter on that first bearish candle.
+    # Keep its evidence, wait for a HIGHER HIGH near resistance, and confirm
+    # a breakdown under the previous 15m low with a strong bearish candle.
+    # BUY is the symmetric lower-low and break-above-previous-high case.
+    # This branch is independent of the direct confirmation above.
+    for i in range(4,len(d)-1):
+        if any(t["signal_ix"]<=i<=t["exit_ix"] for t in result):
+            continue
+        b=d.iloc[i]
+        prev=d.iloc[i-1]
+        for direction in ("SELL","BUY"):
+            if direction=="SELL" and not (b.Close<b.Open and b.Close<prev.Low):
+                continue
+            if direction=="BUY" and not (b.Close>b.Open and b.Close>prev.High):
+                continue
+            # Require a reasonably strong directional confirmation bar.
+            span=float(b.High-b.Low)
+            if span<=0 or abs(float(b.Close-b.Open))/span<0.4:
+                continue
+            found=None
+            for anchor in range(max(1,i-5),i-1):
+                names=[]
+                for name in scores.columns:
+                    val=int(scores.iloc[anchor][name])
+                    if val==0: continue
+                    detected=("BUY" if val>0 else "SELL") if name in ("Engulfing","Harami") else PATTERNS_NEXT[name]
+                    if detected==direction and ((val>0)==(direction=="BUY")):
+                        names.append(name)
+                if not names:continue
+                for level in lvls:
+                    segment=d.iloc[anchor+1:i]
+                    if segment.empty:continue
+                    if direction=="SELL":
+                        peak=float(segment.High.max())
+                        prior_peak=float(d.iloc[anchor].High)
+                        retest_ok=(peak>prior_peak and abs(peak-level)<=proximity+25)
+                        side_ok=(not require_close_side or b.Close<level)
+                        stop=math.ceil((float(b.High)+sl_buffer)*4)/4
+                        entry=float(b.Close)
+                        risk=stop-entry
+                    else:
+                        trough=float(segment.Low.min())
+                        prior_trough=float(d.iloc[anchor].Low)
+                        retest_ok=(trough<prior_trough and abs(trough-level)<=proximity+25)
+                        side_ok=(not require_close_side or b.Close>level)
+                        stop=math.floor((float(b.Low)-sl_buffer)*4)/4
+                        entry=float(b.Close)
+                        risk=entry-stop
+                    if retest_ok and side_ok and 0.25<=risk<=max_risk:
+                        found=(anchor,names[0],level,entry,stop,risk)
+                        break
+                if found:break
+            if not found:continue
+            anchor,name,level,entry,stop,risk=found
+            target=round((entry+rr*risk if direction=="BUY" else entry-rr*risk)*4)/4
+            outcome="END";exit_ix=len(d)-1;exit_price=float(d.Close.iloc[-1])
+            for j in range(i+1,len(d)):
+                x=d.iloc[j]
+                if (x.Low<=stop if direction=="BUY" else x.High>=stop):
+                    outcome="SL";exit_ix=j;exit_price=stop;break
+                if (x.High>=target if direction=="BUY" else x.Low<=target):
+                    outcome="TP";exit_ix=j;exit_price=target;break
+            if any(not (exit_ix<t["signal_ix"] or i>t["exit_ix"]) for t in result):
+                continue
+            signed=(exit_price-entry) if direction=="BUY" else (entry-exit_price)
+            result.append({
+                "signal_time_ny":str(d.index[i]),
+                "signal_time_uk":str(d.index[i].tz_convert("Europe/London")),
+                "direction":direction,
+                "candle_pattern":f"{name} + retest/structure confirmation",
+                "pattern_score":int(scores.iloc[anchor][name]),
+                "reason":f"TA-Lib {name} at {d.index[anchor].strftime('%H:%M')} NY; Gann {level:.0f} retest made a new {'lower low' if direction=='BUY' else 'higher high'}; confirmation breaks previous 15m {'high' if direction=='BUY' else 'low'} at {d.index[i].strftime('%H:%M')} NY",
+                "gann":level,"signal_close":float(b.Close),
+                "entry_time_ny":str(d.index[i]),"entry_ix":i,"entry":entry,
+                "SL":stop,"TP":target,"result":outcome,
+                "exit_time_ny":str(d.index[exit_ix]),"exit_price":exit_price,
+                "gain_loss_pct":round(signed/entry*100,4),
+                "R":round(signed/risk,3),"signal_ix":i,"exit_ix":exit_ix,
+            })
+            break
+    result.sort(key=lambda x:x["signal_ix"])
     # Strict mode: TA-Lib named reversal pattern is mandatory.
     # A Gann touch, a green retest candle, or structural V shape alone
     # must never create a BUY or SELL trade.
