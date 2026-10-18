@@ -1,3 +1,9 @@
+## 2026-10-18 — OPERATIONAL HANDOFF AND VERIFIED DATA AUDIT
+
+**First read:** [Rudra-Gann OPERATIONS.md](https://github.com/raghunathbhandari/ASJR/blob/main/RudraScanner/RudraGann/OPERATIONS.md) for verified data-source folders, imported CSV SHA256, basic audit results, GitHub→VPS bridge limitations, approved Discord/admin commands, safe SSH worktree commands, and precise Gann candle confirmation rules. As of Oct 18 user-confirmed audit: 627,688 real 1m rows, no malformed timestamps/duplicates/order/OHLC errors; 33 ASJR 5m session files. Gap/roll/resampling audit remains pending. **Data collection only until user authorizes backtest.**
+
+---
+
 ## HISTORICAL NQ DATA SOURCES — VERIFIED 2026-10-18 (READ NEXT SESSION FIRST)
 
 **New source identified:** public [kfccolonel1/BARS](https://github.com/kfccolonel1/BARS), source catalog [catalog.json](https://github.com/kfccolonel1/BARS/blob/main/catalog.json). Catalog says stitched 1-minute NQ futures, unadjusted/front-month, quarterly contract roll jumps and holiday/market-closure gaps. Third-party historical source: independently validate timestamps, OHLC integrity, gap coverage, roll discontinuity and permission to reuse before claiming a clean backtest. A rollover jump must NOT be interpreted as a Gann trade.
