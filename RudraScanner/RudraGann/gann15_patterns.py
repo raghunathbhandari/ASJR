@@ -108,8 +108,8 @@ def scan(d:pd.DataFrame, proximity:float=15.0, context_bars:int=3,
                 # Right-side V: confirmed reversal then another directional candle.
                 # Sell = falling side of inverted V; buy = rising side of V.
                 nxt=d.iloc[i+1]
-                if direction==\"SELL\" and not (nxt.Close<nxt.Open and nxt.Close<b.Close):continue
-                if direction==\"BUY\" and not (nxt.Close>nxt.Open and nxt.Close>b.Close):continue
+                if direction=="SELL" and not (nxt.Close<nxt.Open and nxt.Close<b.Close):continue
+                if direction=="BUY" and not (nxt.Close>nxt.Open and nxt.Close>b.Close):continue
                 entry=float(nxt.Close)  # idealized close fill, NOT next-bar open
                 # Two/three-candle pattern extremes including confirmation; risk known before entry.
                 length=3 if name in ("Morning Star","Evening Star") else 2 if name in ("Engulfing","Harami") else 1
