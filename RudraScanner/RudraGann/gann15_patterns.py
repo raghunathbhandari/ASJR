@@ -105,6 +105,13 @@ def scan(d:pd.DataFrame, proximity:float=15.0, context_bars:int=3,
                     continue
                 # Pattern reversal check: bar closes bullish/bearish; some 3-bar patterns may do this naturally.
                 if (direction=="BUY" and b.Close<=b.Open) or (direction=="SELL" and b.Close>=b.Open):continue
+                # Structure must break AFTER the retest to confirm the right-side V.
+                # SELL: confirmation close strictly below preceding 15m LOW.
+                # BUY: confirmation close strictly above preceding 15m HIGH.
+                # No future bars consulted; avoids early sells while HH continues.
+                prior=d.iloc[i-1]
+                if direction=="SELL" and not (b.Close<prior.Low):continue
+                if direction=="BUY" and not (b.Close>prior.High):continue
                 # The TA-Lib pattern candle itself is the directional right-side signal.
                 # Close-price entry is an idealized fill after full candle confirmation.
                 entry=float(b.Close)
@@ -128,7 +135,7 @@ def scan(d:pd.DataFrame, proximity:float=15.0, context_bars:int=3,
                 result.append({
                     "signal_time_ny":str(d.index[i]),"signal_time_uk":str(d.index[i].tz_convert("Europe/London")),
                     "direction":direction,"candle_pattern":name,"pattern_score":score,
-                    "reason":f"{name}; Gann {level:.0f} within {distance:.2f} pts over last {context_bars} bars; confirmed close {'above' if direction=='BUY' else 'below'} line; {'bullish rising V' if direction=='BUY' else 'bearish falling inverted-V'} signal candle CLOSE (assumed fill)",
+                    "reason":f"{name}; Gann {level:.0f} within {distance:.2f} pts over last {context_bars} bars; confirmed close {'above' if direction=='BUY' else 'below'} line; prior-bar {'high broken' if direction=='BUY' else 'low broken'}; {'bullish rising V' if direction=='BUY' else 'bearish falling inverted-V'} signal candle CLOSE (assumed fill)",
                     "gann":level,"signal_close":float(b.Close),"entry_time_ny":str(d.index[i]),"entry_ix":i,"entry":entry,
                     "SL":stop,"TP":target,"result":outcome,"exit_time_ny":str(d.index[exit_ix]),
                     "exit_price":exit_price,"gain_loss_pct":round(signed/entry*100,4),
