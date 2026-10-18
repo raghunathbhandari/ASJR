@@ -144,6 +144,54 @@ def scan(d:pd.DataFrame, proximity:float=15.0, context_bars:int=3,
                 busy=exit_ix
                 break
             if i<=busy:break
+    # Separate visual right-side-of-inverted-V Gann rejection signals.
+    # Mark at the confirmation candle CLOSE, not its open. This is a
+    # documented structural pattern, NOT a TA-Lib-named candlestick.
+    occupied={(int(t["signal_ix"]),float(t["gann"])) for t in result}
+    for i in range(2,len(d)-1):
+        b=d.iloc[i]; prev=d.iloc[i-1]
+        if not (b.Close<b.Open and b.Close<prev.Close):
+            continue
+        for level in lvls:
+            gap=abs(float(prev.High)-level)
+            if gap>proximity or not (b.Close<level and prev.Close<level):
+                continue
+            if (i,level) in occupied:
+                continue
+            # Require a bullish retest (upward leg) followed by falling
+            # right-side bearish confirmation.
+            if prev.Close<=prev.Open:
+                continue
+            entry=float(b.Close)
+            stop=math.ceil((max(float(prev.High),float(b.High))+sl_buffer)*4)/4
+            risk=stop-entry
+            if not (0.25<=risk<=max_risk):continue
+            target=round((entry-rr*risk)*4)/4
+            outcome="END";exit_ix=len(d)-1;exit_price=float(d.Close.iloc[-1])
+            for j in range(i+1,len(d)):
+                x=d.iloc[j]
+                if x.High>=stop:
+                    outcome="SL";exit_ix=j;exit_price=stop;break
+                if x.Low<=target:
+                    outcome="TP";exit_ix=j;exit_price=target;break
+            # Preserve one-trade-at-a-time across existing TA-Lib results.
+            if any(not (exit_ix<t["signal_ix"] or i>t["exit_ix"]) for t in result):
+                continue
+            signed=entry-exit_price
+            result.append({
+                "signal_time_ny":str(d.index[i]),"signal_time_uk":str(d.index[i].tz_convert("Europe/London")),
+                "direction":"SELL","candle_pattern":"Gann bearish V rejection (structural)",
+                "pattern_score":None,
+                "reason":f"Bullish retest high {prev.High:.2f} within {gap:.2f} pts of Gann {level:.0f}; bearish right-side reversal candle closes below Gann",
+                "gann":level,"signal_close":float(b.Close),
+                "entry_time_ny":str(d.index[i]),"entry_ix":i,"entry":entry,
+                "SL":stop,"TP":target,"result":outcome,
+                "exit_time_ny":str(d.index[exit_ix]),"exit_price":exit_price,
+                "gain_loss_pct":round(signed/entry*100,4),"R":round(signed/risk,3),
+                "signal_ix":i,"exit_ix":exit_ix,
+            })
+            break
+    result.sort(key=lambda t:t["signal_ix"])
     return pd.DataFrame(result)
 
 PATTERNS_NEXT={"Morning Star":"BUY","Evening Star":"SELL","Hammer":"BUY","Inverted Hammer":"BUY",
@@ -234,7 +282,7 @@ def plot_full_day(d:pd.DataFrame, signals:pd.DataFrame, title:str="Rudra-Gann 15
                          xrotation=45,datetime_format="%H:%M",
                          tight_layout=True)
     ax=axes[0]
-    levels=sorted({float(x) for x in signals["gann"]}) if not signals.empty else gann_levels(float(d.Low.min()),float(d.High.max()))
+    levels=gann_levels(float(d.Low.min()),float(d.High.max()))
     low=float(d.Low.min());high=float(d.High.max())
     for level in levels:
         if low-60 <= level <= high+60:
