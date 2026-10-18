@@ -105,12 +105,21 @@ def scan(d:pd.DataFrame, proximity:float=15.0, context_bars:int=3,
                     continue
                 # Pattern reversal check: bar closes bullish/bearish; some 3-bar patterns may do this naturally.
                 if (direction=="BUY" and b.Close<=b.Open) or (direction=="SELL" and b.Close>=b.Open):continue
-                # Right-side V: confirmed reversal then another directional candle.\n                # Sell = falling side of inverted V; buy = rising side of V.\n                nxt=d.iloc[i+1]\n                if direction==\"SELL\" and not (nxt.Close<nxt.Open and nxt.Close<b.Close):continue\n                if direction==\"BUY\" and not (nxt.Close>nxt.Open and nxt.Close>b.Close):continue\n                entry=float(nxt.Close)  # idealized close fill, NOT next-bar open
+                # Right-side V: confirmed reversal then another directional candle.
+                # Sell = falling side of inverted V; buy = rising side of V.
+                nxt=d.iloc[i+1]
+                if direction==\"SELL\" and not (nxt.Close<nxt.Open and nxt.Close<b.Close):continue
+                if direction==\"BUY\" and not (nxt.Close>nxt.Open and nxt.Close>b.Close):continue
+                entry=float(nxt.Close)  # idealized close fill, NOT next-bar open
                 # Two/three-candle pattern extremes including confirmation; risk known before entry.
                 length=3 if name in ("Morning Star","Evening Star") else 2 if name in ("Engulfing","Harami") else 1
                 pattern_bars=d.iloc[max(0,i-length+1):i+1]
                 stop=round((float(pattern_bars.Low.min())-sl_buffer)*4)/4 if direction=="BUY" else round((float(pattern_bars.High.max())+sl_buffer)*4)/4
-                # Reject formation if the intended stop was touched in entry candle\n                # before the hypothetical end-of-candle fill.\n                if direction=="SELL" and nxt.High>=stop:continue\n                if direction=="BUY" and nxt.Low<=stop:continue\n                risk=(entry-stop) if direction=="BUY" else (stop-entry)
+                # Reject formation if the intended stop was touched in entry candle
+                # before the hypothetical end-of-candle fill.
+                if direction=="SELL" and nxt.High>=stop:continue
+                if direction=="BUY" and nxt.Low<=stop:continue
+                risk=(entry-stop) if direction=="BUY" else (stop-entry)
                 if not (0.25<=risk<=max_risk):continue
                 target=round((entry+rr*risk if direction=="BUY" else entry-rr*risk)*4)/4
                 outcome="END";exit_ix=len(d)-1;exit_price=float(d.Close.iloc[-1])
