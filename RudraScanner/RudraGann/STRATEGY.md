@@ -1,3 +1,20 @@
+## HISTORICAL NQ DATA SOURCES — VERIFIED 2026-10-18 (READ NEXT SESSION FIRST)
+
+**New source identified:** public [kfccolonel1/BARS](https://github.com/kfccolonel1/BARS), source catalog [catalog.json](https://github.com/kfccolonel1/BARS/blob/main/catalog.json). Catalog says stitched 1-minute NQ futures, unadjusted/front-month, quarterly contract roll jumps and holiday/market-closure gaps. Third-party historical source: independently validate timestamps, OHLC integrity, gap coverage, roll discontinuity and permission to reuse before claiming a clean backtest. A rollover jump must NOT be interpreted as a Gann trade.
+
+**Exact downloadable CSVs:**
+- [2025 1-minute](https://raw.githubusercontent.com/kfccolonel1/BARS/main/NQ/1min/NQ_1min_2025-01-01_2025-12-31_stitched.csv): catalog 353,233 rows; NY 2025-01-01 18:00 through 2025-12-31 16:59.
+- [2026 1-minute](https://raw.githubusercontent.com/kfccolonel1/BARS/main/NQ/1min/NQ_1min_2026-01-01_2026-10-08_stitched.csv): catalog 274,455 rows; NY 2026-01-01 18:00 through 2026-10-08 23:58.
+- ASJR Yahoo NQ=F 5m per-day CSVs already at `RudraScanner/ResearchData/Gann/NQ_2026-09-DD_5m.csv` and `NQ_2026-10-DD_5m.csv` covering 33 Sep–Oct 16 sessions. **Do not silently merge third-party stitched futures with Yahoo continuous data**; prices can differ considerably near roll/throughout history.
+- Other original historical sources: `raghunathbhandari/AlgoStrategy` repo, `AI_Chunks/NQ/data/external/Dataset_NQ_1min_2022_2025` (105 pieces, original archive ended ~Dec 11 2025), `NQ/data/NQ_5min_20260120_20260415.csv`, `NQ/data/NQ_1min_20260401_20260902.csv`.
+- ASJR historical IBKR checkpoint importer (dated NQ futures) `RudraScanner/RudraGann/import_ibkr_1y.py` is an alternative where needed; live file is local research checkpoint, not GitHub until published.
+
+**Copy source archive into ASJR:** `/root/trading/venv_new/bin/python RudraScanner/RudraGann/import_bars_sources.py` from a refreshed `/root/trading/ASJR-Gann` detached research checkout. This imports two source CSVs under `RudraScanner/ResearchData/Gann/Source/BARS/` using an isolated scratch Git clone/push; it does NOT modify live Chakra checkout. **Import is committed as code but source CSV transfer is PENDING until VPS prints `BARS IMPORT | SUCCESS | PUSHED TO ASJR` and the files are independently verified.** Avoid storing a repeated copy in the main repo if either file is >100MB GitHub limit; handle failure explicitly, do not assume saved.
+
+**Backtest preparation:** resample 1m bars only if a full set of five real contiguous minutes is present for a 5m candle; 5m->15m/1H/4H with aligned exchange session boundary and candle completeness. Report coverage by month and preserve original timezone, provider and contract labels. Run frozen Gann pattern test only after the joined dataset passes integrity and rollover checks.
+
+---
+
 # Rudra-Gann Strategy — V1 Research (2026-10-18)
 
 ## Objective
