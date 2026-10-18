@@ -33,7 +33,7 @@ def append_checkpoint(path, rows):
 
 async def run(args):
     try:
-        from ib_async import IB, ContFuture
+        from ib_async import IB, Future
     except ImportError:
         print("ERROR | ib_async is not installed in selected Python environment");return 2
     start=pd.Timestamp(args.start,tz="UTC")
@@ -43,11 +43,27 @@ async def run(args):
     ib=IB()
     try:
         await ib.connectAsync(args.host,args.port,clientId=args.client_id,timeout=18,readonly=True)
-        contract=ContFuture("NQ",exchange="CME",currency="USD")
-        qualified=await ib.qualifyContractsAsync(contract)
-        if len(qualified)!=1:
-            print(f"ERROR | NQ continuous future qualification yielded {len(qualified)}");return 2
-        print("IBKR | NQ continuous future qualified | historical research only",flush=True)
+        from datetime import date
+        import calendar
+        contracts={}
+        async def contract_for(ts):
+            stamp=ts.tz_convert("America/New_York")
+            for year in (stamp.year,stamp.year+1):
+                for month in (3,6,9,12):
+                    fridays=[d for d in range(1,calendar.monthrange(year,month)[1]+1)
+                             if date(year,month,d).weekday()==4]
+                    cutoff=pd.Timestamp(date(year,month,fridays[2]),tz="America/New_York")-pd.Timedelta(days=8)
+                    if stamp < cutoff:
+                        code=f"{year}{month:02d}"
+                        if code not in contracts:
+                            contract=Future("NQ",code,"CME",currency="USD",includeExpired=True)
+                            q=await ib.qualifyContractsAsync(contract)
+                            if len(q)!=1:raise RuntimeError("Cannot qualify NQ "+code)
+                            contracts[code]=q[0]
+                            print("IBKR | qualified NQ "+code,flush=True)
+                        return code,contracts[code]
+            raise RuntimeError("No quarterly contract for "+str(stamp))
+        print("IBKR | dated NQ futures | approximate 8-day-prior rollover | NOT back-adjusted",flush=True)
         if output.exists():
             saved=pd.read_csv(output,usecols=["Datetime"])
             saved["Datetime"]=pd.to_datetime(saved.Datetime,utc=True)
@@ -57,7 +73,8 @@ async def run(args):
         count=0
         while cursor>=start and count<args.max_chunks:
             try:
-                bars=await ib.reqHistoricalDataAsync(qualified[0],
+                contract_code,qualified=await contract_for(cursor)
+                bars=await ib.reqHistoricalDataAsync(qualified,
                       endDateTime=cursor.to_pydatetime(),durationStr="2 D",
                       barSizeSetting="5 mins",whatToShow="TRADES",
                       useRTH=False,formatDate=2,keepUpToDate=False,timeout=90)
@@ -72,14 +89,14 @@ async def run(args):
                 if start<=dt<=end:
                     rows.append({"Datetime":dt.isoformat(),"Open":float(b.open),
                      "High":float(b.high),"Low":float(b.low),"Close":float(b.close),
-                     "Volume":float(b.volume)})
+                     "Volume":float(b.volume),"Contract":contract_code})
             earliest=min(pd.Timestamp(b.date).tz_convert("UTC") if pd.Timestamp(b.date).tzinfo else pd.Timestamp(b.date).tz_localize("UTC") for b in bars)
             if earliest>=cursor:
                 print("ERROR | history cursor did not move backward");return 4
             append_checkpoint(output,rows)
             cursor=earliest-pd.Timedelta(seconds=1)
             count+=1
-            print(f"IBKR | chunk {count}/{args.max_chunks} | next-before={cursor}",flush=True)
+            print(f"IBKR | chunk {count}/{args.max_chunks} | contract={contract_code} | next-before={cursor}",flush=True)
             await asyncio.sleep(args.sleep)
         if cursor>=start:
             print("PARTIAL | max chunks reached; rerun same command to resume safely");return 5
