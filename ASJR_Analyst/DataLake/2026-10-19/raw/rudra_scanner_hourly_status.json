@@ -1,9 +1,8 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-19T12:21:37.248797+00:00",
+  "generated_at_utc": "2026-10-19T12:33:29.006435+00:00",
   "selected_tickers": [
-    "AAOI",
     "AKAM",
     "AMAT",
     "APLD",
@@ -22,13 +21,10 @@
     "SMCI",
     "WDC",
     "WTTR",
-    "WULF"
+    "WULF",
+    "XE"
   ],
   "per_ticker": {
-    "AAOI": {
-      "state": "OK",
-      "rows": 549
-    },
     "AKAM": {
       "state": "OK",
       "rows": 528
@@ -104,11 +100,14 @@
     "WULF": {
       "state": "OK",
       "rows": 549
+    },
+    "XE": {
+      "state": "OK",
+      "rows": 549
     }
   },
   "rows": 10826,
   "usable_150bars": [
-    "AAOI",
     "AKAM",
     "AMAT",
     "APLD",
@@ -127,6 +126,7 @@
     "SMCI",
     "WDC",
     "WTTR",
-    "WULF"
+    "WULF",
+    "XE"
   ]
 }
