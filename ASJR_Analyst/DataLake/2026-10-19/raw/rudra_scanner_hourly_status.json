@@ -1,11 +1,12 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-19T16:38:17.096029+00:00",
+  "generated_at_utc": "2026-10-19T16:50:44.172776+00:00",
   "selected_tickers": [
     "AKAM",
     "ALM",
     "AMAT",
+    "AMZN",
     "APLD",
     "ARQT",
     "AXTI",
@@ -16,7 +17,6 @@
     "IBRX",
     "INTC",
     "MSFT",
-    "MXL",
     "OCUL",
     "ORCL",
     "QCOM",
@@ -34,6 +34,10 @@
       "rows": 553
     },
     "AMAT": {
+      "state": "OK",
+      "rows": 553
+    },
+    "AMZN": {
       "state": "OK",
       "rows": 553
     },
@@ -77,10 +81,6 @@
       "state": "OK",
       "rows": 553
     },
-    "MXL": {
-      "state": "OK",
-      "rows": 553
-    },
     "OCUL": {
       "state": "OK",
       "rows": 491
@@ -111,6 +111,7 @@
     "AKAM",
     "ALM",
     "AMAT",
+    "AMZN",
     "APLD",
     "ARQT",
     "AXTI",
@@ -120,7 +121,6 @@
     "IBRX",
     "INTC",
     "MSFT",
-    "MXL",
     "OCUL",
     "ORCL",
     "QCOM",
