@@ -1,12 +1,13 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-19T16:13:08.139384+00:00",
+  "generated_at_utc": "2026-10-19T16:25:32.504853+00:00",
   "selected_tickers": [
     "AKAM",
     "ALM",
     "AMAT",
     "APLD",
+    "ARQT",
     "AXTI",
     "CLF",
     "CRDO",
@@ -19,7 +20,6 @@
     "OCUL",
     "ORCL",
     "QCOM",
-    "RBA",
     "SMCI",
     "WDC",
     "WTTR"
@@ -27,91 +27,92 @@
   "per_ticker": {
     "AKAM": {
       "state": "OK",
-      "rows": 531
+      "rows": 532
     },
     "ALM": {
       "state": "OK",
-      "rows": 552
+      "rows": 553
     },
     "AMAT": {
       "state": "OK",
-      "rows": 552
+      "rows": 553
     },
     "APLD": {
       "state": "OK",
-      "rows": 552
+      "rows": 553
+    },
+    "ARQT": {
+      "state": "OK",
+      "rows": 496
     },
     "AXTI": {
       "state": "OK",
-      "rows": 552
+      "rows": 553
     },
     "CLF": {
       "state": "OK",
-      "rows": 546
+      "rows": 547
     },
     "CRDO": {
       "state": "OK",
-      "rows": 552
+      "rows": 553
     },
     "CRWV": {
       "state": "OK",
-      "rows": 552
+      "rows": 553
     },
     "IAM": {
       "state": "OK",
-      "rows": 32
+      "rows": 33
     },
     "IBRX": {
       "state": "OK",
-      "rows": 552
+      "rows": 553
     },
     "INTC": {
       "state": "OK",
-      "rows": 552
+      "rows": 553
     },
     "MSFT": {
       "state": "OK",
-      "rows": 552
+      "rows": 553
     },
     "MXL": {
       "state": "OK",
-      "rows": 552
+      "rows": 553
     },
     "OCUL": {
       "state": "OK",
-      "rows": 490
+      "rows": 491
     },
     "ORCL": {
       "state": "OK",
-      "rows": 552
+      "rows": 553
     },
     "QCOM": {
       "state": "OK",
-      "rows": 552
-    },
-    "RBA": {
-      "state": "OK",
-      "rows": 409
+      "rows": 553
     },
     "SMCI": {
       "state": "OK",
-      "rows": 552
+      "rows": 553
     },
     "WDC": {
       "state": "OK",
-      "rows": 552
+      "rows": 553
     },
     "WTTR": {
       "state": "OK",
-      "rows": 425
+      "rows": 426
     }
   },
-  "rows": 10161,
+  "rows": 10267,
   "usable_150bars": [
     "AKAM",
     "ALM",
     "AMAT",
     "APLD",
+    "ARQT",
     "AXTI",
     "CLF",
     "CRDO",
@@ -123,7 +124,6 @@
     "OCUL",
     "ORCL",
     "QCOM",
-    "RBA",
     "SMCI",
     "WDC",
     "WTTR"
