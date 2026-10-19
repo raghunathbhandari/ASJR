@@ -67,6 +67,8 @@ def main(argv=None):
                         help="Finalize research results after all five batches; no broker call")
     parser.add_argument("--git-safe-sync", action="store_true",
                         help="Prepare up-to-date isolated research worktree; never change live Chakra checkout")
+    parser.add_argument("--git-recover", action="store_true",
+                        help="Preserve DataLake and reconcile Git only when Chakra is stopped")
     parser.add_argument("--bridge-start", action="store_true",
                         help="One-time install/start of fixed ASJR research bridge service; no Chakra restart")
     parser.add_argument("--bridge-refresh", action="store_true",
@@ -168,6 +170,9 @@ def main(argv=None):
     if args.git_safe_sync:
         from RudraScanner.git_safe_sync import main as safe_sync_main
         return safe_sync_main()
+    if args.git_recover:
+        from RudraScanner.git_recover_once import main as git_recover_main
+        return git_recover_main()
     if args.gann_test:
         from RudraScanner.RudraGann.strategy import main as gann_test_main
         return gann_test_main()
