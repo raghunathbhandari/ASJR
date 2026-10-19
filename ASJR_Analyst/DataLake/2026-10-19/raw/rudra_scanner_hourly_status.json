@@ -1,17 +1,17 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-19T16:00:21.009539+00:00",
+  "generated_at_utc": "2026-10-19T16:06:41.174057+00:00",
   "selected_tickers": [
     "AKAM",
     "ALM",
     "AMAT",
     "APLD",
+    "ARQT",
     "AXTI",
     "CLF",
     "CRDO",
     "CRWV",
-    "FMC",
     "IAM",
     "IBRX",
     "INTC",
@@ -41,6 +41,10 @@
       "state": "OK",
       "rows": 552
     },
+    "ARQT": {
+      "state": "OK",
+      "rows": 495
+    },
     "AXTI": {
       "state": "OK",
       "rows": 552
@@ -56,10 +60,6 @@
     "CRWV": {
       "state": "OK",
       "rows": 552
-    },
-    "FMC": {
-      "state": "OK",
-      "rows": 521
     },
     "IAM": {
       "state": "OK",
@@ -106,17 +106,17 @@
       "rows": 425
     }
   },
-  "rows": 10273,
+  "rows": 10247,
   "usable_150bars": [
     "AKAM",
     "ALM",
     "AMAT",
     "APLD",
+    "ARQT",
     "AXTI",
     "CLF",
     "CRDO",
     "CRWV",
-    "FMC",
     "IBRX",
     "INTC",
     "MSFT",
