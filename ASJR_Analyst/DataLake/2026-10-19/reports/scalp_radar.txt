@@ -8,12 +8,12 @@ RVOL20 | INSUFFICIENT_20_FULL_RTH_SESSIONS
 DISCOVERY | COLLECTED | extra historical requests: 6
 RUDRA RADAR | 5M | 2026-10-19 | NOT A LIVE TRADE ALERT
 MODE | EXPERIMENTAL_RESEARCH | DISCORD DISABLED
-INPUT | 13814 bars | 25 tickers | 13814 completed
+INPUT | 13854 bars | 25 tickers | 13854 completed
 EMA9 | continuous across real available bars | status=OK
 VWAP | exact IBKR WAP RTH-reset | WAP_MISSING_OR_INCOMPLETE_RTH | valid bars=0
 RVOL20 | INSUFFICIENT_20_FULL_RTH_SESSIONS | valid bars=0
 TOP-DOWN | context gate | 0 tickers WAIT/mixed
 DETECTORS | DATA_NOT_READY | research candidates=0
 NO VERIFIED TRADING SIGNALS; missing WAP/context or detectors OFF.
-CATEGORIES | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-19/reports/rudra_scanner_categories.txt | {'TOP_IN_PLAY': 14, 'STRONG_MOMENTUM': 0, 'WEAK_SELLING': 0, 'REVERSAL_WATCH': 0, 'LOW_RVOL_WATCH': 1, 'UNCLASSIFIED': 6}
+CATEGORIES | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-19/reports/rudra_scanner_categories.txt | {'TOP_IN_PLAY': 14, 'STRONG_MOMENTUM': 1, 'WEAK_SELLING': 1, 'REVERSAL_WATCH': 0, 'LOW_RVOL_WATCH': 2, 'UNCLASSIFIED': 6}
 TICKERS | AGIO, AKAM, ALM, AMAT, AMZN, APLD, ARQT, CLF, CRDO, CRWV, DJT, IBRX, INTC, MSFT, OCUL, ORCL, QCOM, SMCI, WDC, WTTR
