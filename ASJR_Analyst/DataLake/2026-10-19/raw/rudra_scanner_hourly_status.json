@@ -1,19 +1,19 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-19T19:56:58.563609+00:00",
+  "generated_at_utc": "2026-10-19T20:03:40.369815+00:00",
   "selected_tickers": [
+    "AGIO",
     "AKAM",
     "ALM",
     "AMAT",
+    "AMZN",
     "APLD",
     "ARQT",
-    "CCC",
     "CLF",
     "CRDO",
     "CRWV",
     "DJT",
-    "DXC",
     "IBRX",
     "INTC",
     "MSFT",
@@ -25,6 +25,10 @@
     "WTTR"
   ],
   "per_ticker": {
+    "AGIO": {
+      "state": "OK",
+      "rows": 448
+    },
     "AKAM": {
       "state": "OK",
       "rows": 535
@@ -37,6 +41,10 @@
       "state": "OK",
       "rows": 556
     },
+    "AMZN": {
+      "state": "OK",
+      "rows": 556
+    },
     "APLD": {
       "state": "OK",
       "rows": 556
@@ -44,10 +52,6 @@
     "ARQT": {
       "state": "OK",
       "rows": 499
-    },
-    "CCC": {
-      "state": "OK",
-      "rows": 487
     },
     "CLF": {
       "state": "OK",
@@ -64,10 +68,6 @@
     "DJT": {
       "state": "OK",
       "rows": 556
-    },
-    "DXC": {
-      "state": "OK",
-      "rows": 472
     },
     "IBRX": {
       "state": "OK",
@@ -106,19 +106,19 @@
       "rows": 429
     }
   },
-  "rows": 10694,
+  "rows": 10739,
   "usable_150bars": [
+    "AGIO",
     "AKAM",
     "ALM",
     "AMAT",
+    "AMZN",
     "APLD",
     "ARQT",
-    "CCC",
     "CLF",
     "CRDO",
     "CRWV",
     "DJT",
-    "DXC",
     "IBRX",
     "INTC",
     "MSFT",
