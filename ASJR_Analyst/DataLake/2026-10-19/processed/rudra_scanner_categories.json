@@ -1,13 +1,13 @@
 {
   "day": "2026-10-19",
-  "generated_at_uk": "2026-10-19T19:27:53.684907+01:00",
+  "generated_at_uk": "2026-10-19T19:34:11.781210+01:00",
   "counts": {
-    "TOP_IN_PLAY": 14,
-    "STRONG_MOMENTUM": 2,
-    "WEAK_SELLING": 3,
-    "REVERSAL_WATCH": 0,
-    "LOW_RVOL_WATCH": 4,
-    "UNCLASSIFIED": 3
+    "TOP_IN_PLAY": 13,
+    "STRONG_MOMENTUM": 3,
+    "WEAK_SELLING": 9,
+    "REVERSAL_WATCH": 1,
+    "LOW_RVOL_WATCH": 3,
+    "UNCLASSIFIED": 2
   },
   "rows": [
     {
@@ -19,11 +19,11 @@
       "source": "IBKR",
       "scanner_codes": "TOP_PERC_GAIN+HOT_BY_VOLUME+MOST_ACTIVE",
       "ai_bias": "N/A",
-      "price": 19.675,
-      "bar_time_uk": "19:10",
-      "change_5m_pct": 0.024910905384301074,
-      "volume": 904.0,
-      "vol_12bar": 0.3656957928802589,
+      "price": 19.7,
+      "bar_time_uk": "19:15",
+      "change_5m_pct": -0.27841052897999985,
+      "volume": 1799.0,
+      "vol_12bar": 0.6681522748375116,
       "rvol20": null,
       "data_state": "FRESH_5M",
       "selection_reason": "scanner=TOP_PERC_GAIN,HOT_BY_VOLUME,MOST_ACTIVE"
@@ -31,17 +31,19 @@
     {
       "ticker": "CLF",
       "categories": [
-        "TOP_IN_PLAY"
+        "TOP_IN_PLAY",
+        "STRONG_MOMENTUM",
+        "LOW_RVOL_WATCH"
       ],
       "discovery_priority": 7,
       "source": "IBKR",
       "scanner_codes": "TOP_PERC_GAIN+HOT_BY_VOLUME+MOST_ACTIVE",
       "ai_bias": "N/A",
-      "price": 14.01,
-      "bar_time_uk": "19:10",
-      "change_5m_pct": 0.0,
-      "volume": 2099.0,
-      "vol_12bar": 0.35911035072711717,
+      "price": 14.09,
+      "bar_time_uk": "19:15",
+      "change_5m_pct": 0.35612535612536966,
+      "volume": 1983.0,
+      "vol_12bar": 0.3463755458515284,
       "rvol20": null,
       "data_state": "FRESH_5M",
       "selection_reason": "scanner=TOP_PERC_GAIN,HOT_BY_VOLUME,MOST_ACTIVE"
@@ -49,17 +51,18 @@
     {
       "ticker": "DXC",
       "categories": [
-        "TOP_IN_PLAY"
+        "TOP_IN_PLAY",
+        "WEAK_SELLING"
       ],
       "discovery_priority": 7,
       "source": "IBKR",
       "scanner_codes": "TOP_PERC_GAIN+HOT_BY_VOLUME+MOST_ACTIVE",
       "ai_bias": "N/A",
-      "price": 14.48,
-      "bar_time_uk": "19:10",
-      "change_5m_pct": 0.0,
-      "volume": 290.0,
-      "vol_12bar": 0.1499482936918304,
+      "price": 14.35,
+      "bar_time_uk": "19:15",
+      "change_5m_pct": -0.20862308762170656,
+      "volume": 251.0,
+      "vol_12bar": 0.13948318977493748,
       "rvol20": null,
       "data_state": "FRESH_5M",
       "selection_reason": "scanner=TOP_PERC_GAIN,HOT_BY_VOLUME,MOST_ACTIVE"
@@ -67,17 +70,18 @@
     {
       "ticker": "IBRX",
       "categories": [
-        "TOP_IN_PLAY"
+        "TOP_IN_PLAY",
+        "WEAK_SELLING"
       ],
       "discovery_priority": 7,
       "source": "IBKR",
       "scanner_codes": "TOP_PERC_LOSE+HOT_BY_VOLUME+MOST_ACTIVE",
       "ai_bias": "N/A",
-      "price": 8.5299,
-      "bar_time_uk": "19:10",
-      "change_5m_pct": 0.08917780411390464,
-      "volume": 215.0,
-      "vol_12bar": 0.2847682119205298,
+      "price": 8.525,
+      "bar_time_uk": "19:15",
+      "change_5m_pct": -0.11716461628588082,
+      "volume": 936.0,
+      "vol_12bar": 1.2397350993377483,
       "rvol20": null,
       "data_state": "FRESH_5M",
       "selection_reason": "scanner=TOP_PERC_LOSE,HOT_BY_VOLUME,MOST_ACTIVE"
@@ -91,11 +95,11 @@
       "source": "IBKR",
       "scanner_codes": "TOP_PERC_LOSE+HOT_BY_VOLUME",
       "ai_bias": "N/A",
-      "price": 8.75,
-      "bar_time_uk": "19:10",
-      "change_5m_pct": 0.11441647597254523,
-      "volume": 157.0,
-      "vol_12bar": 0.1303986710963455,
+      "price": 8.74,
+      "bar_time_uk": "19:15",
+      "change_5m_pct": 0.2293577981651307,
+      "volume": 378.0,
+      "vol_12bar": 0.313953488372093,
       "rvol20": null,
       "data_state": "FRESH_5M",
       "selection_reason": "scanner=TOP_PERC_LOSE,HOT_BY_VOLUME"
@@ -109,11 +113,11 @@
       "source": "IBKR",
       "scanner_codes": "TOP_PERC_GAIN+HOT_BY_VOLUME",
       "ai_bias": "N/A",
-      "price": 32.465,
-      "bar_time_uk": "19:10",
-      "change_5m_pct": -0.1691266912669076,
-      "volume": 154.0,
-      "vol_12bar": 0.5150501672240803,
+      "price": 32.39,
+      "bar_time_uk": "19:15",
+      "change_5m_pct": -0.2617397998460391,
+      "volume": 452.0,
+      "vol_12bar": 1.5887521968365554,
       "rvol20": null,
       "data_state": "FRESH_5M",
       "selection_reason": "scanner=TOP_PERC_GAIN,HOT_BY_VOLUME"
@@ -121,17 +125,18 @@
     {
       "ticker": "AXTI",
       "categories": [
-        "TOP_IN_PLAY"
+        "TOP_IN_PLAY",
+        "WEAK_SELLING"
       ],
       "discovery_priority": 5,
       "source": "IBKR",
       "scanner_codes": "TOP_PERC_GAIN+HOT_BY_VOLUME",
       "ai_bias": "N/A",
-      "price": 57.24,
-      "bar_time_uk": "19:10",
-      "change_5m_pct": 0.13119916032537926,
-      "volume": 73.0,
-      "vol_12bar": 0.11370716510903427,
+      "price": 57.17,
+      "bar_time_uk": "19:15",
+      "change_5m_pct": -0.0873820342537579,
+      "volume": 169.0,
+      "vol_12bar": 0.2686804451510334,
       "rvol20": null,
       "data_state": "FRESH_5M",
       "selection_reason": "scanner=TOP_PERC_GAIN,HOT_BY_VOLUME"
@@ -139,17 +144,18 @@
     {
       "ticker": "CRWV",
       "categories": [
-        "TOP_IN_PLAY"
+        "TOP_IN_PLAY",
+        "WEAK_SELLING"
       ],
       "discovery_priority": 5,
       "source": "IBKR",
       "scanner_codes": "HOT_BY_VOLUME+MOST_ACTIVE",
       "ai_bias": "N/A",
-      "price": 60.58,
-      "bar_time_uk": "19:10",
-      "change_5m_pct": 0.5644090305444882,
-      "volume": 5678.0,
-      "vol_12bar": 0.6822879115597212,
+      "price": 60.11,
+      "bar_time_uk": "19:15",
+      "change_5m_pct": -0.282017252820177,
+      "volume": 5196.0,
+      "vol_12bar": 0.5992042899152396,
       "rvol20": null,
       "data_state": "FRESH_5M",
       "selection_reason": "scanner=HOT_BY_VOLUME,MOST_ACTIVE"
@@ -165,10 +171,10 @@
       "scanner_codes": "TOP_PERC_LOSE+HOT_BY_VOLUME",
       "ai_bias": "N/A",
       "price": 6.43,
-      "bar_time_uk": "19:10",
+      "bar_time_uk": "19:15",
       "change_5m_pct": -0.15527950310559868,
-      "volume": 43.0,
-      "vol_12bar": 0.0513126491646778,
+      "volume": 359.0,
+      "vol_12bar": 0.42840095465393796,
       "rvol20": null,
       "data_state": "FRESH_5M",
       "selection_reason": "scanner=TOP_PERC_LOSE,HOT_BY_VOLUME"
@@ -182,11 +188,11 @@
       "source": "IBKR",
       "scanner_codes": "TOP_PERC_LOSE+HOT_BY_VOLUME",
       "ai_bias": "N/A",
-      "price": 6.32,
-      "bar_time_uk": "19:10",
-      "change_5m_pct": 0.23790642347343294,
-      "volume": 248.0,
-      "vol_12bar": 0.41333333333333333,
+      "price": 6.315,
+      "bar_time_uk": "19:15",
+      "change_5m_pct": 0.07923930269415624,
+      "volume": 132.0,
+      "vol_12bar": 0.24788732394366197,
       "rvol20": null,
       "data_state": "FRESH_5M",
       "selection_reason": "scanner=TOP_PERC_LOSE,HOT_BY_VOLUME"
@@ -201,11 +207,11 @@
       "source": "FIXED+AI+IBKR",
       "scanner_codes": "MOST_ACTIVE",
       "ai_bias": "WATCH",
-      "price": 92.42,
-      "bar_time_uk": "19:10",
-      "change_5m_pct": -0.0972867798075927,
-      "volume": 1879.0,
-      "vol_12bar": 0.2978521043037172,
+      "price": 92.4,
+      "bar_time_uk": "19:15",
+      "change_5m_pct": -0.03245699448231054,
+      "volume": 2748.0,
+      "vol_12bar": 0.4356027581834033,
       "rvol20": null,
       "data_state": "FRESH_5M",
       "selection_reason": "scanner=MOST_ACTIVE"
@@ -214,17 +220,18 @@
       "ticker": "ORCL",
       "categories": [
         "TOP_IN_PLAY",
+        "STRONG_MOMENTUM",
         "LOW_RVOL_WATCH"
       ],
       "discovery_priority": 3,
       "source": "FIXED+IBKR",
       "scanner_codes": "MOST_ACTIVE",
       "ai_bias": "N/A",
-      "price": 130.02,
-      "bar_time_uk": "19:10",
-      "change_5m_pct": -0.046125461254609146,
-      "volume": 164.0,
-      "vol_12bar": 0.24135393671817512,
+      "price": 130.05,
+      "bar_time_uk": "19:15",
+      "change_5m_pct": 0.13089005235602524,
+      "volume": 321.0,
+      "vol_12bar": 0.47240618101545256,
       "rvol20": null,
       "data_state": "FRESH_5M",
       "selection_reason": "scanner=MOST_ACTIVE"
@@ -232,39 +239,21 @@
     {
       "ticker": "SMCI",
       "categories": [
-        "TOP_IN_PLAY"
+        "TOP_IN_PLAY",
+        "WEAK_SELLING"
       ],
       "discovery_priority": 3,
       "source": "FIXED+IBKR",
       "scanner_codes": "MOST_ACTIVE",
       "ai_bias": "N/A",
-      "price": 32.16,
-      "bar_time_uk": "19:10",
-      "change_5m_pct": 0.0,
-      "volume": 351.0,
-      "vol_12bar": 0.2264516129032258,
+      "price": 32.13,
+      "bar_time_uk": "19:15",
+      "change_5m_pct": -0.15537600994405265,
+      "volume": 341.0,
+      "vol_12bar": 0.2246376811594203,
       "rvol20": null,
       "data_state": "FRESH_5M",
       "selection_reason": "scanner=MOST_ACTIVE"
-    },
-    {
-      "ticker": "WDC",
-      "categories": [
-        "TOP_IN_PLAY",
-        "LOW_RVOL_WATCH"
-      ],
-      "discovery_priority": 3,
-      "source": "FIXED+IBKR",
-      "scanner_codes": "TOP_PERC_GAIN",
-      "ai_bias": "N/A",
-      "price": 347.98,
-      "bar_time_uk": "19:10",
-      "change_5m_pct": -0.04308735242580797,
-      "volume": 277.0,
-      "vol_12bar": 0.4671163575042159,
-      "rvol20": null,
-      "data_state": "FRESH_5M",
-      "selection_reason": "scanner=TOP_PERC_GAIN"
     },
     {
       "ticker": "AKAM",
@@ -275,11 +264,11 @@
       "source": "FIXED",
       "scanner_codes": "",
       "ai_bias": "N/A",
-      "price": 87.79,
-      "bar_time_uk": "19:10",
-      "change_5m_pct": -0.056921675774135316,
-      "volume": 45.0,
-      "vol_12bar": 0.20833333333333334,
+      "price": 87.7,
+      "bar_time_uk": "19:15",
+      "change_5m_pct": -0.034195828108973814,
+      "volume": 36.0,
+      "vol_12bar": 0.16666666666666666,
       "rvol20": null,
       "data_state": "FRESH_5M",
       "selection_reason": "fixed watchlist"
@@ -287,17 +276,17 @@
     {
       "ticker": "AMAT",
       "categories": [
-        "UNCLASSIFIED"
+        "WEAK_SELLING"
       ],
       "discovery_priority": 0,
       "source": "FIXED",
       "scanner_codes": "",
       "ai_bias": "N/A",
-      "price": 417.42,
-      "bar_time_uk": "19:10",
-      "change_5m_pct": 0.06712374742292582,
-      "volume": 208.0,
-      "vol_12bar": 0.2884882108183079,
+      "price": 416.44,
+      "bar_time_uk": "19:15",
+      "change_5m_pct": -0.07918036326990396,
+      "volume": 246.0,
+      "vol_12bar": 0.31906614785992216,
       "rvol20": null,
       "data_state": "FRESH_5M",
       "selection_reason": "fixed watchlist"
@@ -311,11 +300,11 @@
       "source": "FIXED",
       "scanner_codes": "",
       "ai_bias": "N/A",
-      "price": 173.83,
-      "bar_time_uk": "19:10",
-      "change_5m_pct": 0.16710844762015675,
-      "volume": 132.0,
-      "vol_12bar": 0.26586102719033233,
+      "price": 173.72,
+      "bar_time_uk": "19:15",
+      "change_5m_pct": 0.057597051030988666,
+      "volume": 433.0,
+      "vol_12bar": 0.8721047331319235,
       "rvol20": null,
       "data_state": "FRESH_5M",
       "selection_reason": "fixed watchlist"
@@ -323,18 +312,17 @@
     {
       "ticker": "MSFT",
       "categories": [
-        "STRONG_MOMENTUM",
-        "LOW_RVOL_WATCH"
+        "STRONG_MOMENTUM"
       ],
       "discovery_priority": 0,
       "source": "FIXED",
       "scanner_codes": "",
       "ai_bias": "N/A",
-      "price": 534.04,
-      "bar_time_uk": "19:10",
-      "change_5m_pct": 0.01872869610815009,
-      "volume": 520.0,
-      "vol_12bar": 0.36879432624113473,
+      "price": 534.13,
+      "bar_time_uk": "19:15",
+      "change_5m_pct": 0.01872553976369762,
+      "volume": 1034.0,
+      "vol_12bar": 0.7742418569824036,
       "rvol20": null,
       "data_state": "FRESH_5M",
       "selection_reason": "fixed watchlist"
@@ -342,18 +330,35 @@
     {
       "ticker": "QCOM",
       "categories": [
-        "STRONG_MOMENTUM",
-        "LOW_RVOL_WATCH"
+        "UNCLASSIFIED"
       ],
       "discovery_priority": 0,
       "source": "FIXED",
       "scanner_codes": "",
       "ai_bias": "N/A",
-      "price": 173.52,
-      "bar_time_uk": "19:10",
-      "change_5m_pct": 0.051894135962649024,
-      "volume": 119.0,
-      "vol_12bar": 0.2677165354330709,
+      "price": 173.22,
+      "bar_time_uk": "19:15",
+      "change_5m_pct": -0.09804486994635653,
+      "volume": 1322.0,
+      "vol_12bar": 3.0011350737797957,
+      "rvol20": null,
+      "data_state": "FRESH_5M",
+      "selection_reason": "fixed watchlist"
+    },
+    {
+      "ticker": "WDC",
+      "categories": [
+        "REVERSAL_WATCH"
+      ],
+      "discovery_priority": 0,
+      "source": "FIXED",
+      "scanner_codes": "",
+      "ai_bias": "N/A",
+      "price": 347.54,
+      "bar_time_uk": "19:15",
+      "change_5m_pct": 0.06910452058739303,
+      "volume": 287.0,
+      "vol_12bar": 0.49312714776632305,
       "rvol20": null,
       "data_state": "FRESH_5M",
       "selection_reason": "fixed watchlist"
@@ -361,17 +366,17 @@
     {
       "ticker": "WTTR",
       "categories": [
-        "UNCLASSIFIED"
+        "LOW_RVOL_WATCH"
       ],
       "discovery_priority": 0,
       "source": "FIXED",
       "scanner_codes": "",
       "ai_bias": "N/A",
-      "price": 18.52,
-      "bar_time_uk": "19:10",
-      "change_5m_pct": 0.108108108108107,
-      "volume": 7.0,
-      "vol_12bar": 0.25925925925925924,
+      "price": 18.54,
+      "bar_time_uk": "19:15",
+      "change_5m_pct": 0.0,
+      "volume": 4.0,
+      "vol_12bar": 0.14814814814814814,
       "rvol20": null,
       "data_state": "FRESH_5M",
       "selection_reason": "fixed watchlist"
