@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-19T19:24:30.100828+00:00",
+  "generated_at_utc": "2026-10-19T19:50:15.557191+00:00",
   "selected_tickers": [
     "AKAM",
     "ALM",
@@ -19,10 +19,10 @@
     "OCUL",
     "ORCL",
     "QCOM",
+    "QXO",
     "SMCI",
     "WDC",
-    "WTTR",
-    "WULF"
+    "WTTR"
   ],
   "per_ticker": {
     "AKAM": {
@@ -89,6 +89,10 @@
       "state": "OK",
       "rows": 556
     },
+    "QXO": {
+      "state": "OK",
+      "rows": 556
+    },
     "SMCI": {
       "state": "OK",
       "rows": 556
@@ -100,10 +104,6 @@
     "WTTR": {
       "state": "OK",
       "rows": 429
-    },
-    "WULF": {
-      "state": "OK",
-      "rows": 556
     }
   },
   "rows": 10763,
@@ -124,9 +124,9 @@
     "OCUL",
     "ORCL",
     "QCOM",
+    "QXO",
     "SMCI",
     "WDC",
-    "WTTR",
-    "WULF"
+    "WTTR"
   ]
 }
