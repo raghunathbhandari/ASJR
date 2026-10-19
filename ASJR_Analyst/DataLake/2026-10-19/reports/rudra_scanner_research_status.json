@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 11893,
-    "completed_rows": 11893,
+    "input_rows": 12051,
+    "completed_rows": 12051,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,16 +16,16 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 11893,
+    "no_wap_rows": 12051,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
   "detector_status": {
     "state": "OK",
-    "tickers": 20,
+    "tickers": 7,
     "emitted": 0,
     "blocked_context": 0,
-    "blocked_data": 20,
+    "blocked_data": 7,
     "blocked_session": 0,
     "mode": "RESEARCH_ONLY"
   },
@@ -43,10 +43,10 @@
   "context": {
     "state": "LONG",
     "reason": "AS_OF_5M_INDEX_CONFIRMED",
-    "timestamp": "2026-10-19 17:15:00+00:00",
+    "timestamp": "2026-10-19 17:25:00+00:00",
     "index_pct": {
-      "SPY": 0.5411,
-      "QQQ": 1.4045
+      "SPY": 0.545,
+      "QQQ": 1.3735
     },
     "sector_etf": {
       "AKAM": "XLK",
@@ -61,50 +61,50 @@
     "sector_pct": {
       "AKAM": {
         "etf": "XLK",
-        "pct": 1.6955,
-        "vs_spy": 1.1544,
+        "pct": 1.6246,
+        "vs_spy": 1.0796,
         "bias": "LONG"
       },
       "AMAT": {
         "etf": "SMH",
-        "pct": 2.2868,
-        "vs_spy": 1.7457,
+        "pct": 2.1663,
+        "vs_spy": 1.6213,
         "bias": "LONG"
       },
       "CRDO": {
         "etf": "SMH",
-        "pct": 2.2868,
-        "vs_spy": 1.7457,
+        "pct": 2.1663,
+        "vs_spy": 1.6213,
         "bias": "LONG"
       },
       "INTC": {
         "etf": "SMH",
-        "pct": 2.2868,
-        "vs_spy": 1.7457,
+        "pct": 2.1663,
+        "vs_spy": 1.6213,
         "bias": "LONG"
       },
       "MSFT": {
         "etf": "XLK",
-        "pct": 1.6955,
-        "vs_spy": 1.1544,
+        "pct": 1.6246,
+        "vs_spy": 1.0796,
         "bias": "LONG"
       },
       "ORCL": {
         "etf": "XLK",
-        "pct": 1.6955,
-        "vs_spy": 1.1544,
+        "pct": 1.6246,
+        "vs_spy": 1.0796,
         "bias": "LONG"
       },
       "QCOM": {
         "etf": "SMH",
-        "pct": 2.2868,
-        "vs_spy": 1.7457,
+        "pct": 2.1663,
+        "vs_spy": 1.6213,
         "bias": "LONG"
       },
       "WTTR": {
         "etf": "XLE",
         "pct": -0.5276,
-        "vs_spy": -1.0687,
+        "vs_spy": -1.0727,
         "bias": "WAIT"
       }
     },
@@ -134,9 +134,9 @@
       "IBRX",
       "INTC",
       "MSFT",
+      "OCUL",
       "ORCL",
       "QCOM",
-      "RBA",
       "SMCI",
       "WDC",
       "WTTR",
@@ -157,7 +157,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 11893,
+    "count": 12051,
     "source": "SAME_IBKR_APP"
   }
 }

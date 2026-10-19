@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-19T17:34:47.266177+00:00",
+  "generated_at_utc": "2026-10-19T17:41:23.041879+00:00",
   "selected_tickers": [
     "AKAM",
     "ALM",
@@ -17,9 +17,9 @@
     "IBRX",
     "INTC",
     "MSFT",
+    "OCUL",
     "ORCL",
     "QCOM",
-    "RBA",
     "SMCI",
     "WDC",
     "WTTR"
@@ -81,6 +81,10 @@
       "state": "OK",
       "rows": 554
     },
+    "OCUL": {
+      "state": "OK",
+      "rows": 492
+    },
     "ORCL": {
       "state": "OK",
       "rows": 554
@@ -88,10 +92,6 @@
     "QCOM": {
       "state": "OK",
       "rows": 554
-    },
-    "RBA": {
-      "state": "OK",
-      "rows": 411
     },
     "SMCI": {
       "state": "OK",
@@ -106,7 +106,7 @@
       "rows": 427
     }
   },
-  "rows": 10642,
+  "rows": 10723,
   "usable_150bars": [
     "AKAM",
     "ALM",
@@ -122,9 +122,9 @@
     "IBRX",
     "INTC",
     "MSFT",
+    "OCUL",
     "ORCL",
     "QCOM",
-    "RBA",
     "SMCI",
     "WDC",
     "WTTR"
