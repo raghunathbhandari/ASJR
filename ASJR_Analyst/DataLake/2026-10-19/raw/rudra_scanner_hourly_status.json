@@ -1,9 +1,10 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-19T03:04:24.891819+00:00",
+  "generated_at_utc": "2026-10-19T03:10:17.483134+00:00",
   "selected_tickers": [
     "AAOI",
+    "AEHR",
     "AKAM",
     "AMAT",
     "AXTI",
@@ -18,7 +19,6 @@
     "NVTS",
     "ORCL",
     "QCOM",
-    "RKLB",
     "SMCI",
     "SNDK",
     "WDC",
@@ -26,6 +26,10 @@
   ],
   "per_ticker": {
     "AAOI": {
+      "state": "OK",
+      "rows": 560
+    },
+    "AEHR": {
       "state": "OK",
       "rows": 560
     },
@@ -85,10 +89,6 @@
       "state": "OK",
       "rows": 560
     },
-    "RKLB": {
-      "state": "OK",
-      "rows": 560
-    },
     "SMCI": {
       "state": "OK",
       "rows": 560
@@ -109,6 +109,7 @@
   "rows": 11051,
   "usable_150bars": [
     "AAOI",
+    "AEHR",
     "AKAM",
     "AMAT",
     "AXTI",
@@ -123,7 +124,6 @@
     "NVTS",
     "ORCL",
     "QCOM",
-    "RKLB",
     "SMCI",
     "SNDK",
     "WDC",
