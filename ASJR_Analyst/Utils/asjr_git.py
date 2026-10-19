@@ -100,15 +100,8 @@ def submit_datalake(
         message,
     )
 
-    # Remote may contain newer ASJR code. Rebase the local DataLake
-    # commit safely before pushing. Never force-push.
-    _run_git(
-        repo_root,
-        "pull",
-        "--rebase",
-        remote,
-        branch,
-    )
+    # Never rebase while Chakra updates live DataLake files.
+    # Push fails safely if GitHub has newer commits.
 
     push = _run_git(
         repo_root,
