@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-19T04:38:40.342750+00:00",
+  "generated_at_utc": "2026-10-19T04:50:03.485017+00:00",
   "selected_tickers": [
     "AAOI",
     "AEHR",
@@ -10,6 +10,7 @@
     "AXTI",
     "BE",
     "CRDO",
+    "CRWV",
     "INTC",
     "IONQ",
     "IREN",
@@ -19,7 +20,6 @@
     "NVTS",
     "ORCL",
     "QCOM",
-    "RKLB",
     "SMCI",
     "WDC",
     "WTTR"
@@ -50,6 +50,10 @@
       "rows": 560
     },
     "CRDO": {
+      "state": "OK",
+      "rows": 560
+    },
+    "CRWV": {
       "state": "OK",
       "rows": 560
     },
@@ -89,10 +93,6 @@
       "state": "OK",
       "rows": 560
     },
-    "RKLB": {
-      "state": "OK",
-      "rows": 560
-    },
     "SMCI": {
       "state": "OK",
       "rows": 560
@@ -115,6 +115,7 @@
     "AXTI",
     "BE",
     "CRDO",
+    "CRWV",
     "INTC",
     "IONQ",
     "IREN",
@@ -124,7 +125,6 @@
     "NVTS",
     "ORCL",
     "QCOM",
-    "RKLB",
     "SMCI",
     "WDC",
     "WTTR"
