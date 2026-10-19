@@ -1,12 +1,12 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-19T11:40:43.690109+00:00",
+  "generated_at_utc": "2026-10-19T12:15:28.251114+00:00",
   "selected_tickers": [
-    "AAOI",
     "AKAM",
     "AMAT",
     "APLD",
+    "ASTS",
     "AXTI",
     "CIFR",
     "CLF",
@@ -25,10 +25,6 @@
     "WULF"
   ],
   "per_ticker": {
-    "AAOI": {
-      "state": "OK",
-      "rows": 548
-    },
     "AKAM": {
       "state": "OK",
       "rows": 527
@@ -41,61 +37,65 @@
       "state": "OK",
       "rows": 548
     },
+    "ASTS": {
+      "state": "OK",
+      "rows": 548
+    },
     "AXTI": {
       "state": "OK",
       "rows": 548
     },
     "CIFR": {
       "state": "OK",
-      "rows": 548
+      "rows": 549
     },
     "CLF": {
       "state": "OK",
-      "rows": 542
+      "rows": 543
     },
     "CRDO": {
       "state": "OK",
-      "rows": 548
+      "rows": 549
     },
     "CRWV": {
       "state": "OK",
-      "rows": 548
+      "rows": 549
     },
     "INTC": {
       "state": "OK",
-      "rows": 548
+      "rows": 549
     },
     "IREN": {
       "state": "OK",
-      "rows": 548
+      "rows": 549
     },
     "MSFT": {
       "state": "OK",
-      "rows": 548
+      "rows": 549
     },
     "NBIS": {
       "state": "OK",
-      "rows": 548
+      "rows": 549
     },
     "ORCL": {
       "state": "OK",
-      "rows": 548
+      "rows": 549
     },
     "QCOM": {
       "state": "OK",
-      "rows": 548
+      "rows": 549
     },
     "RCAT": {
       "state": "OK",
-      "rows": 548
+      "rows": 549
     },
     "SMCI": {
       "state": "OK",
-      "rows": 548
+      "rows": 549
     },
     "WDC": {
       "state": "OK",
-      "rows": 548
+      "rows": 549
     },
     "WTTR": {
       "state": "OK",
@@ -103,15 +103,15 @@
     },
     "WULF": {
       "state": "OK",
-      "rows": 548
+      "rows": 549
     }
   },
-  "rows": 10807,
+  "rows": 10821,
   "usable_150bars": [
-    "AAOI",
     "AKAM",
     "AMAT",
     "APLD",
+    "ASTS",
     "AXTI",
     "CIFR",
     "CLF",
