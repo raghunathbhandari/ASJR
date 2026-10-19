@@ -1,28 +1,28 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-19T12:39:45.151805+00:00",
+  "generated_at_utc": "2026-10-19T12:46:12.105057+00:00",
   "selected_tickers": [
     "AAOI",
     "AKAM",
     "AMAT",
     "APLD",
     "BE",
+    "CIFR",
     "CLF",
     "CRDO",
     "CRWV",
-    "CVX",
     "INTC",
     "IREN",
     "MSFT",
     "NBIS",
     "ORCL",
-    "PODD",
     "QCOM",
     "SMCI",
     "WDC",
     "WTTR",
-    "WULF"
+    "WULF",
+    "XE"
   ],
   "per_ticker": {
     "AAOI": {
@@ -45,6 +45,10 @@
       "state": "OK",
       "rows": 549
     },
+    "CIFR": {
+      "state": "OK",
+      "rows": 549
+    },
     "CLF": {
       "state": "OK",
       "rows": 543
@@ -54,10 +58,6 @@
       "rows": 549
     },
     "CRWV": {
-      "state": "OK",
-      "rows": 549
-    },
-    "CVX": {
       "state": "OK",
       "rows": 549
     },
@@ -81,10 +81,6 @@
       "state": "OK",
       "rows": 549
     },
-    "PODD": {
-      "state": "OK",
-      "rows": 430
-    },
     "QCOM": {
       "state": "OK",
       "rows": 549
@@ -104,29 +100,33 @@
     "WULF": {
       "state": "OK",
       "rows": 549
+    },
+    "XE": {
+      "state": "OK",
+      "rows": 549
     }
   },
-  "rows": 10707,
+  "rows": 10826,
   "usable_150bars": [
     "AAOI",
     "AKAM",
     "AMAT",
     "APLD",
     "BE",
+    "CIFR",
     "CLF",
     "CRDO",
     "CRWV",
-    "CVX",
     "INTC",
     "IREN",
     "MSFT",
     "NBIS",
     "ORCL",
-    "PODD",
     "QCOM",
     "SMCI",
     "WDC",
     "WTTR",
-    "WULF"
+    "WULF",
+    "XE"
   ]
 }
