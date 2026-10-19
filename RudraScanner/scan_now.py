@@ -65,10 +65,18 @@ def main(argv=None):
                         help="One of five fixed, Yahoo-only research collection batches")
     parser.add_argument("--research-46-finalize", action="store_true",
                         help="Finalize research results after all five batches; no broker call")
+    parser.add_argument("--git-safe-sync", action="store_true",
+                        help="Prepare up-to-date isolated research worktree; never change live Chakra checkout")
+    parser.add_argument("--git-recover", action="store_true",
+                        help="Preserve DataLake and reconcile Git only when Chakra is stopped")
     parser.add_argument("--bridge-start", action="store_true",
                         help="One-time install/start of fixed ASJR research bridge service; no Chakra restart")
     parser.add_argument("--bridge-refresh", action="store_true",
                         help="Reload only the research bridge service to deploy approved research export; no Chakra restart")
+    parser.add_argument("--gann-test", action="store_true",
+                        help="Read-only Rudra-Gann candle-pattern backtest from saved NQ 5m data")
+    parser.add_argument("--gann-nq-import", action="store_true",
+                        help="One-time NQ Oct16 Yahoo 5m research import, no Chakra")
     parser.add_argument("--bridge-check", action="store_true",
                         help="Run one bridge polling iteration and report health, without installing service")
     parser.add_argument("--ibkr-ema50", action="store_true", help="Direct read-only HIGH_LAST_VS_EMA50 list, up to 50 symbols")
@@ -159,6 +167,18 @@ def main(argv=None):
         from RudraScanner.momentum_movers import main as momentum_main
         period = "1m" if args.momentum_1m else ("3m" if args.momentum_3m else "both")
         return momentum_main(["--compact", "--period", period])
+    if args.git_safe_sync:
+        from RudraScanner.git_safe_sync import main as safe_sync_main
+        return safe_sync_main()
+    if args.git_recover:
+        from RudraScanner.git_recover_once import main as git_recover_main
+        return git_recover_main()
+    if args.gann_test:
+        from RudraScanner.RudraGann.strategy import main as gann_test_main
+        return gann_test_main()
+    if args.gann_nq_import:
+        from RudraScanner.gann_nq_import import main as gann_import_main
+        return gann_import_main()
     if args.bridge_refresh:
         from RudraScanner.ResearchBridge.refresh_bridge import main as bridge_refresh
         return bridge_refresh()

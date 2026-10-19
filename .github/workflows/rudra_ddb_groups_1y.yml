@@ -1,0 +1,31 @@
+name: Rudra DDB Group Annual Swings AOI
+on:
+  push:
+    paths:
+      - '.github/workflows/rudra_ddb_groups_1y.yml'
+      - 'RudraScanner/research_ddb_groups_1y.py'
+permissions:
+  contents: write
+jobs:
+  independent-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install research libraries
+        run: pip install --quiet numpy pandas yfinance
+      - name: Generate annual swings and historical AOI table
+        run: python -m RudraScanner.research_ddb_groups_1y
+      - name: Commit research results only
+        run: |
+          git config user.name "ASJR Research Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add RudraScanner/ResearchData/DDB_OPPOSITE_2026-10-16/RUDRA_DDB_GROUPS_1Y_*
+          if ! git diff --cached --quiet; then
+            git commit -m "Research: DDB group annual swing count and historic bottom AOI"
+            git pull --rebase
+            git push
+          fi

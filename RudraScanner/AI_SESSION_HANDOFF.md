@@ -1,3 +1,129 @@
+## 2026-10-18 — OPERATIONAL HANDOFF AND VERIFIED DATA AUDIT
+
+**First read:** [Rudra-Gann OPERATIONS.md](https://github.com/raghunathbhandari/ASJR/blob/main/RudraScanner/RudraGann/OPERATIONS.md) for verified data-source folders, imported CSV SHA256, basic audit results, GitHub→VPS bridge limitations, approved Discord/admin commands, safe SSH worktree commands, and precise Gann candle confirmation rules. As of Oct 18 user-confirmed audit: 627,688 real 1m rows, no malformed timestamps/duplicates/order/OHLC errors; 33 ASJR 5m session files. Gap/roll/resampling audit remains pending. **Data collection only until user authorizes backtest.**
+
+---
+
+## 2026-10-18 — IMPORTANT NQ BARS SOURCE AND COPY STATE
+
+**READ `RudraScanner/RudraGann/STRATEGY.md` first (historical source index at top).** GitHub public `kfccolonel1/BARS` contains stitched NQ 1-minute CSVs: `NQ/1min/NQ_1min_2025-01-01_2025-12-31_stitched.csv` (353,233 rows catalog) and `NQ/1min/NQ_1min_2026-01-01_2026-10-08_stitched.csv` (274,455 rows catalog). URL prefix `https://raw.githubusercontent.com/kfccolonel1/BARS/main/`; catalog at `https://github.com/kfccolonel1/BARS/blob/main/catalog.json`. 2026-10-09–16 covered by prior ASJR 5m imports. Research-only code `RudraScanner/RudraGann/import_bars_sources.py` committed to GitHub to copy both original CSV files via isolated scratch clone into `RudraScanner/ResearchData/Gann/Source/BARS/`. **Do not claim large files copied until VPS command succeeds and GitHub content exists.** Execute via isolated research checkout, never live diverged ASJR. Source has unadjusted futures roll jumps; verify provenance, integrity, gaps, session alignment and cross-source price compatibility before Gann backtests. Source folder may remain absent until import. Current focus: 1-year NQ 5m Gann candle confirmation tests.
+
+---
+
+## 2026-10-18 — Rudra-Gann V1 research (code committed, VPS run unverified)
+
+User insists **Gann level + reversal candle pattern MANDATORY**. Visual reference SELL candles Oct16 **10:50 NY** (29,929 area) and **13:45 NY** (29,585 area), both 5m candle start times. Historic 5m OHLC from Yahoo `NQ=F` published to `RudraScanner/ResearchData/Gann/NQ_2026-10-16_5m.csv` (203 candles, 00:05–16:55 NY). Strategy folder: `RudraScanner/RudraGann/STRATEGY.md`, `strategy.py`, `test_strategy.py`. This is research-only short backtest with configurable thresholds and conservative intrabar exit order. **Crucial correction:** label 10:50 or 13:45 as visually recognized signal candles but their completed body/high/close is not known at candle OPEN; a backtest using same 5m candle's OPEN as entry and its later HIGH as stop is look-ahead. V1 enters NEXT 5m candle OPEN following confirmed pattern; intrabar live entry needs 1m/tick confirmation defined separately. No live executions or backtest results claimed. Approved command route added `!runpy RudraScanner/scan_now\\.py --gann-test`, but not VPS deployed/tested due diverged checkout. Protect Chakra DataLake; isolated research checkout can run using `python -m RudraScanner.RudraGann.strategy` manually. Current V1 default tolerance 15 points, overshoot 25, breakout lookback 24×5m, confirmation within 4 bars, bearish body >=40% range and close bottom 35%, stop buffer 0.25, TP 2R. One-day first; only then frozen-rules one-month test. Do not imply that marked candles meet every automated condition before running/verifying.
+
+---
+
+## 2026-10-18 — IMPORTANT AI LEARNING: LIVE GIT DIVERGENCE (UNRESOLVED)
+
+**User requirement:** Solve recurrent VPS/GitHub divergence permanently with one controlled, safe operation; do not repeatedly ask for ad-hoc SSH commands or recommend destructive Git shortcuts. Always use Discord's already-allowed entry point `!runpy RudraScanner/scan_now\\.py ...`; directly calling new scripts yields `RUNPY | DENIED | Script not allowed`.
+
+**Observed evidence (Oct 18):** Live VPS `/root/trading/ASJR` reported `git rev-list --left-right --count HEAD...origin/main` = `5 73`. Its five local-only commits were 64c25bac, baed1819, 413431fc, 22426f01, a549c6f7 (all Oct 16 DataLake commits). Numerous tracked DataLake raw/processed/reports files were locally modified, and research, alerts, history, lock and DataLake files were untracked. `!gitpull` failed with code 128: diverging branches cannot fast-forward. The problem is **not** fixed by retrying pull or using `--ff-only`.
+
+**Preservation rule:** Never automatically use `git reset --hard`, `git clean`, force push, blind stash, rebases or merges in the live Chakra checkout. Do not overwrite, delete or misclassify untracked market datasets/state. Inspect local commits and working tree first, preserve both remote and local changes, and account for concurrent Chakra writes. A correct permanent resolution requires a dedicated, concurrency-safe synchronization design, tested recovery of all five commits and dirty files, and subsequent verification of live Git push/pull. Do not claim a permanent fix from a research-only workaround.
+
+**Safe immediate workaround actually tested:** User created isolated detached worktree `/root/trading/ASJR-Gann` at remote commit 08451752. Running `/root/trading/venv_new/bin/python RudraScanner/gann_nq_import.py` there succeeded: Yahoo `NQ=F`, October 16, 2026, **203 five-minute candles**, NY first 00:05 and last 16:55; pushed `RudraScanner/ResearchData/Gann/NQ_2026-10-16_5m.csv` to GitHub. Independently verified CSV on GitHub. This DOES NOT repair live Git divergence. Live Chakra was not restarted.
+
+**New interim command (GitHub committed, NOT VPS verified):** `!runpy RudraScanner/scan_now\\.py --git-safe-sync` (code commit 7cc34001) creates/refreshes isolated `/root/trading/ASJR-Synced` worktree, leaving live checkout untouched. Requires deployment via a safe path because live `!gitpull` fails. This is a research code availability aid, **NOT** live repo history reconciliation. Do not claim the command is installed or working on VPS without output.
+
+**Future AI task:** Design/test one-shot, safe *live* repair separate from active trading data ingestion. Prioritize backup/snapshot, coordination with bot Git writes, non-destructive conflict handling, checkpoint/rollback, no data loss, and explicit validation of the final main history and subsequent cycles. If conflicts cannot be safely resolved automatically, abort and report precise blocker rather than pretending success. Favor minimal operator interaction and supported allowlisted Discord paths. Keep NQ/Gann strategy research separate from Git maintenance.
+
+---
+
+## LOCKED 2026-10-16 — RUDRA-DDB OFFICIAL MASTER LIST (USER CONFIRMED)
+
+**This supersedes older draft/10-ticker lists and older fundamental Pending statements.** Official universe is **39 tickers, Group A 22 + Group B 17**. Group A: INTC, AKAM, WDC, STX, KLAC, CIEN, TER, LRCX, VRT, PANW, AMD, QCOM, TSM, SWKS, CRWD, ETN, KEYS, FLEX, GLW, COHR, ASML, AMAT. Group B: CBOE, ZTS, V, CME, CDW, PGR, AJG, JKHY, O, YUM, VRSK, MRSH, NSC, PEP, PAYX, NEE, MCK.
+
+**Canonical source of truth:** `RudraScanner/ResearchData/DDB_OPPOSITE_2026-10-16/DDB_39_3M_RANGE_SCREEN_2026-10-16.csv` (as of 2026-10-16 commit `88192a61`). The user's desired full display is group-separated with ticker, 3-month historical bottom/top, 3M range percent, completed daily-close swings >=7%, percent above 3M bottom/DD band, **Fundamental** and **Dilution** as TWO DISTINCT columns; retain sector, prices/as-of date, holding notes, and fiscal quarter/evidence URLs in the underlying master. Data are historical through Oct 15, not live. A daily-close zero swing count does not imply no 4H swings (e.g. V). Clusters/extremes are not proven range boundaries.
+
+**Fundamental scoring LOCKED:** use newest available published quarter, or previous quarter if newest audit/report is not available. PASS = profitable OR positive year-over-year revenue growth. FAIL only if neither holds per a verified quarter. The 2026-10-16 master currently records **39/39 as PASS on this simplified screening rule**, with quarter identifiers and reference URLs; do not imply comprehensive balance-sheet or audit clearance. **Dilution independent of Fund:** preserve specific flags for INTC (equity offering/conditional warrants), AKAM (convertible notes/warrants), WDC (historical preferred conversion), VRT (debt offering, not direct common-share dilution), COHR (historical preferred conversion), AJG (historical equity offering), NEE (equity units future settlement). Other rows say no specific event identified in **initial** screen; NOT a full SEC no-dilution guarantee. Six issuer equity/convertible events plus VRT debt-financing flag; do not collapse into misleading count. User currently HOLDS AKAM (size/entry unknown); AKAM Fundamental PASS + convertibles flagged. Never automatically fail fundamentally healthy names for dilution flag. This is a research watchlist, not trading clearance.
+
+**Still outstanding (do not misstate as completed):** issuer-level comprehensive share-dilution SEC review across all 39; independent confirmation that prior quarterly source links resolve and fully support each PASS; all-39 1Y swing comparison export/workflow success and validation of repeated two-sided top/bottom boundary tests. These are separate deeper validations, not reasons to replace all Fund scores with Pending. Do not alter bot/Chakra operation or claim live prices/VPS processing.
+
+---
+
+## 2026-10-16 — USER UPDATED FUNDAMENTAL PASS POLICY (SUPERSEDES PRIOR DILUTION BLOCK)
+**Fundamental PASS criterion:** confirmed profitability OR positive revenue growth qualifies for fundamental PASS under user's simplified screen. Report which test passed and filing period/source. Positive revenue level alone without growth/profit is not evidence of strength; clarify in edge cases. **Dilution is a separate FLAG/AUDIT informational column, NOT an automatic fundamental FAIL, HOLD, or trading prohibition.** Check offerings/convertible shares/warrants and flag risk without blocking PASS. Serious solvency or financial distress still warrants separate caution. Never invent company data or give PASS without verified profitability or positive growth. AKAM: already evidenced Q2 2026 net income $79.4M and revenue +5% YoY, hence **FUNDAMENTAL PASS**, with convertible financing risk flagged separately; user currently holds AKAM (quantity/cost not provided). The previously documented stricter gate requiring dilution clearance is superseded for scoring, though trading confirmation still requires price structure.
+
+---
+
+## 2026-10-16 — USER CONFIRMED RUDRA-DDB MASTER LIST + FUNDAMENTAL GATE
+
+**Trigger:** when user writes "Rudra-DDB", present both full expanded groups with all available columns: Group, ticker, sector, 3M historical bottom, 3M historical top, 3M range %, 3M completed legs >=7%, 3M bottom/top *candidate* pivot counts, 1Y >=25% swings and 1Y range once available, last verified close and timestamp, % above 3M bottom, color, DD status, fundamental status and dilution risk. For missing annual data mark PENDING, not 0. Source: `RudraScanner/ResearchData/DDB_OPPOSITE_2026-10-16/DDB_39_3M_RANGE_SCREEN_2026-10-16.csv`; annual 39-stock collector `RudraScanner/research_ddb_39_1y.py` and GitHub workflow pending verified output. Historical extremes are NOT validated two-sided AOI. Color: GREEN <=2% above bottom; YELLOW >2%-5%; AMBER >5%; below range RED. DD WATCH is NOT a buy order. Do not substitute cached close for live quotes.
+
+**Locked groups (39):**
+- A (22): INTC, AKAM, WDC, STX, KLAC, CIEN, TER, LRCX, VRT, PANW, AMD, QCOM, TSM, SWKS, CRWD, ETN, KEYS, FLEX, GLW, COHR, ASML, AMAT.
+- B (17): CBOE, ZTS, V, CME, CDW, PGR, AJG, JKHY, O, YUM, VRSK, MRSH, NSC, PEP, PAYX, NEE, MCK.
+Original 5+5 historical classification preserved separately as described below.
+
+**User trading exclusion:** weak fundamentals, distressed balance sheets, or material unmitigated shareholder dilution risk => NO TRADE. Keep any such names in research reference only (for correlation) rather than silently deleting them. Full issuer-filing audit required for each company; don't infer 39 fundamental passes. Check 10-K/10-Q, cash flow, debt/maturities, outstanding shares, ATM/convertible/equity-unit offerings, shelf registrations, warrants, secondary issuance, capital needs and earnings. Use labels PASS / HOLD_RISK / PENDING_VERIFY, and source+as-of dates. Correlation/technical ranges do not override this gate.
+
+**Verified initial flags at 2026-10-16:** INTC HOLD_RISK: Q2 2026 10-Q describes net losses, escrowed government shares and conditional DOC warrants; review dilution effects before investing: https://www.intc.com/filings-reports/all-sec-filings/content/0000050863-26-000157/intc-20260627.htm . NEE HOLD_REVIEW: Mar 3 2026 SEC filing describes $2.3bn equity units with future mandatory purchases of common stock: https://www.sec.gov/Archives/edgar/data/753308/000075330826000020/nee-20260303.htm . WDC operating cash flow was $3.929bn FY2026 vs $1.691bn FY2025, encouraging but NOT a comprehensive PASS: https://investor.wdc.com/static-files/885b2c03-508d-491d-8555-281fa5214179 . Other 36 company-specific diligence not yet completed => PENDING_VERIFY. Not all potential dilution is automatically disqualifying; assess magnitude and financing need rather than claim no risk.
+
+---
+
+## LATEST 2026-10-16 — DDB 39-NAME INTC EXPANSION + VERIFIED AI↔VPS GUIDE
+Read [RUDRA_DDB_INTC_EXPANSION_2026-10-16.md](RUDRA_DDB_INTC_EXPANSION_2026-10-16.md) FIRST for original vs expanded candidate membership, historical 545-instrument INTC comparisons, tested pivot clusters, Visa 4H correction, necessary fundamentals/range validation and safe GitHub↔VPS bridge workflow. New DDB calculation is NOT currently an allowlisted bridge job. No direct SSH or arbitrary Discord shell; research bridge supports only its reviewed operations. No trading-bot changes made.
+
+---
+
+## RUDRA-DDB HARD FILTERS — 2026-10-16 (IMPORTANT)
+The user has locked TWO mandatory DDB gates: (1) **fundamentally strong tickers only**: verify durable earnings/cash-flow/balance sheet/business model; if uncertain, do not treat as investable, (2) **BOTH sides of proposed price range must have been TESTED MULTIPLE TIMES**. Conservative research default: >=2 independent nonconsecutive significant price reactions at bottom support zone AND >=2 at top resistance zone, separated by material intervening swings, not one-off highs/lows or neighboring candles. Unverified test counts mean NO VALID RANGE/AOI/TARGET. 25%+ historical one-year swing-leg count is NOT evidence of recurring support/resistance tests. 3-month recent multi-swing remains necessary. Exact price-level thresholds need ATR/tolerance-aware independent test verification, not simply the 10 smallest closes or a single highest close.
+
+**WARNING / RETRACTION:** Previous DDB Groups 1Y AOI table calculated bottoms via ten lowest closes and tops via one highest close. Those are exploratory historical references only, no longer actionable price zones or target percentages, pending hard-filter revalidation. Official document: RudraScanner/RUDRA_DDB_GROUPS.md. Group A & B are exploratory, not eligible trading calls without passes.
+
+---
+
+## OFFICIAL RUDRA-DDB GROUPS — 2026-10-16
+The user approved two named research watchlists, saved at **RudraScanner/RUDRA_DDB_GROUPS.md**:
+- **Group A (discounted/bottom research): INTC, AKAM, WDC, STX, KLAC.**
+- **Group B (strong/top research): CBOE, ZTS, V, CME, CDW.**
+Study rolling 3-month repeated 25%+ swings, current relative range position and historical opposing sector/stock dynamics. A/B roles can switch and are not direct trading calls. Same-position table rows are NOT proven inversely correlated trading pairs. Research data cutoff 2026-10-15. Fundamental durability, support/sweep, bullish CHOCH, catalysts, out-of-sample correlation validation required before trading. No trading bot or schedule modifications.
+Source: RudraScanner/ResearchData/DDB_OPPOSITE_2026-10-16/DDB_TWO_GROUPS_REPORT.md
+
+---
+
+## RUDRA-DDB — MULTIPLE SWINGS WITHIN THREE MONTHS (2026-10-16, LATEST)
+
+**Important clarification from user:** DDB is about a **rolling three-month up/down structure with multiple repeated swings**, NOT only a single rise then a single fall. Example supplied by user: **INTC repeatedly traded up and down in roughly the $88–$125 range**. Treat those bounds as user-provided reference points, **not independently validated highs/lows, dates or a current quote**. Reconstruct the real dated sequence from price candles before applying scores.
+
+Measure for all DDB candidates: (1) all material swing highs/lows over last ~63 U.S. sessions, with dates and prices; (2) number of complete rallies and pullbacks; (3) per-leg percent up/down and cumulative traded range; (4) higher highs/lower highs, higher lows/lower lows, and range compression/expansion; (5) proximity of *current* price to recurrent support and resistance; (6) multiple liquidity sweeps/reclaims and bullish CHOCH with volume/time-of-day; (7) momentum in **latest** leg vs prior legs; (8) stock/index/sector relative strength plus financial durability and contemporaneous catalysts. Mark unverified figures and avoid counting noise as material swings. Repeated range swings can indicate consolidation, distribution or volatile chop, not necessarily a bullish setup. Require price stabilization and verified bullish shift, at attractive levels, before upgrading to DDB recovery.
+
+Older rule remains: recent three-month lookback is **locked**; older 52-week drawdown alone cannot qualify. The user examples INTC, WDC, AKAM should be evaluated with the SAME three-month multi-swing methodology. Do not turn user-supplied $88–$125 example into a locked support/target zone without historical verification.
+
+---
+
+## RUDRA-DDB — LOCKED TIME WINDOW (2026-10-16)
+
+**User explicitly clarified:** DDB fall / drawdown MUST be recent and its up-and-down cycle occur **within the last three months**, not a 52-week or multi-year peak-to-current drawdown. Apply to every future DDB shortlist/report.
+
+Scan a rolling ~63 US trading-session / calendar three-month window, use the peak date within that period (with a meaningful preceding upswing), calculate exact peak-to-trough and peak-to-current decline, and document dates, percent rally before peak, downside size, and current stabilization/CHOCH. Prefer ~15–20%+ corrections as candidate threshold only; threshold not yet user locked. Score company durability/profitability/cash flow independently and mark deteriorating fundamentals. Rising EMA9/EMA20, liquidity sweep, bullish CHOCH, sector/index recovery are entry confirmations, not assumed simply from drawdown. Reject examples whose only cheapness refers to a high made beyond this window. Previously cited -40%/-60% 52-week drawdowns do NOT qualify without new 3-month timing verification. User's examples INTC, WDC, AKAM are still to be tested against this updated window, not automatically qualified.
+
+**Rudra-DDB = Discounted (last 3 months), Durable business, Breakout/reversal confirmation**, separate from the original 46-stock IBKR EMA50 raw momentum rankings.
+
+---
+
+## 2026-10-16 — VERIFIED COMPLETE 46-TICKER SCORING REPORT (LATEST)
+
+**User's ask:** rank the 46 names returned from Oct 15 HIGH_LAST_VS_EMA50 using swing/momentum evidence, prioritize RVOL, and document for next AI session. **DELIVERED AND VERIFIED IN GITHUB:**
+
+- [Full Markdown rank and research guide](ResearchData/EMA50_2026-10-15/SCORING_REPORT_46.md)
+- [Scored 46-ticker CSV with factor breakdown and capitalization status](ResearchData/EMA50_2026-10-15/SCORING_RANKING_46.csv)
+- [Original 46-ticker computed OHLCV metric CSV](ResearchData/EMA50_2026-10-15/research_metrics_46.csv) and 93 total pushed evidence files including compressed Yahoo daily and 5-minute candles.
+- Completed bridge request `research-2026101611051` reported `SUCCESS` and explicitly `PUBLISH | SUCCESS | 93 research files pushed`. **No manual Discord/SSH data collection needed to complete.**
+- Dataset coverage: daily 46/46; 5-minute 45/46; prior 20 sessions same-clock-slot RVOL 43/46; MAMK no valid 5-minute history and zero latest daily volume.
+- **Technical-only normalized index**, not probability or finalized seven-factor score. Points: RVOL25, momentum20, MA15, last-bar candle patterns15, consolidation10 (85 max). Overextension penalty; normalize by observed max to /100. Sector5 and catalysts10 **not scored** because the collector does not supply systematic dated evidence. Check report for full thresholds, risk flags and 46 sorted rows.
+- Verified $2B+ cap cohort in the report: 20 symbols, top are SHOP71, TEAM71, SIG68, CDNA67, MPC67, CVI66, NTSK65, VEEV65; source market caps are Oct 14/15 public snapshots. Raw technical leader PD71 excluded ($1.34B small-cap), EFOR69 cap unverified. Do not silently include unverified-cap names. Some additional eligible names may remain unverified; not the same as proven small-cap.
+- Technical index is **not validated**, is partly based on the **last 5-minute bar**, and must NOT be presented as pre-breakout predictive probability. Continue research on historical *before-move* sequences and non-winner controls, matched capitalization as of historical date, dated catalysts and sector context.
+- Public catalyst examples: VEEV Oct 13 expanded IQVIA partnership, documented flat-base breakout and earnings; CDNA Q2 revenue +52% year-over-year raised guidance; sector rotation towards healthcare from technology/energy on Oct 15. Keep the news time separate from entry suitability.
+- Collector encountered mixed EDT/EST parsing; patched `research_ema50_46.py`, finalize succeeded. To bypass an old in-memory bridge exporter import-path bug, newer collector `--finalize` publishes approved files using an isolated scratch Git clone. Export success is **directly verified** via 93 files. Worker import error handler patch exists on GitHub but old systemd process may not yet have reloaded; do not assume it has. User does not need to run more batch/CSV commands for this completed study.
+
+**Next research task:** use published daily/5-minute data to reconstruct pre-breakout volume regime and sweep/base frequency over trailing 20 sessions; incorporate catalysts and market/sector without hindsight; compare to failed controls and train/test out-of-sample. Preserve Chakra trading code and schedules.
+
+---
+
 ## 2026-10-16 — QUEUE STALL ROOT CAUSE FOUND AND FIXED (VERIFIED)
 
 **Diagnosis:** Five queued jobs were named `research-20261016101302`, `...101402`, `...101502`, `...101602`, `...101902`. They contained **14 digits after `research-`**, but `safe_job()` requires **exactly 13 numeric digits**, total ID length 22. The worker silently rejected them without producing result JSON, which looked like stalled VPS execution. No VPS/service restart was necessary.

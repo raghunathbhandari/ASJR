@@ -1,0 +1,39 @@
+name: Rudra DDB Opposite-Phase Market Research
+
+on:
+  push:
+    paths:
+      - '.github/workflows/rudra_ddb_opposite_groups.yml'
+      - 'RudraScanner/research_ddb_opposite_groups.py'
+      - 'RudraScanner/ResearchBridge/ddb_opposite.trigger'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rudra-ddb-opposite-market-research
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Research dependencies
+        run: pip install --quiet pandas numpy yfinance lxml html5lib beautifulsoup4
+      - name: Measure sector and stock out-of-phase groups
+        run: python -m RudraScanner.research_ddb_opposite_groups
+      - name: Publish research outputs only
+        run: |
+          git config user.name "ASJR Research Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add RudraScanner/ResearchData/DDB_OPPOSITE_2026-10-16/
+          if ! git diff --cached --quiet; then
+            git commit -m "Research: DDB two-phase rotation groups across wider US stock universe"
+            git pull --rebase
+            git push
+          fi

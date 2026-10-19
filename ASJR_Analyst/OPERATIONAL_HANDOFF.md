@@ -1,3 +1,20 @@
+## LOCKED 2026-10-16 — RUDRA-DDB OFFICIAL MASTER LIST (USER CONFIRMED)
+
+**This supersedes older draft/10-ticker lists and older fundamental Pending statements.** Official universe is **39 tickers, Group A 22 + Group B 17**. Group A: INTC, AKAM, WDC, STX, KLAC, CIEN, TER, LRCX, VRT, PANW, AMD, QCOM, TSM, SWKS, CRWD, ETN, KEYS, FLEX, GLW, COHR, ASML, AMAT. Group B: CBOE, ZTS, V, CME, CDW, PGR, AJG, JKHY, O, YUM, VRSK, MRSH, NSC, PEP, PAYX, NEE, MCK.
+
+**Canonical source of truth:** `RudraScanner/ResearchData/DDB_OPPOSITE_2026-10-16/DDB_39_3M_RANGE_SCREEN_2026-10-16.csv` (as of 2026-10-16 commit `88192a61`). The user's desired full display is group-separated with ticker, 3-month historical bottom/top, 3M range percent, completed daily-close swings >=7%, percent above 3M bottom/DD band, **Fundamental** and **Dilution** as TWO DISTINCT columns; retain sector, prices/as-of date, holding notes, and fiscal quarter/evidence URLs in the underlying master. Data are historical through Oct 15, not live. A daily-close zero swing count does not imply no 4H swings (e.g. V). Clusters/extremes are not proven range boundaries.
+
+**Fundamental scoring LOCKED:** use newest available published quarter, or previous quarter if newest audit/report is not available. PASS = profitable OR positive year-over-year revenue growth. FAIL only if neither holds per a verified quarter. The 2026-10-16 master currently records **39/39 as PASS on this simplified screening rule**, with quarter identifiers and reference URLs; do not imply comprehensive balance-sheet or audit clearance. **Dilution independent of Fund:** preserve specific flags for INTC (equity offering/conditional warrants), AKAM (convertible notes/warrants), WDC (historical preferred conversion), VRT (debt offering, not direct common-share dilution), COHR (historical preferred conversion), AJG (historical equity offering), NEE (equity units future settlement). Other rows say no specific event identified in **initial** screen; NOT a full SEC no-dilution guarantee. Six issuer equity/convertible events plus VRT debt-financing flag; do not collapse into misleading count. User currently HOLDS AKAM (size/entry unknown); AKAM Fundamental PASS + convertibles flagged. Never automatically fail fundamentally healthy names for dilution flag. This is a research watchlist, not trading clearance.
+
+**Still outstanding (do not misstate as completed):** issuer-level comprehensive share-dilution SEC review across all 39; independent confirmation that prior quarterly source links resolve and fully support each PASS; all-39 1Y swing comparison export/workflow success and validation of repeated two-sided top/bottom boundary tests. These are separate deeper validations, not reasons to replace all Fund scores with Pending. Do not alter bot/Chakra operation or claim live prices/VPS processing.
+
+---
+
+## 2026-10-16 — DDB 39 ticker research and safe VPS bridge guide
+New canonical companion document: [RudraScanner/RUDRA_DDB_INTC_EXPANSION_2026-10-16.md](../RudraScanner/RUDRA_DDB_INTC_EXPANSION_2026-10-16.md). Documents expanded INTC-similar (A) and INTC-inverse (B) candidate watchlists, same-session historical correlation/turning-point computations, Visa sub-25% 4H correction, limitations of unverified support/top tests, and exact established AI→GitHub→VPS research bridge controls. Expanded research analyzed GitHub saved data in AI session, **not an executed DDB VPS job**. The current worker has no DDB operation allowlisted; approve/deploy a scoped extension before any new VPS research run. Leave Chakra/Discord schedules untouched.
+
+---
+
 ## 2026-10-16 — NEW VERIFIED AI→VPS BRIDGE + RESEARCH (READ THIS BEFORE OLDER SECTIONS)
 
 **Authoritative up-to-date details:** [RudraScanner/AI_SESSION_HANDOFF.md](../RudraScanner/AI_SESSION_HANDOFF.md) (first section) and [RudraScanner/ResearchBridge/README.md](../RudraScanner/ResearchBridge/README.md).
