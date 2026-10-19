@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-19T07:04:04.432949+00:00",
+  "generated_at_utc": "2026-10-19T07:15:30.607961+00:00",
   "selected_tickers": [
     "AAOI",
     "AEHR",
@@ -13,16 +13,16 @@
     "CRDO",
     "INTC",
     "IONQ",
-    "IREN",
+    "LITE",
     "MSFT",
     "NBIS",
     "NVTS",
     "ORCL",
     "QCOM",
     "SMCI",
-    "SNDK",
     "WDC",
-    "WTTR"
+    "WTTR",
+    "WULF"
   ],
   "per_ticker": {
     "AAOI": {
@@ -65,7 +65,7 @@
       "state": "OK",
       "rows": 560
     },
-    "IREN": {
+    "LITE": {
       "state": "OK",
       "rows": 560
     },
@@ -93,10 +93,6 @@
       "state": "OK",
       "rows": 560
     },
-    "SNDK": {
-      "state": "OK",
-      "rows": 560
-    },
     "WDC": {
       "state": "OK",
       "rows": 560
@@ -104,6 +100,10 @@
     "WTTR": {
       "state": "OK",
       "rows": 434
+    },
+    "WULF": {
+      "state": "OK",
+      "rows": 560
     }
   },
   "rows": 11051,
@@ -118,15 +118,15 @@
     "CRDO",
     "INTC",
     "IONQ",
-    "IREN",
+    "LITE",
     "MSFT",
     "NBIS",
     "NVTS",
     "ORCL",
     "QCOM",
     "SMCI",
-    "SNDK",
     "WDC",
-    "WTTR"
+    "WTTR",
+    "WULF"
   ]
 }
