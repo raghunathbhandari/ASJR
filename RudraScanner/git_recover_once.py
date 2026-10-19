@@ -94,6 +94,12 @@ def main():
                 abort = git("merge", "--abort", timeout=120)
                 if abort.returncode:
                     print("MERGE ABORT FAILED | manual review required", flush=True)
+            if stash_sha and not (gd / "MERGE_HEAD").exists():
+                recovery = git("stash", "apply", stash_sha, timeout=180)
+                if recovery.returncode:
+                    print("RESTORE | MANUAL REVIEW | local edits remain in stash", flush=True)
+                else:
+                    print("RESTORE | original local edits recovered; stash retained", flush=True)
             print("MERGE | CONFLICT/ERROR | backup/stash retained", flush=True)
             print((merged.stderr or merged.stdout)[-700:], flush=True)
             return 2
