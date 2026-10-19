@@ -69,6 +69,8 @@ def main(argv=None):
                         help="Prepare up-to-date isolated research worktree; never change live Chakra checkout")
     parser.add_argument("--git-recover", action="store_true",
                         help="Preserve DataLake and reconcile Git only when Chakra is stopped")
+    parser.add_argument("--maintenance", action="store_true",
+                        help="Guarded ASJR Git repair and diagnostics; no live rebase/reset")
     parser.add_argument("--bridge-start", action="store_true",
                         help="One-time install/start of fixed ASJR research bridge service; no Chakra restart")
     parser.add_argument("--bridge-refresh", action="store_true",
@@ -173,6 +175,16 @@ def main(argv=None):
     if args.git_recover:
         from RudraScanner.git_recover_once import main as git_recover_main
         return git_recover_main()
+    if args.maintenance:
+        from importlib.util import module_from_spec, spec_from_file_location
+        maintenance_file = root / "Rudra-DDB" / "asjr_maintenance.py"
+        spec = spec_from_file_location("asjr_maintenance", maintenance_file)
+        if spec is None or spec.loader is None:
+            print("MAINTENANCE | not installed")
+            return 2
+        module = module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module.main()
     if args.gann_test:
         from RudraScanner.RudraGann.strategy import main as gann_test_main
         return gann_test_main()
