@@ -1,16 +1,72 @@
 {
   "date_et": "2026-10-19",
   "signal_quality": {
-    "state": "NO_BARS"
+    "state": "NO_FRESH_COMPLETED_BAR",
+    "count": 0,
+    "asof_utc": "2026-10-19T14:50:44.154227+00:00",
+    "latest_seen": 5,
+    "newest_bar_et": "2026-10-19T10:35:00-04:00",
+    "latest_completed": 0,
+    "rejected_stale_or_not_closed": 5,
+    "latest_rvol_ready": 0,
+    "latest_vwap_ready": 0,
+    "latest_ema9_ready": 0,
+    "latest_positive_volume": 0
   },
   "signal_events": [],
   "mode": "EVALUATION_REPORT_ONLY",
   "history": {
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/state/rudra_premarket_rvol5.csv",
-    "ready5": 0,
+    "ready5": 400,
     "stored_rows": 305064,
     "saved": true
   },
-  "tickers": [],
+  "tickers": [
+    {
+      "ticker": "CAT",
+      "bar_et": "2026-10-19 10:35:00-04:00",
+      "session": "RTH",
+      "rvol5": 0.738,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "FSLR",
+      "bar_et": "2026-10-19 10:35:00-04:00",
+      "session": "RTH",
+      "rvol5": 0.8065,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "INTC",
+      "bar_et": "2026-10-19 10:35:00-04:00",
+      "session": "RTH",
+      "rvol5": 1.0095,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "MU",
+      "bar_et": "2026-10-19 10:35:00-04:00",
+      "session": "RTH",
+      "rvol5": 0.8503,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "TSLA",
+      "bar_et": "2026-10-19 10:35:00-04:00",
+      "session": "RTH",
+      "rvol5": 1.2895,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    }
+  ],
   "notice": "This report checks RVOL and EMA9/VWAP readiness. It is NOT a Discord delivery receipt. Check the existing Chakra sender log for delivery; no order is executed."
 }
