@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 11715,
-    "completed_rows": 11715,
+    "input_rows": 11691,
+    "completed_rows": 11691,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 11715,
+    "no_wap_rows": 11691,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -43,10 +43,10 @@
   "context": {
     "state": "LONG",
     "reason": "AS_OF_5M_INDEX_CONFIRMED",
-    "timestamp": "2026-10-19 16:15:00+00:00",
+    "timestamp": "2026-10-19 16:20:00+00:00",
     "index_pct": {
-      "SPY": 0.7049,
-      "QQQ": 1.7694
+      "SPY": 0.6407,
+      "QQQ": 1.6412
     },
     "sector_etf": {
       "AKAM": "XLK",
@@ -61,50 +61,50 @@
     "sector_pct": {
       "AKAM": {
         "etf": "XLK",
-        "pct": 2.1207,
-        "vs_spy": 1.4158,
+        "pct": 1.9299,
+        "vs_spy": 1.2892,
         "bias": "LONG"
       },
       "AMAT": {
         "etf": "SMH",
-        "pct": 2.9947,
-        "vs_spy": 2.2898,
+        "pct": 2.7612,
+        "vs_spy": 2.1205,
         "bias": "LONG"
       },
       "CRDO": {
         "etf": "SMH",
-        "pct": 2.9947,
-        "vs_spy": 2.2898,
+        "pct": 2.7612,
+        "vs_spy": 2.1205,
         "bias": "LONG"
       },
       "INTC": {
         "etf": "SMH",
-        "pct": 2.9947,
-        "vs_spy": 2.2898,
+        "pct": 2.7612,
+        "vs_spy": 2.1205,
         "bias": "LONG"
       },
       "MSFT": {
         "etf": "XLK",
-        "pct": 2.1207,
-        "vs_spy": 1.4158,
+        "pct": 1.9299,
+        "vs_spy": 1.2892,
         "bias": "LONG"
       },
       "ORCL": {
         "etf": "XLK",
-        "pct": 2.1207,
-        "vs_spy": 1.4158,
+        "pct": 1.9299,
+        "vs_spy": 1.2892,
         "bias": "LONG"
       },
       "QCOM": {
         "etf": "SMH",
-        "pct": 2.9947,
-        "vs_spy": 2.2898,
+        "pct": 2.7612,
+        "vs_spy": 2.1205,
         "bias": "LONG"
       },
       "WTTR": {
         "etf": "XLE",
-        "pct": -0.6888,
-        "vs_spy": -1.3937,
+        "pct": -0.7768,
+        "vs_spy": -1.4174,
         "bias": "WAIT"
       }
     },
@@ -123,8 +123,8 @@
       "AKAM",
       "ALM",
       "AMAT",
-      "AMZN",
       "APLD",
+      "ARQT",
       "AXTI",
       "CLF",
       "CRDO",
@@ -157,7 +157,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 11715,
+    "count": 11691,
     "source": "SAME_IBKR_APP"
   }
 }
