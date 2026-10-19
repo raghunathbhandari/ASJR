@@ -1,13 +1,14 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-19T19:50:15.557191+00:00",
+  "generated_at_utc": "2026-10-19T19:56:58.563609+00:00",
   "selected_tickers": [
     "AKAM",
     "ALM",
     "AMAT",
     "APLD",
     "ARQT",
+    "CCC",
     "CLF",
     "CRDO",
     "CRWV",
@@ -19,7 +20,6 @@
     "OCUL",
     "ORCL",
     "QCOM",
-    "QXO",
     "SMCI",
     "WDC",
     "WTTR"
@@ -44,6 +44,10 @@
     "ARQT": {
       "state": "OK",
       "rows": 499
+    },
+    "CCC": {
+      "state": "OK",
+      "rows": 487
     },
     "CLF": {
       "state": "OK",
@@ -89,10 +93,6 @@
       "state": "OK",
       "rows": 556
     },
-    "QXO": {
-      "state": "OK",
-      "rows": 556
-    },
     "SMCI": {
       "state": "OK",
       "rows": 556
@@ -106,13 +106,14 @@
       "rows": 429
     }
   },
-  "rows": 10763,
+  "rows": 10694,
   "usable_150bars": [
     "AKAM",
     "ALM",
     "AMAT",
     "APLD",
     "ARQT",
+    "CCC",
     "CLF",
     "CRDO",
     "CRWV",
@@ -124,7 +125,6 @@
     "OCUL",
     "ORCL",
     "QCOM",
-    "QXO",
     "SMCI",
     "WDC",
     "WTTR"
