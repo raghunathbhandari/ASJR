@@ -34,8 +34,8 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 51558,
-    "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-16/processed/rudra_scanner_rvol20_baseline.csv",
+    "stored_rows": 52026,
+    "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-19/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
     "output": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-19/processed/rudra_scanner_rvol20_baseline.csv"
@@ -62,14 +62,14 @@
   },
   "collection": {
     "requested": [
-      "AEHR",
       "AXTI",
       "BE",
-      "CBRS",
       "COHR",
       "CRWV",
       "IREN",
       "NBIS",
+      "PURR",
+      "WOLF",
       "SPY",
       "QQQ",
       "SMH",
@@ -78,12 +78,10 @@
       "XLY"
     ],
     "symbols": [
-      "AEHR",
       "AKAM",
       "AMAT",
       "AXTI",
       "BE",
-      "CBRS",
       "COHR",
       "CRDO",
       "CRWV",
@@ -93,10 +91,12 @@
       "MSFT",
       "NBIS",
       "ORCL",
+      "PURR",
       "QCOM",
       "SMCI",
       "TSLA",
       "WDC",
+      "WOLF",
       "WTTR",
       "SPY",
       "QQQ",

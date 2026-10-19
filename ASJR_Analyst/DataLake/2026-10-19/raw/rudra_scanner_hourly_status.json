@@ -1,14 +1,12 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-19T00:04:02.777627+00:00",
+  "generated_at_utc": "2026-10-19T00:09:32.864458+00:00",
   "selected_tickers": [
-    "AEHR",
     "AKAM",
     "AMAT",
     "AXTI",
     "BE",
-    "CBRS",
     "COHR",
     "CRDO",
     "CRWV",
@@ -18,17 +16,15 @@
     "MSFT",
     "NBIS",
     "ORCL",
+    "PURR",
     "QCOM",
     "SMCI",
     "TSLA",
     "WDC",
+    "WOLF",
     "WTTR"
   ],
   "per_ticker": {
-    "AEHR": {
-      "state": "OK",
-      "rows": 560
-    },
     "AKAM": {
       "state": "OK",
       "rows": 537
@@ -42,10 +38,6 @@
       "rows": 560
     },
     "BE": {
-      "state": "OK",
-      "rows": 560
-    },
-    "CBRS": {
       "state": "OK",
       "rows": 560
     },
@@ -85,6 +77,10 @@
       "state": "OK",
       "rows": 560
     },
+    "PURR": {
+      "state": "OK",
+      "rows": 560
+    },
     "QCOM": {
       "state": "OK",
       "rows": 560
@@ -101,6 +97,10 @@
       "state": "OK",
       "rows": 560
     },
+    "WOLF": {
+      "state": "OK",
+      "rows": 560
+    },
     "WTTR": {
       "state": "OK",
       "rows": 434
@@ -108,12 +108,10 @@
   },
   "rows": 11051,
   "usable_150bars": [
-    "AEHR",
     "AKAM",
     "AMAT",
     "AXTI",
     "BE",
-    "CBRS",
     "COHR",
     "CRDO",
     "CRWV",
@@ -123,10 +121,12 @@
     "MSFT",
     "NBIS",
     "ORCL",
+    "PURR",
     "QCOM",
     "SMCI",
     "TSLA",
     "WDC",
+    "WOLF",
     "WTTR"
   ]
 }
