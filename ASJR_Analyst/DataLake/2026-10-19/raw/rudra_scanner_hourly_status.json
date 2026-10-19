@@ -1,9 +1,10 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-19T01:25:31.507384+00:00",
+  "generated_at_utc": "2026-10-19T01:31:23.167896+00:00",
   "selected_tickers": [
     "AAOI",
+    "AEHR",
     "AKAM",
     "AMAT",
     "AXTI",
@@ -15,7 +16,6 @@
     "LITE",
     "MRVL",
     "MSFT",
-    "MU",
     "NBIS",
     "ORCL",
     "QCOM",
@@ -26,6 +26,10 @@
   ],
   "per_ticker": {
     "AAOI": {
+      "state": "OK",
+      "rows": 560
+    },
+    "AEHR": {
       "state": "OK",
       "rows": 560
     },
@@ -73,10 +77,6 @@
       "state": "OK",
       "rows": 560
     },
-    "MU": {
-      "state": "OK",
-      "rows": 560
-    },
     "NBIS": {
       "state": "OK",
       "rows": 560
@@ -109,6 +109,7 @@
   "rows": 11051,
   "usable_150bars": [
     "AAOI",
+    "AEHR",
     "AKAM",
     "AMAT",
     "AXTI",
@@ -120,7 +121,6 @@
     "LITE",
     "MRVL",
     "MSFT",
-    "MU",
     "NBIS",
     "ORCL",
     "QCOM",
