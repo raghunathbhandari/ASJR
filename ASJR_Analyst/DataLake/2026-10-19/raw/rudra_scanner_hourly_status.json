@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-19T07:15:30.607961+00:00",
+  "generated_at_utc": "2026-10-19T07:21:25.853799+00:00",
   "selected_tickers": [
     "AAOI",
     "AEHR",
@@ -16,13 +16,13 @@
     "LITE",
     "MSFT",
     "NBIS",
-    "NVTS",
     "ORCL",
+    "POET",
     "QCOM",
     "SMCI",
+    "SNDK",
     "WDC",
-    "WTTR",
-    "WULF"
+    "WTTR"
   ],
   "per_ticker": {
     "AAOI": {
@@ -77,11 +77,11 @@
       "state": "OK",
       "rows": 560
     },
-    "NVTS": {
+    "ORCL": {
       "state": "OK",
       "rows": 560
     },
-    "ORCL": {
+    "POET": {
       "state": "OK",
       "rows": 560
     },
@@ -93,6 +93,10 @@
       "state": "OK",
       "rows": 560
     },
+    "SNDK": {
+      "state": "OK",
+      "rows": 560
+    },
     "WDC": {
       "state": "OK",
       "rows": 560
@@ -100,10 +104,6 @@
     "WTTR": {
       "state": "OK",
       "rows": 434
-    },
-    "WULF": {
-      "state": "OK",
-      "rows": 560
     }
   },
   "rows": 11051,
@@ -121,12 +121,12 @@
     "LITE",
     "MSFT",
     "NBIS",
-    "NVTS",
     "ORCL",
+    "POET",
     "QCOM",
     "SMCI",
+    "SNDK",
     "WDC",
-    "WTTR",
-    "WULF"
+    "WTTR"
   ]
 }
