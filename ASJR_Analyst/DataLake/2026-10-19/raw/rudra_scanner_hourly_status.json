@@ -1,9 +1,10 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-19T15:40:31.690741+00:00",
+  "generated_at_utc": "2026-10-19T15:53:59.258646+00:00",
   "selected_tickers": [
     "AKAM",
+    "ALM",
     "AMAT",
     "APLD",
     "AXTI",
@@ -14,20 +15,23 @@
     "IAM",
     "IBRX",
     "INTC",
-    "IREN",
     "MSFT",
     "OCUL",
+    "OLMA",
     "ORCL",
     "QCOM",
     "SMCI",
     "WDC",
-    "WTTR",
-    "WULF"
+    "WTTR"
   ],
   "per_ticker": {
     "AKAM": {
       "state": "OK",
       "rows": 531
+    },
+    "ALM": {
+      "state": "OK",
+      "rows": 552
     },
     "AMAT": {
       "state": "OK",
@@ -69,10 +73,6 @@
       "state": "OK",
       "rows": 552
     },
-    "IREN": {
-      "state": "OK",
-      "rows": 552
-    },
     "MSFT": {
       "state": "OK",
       "rows": 552
@@ -80,6 +80,10 @@
     "OCUL": {
       "state": "OK",
       "rows": 490
+    },
+    "OLMA": {
+      "state": "OK",
+      "rows": 487
     },
     "ORCL": {
       "state": "OK",
@@ -100,15 +104,12 @@
     "WTTR": {
       "state": "OK",
       "rows": 425
-    },
-    "WULF": {
-      "state": "OK",
-      "rows": 552
     }
   },
-  "rows": 10273,
+  "rows": 10208,
   "usable_150bars": [
     "AKAM",
+    "ALM",
     "AMAT",
     "APLD",
     "AXTI",
@@ -118,14 +119,13 @@
     "FMC",
     "IBRX",
     "INTC",
-    "IREN",
     "MSFT",
     "OCUL",
+    "OLMA",
     "ORCL",
     "QCOM",
     "SMCI",
     "WDC",
-    "WTTR",
-    "WULF"
+    "WTTR"
   ]
 }
