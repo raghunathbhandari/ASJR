@@ -1,28 +1,28 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-19T13:41:09.979485+00:00",
+  "generated_at_utc": "2026-10-19T13:47:26.000372+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
     "APLD",
     "ASTS",
     "AXTI",
+    "CIFR",
     "CLF",
     "CRDO",
-    "CRWV",
+    "IBRX",
     "INTC",
     "IREN",
-    "MRNA",
     "MSFT",
-    "MXL",
-    "NMAX",
+    "NBIS",
     "ORCL",
     "QCOM",
     "SKYD",
     "SMCI",
     "WDC",
-    "WTTR"
+    "WTTR",
+    "WULF"
   ],
   "per_ticker": {
     "AKAM": {
@@ -45,6 +45,10 @@
       "state": "OK",
       "rows": 550
     },
+    "CIFR": {
+      "state": "OK",
+      "rows": 550
+    },
     "CLF": {
       "state": "OK",
       "rows": 544
@@ -53,7 +57,7 @@
       "state": "OK",
       "rows": 550
     },
-    "CRWV": {
+    "IBRX": {
       "state": "OK",
       "rows": 550
     },
@@ -65,21 +69,13 @@
       "state": "OK",
       "rows": 550
     },
-    "MRNA": {
-      "state": "OK",
-      "rows": 550
-    },
     "MSFT": {
       "state": "OK",
       "rows": 550
     },
-    "MXL": {
+    "NBIS": {
       "state": "OK",
       "rows": 550
-    },
-    "NMAX": {
-      "state": "OK",
-      "rows": 446
     },
     "ORCL": {
       "state": "OK",
@@ -103,30 +99,34 @@
     },
     "WTTR": {
       "state": "OK",
-      "rows": 422
+      "rows": 423
+    },
+    "WULF": {
+      "state": "OK",
+      "rows": 550
     }
   },
-  "rows": 10721,
+  "rows": 10826,
   "usable_150bars": [
     "AKAM",
     "AMAT",
     "APLD",
     "ASTS",
     "AXTI",
+    "CIFR",
     "CLF",
     "CRDO",
-    "CRWV",
+    "IBRX",
     "INTC",
     "IREN",
-    "MRNA",
     "MSFT",
-    "MXL",
-    "NMAX",
+    "NBIS",
     "ORCL",
     "QCOM",
     "SKYD",
     "SMCI",
     "WDC",
-    "WTTR"
+    "WTTR",
+    "WULF"
   ]
 }
