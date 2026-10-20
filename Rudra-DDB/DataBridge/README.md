@@ -1,3 +1,5 @@
+> **Rudra-Coder handoff (verified 20 Oct 2026):** [Read RUDRA_CODER_HANDOFF.md](RUDRA_CODER_HANDOFF.md) for successful 190-candle MSFT CSV export, confirmed live status, operating lessons, research possibilities and next-session steps.
+
 # Rudra Data Bridge — isolated Yahoo data import and Git export
 
 Created 20 October 2026. This is **separate** from `Rudra-DDB/AdminBridge`; do not add data-import operations to the Admin Bridge again.
