@@ -1,13 +1,13 @@
 {
   "day": "2026-10-20",
-  "generated_at_uk": "2026-10-20T05:14:24.169063+01:00",
+  "generated_at_uk": "2026-10-20T05:20:23.402166+01:00",
   "counts": {
-    "TOP_IN_PLAY": 15,
+    "TOP_IN_PLAY": 16,
     "STRONG_MOMENTUM": 0,
     "WEAK_SELLING": 0,
     "REVERSAL_WATCH": 0,
     "LOW_RVOL_WATCH": 0,
-    "UNCLASSIFIED": 5
+    "UNCLASSIFIED": 4
   },
   "rows": [
     {
@@ -263,6 +263,24 @@
       "selection_reason": "scanner=TOP_PERC_LOSE,HOT_BY_VOLUME"
     },
     {
+      "ticker": "CRDO",
+      "categories": [
+        "TOP_IN_PLAY"
+      ],
+      "discovery_priority": 3,
+      "source": "FIXED+IBKR",
+      "scanner_codes": "HOT_BY_VOLUME",
+      "ai_bias": "N/A",
+      "price": null,
+      "bar_time_uk": null,
+      "change_5m_pct": null,
+      "volume": null,
+      "vol_12bar": null,
+      "rvol20": null,
+      "data_state": "NO_FRESH_5M",
+      "selection_reason": "scanner=HOT_BY_VOLUME"
+    },
+    {
       "ticker": "ORCL",
       "categories": [
         "TOP_IN_PLAY"
@@ -282,24 +300,6 @@
     },
     {
       "ticker": "AKAM",
-      "categories": [
-        "UNCLASSIFIED"
-      ],
-      "discovery_priority": 0,
-      "source": "FIXED",
-      "scanner_codes": "",
-      "ai_bias": "N/A",
-      "price": null,
-      "bar_time_uk": null,
-      "change_5m_pct": null,
-      "volume": null,
-      "vol_12bar": null,
-      "rvol20": null,
-      "data_state": "NO_FRESH_5M",
-      "selection_reason": "fixed watchlist"
-    },
-    {
-      "ticker": "CRDO",
       "categories": [
         "UNCLASSIFIED"
       ],
