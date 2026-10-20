@@ -86,3 +86,38 @@ Look for corresponding results JSON on same branch. Only then mark inventory **L
 ### Future data imports for backtesting
 
 Preserve the narrower, existing research import operations until tested. Add approved **read-only data manifests** and **fixed backtest data import actions** only with limits on ticker/date/timeframe, requests and maximum output sizes. Do not let AI submit shell strings, arbitrary file paths, Python code, IBKR credentials or unrestricted imports. Prefer an isolated Yahoo importer; IBKR imports should use the existing Chakra broker connection or an explicitly coordinated broker access window.
+
+
+## Generic Yahoo historical importer — prepared, not yet deployed/verified
+
+New files: `yahoo_import.py`, `test_yahoo_import.py`. Admin Bridge worker accepts a strict `yahoo_import` operation with these **exact** request keys:
+
+```json
+{
+  "schema_version": 1,
+  "id": "admin-2026102017000",
+  "operation": "yahoo_import",
+  "symbols": ["INTC", "NQ=F"],
+  "interval": "5m",
+  "start": "2026-10-19",
+  "end": "2026-10-21"
+}
+```
+
+Date range: start **inclusive**, end **exclusive**, both `YYYY-MM-DD`. Up to five valid tickers per request. Accepted intervals: `1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo`. Intervals have bounded request windows (1m seven days; most intraday 60 days; hourly up to 730 days; higher timeframes 3650 days). Real Yahoo availability may be more restrictive and is never guaranteed. Limits and validators are in `yahoo_import.py`. No arbitrary command, Python source, local path, IBKR connection or trading action is accepted. Outputs stay under `Rudra-DDB/ResearchData/Yahoo/<start>_<end>_<interval>/` on VPS only; result JSON contains ticker row counts and timestamps. Results are not raw data exports; explicit reviewed export is needed to read complete CSVs remotely.
+
+**VPS deployment while service is already installed:**
+
+```bash
+cd /root/trading/ASJR
+git fetch origin rudra-admin-bridge-v1-20261020
+# Confirm there are no uncommitted personal edits to these exact files first.
+git status --short -- Rudra-DDB/AdminBridge/admin_bridge_worker.py Rudra-DDB/AdminBridge/yahoo_import.py Rudra-DDB/AdminBridge/test_yahoo_import.py
+git restore --source=FETCH_HEAD --worktree -- Rudra-DDB/AdminBridge/admin_bridge_worker.py Rudra-DDB/AdminBridge/yahoo_import.py Rudra-DDB/AdminBridge/test_yahoo_import.py
+/root/trading/venv_new/bin/python -m py_compile Rudra-DDB/AdminBridge/admin_bridge_worker.py Rudra-DDB/AdminBridge/yahoo_import.py
+/root/trading/venv_new/bin/python Rudra-DDB/AdminBridge/test_yahoo_import.py
+systemctl restart asjr-admin-bridge.service
+systemctl is-active asjr-admin-bridge.service
+```
+
+Do not merge development branch into `main` merely to deploy the importer. Until deployment and a successful result JSON from the VPS, mark generic import **CODE ONLY**. For production, use narrower permissions and a dedicated non-root account.
