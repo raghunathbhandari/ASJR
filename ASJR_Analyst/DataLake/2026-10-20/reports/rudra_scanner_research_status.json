@@ -1,13 +1,13 @@
 {
-  "state": "EXPERIMENTAL_RESEARCH",
+  "state": "INDICATORS_ONLY",
   "feature_status": {
-    "state": "OK",
-    "input_rows": 14202,
-    "completed_rows": 14202,
+    "state": "MISSING",
+    "input_rows": 0,
+    "completed_rows": 0,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
-    "tickers": 25,
+    "tickers": 0,
     "min_periods": 9,
     "session_reset": false,
     "extended_hours_included": true,
@@ -16,17 +16,17 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 14202,
+    "no_wap_rows": 0,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
   "detector_status": {
-    "state": "OK",
-    "tickers": 20,
+    "state": "DISABLED",
+    "tickers": 0,
     "emitted": 0,
     "blocked_context": 0,
     "blocked_data": 0,
-    "blocked_session": 20,
+    "blocked_session": 0,
     "mode": "RESEARCH_ONLY"
   },
   "events": [],
@@ -42,7 +42,7 @@
   },
   "context": {
     "state": "WAIT",
-    "reason": "MISSING_BENCHMARK_OR_PREV_RTH_CLOSE",
+    "reason": "NO_COMPLETED_BARS",
     "timestamp": null,
     "index_pct": {},
     "sector_etf": {
@@ -51,7 +51,6 @@
       "CRDO": "SMH",
       "INTC": "SMH",
       "MSFT": "XLK",
-      "MU": "SMH",
       "ORCL": "XLK",
       "QCOM": "SMH",
       "WTTR": "XLE"
@@ -61,15 +60,16 @@
   },
   "collection": {
     "requested": [
-      "AAOI",
-      "AXTI",
-      "BE",
-      "COHR",
-      "CRCL",
-      "CRWV",
-      "IREN",
-      "NBIS",
-      "SNDK",
+      "AKAM",
+      "AMAT",
+      "CRDO",
+      "INTC",
+      "MSFT",
+      "ORCL",
+      "QCOM",
+      "SMCI",
+      "WDC",
+      "WTTR",
       "SPY",
       "QQQ",
       "SMH",
@@ -77,24 +77,14 @@
       "XLK"
     ],
     "symbols": [
-      "AAOI",
       "AKAM",
       "AMAT",
-      "AXTI",
-      "BE",
-      "COHR",
-      "CRCL",
       "CRDO",
-      "CRWV",
       "INTC",
-      "IREN",
       "MSFT",
-      "MU",
-      "NBIS",
       "ORCL",
       "QCOM",
       "SMCI",
-      "SNDK",
       "WDC",
       "WTTR",
       "SPY",
@@ -109,13 +99,10 @@
       "CRDO": "SMH",
       "INTC": "SMH",
       "MSFT": "XLK",
-      "MU": "SMH",
       "ORCL": "XLK",
       "QCOM": "SMH",
       "WTTR": "XLE"
     },
-    "state": "COLLECTED",
-    "count": 14202,
-    "source": "SAME_IBKR_APP"
+    "state": "DATA_NOT_READY"
   }
 }
