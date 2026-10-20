@@ -2,12 +2,12 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 8417,
-    "completed_rows": 8417,
+    "input_rows": 14202,
+    "completed_rows": 14202,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
-    "tickers": 15,
+    "tickers": 25,
     "min_periods": 9,
     "session_reset": false,
     "extended_hours_included": true,
@@ -16,17 +16,17 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 8417,
+    "no_wap_rows": 14202,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
   "detector_status": {
     "state": "OK",
-    "tickers": 10,
+    "tickers": 20,
     "emitted": 0,
     "blocked_context": 0,
     "blocked_data": 0,
-    "blocked_session": 10,
+    "blocked_session": 20,
     "mode": "RESEARCH_ONLY"
   },
   "events": [],
@@ -34,8 +34,8 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 59358,
-    "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-19/processed/rudra_scanner_rvol20_baseline.csv",
+    "stored_rows": 60138,
+    "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-20/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
     "output": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-20/processed/rudra_scanner_rvol20_baseline.csv"
@@ -51,6 +51,7 @@
       "CRDO": "SMH",
       "INTC": "SMH",
       "MSFT": "XLK",
+      "MU": "SMH",
       "ORCL": "XLK",
       "QCOM": "SMH",
       "WTTR": "XLE"
@@ -60,6 +61,15 @@
   },
   "collection": {
     "requested": [
+      "AAOI",
+      "AXTI",
+      "CIFR",
+      "CRWV",
+      "IONQ",
+      "IREN",
+      "LITE",
+      "SNDK",
+      "SPCX",
       "SPY",
       "QQQ",
       "SMH",
@@ -67,14 +77,24 @@
       "XLK"
     ],
     "symbols": [
+      "AAOI",
       "AKAM",
       "AMAT",
+      "AXTI",
+      "CIFR",
       "CRDO",
+      "CRWV",
       "INTC",
+      "IONQ",
+      "IREN",
+      "LITE",
       "MSFT",
+      "MU",
       "ORCL",
       "QCOM",
       "SMCI",
+      "SNDK",
+      "SPCX",
       "WDC",
       "WTTR",
       "SPY",
@@ -89,12 +109,13 @@
       "CRDO": "SMH",
       "INTC": "SMH",
       "MSFT": "XLK",
+      "MU": "SMH",
       "ORCL": "XLK",
       "QCOM": "SMH",
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 8417,
+    "count": 14202,
     "source": "SAME_IBKR_APP"
   }
 }

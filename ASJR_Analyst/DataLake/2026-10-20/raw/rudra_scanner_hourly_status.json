@@ -1,20 +1,34 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-20T00:05:49.260272+00:00",
+  "generated_at_utc": "2026-10-20T00:11:29.672560+00:00",
   "selected_tickers": [
+    "AAOI",
     "AKAM",
     "AMAT",
+    "AXTI",
+    "CIFR",
     "CRDO",
+    "CRWV",
     "INTC",
+    "IONQ",
+    "IREN",
+    "LITE",
     "MSFT",
+    "MU",
     "ORCL",
     "QCOM",
     "SMCI",
+    "SNDK",
+    "SPCX",
     "WDC",
     "WTTR"
   ],
   "per_ticker": {
+    "AAOI": {
+      "state": "OK",
+      "rows": 560
+    },
     "AKAM": {
       "state": "OK",
       "rows": 539
@@ -23,7 +37,19 @@
       "state": "OK",
       "rows": 560
     },
+    "AXTI": {
+      "state": "OK",
+      "rows": 560
+    },
+    "CIFR": {
+      "state": "OK",
+      "rows": 560
+    },
     "CRDO": {
+      "state": "OK",
+      "rows": 560
+    },
+    "CRWV": {
       "state": "OK",
       "rows": 560
     },
@@ -31,7 +57,23 @@
       "state": "OK",
       "rows": 560
     },
+    "IONQ": {
+      "state": "OK",
+      "rows": 560
+    },
+    "IREN": {
+      "state": "OK",
+      "rows": 560
+    },
+    "LITE": {
+      "state": "OK",
+      "rows": 560
+    },
     "MSFT": {
+      "state": "OK",
+      "rows": 560
+    },
+    "MU": {
       "state": "OK",
       "rows": 560
     },
@@ -47,6 +89,14 @@
       "state": "OK",
       "rows": 560
     },
+    "SNDK": {
+      "state": "OK",
+      "rows": 560
+    },
+    "SPCX": {
+      "state": "OK",
+      "rows": 560
+    },
     "WDC": {
       "state": "OK",
       "rows": 560
@@ -56,16 +106,26 @@
       "rows": 433
     }
   },
-  "rows": 5452,
+  "rows": 11052,
   "usable_150bars": [
+    "AAOI",
     "AKAM",
     "AMAT",
+    "AXTI",
+    "CIFR",
     "CRDO",
+    "CRWV",
     "INTC",
+    "IONQ",
+    "IREN",
+    "LITE",
     "MSFT",
+    "MU",
     "ORCL",
     "QCOM",
     "SMCI",
+    "SNDK",
+    "SPCX",
     "WDC",
     "WTTR"
   ]
