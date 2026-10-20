@@ -1,0 +1,20 @@
+{
+  "completed_utc": "2026-10-20T16:33:36.088649+00:00",
+  "end_exclusive": "2026-09-22",
+  "id": "admin-2026102016330",
+  "interval": "5m",
+  "operation": "yahoo_import",
+  "source": "Yahoo Finance",
+  "start_inclusive": "2026-09-21",
+  "status": "SUCCESS",
+  "symbols": {
+    "MSFT": {
+      "bytes": 14476,
+      "first": "2026-09-21 08:00:00+00:00",
+      "last": "2026-09-21 23:55:00+00:00",
+      "path": "Rudra-DDB/ResearchData/Yahoo/2026-09-21_2026-09-22_5m/MSFT.csv",
+      "rows": 190,
+      "status": "SUCCESS"
+    }
+  }
+}
