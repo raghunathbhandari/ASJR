@@ -23,6 +23,7 @@ from pathlib import Path
 ROOT = Path("/root/trading/ASJR")
 REQUESTS = "Rudra-DDB/AdminBridge/requests"
 RESULTS = "Rudra-DDB/AdminBridge/results"
+RESULT_BRANCH = "rudra-admin-results"
 LOCK = Path("/tmp/asjr_admin_bridge.lock")
 OPERATIONS = {"health", "diagnose", "maintenance", "cleanup_audit"}
 ID = re.compile(r"admin-[0-9]{13}\Z")
@@ -120,7 +121,7 @@ def publish(identifier, result):
         git("config", "user.name", "ASJR Admin Bridge", cwd=folder)
         git("config", "user.email", "asjr-admin-bridge@users.noreply.github.com", cwd=folder)
         for attempt in range(4):
-            if git("fetch", "-q", "origin", "main", cwd=folder).returncode:
+            if git("fetch", "-q", "origin", RESULT_BRANCH, cwd=folder).returncode:
                 return False
             if git("checkout", "-q", "-B", "admin-result", "FETCH_HEAD", cwd=folder).returncode:
                 return False
@@ -131,7 +132,7 @@ def publish(identifier, result):
                 return False
             if git("commit", "-qm", f"ASJR admin bridge result {identifier}", cwd=folder).returncode:
                 return False
-            if git("push", "-q", "origin", "HEAD:refs/heads/main", cwd=folder, timeout=120).returncode == 0:
+            if git("push", "-q", "origin", "HEAD:refs/heads/" + RESULT_BRANCH, cwd=folder, timeout=120).returncode == 0:
                 return True
             time.sleep(attempt+1)
     return False
@@ -157,7 +158,9 @@ def tick():
         identifier = Path(path).stem
         if not ID.fullmatch(identifier):
             continue
-        if git("cat-file", "-e", f"origin/main:{RESULTS}/{identifier}.json").returncode == 0:
+        if git("fetch", "-q", "origin", RESULT_BRANCH).returncode:
+            return 2
+        if git("cat-file", "-e", f"FETCH_HEAD:{RESULTS}/{identifier}.json").returncode == 0:
             continue
         raw = git("show", f"origin/main:{path}")
         if raw.returncode or len(raw.stdout) > 2048:
