@@ -25,7 +25,7 @@ REQUESTS = "Rudra-DDB/AdminBridge/requests"
 RESULTS = "Rudra-DDB/AdminBridge/results"
 RESULT_BRANCH = "rudra-admin-results"
 LOCK = Path("/tmp/asjr_admin_bridge.lock")
-OPERATIONS = {"health", "diagnose", "maintenance", "cleanup_audit", "data_inventory", "import_nq_intc_5m"}
+OPERATIONS = {"health", "diagnose", "maintenance", "cleanup_audit", "data_inventory", "import_nq_intc_5m", "yahoo_import"}
 ID = re.compile(r"admin-[0-9]{13}\Z")
 MAX_OUTPUT = 2200
 
@@ -45,13 +45,25 @@ def report_error(kind):
 
 
 def valid(job, identifier):
-    return (type(job) is dict and set(job) == {"schema_version", "id", "operation"}
-            and job["schema_version"] == 1
-            and job["id"] == identifier and bool(ID.fullmatch(identifier))
-            and job["operation"] in OPERATIONS)
+    if type(job) is not dict or not ID.fullmatch(identifier):
+        return False
+    if job.get("schema_version") != 1 or job.get("id") != identifier:
+        return False
+    if job.get("operation") == "yahoo_import":
+        return set(job) == {"schema_version", "id", "operation", "symbols", "interval", "start", "end"}
+    return set(job) == {"schema_version", "id", "operation"} and job.get("operation") in OPERATIONS
 
 
-def execute(operation):
+def execute(operation, job=None):
+    if operation == "yahoo_import":
+        import importlib.util
+        path = ROOT / "Rudra-DDB/AdminBridge/yahoo_import.py"
+        if not path.is_file() or path.is_symlink():
+            return report_error("YAHOO_IMPORT_NOT_DEPLOYED")
+        spec = importlib.util.spec_from_file_location("admin_yahoo_import", path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module.import_history(job)
     if operation == "health":
         return {"status": "SUCCESS", "python": sys.version.split()[0],
                 "root_exists": ROOT.is_dir()}
@@ -200,7 +212,7 @@ def tick():
             continue
         print(f"ADMIN BRIDGE | {identifier} {job['operation']}", flush=True)
         try:
-            result = execute(job["operation"])
+            result = execute(job["operation"], job)
         except (OSError, subprocess.TimeoutExpired) as exc:
             result = report_error(type(exc).__name__)
         result.update({"id":identifier, "operation":job["operation"],
