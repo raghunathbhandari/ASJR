@@ -1,17 +1,17 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-20T09:07:11.830535+00:00",
+  "generated_at_utc": "2026-10-20T09:13:09.454293+00:00",
   "selected_tickers": [
     "AAOI",
     "AEHR",
     "AKAM",
     "AMAT",
+    "APLD",
     "AXTI",
     "BE",
     "CRDO",
     "CRWV",
-    "HUT",
     "INTC",
     "IREN",
     "MSFT",
@@ -20,7 +20,7 @@
     "ORCL",
     "QCOM",
     "SMCI",
-    "SNDK",
+    "VG",
     "WDC",
     "WTTR"
   ],
@@ -41,6 +41,10 @@
       "state": "OK",
       "rows": 545
     },
+    "APLD": {
+      "state": "OK",
+      "rows": 545
+    },
     "AXTI": {
       "state": "OK",
       "rows": 545
@@ -54,10 +58,6 @@
       "rows": 545
     },
     "CRWV": {
-      "state": "OK",
-      "rows": 545
-    },
-    "HUT": {
       "state": "OK",
       "rows": 545
     },
@@ -93,7 +93,7 @@
       "state": "OK",
       "rows": 545
     },
-    "SNDK": {
+    "VG": {
       "state": "OK",
       "rows": 545
     },
@@ -112,11 +112,11 @@
     "AEHR",
     "AKAM",
     "AMAT",
+    "APLD",
     "AXTI",
     "BE",
     "CRDO",
     "CRWV",
-    "HUT",
     "INTC",
     "IREN",
     "MSFT",
@@ -125,7 +125,7 @@
     "ORCL",
     "QCOM",
     "SMCI",
-    "SNDK",
+    "VG",
     "WDC",
     "WTTR"
   ]
