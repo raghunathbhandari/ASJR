@@ -25,7 +25,7 @@ REQUESTS = "Rudra-DDB/AdminBridge/requests"
 RESULTS = "Rudra-DDB/AdminBridge/results"
 RESULT_BRANCH = "rudra-admin-results"
 LOCK = Path("/tmp/asjr_admin_bridge.lock")
-OPERATIONS = {"health", "diagnose", "maintenance", "cleanup_audit"}
+OPERATIONS = {"health", "diagnose", "maintenance", "cleanup_audit", "data_inventory"}
 ID = re.compile(r"admin-[0-9]{13}\Z")
 MAX_OUTPUT = 2200
 
@@ -70,6 +70,24 @@ def execute(operation):
         result["chakra"] = "RUNNING" if tmux.returncode == 0 else "STOPPED" if tmux.returncode == 1 else "UNKNOWN"
         result["status"] = "SUCCESS"
         return result
+    if operation == "data_inventory":
+        # Strict fixed paths: metadata only; no user paths, no sample rows,
+        # no data changes and no broker/network calls.
+        paths = {
+            "research_46_metrics": "RudraScanner/ResearchData/EMA50_2026-10-15/research_metrics_46.csv",
+            "nq_import_script": "RudraScanner/gann_nq_import.py",
+            "nq_october_script": "RudraScanner/gann_october_import.py",
+            "yahoo_research_import_script": "RudraScanner/research_ema50_46.py",
+            "datalake_root": "ASJR_Analyst/DataLake",
+        }
+        result = {}
+        for name, relative in paths.items():
+            item = ROOT / relative
+            result[name] = {
+                "exists": item.exists() and not item.is_symlink(),
+                "bytes": item.stat().st_size if item.is_file() and not item.is_symlink() else None,
+            }
+        return {"status":"SUCCESS", "mode":"READ_ONLY_METADATA", "assets":result}
     if operation == "cleanup_audit":
         # Never run the potentially destructive cleanup scheduler.
         # Observe candidate dated folders only. No filesystem mutations.
