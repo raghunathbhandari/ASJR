@@ -1,13 +1,13 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-20T05:55:15.879167+00:00",
+  "generated_at_utc": "2026-10-20T06:12:17.024871+00:00",
   "selected_tickers": [
     "AAOI",
+    "AEHR",
     "AKAM",
     "AMAT",
     "AXTI",
-    "BE",
     "CIFR",
     "COHR",
     "CRDO",
@@ -29,6 +29,10 @@
       "state": "OK",
       "rows": 560
     },
+    "AEHR": {
+      "state": "OK",
+      "rows": 560
+    },
     "AKAM": {
       "state": "OK",
       "rows": 539
@@ -38,10 +42,6 @@
       "rows": 560
     },
     "AXTI": {
-      "state": "OK",
-      "rows": 560
-    },
-    "BE": {
       "state": "OK",
       "rows": 560
     },
@@ -109,10 +109,10 @@
   "rows": 11052,
   "usable_150bars": [
     "AAOI",
+    "AEHR",
     "AKAM",
     "AMAT",
     "AXTI",
-    "BE",
     "CIFR",
     "COHR",
     "CRDO",
