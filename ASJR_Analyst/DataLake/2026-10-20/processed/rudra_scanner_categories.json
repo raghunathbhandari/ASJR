@@ -1,6 +1,6 @@
 {
   "day": "2026-10-20",
-  "generated_at_uk": "2026-10-20T08:09:36.854242+01:00",
+  "generated_at_uk": "2026-10-20T08:15:08.192129+01:00",
   "counts": {
     "TOP_IN_PLAY": 17,
     "STRONG_MOMENTUM": 0,
@@ -191,6 +191,24 @@
       "selection_reason": "scanner=TOP_PERC_LOSE,HOT_BY_VOLUME,MOST_ACTIVE"
     },
     {
+      "ticker": "AKAM",
+      "categories": [
+        "TOP_IN_PLAY"
+      ],
+      "discovery_priority": 5,
+      "source": "FIXED+IBKR",
+      "scanner_codes": "TOP_PERC_GAIN+HOT_BY_VOLUME",
+      "ai_bias": "N/A",
+      "price": null,
+      "bar_time_uk": null,
+      "change_5m_pct": null,
+      "volume": null,
+      "vol_12bar": null,
+      "rvol20": null,
+      "data_state": "NO_FRESH_5M",
+      "selection_reason": "scanner=TOP_PERC_GAIN,HOT_BY_VOLUME"
+    },
+    {
       "ticker": "INTC",
       "categories": [
         "TOP_IN_PLAY"
@@ -207,24 +225,6 @@
       "rvol20": null,
       "data_state": "NO_FRESH_5M",
       "selection_reason": "scanner=HOT_BY_VOLUME,MOST_ACTIVE"
-    },
-    {
-      "ticker": "AKAM",
-      "categories": [
-        "TOP_IN_PLAY"
-      ],
-      "discovery_priority": 3,
-      "source": "FIXED+IBKR",
-      "scanner_codes": "TOP_PERC_GAIN",
-      "ai_bias": "N/A",
-      "price": null,
-      "bar_time_uk": null,
-      "change_5m_pct": null,
-      "volume": null,
-      "vol_12bar": null,
-      "rvol20": null,
-      "data_state": "NO_FRESH_5M",
-      "selection_reason": "scanner=TOP_PERC_GAIN"
     },
     {
       "ticker": "CRDO",
