@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 9960,
-    "completed_rows": 9960,
+    "input_rows": 9984,
+    "completed_rows": 9984,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 9960,
+    "no_wap_rows": 9984,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -61,11 +61,11 @@
   },
   "collection": {
     "requested": [
+      "AXTI",
       "BE",
-      "CRWV",
       "IREN",
       "NBIS",
-      "OKLO",
+      "SNDK",
       "SPY",
       "QQQ",
       "SMH",
@@ -86,11 +86,11 @@
       "MSFT",
       "MU",
       "NBIS",
-      "OKLO",
       "ORCL",
       "QCOM",
       "SMCI",
       "SMR",
+      "SNDK",
       "WDC",
       "WTTR",
       "SPY",
@@ -111,7 +111,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 9960,
+    "count": 9984,
     "source": "SAME_IBKR_APP"
   }
 }
