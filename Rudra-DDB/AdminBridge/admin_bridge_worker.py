@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Restricted GitHub -> ASJR VPS administrative bridge.
-Requests on GitHub main: Rudra-DDB/AdminBridge/requests/admin-<13digits>.json
-Results on GitHub main: Rudra-DDB/AdminBridge/results/<same-id>.json
+Requests on GitHub rudra-admin-results: Rudra-DDB/AdminBridge/requests/admin-<13digits>.json
+Results on GitHub rudra-admin-results: Rudra-DDB/AdminBridge/results/<same-id>.json
 
 Strict operations: health, diagnose, maintenance, cleanup_audit.
 No arbitrary argv, shell, trade orders, force push, hard reset, deletion,
@@ -146,10 +146,10 @@ def tick():
     ):
         print("ADMIN BRIDGE | unauthorized origin", flush=True)
         return 2
-    if git("fetch", "-q", "origin", "main").returncode:
+    if git("fetch", "-q", "origin", RESULT_BRANCH).returncode:
         print("ADMIN BRIDGE | fetch failed", flush=True)
         return 2
-    listed = git("ls-tree", "-r", "--name-only", "origin/main", REQUESTS)
+    listed = git("ls-tree", "-r", "--name-only", "FETCH_HEAD", REQUESTS)
     if listed.returncode:
         return 2
     for path in listed.stdout.splitlines():
@@ -162,7 +162,7 @@ def tick():
             return 2
         if git("cat-file", "-e", f"FETCH_HEAD:{RESULTS}/{identifier}.json").returncode == 0:
             continue
-        raw = git("show", f"origin/main:{path}")
+        raw = git("show", f"FETCH_HEAD:{path}")
         if raw.returncode or len(raw.stdout) > 2048:
             continue
         try:
