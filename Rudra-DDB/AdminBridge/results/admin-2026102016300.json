@@ -1,0 +1,28 @@
+{
+  "completed_utc": "2026-10-20T16:31:04.339971+00:00",
+  "end_exclusive": "2026-10-21",
+  "id": "admin-2026102016300",
+  "interval": "5m",
+  "operation": "yahoo_import",
+  "source": "Yahoo Finance",
+  "start_inclusive": "2026-10-19",
+  "status": "SUCCESS",
+  "symbols": {
+    "INTC": {
+      "bytes": 21463,
+      "first": "2026-10-19 08:00:00+00:00",
+      "last": "2026-10-20 16:30:00+00:00",
+      "path": "Rudra-DDB/ResearchData/Yahoo/2026-10-19_2026-10-21_5m/INTC.csv",
+      "rows": 295,
+      "status": "SUCCESS"
+    },
+    "NQ=F": {
+      "bytes": 27351,
+      "first": "2026-10-19 04:00:00+00:00",
+      "last": "2026-10-20 16:20:00+00:00",
+      "path": "Rudra-DDB/ResearchData/Yahoo/2026-10-19_2026-10-21_5m/NQ_EQ_F.csv",
+      "rows": 424,
+      "status": "SUCCESS"
+    }
+  }
+}
