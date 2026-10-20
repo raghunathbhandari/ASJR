@@ -164,7 +164,11 @@ def publish(job, result, csvs):
                 result["symbols"][symbol]["github_path"] = dest_rel
             result_path.parent.mkdir(parents=True, exist_ok=True)
             result_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
-            git("add", "--", str(Path(RESULTS) / (ident + ".json")), str(Path(EXPORTS) / ident), cwd=folder)
+            paths_to_stage = [str(Path(RESULTS) / (ident + ".json"))]
+            if csvs:
+                paths_to_stage.append(str(Path(EXPORTS) / ident))
+            if git("add", "--", *paths_to_stage, cwd=folder).returncode:
+                return False
             if git("commit", "-qm", f"Data bridge result {ident}", cwd=folder).returncode:
                 return False
             if git("push", "-q", "origin", "HEAD:refs/heads/" + BRANCH, cwd=folder, timeout=180).returncode == 0:
