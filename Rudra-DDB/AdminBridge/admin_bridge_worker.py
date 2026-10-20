@@ -25,7 +25,7 @@ REQUESTS = "Rudra-DDB/AdminBridge/requests"
 RESULTS = "Rudra-DDB/AdminBridge/results"
 RESULT_BRANCH = "rudra-admin-results"
 LOCK = Path("/tmp/asjr_admin_bridge.lock")
-OPERATIONS = {"health", "diagnose", "maintenance", "cleanup_audit", "data_inventory"}
+OPERATIONS = {"health", "diagnose", "maintenance", "cleanup_audit", "data_inventory", "import_nq_intc_5m"}
 ID = re.compile(r"admin-[0-9]{13}\Z")
 MAX_OUTPUT = 2200
 
@@ -70,6 +70,15 @@ def execute(operation):
         result["chakra"] = "RUNNING" if tmux.returncode == 0 else "STOPPED" if tmux.returncode == 1 else "UNKNOWN"
         result["status"] = "SUCCESS"
         return result
+    if operation == "import_nq_intc_5m":
+        import importlib.util
+        path = ROOT / "Rudra-DDB/AdminBridge/import_nq_intc_5m.py"
+        if not path.is_file() or path.is_symlink():
+            return report_error("IMPORT_MODULE_MISSING")
+        spec=importlib.util.spec_from_file_location("admin_fixed_5m", path)
+        module=importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module.execute()
     if operation == "data_inventory":
         # Strict fixed paths: metadata only; no user paths, no sample rows,
         # no data changes and no broker/network calls.
