@@ -1,13 +1,13 @@
 {
   "day": "2026-10-20",
-  "generated_at_uk": "2026-10-20T02:04:57.069055+01:00",
+  "generated_at_uk": "2026-10-20T02:11:01.841750+01:00",
   "counts": {
-    "TOP_IN_PLAY": 18,
+    "TOP_IN_PLAY": 17,
     "STRONG_MOMENTUM": 0,
     "WEAK_SELLING": 0,
     "REVERSAL_WATCH": 0,
     "LOW_RVOL_WATCH": 0,
-    "UNCLASSIFIED": 2
+    "UNCLASSIFIED": 3
   },
   "rows": [
     {
@@ -317,13 +317,13 @@
       "selection_reason": "scanner=MOST_ACTIVE"
     },
     {
-      "ticker": "QCOM",
+      "ticker": "AKAM",
       "categories": [
-        "TOP_IN_PLAY"
+        "UNCLASSIFIED"
       ],
-      "discovery_priority": 3,
-      "source": "FIXED+IBKR",
-      "scanner_codes": "TOP_PERC_LOSE",
+      "discovery_priority": 0,
+      "source": "FIXED",
+      "scanner_codes": "",
       "ai_bias": "N/A",
       "price": null,
       "bar_time_uk": null,
@@ -332,10 +332,10 @@
       "vol_12bar": null,
       "rvol20": null,
       "data_state": "NO_FRESH_5M",
-      "selection_reason": "scanner=TOP_PERC_LOSE"
+      "selection_reason": "fixed watchlist"
     },
     {
-      "ticker": "AKAM",
+      "ticker": "QCOM",
       "categories": [
         "UNCLASSIFIED"
       ],
