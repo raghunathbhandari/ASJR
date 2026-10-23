@@ -32,3 +32,9 @@ Scope: original searchable English text compared with available Nepali PDFs, cha
 - Upload final PDFs into `Gann/Books/` with authenticated binary-capable Git tooling. **No binaries have been pushed** using this connector.
 
 This file documents comparison results; it does NOT claim that chapters 12–15 are final or that a word-by-word verification has been completed.
+
+## 2026-10-23 later update
+- Chapter 15 Nepali narrative draft has now been created as a 4-page PDF (`WD_Gann_Tunnel_Nepali_Ch15.pdf`). Original English poems and scriptural quotations are retained, as requested for difficult-to-translate text.
+- It is not independently certified as exact; original paragraph-by-paragraph checks remain.
+- Chapters 12–14 remain **partial**, and chapters 1–11 have not been certified after full line-by-line comparison.
+- Updated ZIP in working files: `Rudra_Gann_Books_Through_Ch15_Updated.zip` (not uploaded to GitHub).
