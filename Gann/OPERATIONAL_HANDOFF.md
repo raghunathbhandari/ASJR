@@ -40,3 +40,13 @@ User requests the next chapter by number only (e.g. “8”). Return the complet
 
 ## Related Rudra-Gann research (kept separate from book translation)
 INTC 4H: Gann Fan, Gann Box, Square, historical turning-price levels; independently test prices against real OHLC data. Do not add trading interpretation into translated books.
+
+
+## Status update — 2026-10-23 evening
+- Available Nepali PDFs: chapters **1–11**, previously generated. Completeness was not independently reverified in this handoff.
+- Chapters **12, 13, 14**: PARTIAL translation PDFs only, **not final**.
+- Chapter **15**: not created; user wants all up to 15 final, **still pending**.
+- Chapter **16**: partial draft exists but is outside the requested through-15 archive.
+- One checked ZIP package exists in ChatGPT workspace: `Rudra_Gann_Books_Through_Ch15_Current.zip`, with original searchable English PDF, Nepali 1–11, partial 12–14, and SHA-256 inventory.
+- **The PDF binaries are NOT in GitHub yet.** Existing GitHub connector supports UTF-8 text files but cannot directly consume local binary paths; upload ZIP contents into `Gann/Books/` with authenticated Git, then check file integrity. Do not report PDF files as pushed until verified.
+- User wants remainder done tomorrow; do not promise asynchronous work without scheduling.
