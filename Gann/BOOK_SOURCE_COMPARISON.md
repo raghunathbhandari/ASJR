@@ -38,3 +38,27 @@ This file documents comparison results; it does NOT claim that chapters 12–15 
 - It is not independently certified as exact; original paragraph-by-paragraph checks remain.
 - Chapters 12–14 remain **partial**, and chapters 1–11 have not been certified after full line-by-line comparison.
 - Updated ZIP in working files: `Rudra_Gann_Books_Through_Ch15_Updated.zip` (not uploaded to GitHub).
+
+
+## Automated chapter-span audit — 2026-10-23
+Source lengths measured on original searchable English chapters; PDF character counts are extraction lengths, **not** translation completeness proofs.
+
+| Ch | English chars | Nepali extracted chars | State |
+|---|---:|---:|---|
+| 1 | 7415 | 8326 | file exists; not certified |
+| 2 | 17620 | 12809 | file exists; not certified |
+| 3 | 24450 | 19039 | file exists; not certified |
+| 4 | 20752 | 19301 | file exists; not certified |
+| 5 | 18189 | 17250 | file exists; not certified |
+| 6 | 21504 | 18835 | file exists; not certified |
+| 7 | 13587 | 12471 | file exists; not certified |
+| 8 | 6728 | 6202 | file exists; not certified |
+| 9 | 24121 | 20542 | file exists; not certified |
+| 10 | 15869 | 13282 | file exists; not certified |
+| 11 | 17266 | 14258 | file exists; not certified |
+| 12 | 44459 | 1921 | partial |
+| 13 | 22135 | 2606 | partial |
+| 14 | 24340 | 2444 | partial |
+| 15 | 12621 | 11985 | file exists; not certified |
+
+Full original English reference PDFs for chapters 12–15 and all available Nepali drafts are available in the working verification ZIP package, **not committed as binaries in Git**. Do not state that chapter 12–14 translations are complete.
