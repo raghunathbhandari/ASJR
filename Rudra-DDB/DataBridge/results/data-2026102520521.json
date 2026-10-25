@@ -1,0 +1,20 @@
+{
+  "completed_utc": "2026-10-25T20:50:42.303311+00:00",
+  "end_exclusive": "2026-10-01",
+  "id": "data-2026102520521",
+  "interval": "5m",
+  "operation": "yahoo_import",
+  "source": "Yahoo Finance",
+  "start_inclusive": "2026-09-01",
+  "status": "SUCCESS",
+  "symbols": {
+    "INTC": {
+      "bytes": 307885,
+      "first": "2026-09-01 08:00:00+00:00",
+      "github_path": "Rudra-DDB/DataBridge/exports/data-2026102520521/INTC.csv",
+      "last": "2026-09-30 23:55:00+00:00",
+      "rows": 4032,
+      "status": "SUCCESS"
+    }
+  }
+}
