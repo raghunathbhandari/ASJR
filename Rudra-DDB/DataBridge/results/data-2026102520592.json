@@ -1,0 +1,44 @@
+{
+  "completed_utc": "2026-10-25T21:00:50.480847+00:00",
+  "end_exclusive": "2026-10-25",
+  "id": "data-2026102520592",
+  "interval": "5m",
+  "operation": "yahoo_import",
+  "source": "Yahoo Finance",
+  "start_inclusive": "2026-10-01",
+  "status": "SUCCESS",
+  "symbols": {
+    "NVDA": {
+      "bytes": 238262,
+      "first": "2026-10-01 08:00:00+00:00",
+      "github_path": "Rudra-DDB/DataBridge/exports/data-2026102520592/NVDA.csv",
+      "last": "2026-10-23 23:55:00+00:00",
+      "rows": 3016,
+      "status": "SUCCESS"
+    },
+    "PLTR": {
+      "bytes": 228378,
+      "first": "2026-10-01 08:00:00+00:00",
+      "github_path": "Rudra-DDB/DataBridge/exports/data-2026102520592/PLTR.csv",
+      "last": "2026-10-23 23:55:00+00:00",
+      "rows": 2891,
+      "status": "SUCCESS"
+    },
+    "SPY": {
+      "bytes": 228408,
+      "first": "2026-10-01 08:00:00+00:00",
+      "github_path": "Rudra-DDB/DataBridge/exports/data-2026102520592/SPY.csv",
+      "last": "2026-10-23 23:55:00+00:00",
+      "rows": 2981,
+      "status": "SUCCESS"
+    },
+    "XOM": {
+      "bytes": 186088,
+      "first": "2026-10-01 08:00:00+00:00",
+      "github_path": "Rudra-DDB/DataBridge/exports/data-2026102520592/XOM.csv",
+      "last": "2026-10-23 23:55:00+00:00",
+      "rows": 2161,
+      "status": "SUCCESS"
+    }
+  }
+}
