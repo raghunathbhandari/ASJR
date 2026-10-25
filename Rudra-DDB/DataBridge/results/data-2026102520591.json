@@ -1,0 +1,52 @@
+{
+  "completed_utc": "2026-10-25T20:59:36.449297+00:00",
+  "end_exclusive": "2026-10-25",
+  "id": "data-2026102520591",
+  "interval": "5m",
+  "operation": "yahoo_import",
+  "source": "Yahoo Finance",
+  "start_inclusive": "2026-10-01",
+  "status": "SUCCESS",
+  "symbols": {
+    "AMAT": {
+      "bytes": 212248,
+      "first": "2026-10-01 08:00:00+00:00",
+      "github_path": "Rudra-DDB/DataBridge/exports/data-2026102520591/AMAT.csv",
+      "last": "2026-10-23 23:35:00+00:00",
+      "rows": 2713,
+      "status": "SUCCESS"
+    },
+    "GOOG": {
+      "bytes": 229582,
+      "first": "2026-10-01 08:00:00+00:00",
+      "github_path": "Rudra-DDB/DataBridge/exports/data-2026102520591/GOOG.csv",
+      "last": "2026-10-23 23:55:00+00:00",
+      "rows": 2976,
+      "status": "SUCCESS"
+    },
+    "LRCX": {
+      "bytes": 199261,
+      "first": "2026-10-01 08:00:00+00:00",
+      "github_path": "Rudra-DDB/DataBridge/exports/data-2026102520591/LRCX.csv",
+      "last": "2026-10-23 23:55:00+00:00",
+      "rows": 2452,
+      "status": "SUCCESS"
+    },
+    "META": {
+      "bytes": 225966,
+      "first": "2026-10-01 08:00:00+00:00",
+      "github_path": "Rudra-DDB/DataBridge/exports/data-2026102520591/META.csv",
+      "last": "2026-10-23 23:55:00+00:00",
+      "rows": 2971,
+      "status": "SUCCESS"
+    },
+    "MU": {
+      "bytes": 231185,
+      "first": "2026-10-01 08:00:00+00:00",
+      "github_path": "Rudra-DDB/DataBridge/exports/data-2026102520591/MU.csv",
+      "last": "2026-10-23 23:55:00+00:00",
+      "rows": 3018,
+      "status": "SUCCESS"
+    }
+  }
+}
