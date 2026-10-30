@@ -1,3 +1,11 @@
+## 2026-10-30 — v2.2.1 all swing lines first
+
+- `show_chart(test)` now plots **one full-range candle chart** with **all** confirmed swing support (turquoise dashed) and resistance (orange dashed) levels; removed nearest-six limit.
+- Each horizontal level begins at its confirmation timestamp and extends to the last candle, rather than appearing before it could have been known.
+- No Three-Candle signal boxes, entry, SL, 1R/2R/3R or matching overlay are drawn in this version. The pattern research output from `check_signals` is preserved.
+- `show_chart(test, signal_number=...)` remains callable, but signal_number is currently ignored in the lines-first display.
+- Version prints `2.2.1-20261030` on import and in the scan.
+
 ## 2026-10-30 — v2.2.0: confirmed swing price lines + Three-Candle proximity
 
 - Kept existing notebook API, default `checkVol=False`, `session="extended"` for NQ; version printed as `2.2.0-20261030`.
