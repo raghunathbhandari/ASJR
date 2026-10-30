@@ -1,3 +1,11 @@
+## 2026-10-30 — v2.3.1 relaxed bullish C2 / green C3 confirmation
+
+- Requested: allow bearish **or** bullish C2 sweep, but C3 must be **green** for a BUY signal. C2 no longer has to close above C1 low. The existing C2 lower wick > absolute C2 body and C2 low < C1 low checks remain.
+- Function: `is_bullish_three_candle_sweep()`; `checkVol=False` default remains unchanged, optional volume-on mode remains available; still requires C3 close > C2 close. This is a pattern-detection change, **not** proof of a profitable entry or a filled trade.
+- 29 Oct NQ 15m user-identified sequence: C1 14:30 low 29531.75, C2 14:45 red (O29577.00 L29449.00 C29526.00; lower wick 77 > body 51), C3 15:00 green (O29525.75 C29613.00). This case now passes the BUY predicate with volume OFF. Since C3 opens 15:00, confirmation occurs at **15:15 UK**, not at the start of 15:00.
+- Printed version increased to `2.3.1-20261030`. Existing `check_signals()`, `show_chart()` API unchanged; chart still shows swing lines only.
+- Only the supplied example's Boolean predicate was checked during the change; full 29/30 October scanner regression and data feed retrieval have not been rerun.
+
 ## Developer review guide — function map and execution flow (v2.3.0)
 
 The source of truth is `main/three_candle/three_candle.py`.
