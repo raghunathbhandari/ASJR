@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 
-__version__ = "2.1.1-20261030"
+__version__ = "2.1.2-20261030"
 MODEL = "RTH_C2_SWEEP_EXPOST"
 print(f"[Rudra Three-Candle] LOADED v{__version__} | MODEL={MODEL}")
 COLS = ["Open", "High", "Low", "Close", "Volume"]
@@ -50,25 +50,93 @@ class Signal:
     candle2_volume: float
 
 
+def _normalize_yahoo(raw: pd.DataFrame) -> pd.DataFrame:
+    if raw.empty:
+        raise ValueError("No Yahoo bars returned")
+    if isinstance(raw.columns, pd.MultiIndex):
+        raw.columns = raw.columns.get_level_values(0)
+    if raw.index.tz is None:
+        raise ValueError("Yahoo data lacks timezone")
+    data = raw[COLS].copy().sort_index()
+    return data.loc[~data.index.duplicated(keep="last")]
+
+
+def _rth_missing_5m(data: pd.DataFrame) -> list[pd.Timestamp]:
+    """Identify absent 5m timestamps only for observed US RTH dates."""
+    eastern = data.index.tz_convert("America/New_York")
+    missing = []
+    for day in sorted(set(eastern.date)):
+        observed = eastern[eastern.date == day]
+        if not any((observed.hour >= 9) & (observed.hour <= 15)):
+            continue
+        expected = pd.date_range(
+            pd.Timestamp(day, tz="America/New_York") + pd.Timedelta(hours=9, minutes=30),
+            periods=78, freq="5min",
+        )
+        # Do not flag bars that have not happened yet on an active session.
+        expected = expected[expected <= pd.Timestamp.now(tz="America/New_York")]
+        missing.extend(expected.difference(observed))
+    return missing
+
+
+def _quarantine_nq_outliers(data: pd.DataFrame) -> pd.DataFrame:
+    """Exclude unverified NQ bars with an extreme 5m range (>2% of prior close)."""
+    if data.empty:
+        return data
+    data = data.sort_index()
+    previous = data.Close.shift(1)
+    abnormal = ((data.High - data.Low) / previous > 0.02) & (previous > 0)
+    # Also ensure OHLC obeys elementary envelope constraints.
+    abnormal |= (data.High < data[["Open", "Close", "Low"]].max(axis=1))
+    abnormal |= (data.Low > data[["Open", "Close", "High"]].min(axis=1))
+    if abnormal.any():
+        print("[Rudra Three-Candle] DATA WARNING: quarantining unverified NQ 5m bars:")
+        for stamp in data.index[abnormal]:
+            print(f"  {stamp.tz_convert('Europe/London'):%Y-%m-%d %H:%M %Z} "
+                  f"range={data.loc[stamp,'High']-data.loc[stamp,'Low']:.2f}")
+    return data.loc[~abnormal].copy()
+
+
 def download_data(start: str, end: str, symbol: str = "INTC",
                   interval: str = "5m") -> pd.DataFrame:
-    """Get Yahoo 5-minute bars with timezone and volume (retention limited)."""
+    """Download Yahoo bars, retry incomplete 5m RTH dates, flag quality problems.
+
+    Yahoo cannot guarantee missing data recovery. Never interpolate OHLCV.
+    """
     import yfinance as yf
     first, last = date.fromisoformat(start), date.fromisoformat(end)
     if last < first:
         raise ValueError("end before start")
-    data = yf.download(
+    raw = yf.download(
         symbol, start=first.isoformat(),
         end=(last+timedelta(days=1)).isoformat(), interval=interval,
         prepost=True, auto_adjust=False, progress=False, threads=False,
     )
-    if data.empty:
-        raise ValueError("No Yahoo bars: check date range and 5m retention")
-    if isinstance(data.columns, pd.MultiIndex):
-        data.columns = data.columns.get_level_values(0)
-    if data.index.tz is None:
-        raise ValueError("Yahoo data lacks timezone")
-    return data[COLS].copy()
+    data = _normalize_yahoo(raw)
+    if interval in ("5m", "5min"):
+        missing = _rth_missing_5m(data)
+        if missing:
+            print(f"[Rudra Three-Candle] DATA WARNING: {len(missing)} missing RTH 5m bars; retrying dates")
+            for day in sorted({t.date() for t in missing}):
+                retry = yf.download(
+                    symbol, start=(day-timedelta(days=1)).isoformat(),
+                    end=(day+timedelta(days=1)).isoformat(),
+                    interval="5m", prepost=True, auto_adjust=False,
+                    progress=False, threads=False,
+                )
+                if not retry.empty:
+                    extra = _normalize_yahoo(retry)
+                    data = pd.concat([data, extra]).sort_index()
+                    data = data.loc[~data.index.duplicated(keep="last")]
+        if symbol == "NQ=F":
+            data = _quarantine_nq_outliers(data)
+        unresolved = _rth_missing_5m(data)
+        if unresolved:
+            print(f"[Rudra Three-Candle] DATA WARNING: {len(unresolved)} RTH 5m bars still missing/invalid:")
+            for stamp in unresolved:
+                print(f"  {stamp.tz_convert('Europe/London'):%Y-%m-%d %H:%M %Z}")
+            print("[Rudra Three-Candle] Incomplete candle groups will be excluded; no synthetic fills.")
+    return data
 
 
 def resample_rth_5m(raw: pd.DataFrame, start: str, end: str,
@@ -82,6 +150,8 @@ def resample_rth_5m(raw: pd.DataFrame, start: str, end: str,
     minutes = timeframe_minutes(interval)
     group_size = minutes // 5
     data = raw[COLS].apply(pd.to_numeric, errors="coerce").dropna().sort_index()
+    if symbol == "NQ=F":
+        data = _quarantine_nq_outliers(data)
     data.index = data.index.tz_convert("America/New_York")
     data = data.loc[(pd.Index(data.index.date) >= first) &
                     (pd.Index(data.index.date) <= last)]
@@ -132,6 +202,7 @@ def resample_nq_extended_4h(raw: pd.DataFrame, start: str,
     if last < first:
         raise ValueError("end before start")
     data = raw[COLS].apply(pd.to_numeric, errors="coerce").dropna().sort_index()
+    data = _quarantine_nq_outliers(data)
     data.index = data.index.tz_convert("America/New_York")
     labels = (data.index + pd.Timedelta(hours=6)).date
     data = data.loc[(pd.Index(labels) >= first) & (pd.Index(labels) <= last)]
@@ -190,7 +261,10 @@ def historical_three_candle(c1: pd.Series, c2: pd.Series,
 def find_historical_signals(data: pd.DataFrame):
     """Never join pattern candles across two US trading sessions."""
     for _, day in data.groupby(futures_session_dates(data)):
+        step = pd.Timedelta(minutes=int(data.attrs.get("interval_minutes", 15)))
         for i in range(2, len(day)):
+            if day.index[i] - day.index[i-1] != step or day.index[i-1] - day.index[i-2] != step:
+                continue
             c1, c2, c3 = day.iloc[i-2], day.iloc[i-1], day.iloc[i]
             if not historical_three_candle(c1, c2, c3):
                 continue
