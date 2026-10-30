@@ -1,25 +1,59 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-30T00:06:38.433619+00:00",
+  "generated_at_utc": "2026-10-30T00:12:30.198189+00:00",
   "selected_tickers": [
+    "AAOI",
     "AKAM",
     "AMAT",
+    "AMZN",
+    "AXTI",
+    "BE",
+    "BMNR",
+    "CRCL",
     "CRDO",
     "INTC",
     "MSFT",
+    "MSTR",
+    "NBIS",
     "ORCL",
+    "PURR",
     "QCOM",
+    "RDDT",
     "SMCI",
     "WDC",
     "WTTR"
   ],
   "per_ticker": {
+    "AAOI": {
+      "state": "OK",
+      "rows": 560
+    },
     "AKAM": {
       "state": "OK",
       "rows": 550
     },
     "AMAT": {
+      "state": "OK",
+      "rows": 560
+    },
+    "AMZN": {
+      "state": "OK",
+      "rows": 560
+    },
+    "AXTI": {
+      "state": "OK",
+      "rows": 560
+    },
+    "BE": {
+      "state": "OK",
+      "rows": 560
+    },
+    "BMNR": {
+      "state": "OK",
+      "rows": 560
+    },
+    "CRCL": {
       "state": "OK",
       "rows": 560
     },
@@ -35,11 +69,27 @@
       "state": "OK",
       "rows": 560
     },
+    "MSTR": {
+      "state": "OK",
+      "rows": 560
+    },
+    "NBIS": {
+      "state": "OK",
+      "rows": 560
+    },
     "ORCL": {
       "state": "OK",
       "rows": 560
     },
+    "PURR": {
+      "state": "OK",
+      "rows": 560
+    },
     "QCOM": {
+      "state": "OK",
+      "rows": 560
+    },
+    "RDDT": {
       "state": "OK",
       "rows": 560
     },
@@ -56,15 +106,25 @@
       "rows": 435
     }
   },
-  "rows": 5465,
+  "rows": 11065,
   "usable_150bars": [
+    "AAOI",
     "AKAM",
     "AMAT",
+    "AMZN",
+    "AXTI",
+    "BE",
+    "BMNR",
+    "CRCL",
     "CRDO",
     "INTC",
     "MSFT",
+    "MSTR",
+    "NBIS",
     "ORCL",
+    "PURR",
     "QCOM",
+    "RDDT",
     "SMCI",
     "WDC",
     "WTTR"
