@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 
-__version__ = "2.4.0-20261030"
+__version__ = "2.4.1-20261030"
 MODEL = "RTH_C2_SWEEP_EXPOST"
 print(f"[Rudra Three-Candle] LOADED v{__version__} | MODEL={MODEL}")
 COLS = ["Open", "High", "Low", "Close", "Volume"]
@@ -584,7 +584,7 @@ def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
     else:
         data = build_regular_market_candles(download_candles_from_yahoo(start, end, ticker),
                                start, end, ticker, interval_label)
-    breakout_trades = backtest_breakout_reversals(data, minC1RangePct, minC2RangePct, r)
+    breakout_trades = backtest_breakout_reversals(data, minC1RangePct, minC2RangePct, 0.20)
     print("\\n=== BREAKOUT BUY / POST-SWEEP SELL RESEARCH (gross Gain %) ===")
     if breakout_trades.empty:
         print("No qualifying breakout trades in available candles.")
