@@ -1,4 +1,4 @@
-"""Rudra Three-Candle: transparent INTC / NQ=F 15-minute research.
+"""Rudra Three-Candle: versioned historical setup research and breakout experiment.
 
 This module identifies *setups*, not executable fills or profit results.
 Every filter is independent so its definition can be reviewed or changed.
@@ -10,11 +10,11 @@ import argparse
 from dataclasses import dataclass
 from datetime import date, timedelta
 import math
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
-import yfinance as yf
 
 
 @dataclass(frozen=True)
@@ -51,6 +51,10 @@ def download_data(start: str, end: str, symbol: str = "INTC",
     Yahoo typically limits 15-minute history to about 60 days. Yahoo futures
     volume can be incomplete; validate it before interpreting volume filters.
     """
+    try:
+        import yfinance as yf
+    except ImportError as exc:
+        raise ImportError("Install yfinance for live Yahoo downloads; archived CSV tests do not need it") from exc
     first = date.fromisoformat(start)
     last = date.fromisoformat(end)
     if last < first:
@@ -82,6 +86,126 @@ def download_data(start: str, end: str, symbol: str = "INTC",
 def download_nq(start: str, end: str, interval: str = "15m") -> pd.DataFrame:
     """Backward-compatible alias for the original notebook."""
     return download_data(start, end, symbol="NQ=F", interval=interval)
+
+
+def load_historical_5m(path: str, start: str, end: str) -> pd.DataFrame:
+    """Load archived IBKR/Yahoo UTC 5m CSV and build New York RTH 15m bars.
+
+    Reset at each US session, anchor the first bar at 09:30 ET, and reject
+    incomplete 15m groups. The returned index is UK time for display.
+    """
+    raw = pd.read_csv(path)
+    time_column = "Datetime" if "Datetime" in raw else "datetime_source"
+    raw.index = pd.DatetimeIndex(pd.to_datetime(raw[time_column], utc=True))
+    raw = raw[["Open", "High", "Low", "Close", "Volume"]].apply(
+        pd.to_numeric, errors="coerce"
+    ).dropna().sort_index()
+    raw.index = raw.index.tz_convert("America/New_York")
+    first, last = date.fromisoformat(start), date.fromisoformat(end)
+    if first > last:
+        raise ValueError("end must be on/after start")
+    raw = raw.loc[(pd.Index(raw.index.date) >= first)
+                  & (pd.Index(raw.index.date) <= last)]
+    raw = raw.between_time("09:30", "15:59")
+    sessions = []
+    for _, day in raw.groupby(raw.index.date):
+        minutes = day.index.hour * 60 + day.index.minute - 570
+        bucket = minutes // 15
+        counts = day.groupby(bucket).size()
+        complete = counts[counts == 3].index
+        aggregate = day.groupby(bucket).agg({
+            "Open": "first", "High": "max", "Low": "min",
+            "Close": "last", "Volume": "sum"
+        }).loc[complete]
+        if aggregate.empty:
+            continue
+        # Timestamp labels mark candle START, as in the historical study.
+        session_open = day.index[0].normalize() + pd.Timedelta(hours=9, minutes=30)
+        aggregate.index = pd.DatetimeIndex([
+            session_open + pd.Timedelta(minutes=int(b) * 15)
+            for b in aggregate.index
+        ])
+        sessions.append(aggregate)
+    if not sessions:
+        raise ValueError(f"No complete RTH 15m bars in {path} during {start}..{end}")
+    result = pd.concat(sessions)
+    result.index = result.index.tz_convert("Europe/London")
+    result.attrs["symbol"] = Path(path).name.split("_")[0].split(".")[0]
+    result.attrs["model"] = "historical_v1_expost"
+    return result
+
+
+def historical_three_candle(c1: pd.Series, c2: pd.Series,
+                            c3: pd.Series) -> bool:
+    """Exact historical 2026-10-25 setup predicates; NOT an executable entry."""
+    body = float(c2.Close - c2.Open)
+    return (
+        body > 0
+        and float(c2.Open - c2.Low) > body
+        and float(c2.Low) < float(c1.Low)
+        and float(c2.Close) > float(c1.Low)
+        and candle3_volume_increases(c2, c3)
+        and float(c3.Close) > float(c2.Close)
+    )
+
+
+def find_historical_signals(data: pd.DataFrame):
+    """Do not join candles across a US session boundary."""
+    ny_dates = data.index.tz_convert("America/New_York").date
+    for _, session in data.groupby(ny_dates):
+        for i in range(2, len(session)):
+            c1, c2, c3 = session.iloc[i-2], session.iloc[i-1], session.iloc[i]
+            if not historical_three_candle(c1, c2, c3):
+                continue
+            yield Signal(
+                time=session.index[i], direction="LONG",
+                candle1_time=session.index[i-2],
+                candle2_time=session.index[i-1],
+                candle3_time=session.index[i],
+                candle2_high=float(c2.High), candle2_low=float(c2.Low),
+                candle2_open=float(c2.Open), candle2_close=float(c2.Close),
+                candle3_volume=float(c3.Volume), candle2_volume=float(c2.Volume)
+            )
+
+
+def historical_report(path: str, start: str, end: str) -> list[Signal]:
+    data = load_historical_5m(path, start, end)
+    signals = list(find_historical_signals(data))
+    print(f"{data.attrs['symbol']} | historical_v1_expost | "
+          f"{start}..{end} | {len(data)} RTH 15m bars | "
+          f"{len(signals)} SETUPS (not executed wins)")
+    for s in signals:
+        print(f"  C3 starts {s.time:%Y-%m-%d %H:%M %Z} | "
+              f"C2 close hypothesis {s.candle2_close:.4f} | "
+              f"SL reference {s.candle2_open:.4f}")
+    counts = historical_target_touches(signals, data)
+    print("EX-POST same-session high touches (NOT executable wins): "
+          f"1R={counts[0]}/{len(signals)} | "
+          f"2R={counts[1]}/{len(signals)} | "
+          f"3R={counts[2]}/{len(signals)}")
+    return signals
+
+
+def historical_target_touches(signals: list[Signal],
+                              data: pd.DataFrame) -> tuple[int, int, int]:
+    """Count ex-post same-session highs after C3 begins; ignore stop chronology.
+
+    This reproduces archived *price touch* statistics only. The C2-close
+    hypothesis cannot know final C3 volume; high/low ordering is unknown.
+    """
+    ny_dates = data.index.tz_convert("America/New_York").date
+    counts = [0, 0, 0]
+    for signal in signals:
+        entry = signal.candle2_close
+        step = max(entry - signal.candle2_open, entry * 0.001)
+        day = signal.time.tz_convert("America/New_York").date()
+        future = data.loc[(ny_dates == day) & (data.index >= signal.candle3_time)]
+        if future.empty:
+            continue
+        high = float(future.High.max())
+        for k in range(1, 4):
+            counts[k-1] += int(high >= entry + k * step)
+    return tuple(counts)
 
 
 def candle_is_bullish(candle: pd.Series) -> bool:
@@ -334,7 +458,12 @@ if __name__ == "__main__":
     parser.add_argument("--symbol", default="INTC")
     parser.add_argument("--r-pct", type=float, default=0.10)
     parser.add_argument("--target-r", type=int, default=2)
+    parser.add_argument("--historical-csv", default=None,
+                        help="Archived 5m CSV: reproduce the old RTH setup scan; no trade P&L")
     args = parser.parse_args()
-    run(args.start, args.end, show_charts=not args.no_charts,
-        require_breakout=args.require_breakout, limit=args.limit,
-        symbol=args.symbol, r_pct=args.r_pct, target_r=args.target_r)
+    if args.historical_csv:
+        historical_report(args.historical_csv, args.start, args.end)
+    else:
+        run(args.start, args.end, show_charts=not args.no_charts,
+            require_breakout=args.require_breakout, limit=args.limit,
+            symbol=args.symbol, r_pct=args.r_pct, target_r=args.target_r)
