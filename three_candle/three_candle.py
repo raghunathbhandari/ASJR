@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 
-__version__ = "2.4.1-20261030"
+__version__ = "2.4.2-20261030"
 MODEL = "RTH_C2_SWEEP_EXPOST"
 print(f"[Rudra Three-Candle] LOADED v{__version__} | MODEL={MODEL}")
 COLS = ["Open", "High", "Low", "Close", "Volume"]
@@ -371,7 +371,7 @@ def backtest_breakout_reversals(data: pd.DataFrame,
     """Research BUY C3 body-top breakout and SELL post-C3 sweep breakdown.
 
     BUY: C1/C2 ranges pass filters; C2 long lower wick sweeps C1 low;
-         C3 green and trades above C2 body top. Entry=C2 body top, SL=C2 low.
+         C3 green and trades above C2 body top. Entry=C2 body bottom, SL=C2 low.
     SELL: C3 high sweeps BOTH C1/C2 highs; C4 red and trades below C3
           body bottom. Entry=C3 body bottom, SL=C3 high.
     R = max(entry-to-stop distance, entry * r_floor_pct/100).
@@ -392,9 +392,9 @@ def backtest_breakout_reversals(data: pd.DataFrame,
             wick=float(min(b.Open,b.Close)-b.Low)
             body=abs(float(b.Close-b.Open))
             buy=(large and wick>body and b.Low<a.Low and
-                 c.Close>c.Open and c.High>max(b.Open,b.Close))
+                 c.Close>c.Open and c.High>min(b.Open,b.Close))
             if buy:
-                entry=float(max(b.Open,b.Close)); sl=float(b.Low)
+                entry=float(min(b.Open,b.Close)); sl=float(b.Low)
                 trades.append(("BUY",day.index[i-1],day.index[i],entry,sl,i))
             # SELL: C3 sweeps highs; C4 must be red and break below C3 body.
             if i+1<len(day) and day.index[i+1]-day.index[i]==step:
