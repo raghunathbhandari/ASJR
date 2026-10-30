@@ -18,19 +18,19 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 
-__version__ = "2.1.0-20261030"
+__version__ = "2.1.1-20261030"
 MODEL = "RTH_C2_SWEEP_EXPOST"
 print(f"[Rudra Three-Candle] LOADED v{__version__} | MODEL={MODEL}")
 COLS = ["Open", "High", "Low", "Close", "Volume"]
-TIMEFRAMES = {"5min": 5, "15min": 15, "30min": 30, "1h": 60}
+TIMEFRAMES = {"5min": 5, "15min": 15, "30min": 30, "1h": 60, "4h": 240}
 
 
 def timeframe_minutes(value: str) -> int:
     aliases = {"5m": "5min", "15m": "15min", "30m": "30min",
-               "60m": "1h", "60min": "1h", "1hr": "1h"}
+               "60m": "1h", "60min": "1h", "1hr": "1h", "4hr": "4h", "240m": "4h"}
     key = aliases.get(str(value).lower(), str(value).lower())
     if key not in TIMEFRAMES:
-        raise ValueError("interval must be 5min, 15min, 30min, or 1h")
+        raise ValueError("interval must be 5min, 15min, 30min, 1h, or 4h")
     return TIMEFRAMES[key]
 
 
@@ -110,6 +110,59 @@ def resample_rth_5m(raw: pd.DataFrame, start: str, end: str,
     return result
 
 
+
+def futures_session_dates(data: pd.DataFrame):
+    """NY 18:00 futures open belongs to the following ET trading date."""
+    eastern = data.index.tz_convert("America/New_York")
+    if data.attrs.get("session_type") == "nq_extended_4h":
+        return (eastern + pd.Timedelta(hours=6)).date
+    return eastern.date
+
+
+def resample_nq_extended_4h(raw: pd.DataFrame, start: str,
+                            end: str) -> pd.DataFrame:
+    """Full 4h NQ futures candles, 18:00 ET anchored; omit partial 14–17 bar.
+
+    Maintenance 17:00–18:00 ET is excluded. Futures sessions run from
+    18:00 ET of the previous calendar day to 17:00 ET of the trade date.
+    """
+    if raw.index.tz is None:
+        raise ValueError("NQ source timestamps must be timezone-aware")
+    first, last = date.fromisoformat(start), date.fromisoformat(end)
+    if last < first:
+        raise ValueError("end before start")
+    data = raw[COLS].apply(pd.to_numeric, errors="coerce").dropna().sort_index()
+    data.index = data.index.tz_convert("America/New_York")
+    labels = (data.index + pd.Timedelta(hours=6)).date
+    data = data.loc[(pd.Index(labels) >= first) & (pd.Index(labels) <= last)]
+    sessions = []
+    for trade_date, day in data.groupby((data.index + pd.Timedelta(hours=6)).date):
+        session_open = pd.Timestamp(trade_date, tz="America/New_York") - pd.Timedelta(hours=6)
+        offsets = pd.Index((day.index - session_open).total_seconds() / 60).astype(int)
+        # Only full blocks within 18:00–14:00 ET; skip 14:00–17:00 partial.
+        valid = (offsets >= 0) & (offsets < 1200) & (offsets % 5 == 0)
+        day = day.loc[valid]
+        buckets = offsets[valid] // 240
+        grouped = day.groupby(buckets)
+        counts = grouped.size()
+        complete = counts[counts == 48].index
+        bars = grouped.agg({"Open":"first", "High":"max", "Low":"min",
+                            "Close":"last", "Volume":"sum"}).loc[complete]
+        if bars.empty:
+            continue
+        bars.index = pd.DatetimeIndex([
+            session_open + pd.Timedelta(minutes=int(b)*240) for b in bars.index
+        ])
+        sessions.append(bars)
+    if not sessions:
+        raise ValueError("No complete NQ extended-session 4h candles")
+    result = pd.concat(sessions)
+    result.index = result.index.tz_convert("Europe/London")
+    result.attrs.update({"symbol":"NQ=F", "model":"NQ_EXTENDED_C2_SWEEP_EXPOST",
+                         "interval_minutes":240, "session_type":"nq_extended_4h"})
+    return result
+
+
 def load_historical_5m(path: str, start: str, end: str,
                        interval: str = "15min") -> pd.DataFrame:
     raw = pd.read_csv(path)
@@ -117,6 +170,8 @@ def load_historical_5m(path: str, start: str, end: str,
     if time_col not in raw:
         raise ValueError("Expected Datetime or datetime_source CSV column")
     raw.index = pd.DatetimeIndex(pd.to_datetime(raw[time_col], utc=True))
+    if timeframe_minutes(interval) == 240:
+        return resample_nq_extended_4h(raw, start, end)
     return resample_rth_5m(raw, start, end, Path(path).name.split("_")[0].split(".")[0], interval)
 
 
@@ -134,7 +189,7 @@ def historical_three_candle(c1: pd.Series, c2: pd.Series,
 
 def find_historical_signals(data: pd.DataFrame):
     """Never join pattern candles across two US trading sessions."""
-    for _, day in data.groupby(data.index.tz_convert("America/New_York").date):
+    for _, day in data.groupby(futures_session_dates(data)):
         for i in range(2, len(day)):
             c1, c2, c3 = day.iloc[i-2], day.iloc[i-1], day.iloc[i]
             if not historical_three_candle(c1, c2, c3):
@@ -151,12 +206,15 @@ def historical_target_touches(signals: list[Signal], data: pd.DataFrame,
     """Same-session future highs from C3; stop ordering is deliberately ignored."""
     if r_pct <= 0:
         raise ValueError("r must be positive")
-    ny_dates = data.index.tz_convert("America/New_York").date
+    ny_dates = futures_session_dates(data)
     hits = [0, 0, 0]
     for signal in signals:
         entry = signal.candle2_close
         step = max(entry-signal.candle2_open, entry*r_pct/100)
-        day = signal.time.tz_convert("America/New_York").date()
+        day = (signal.time.tz_convert("America/New_York") + (
+            pd.Timedelta(hours=6) if data.attrs.get("session_type") == "nq_extended_4h"
+            else pd.Timedelta(0)
+        )).date()
         later = data.loc[(ny_dates == day) & (data.index >= signal.candle3_time)]
         if later.empty:
             continue
@@ -175,12 +233,15 @@ def historical_potential_gains(signals: list[Signal], data: pd.DataFrame,
     """
     if r_pct <= 0:
         raise ValueError("r must be positive")
-    dates = data.index.tz_convert("America/New_York").date
+    dates = futures_session_dates(data)
     gains = [0.0, 0.0, 0.0]
     for signal in signals:
         entry = signal.candle2_close
         step = max(entry-signal.candle2_open, entry*r_pct/100)
-        day = signal.time.tz_convert("America/New_York").date()
+        day = (signal.time.tz_convert("America/New_York") + (
+            pd.Timedelta(hours=6) if data.attrs.get("session_type") == "nq_extended_4h"
+            else pd.Timedelta(0)
+        )).date()
         later = data.loc[(dates == day) & (data.index >= signal.candle3_time)]
         if later.empty:
             continue
@@ -210,10 +271,19 @@ def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
     if start is None or end is None:
         raise TypeError("start and end dates are required")
     minutes = timeframe_minutes(interval)
-    interval_label = f"{minutes}min" if minutes < 60 else "1h"
-    print(f"[Rudra Three-Candle] v{__version__} | MODEL={MODEL} | TIMEFRAME={interval_label}")
-    data = (load_historical_5m(source_csv, start, end, interval_label) if source_csv else
-            resample_rth_5m(download_data(start, end, ticker), start, end, ticker, interval_label))
+    interval_label = f"{minutes}min" if minutes < 60 else f"{minutes//60}h"
+    if minutes == 240 and ticker not in ("NQ=F",):
+        raise ValueError("4h extended futures mode currently supports NQ=F only")
+    active_model = "NQ_EXTENDED_C2_SWEEP_EXPOST" if minutes == 240 else MODEL
+    print(f"[Rudra Three-Candle] v{__version__} | MODEL={active_model} | TIMEFRAME={interval_label}")
+    if source_csv:
+        data = load_historical_5m(source_csv, start, end, interval_label)
+    elif minutes == 240:
+        fetch_start = (date.fromisoformat(start) - timedelta(days=1)).isoformat()
+        data = resample_nq_extended_4h(download_data(fetch_start, end, ticker), start, end)
+    else:
+        data = resample_rth_5m(download_data(start, end, ticker),
+                               start, end, ticker, interval_label)
     signals = list(find_historical_signals(data))
     hits = historical_target_touches(signals, data, r)
     gains = historical_potential_gains(signals, data, r)
@@ -238,7 +308,7 @@ def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
         print(f"C2 close hypothesis {s.candle2_close:.4f} | SL {s.candle2_open:.4f} | "
               f"C3/C2 volume {s.candle3_volume/s.candle2_volume:.2f}x")
     return {"data":data, "signals":signals, "results":[],
-            "touches":hits, "potential_gains_pct":gains, "model":MODEL, "r_pct":r, "interval":interval_label}
+            "touches":hits, "potential_gains_pct":gains, "model":active_model, "r_pct":r, "interval":interval_label}
 
 
 def show_chart(test: dict, signal_number: int | None = None) -> None:
@@ -249,10 +319,13 @@ def show_chart(test: dict, signal_number: int | None = None) -> None:
             raise ValueError(f"signal_number must be 1..{len(signals)}")
         signals = [signals[signal_number-1]]
     data = test["data"]
-    ny_dates = data.index.tz_convert("America/New_York").date
+    ny_dates = futures_session_dates(data)
     for s in signals:
         idx = data.index.get_loc(s.candle3_time)
-        day = s.time.tz_convert("America/New_York").date()
+        day = (s.time.tz_convert("America/New_York") + (
+            pd.Timedelta(hours=6) if data.attrs.get("session_type") == "nq_extended_4h"
+            else pd.Timedelta(0)
+        )).date()
         last = max(i for i in range(idx, len(data)) if ny_dates[i] == day)
         view = data.iloc[max(0, idx-10):last+1]
         fig, (ax, volume) = plt.subplots(
