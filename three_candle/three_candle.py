@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 from dataclasses import dataclass
 from datetime import date, timedelta
+import math
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
@@ -29,6 +30,18 @@ class Signal:
     candle2_close: float
     candle3_volume: float
     candle2_volume: float
+
+
+@dataclass(frozen=True)
+class TradeResult:
+    signal_time: pd.Timestamp
+    status: str  # WIN, LOSS, OPEN, NO_FILL, INVALID
+    entry_time: pd.Timestamp | None
+    exit_time: pd.Timestamp | None
+    entry: float
+    exit_price: float | None
+    achieved_r: int
+    realised_r: float | None
 
 
 def download_nq(start: str, end: str, interval: str = "15m") -> pd.DataFrame:
@@ -117,6 +130,68 @@ def find_signals(data: pd.DataFrame, require_breakout: bool = False):
         )
 
 
+def backtest_signal(signal: Signal, data: pd.DataFrame) -> TradeResult:
+    """C3-confirmed breakout; reach 2R, then trail 2R, 3R, 4R ...
+
+    Only bars AFTER C3 may fill. Entry=C2 high (stop-buy), initial SL=C2
+    open. Once a bar reaches >=2R, its stepped stop becomes ACTIVE ON THE
+    NEXT BAR. We check the existing stop BEFORE advancing it. If both a stop
+    and a higher milestone occur in one 15m bar, stop wins (conservative).
+    No fees/slippage; intrabar order is unknown. All signals independently
+    evaluated and may overlap. Pending trades at dataset end remain OPEN.
+    """
+    entry = signal.candle2_high
+    initial_stop = signal.candle2_open
+    risk = entry - initial_stop
+    if risk <= 0:
+        return TradeResult(signal.time, "INVALID", None, None, entry, None, 0, None)
+
+    start = data.index.get_loc(signal.candle3_time) + 1
+    filled_at = None
+    stop = initial_stop
+    max_r = 0
+    for timestamp, candle in data.iloc[start:].iterrows():
+        high, low = float(candle.High), float(candle.Low)
+        if filled_at is None:
+            if high < entry:
+                continue
+            filled_at = timestamp
+        if low <= stop:
+            # A gap through a stop can fill worse in reality; not modelled.
+            realised = (stop - entry) / risk
+            return TradeResult(signal.time, "WIN" if realised >= 2 else "LOSS",
+                               filled_at, timestamp, entry, stop, max_r, realised)
+        reached = max(0, math.floor((high - entry) / risk + 1e-9))
+        max_r = max(max_r, reached)
+        if max_r >= 2:
+            stop = max(stop, entry + max_r * risk)
+
+    if filled_at is None:
+        status = "NO_FILL"
+    else:
+        status = "OPEN"
+    return TradeResult(signal.time, status, filled_at, None, entry, None, max_r, None)
+
+
+def print_summary(signals: list[Signal], data: pd.DataFrame) -> list[TradeResult]:
+    """Show completed 2R-trailing win rate and unresolved counts separately."""
+    results = [backtest_signal(s, data) for s in signals]
+    wins = sum(r.status == "WIN" for r in results)
+    losses = sum(r.status == "LOSS" for r in results)
+    print("\n=== RUDRA THREE-CANDLE SUMMARY (2R minimum, +1R steps) ===")
+    print(f"Signals: {len(results)} | Wins: {wins} | Losses: {losses} | "
+          f"Open: {sum(r.status == 'OPEN' for r in results)} | "
+          f"No fill: {sum(r.status == 'NO_FILL' for r in results)} | "
+          f"Invalid: {sum(r.status == 'INVALID' for r in results)}")
+    print(f"Completed-trade success rate: {wins/(wins+losses)*100:.1f}%"
+          if wins+losses else "Completed-trade success rate: N/A (no closed trades)")
+    for r in results:
+        print(f"{r.signal_time:%Y-%m-%d %H:%M %Z} | {r.status:7} | "
+              f"highest {r.achieved_r}R | realised "
+              f"{r.realised_r if r.realised_r is not None else 'N/A'}R")
+    return results
+
+
 def print_signal(signal: Signal, data: pd.DataFrame) -> None:
     """Print all three input candles and candidate levels for human review."""
     print(f"\nSIGNAL {signal.direction} | candle 3 closed {signal.time:%Y-%m-%d %H:%M %Z}")
@@ -174,8 +249,10 @@ def run(start: str, end: str, show_charts: bool = True,
     data = download_nq(start, end)
     print(f"NQ=F | {len(data)} 15m candles | {start} to {end} (UK dates)")
     count = 0
+    shown = []
     for signal in find_signals(data, require_breakout=require_breakout):
         count += 1
+        shown.append(signal)
         print_signal(signal, data)
         if show_charts:
             fig = plot_signal(signal, data)
@@ -184,6 +261,7 @@ def run(start: str, end: str, show_charts: bool = True,
         if limit is not None and count >= limit:
             break
     print(f"\nTotal setups shown: {count}")
+    print_summary(shown, data)
     return data
 
 
