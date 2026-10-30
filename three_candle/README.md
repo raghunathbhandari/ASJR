@@ -1,7 +1,17 @@
-# Rudra Three-Candle — NQ=F 15-minute research
+# Rudra Three-Candle Strategy — Research workspace
 
-Readable, modular signal discovery and an exploratory **2R stepped-trailing backtest**.
-This is not an order executor or a fee-adjusted performance estimate.
+**Primary home:** `main/three_candle/` • Updated 2026-10-30 (UK).
+
+This is an exploratory **signal scanner and hypothetical OHLC backtest**, not a live order executor or validated fee-adjusted strategy.
+
+## Start here
+
+- [STRATEGY.md](STRATEGY.md) — side-by-side comparison of the original historical strategy and the **different** current Python implementation, data provenance, and outcome limitations.
+- [AI_SESSION_HANDOFF.md](AI_SESSION_HANDOFF.md) — reproducibility notes, prior research, next tests, and user chart preferences.
+- [three_candle.py](three_candle.py) — current executable signal/backtest logic.
+- [test_three_candle.ipynb](test_three_candle.ipynb) — interactive notebook.
+
+**Warning:** historical 83/83 1R touches in September were **not 83 verified closed trade wins**. The original research requires C1 liquidity sweep/reclaim, C3 close confirmation, C2-close hypothetical entry, and 1R trailing; the current Python script does not implement those identical rules. Do not merge their win rates. See [STRATEGY.md](STRATEGY.md).
 
 ## Install
 
@@ -9,50 +19,25 @@ This is not an order executor or a fee-adjusted performance estimate.
 python -m pip install yfinance pandas matplotlib ipykernel notebook
 ```
 
-## Run one UK calendar day
+## Current Python implementation
+
+Defaults: INTC, Yahoo native 15m with extended sessions, C2 bullish, **either** C2 wick > body, C3 volume > C2 volume, no C1 sweep condition. Optional `--require-breakout` requires C3 high > C2 high. Setup known only when C3 has completed.
+
+A hypothetical C2-high stop-buy is eligible **after** C3. Initial SL=C2 open. Step size `R=max(C2 high − C2 open, entry×r_pct/100)` (default `r_pct=0.10`). At 2R by default, the trailing stop moves to that level **for the next bar**, and advances at later whole-R milestones. No fixed TP order. Same-bar OHLC path is unknown; entry and stop may both appear in the same bar. No modeled commissions, slippage, gaps, partial fills, or position/capital limits. Multiple signals are tested independently, potentially overlapping.
+
+### Commands (from repository root)
 
 ```bash
-python three_candle/three_candle.py --start 2026-10-29 --end 2026-10-29 --limit 3
+python three_candle/three_candle.py --start 2026-10-29 --end 2026-10-30 --symbol INTC --limit 3
+python three_candle/three_candle.py --start 2026-10-01 --end 2026-10-30 --symbol INTC --no-charts
+python three_candle/three_candle.py --start 2026-10-29 --end 2026-10-30 --symbol INTC --r-pct 0.20 --target-r 2 --no-charts
 ```
 
-## Run one month
+Dates are inclusive UK calendar dates, and output labels convert to `Europe/London`. Yahoo 15m history is usually limited to approximately the recent 60 days; availability and missing extended-hours volume must be validated. Running a very short period may leave most trades OPEN/NO_FILL, so the completed-trade win rate can be misleading. A `--target-r 1` run changes the stop progression but does **not** reproduce the older C2-close strategy.
 
-```bash
-python three_candle/three_candle.py --start 2026-10-01 --end 2026-10-30 --no-charts
-```
+## Visual conventions
 
-Open `three_candle/test_three_candle.ipynb` for visual step-by-step testing.
-
-## Definitions (initial editable research hypothesis)
-
-1. Candle 2 bullish (`Close > Open`).
-2. At least one Candle 2 wick is longer than its absolute body.
-3. Candle 3 volume strictly exceeds Candle 2 volume, both valid and nonzero.
-4. Optional `--require-breakout`: Candle 3 high exceeds Candle 2 high.
-
-The three candles are consecutive completed 15m NQ=F bars. A setup is
-reported at Candle 3 completion, never at Candle 2 completion. The output
-prints all three OHLCV rows; `plot_signal` shows surrounding candlesticks.
-
-This starter focuses on **long** setups. The paper entry is a C2-high
-stop-buy, eligible only on bars after C3 completes; initial stop is C2 open.
-Risk 1R = entry minus C2 open. At 2R reached, stop moves to +2R on the **next**
-bar; at 3R, to +3R; at 4R, to +4R, etc. There is no fixed profit-taking
-order. On a candle that both reaches the existing stop and a new higher R
-milestone, the stop wins (conservative OHLC assumption). Results are WIN (exit
-at >=2R), LOSS, OPEN, NO_FILL or INVALID. The printed win rate divides wins
-by *closed* wins plus losses, excluding all unresolved signals. A single-day
-dataset typically leaves trades unresolved; use more following dates for an
-honest summary. Signals may overlap as independent paper trades.
-
-This does not model fees, slippage, gaps through stops, capital allocation or
-short trades. Review individual setups before relying on results. In
-particular, a C2 close entry cannot use future C3 volume.
-
-Yahoo Finance may only provide approximately the most recent 60 days of 15m
-data. The availability window, missing futures bars, and reported NQ volume
-must be checked before drawing conclusions. Overnight sessions are included;
-timestamps and date boundaries use `Europe/London` (BST/GMT automatically).
+Entry = **green**; winning TP/trailing exit = **purple**; initial SL and losing exit = **red**. A setup is not an executed fill. Use UK time for all charts and ledgers.
 
 ## VPS update
 
@@ -61,5 +46,4 @@ cd /root/trading/ASJR
 git pull --ff-only origin main
 ```
 
-Run Jupyter from the repository root or insert the `three_candle` folder in
-your notebook's Python path as the first notebook cell does.
+Research-only changes to the code require a separate validated scenario and documented assumptions. Do not promote preliminary price-touch rates to trading P&L.
