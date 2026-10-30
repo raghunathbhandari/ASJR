@@ -18,14 +18,17 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 
-__version__ = "2.2.1-20261030"
+__version__ = "2.3.0-20261030"
 MODEL = "RTH_C2_SWEEP_EXPOST"
 print(f"[Rudra Three-Candle] LOADED v{__version__} | MODEL={MODEL}")
 COLS = ["Open", "High", "Low", "Close", "Volume"]
 TIMEFRAMES = {"5min": 5, "15min": 15, "30min": 30, "1h": 60, "4h": 240}
 
 
-def timeframe_minutes(value: str) -> int:
+# 01. INPUT SETTINGS AND TIMEFRAMES
+# Timeframe aliases and configuration.
+
+def get_timeframe_minutes(value: str) -> int:
     aliases = {"5m": "5min", "15m": "15min", "30m": "30min",
                "60m": "1h", "60min": "1h", "1hr": "1h", "4hr": "4h", "240m": "4h"}
     key = aliases.get(str(value).lower(), str(value).lower())
@@ -50,7 +53,10 @@ class Signal:
     candle2_volume: float
 
 
-def _normalize_yahoo(raw: pd.DataFrame) -> pd.DataFrame:
+# 02. DOWNLOAD AND DATA QUALITY
+# Detect gaps and invalid prices; never fabricate OHLCV bars.
+
+def clean_downloaded_candles(raw: pd.DataFrame) -> pd.DataFrame:
     if raw.empty:
         raise ValueError("No Yahoo bars returned")
     if isinstance(raw.columns, pd.MultiIndex):
@@ -61,7 +67,7 @@ def _normalize_yahoo(raw: pd.DataFrame) -> pd.DataFrame:
     return data.loc[~data.index.duplicated(keep="last")]
 
 
-def _rth_missing_5m(data: pd.DataFrame) -> list[pd.Timestamp]:
+def find_missing_regular_hours_candles(data: pd.DataFrame) -> list[pd.Timestamp]:
     """Identify absent 5m timestamps only for observed US RTH dates."""
     eastern = data.index.tz_convert("America/New_York")
     missing = []
@@ -79,7 +85,7 @@ def _rth_missing_5m(data: pd.DataFrame) -> list[pd.Timestamp]:
     return missing
 
 
-def _quarantine_nq_outliers(data: pd.DataFrame) -> pd.DataFrame:
+def remove_suspicious_nq_candles(data: pd.DataFrame) -> pd.DataFrame:
     """Exclude unverified NQ bars with an extreme 5m range (>2% of prior close)."""
     if data.empty:
         return data
@@ -97,7 +103,7 @@ def _quarantine_nq_outliers(data: pd.DataFrame) -> pd.DataFrame:
     return data.loc[~abnormal].copy()
 
 
-def download_data(start: str, end: str, symbol: str = "INTC",
+def download_candles_from_yahoo(start: str, end: str, symbol: str = "INTC",
                   interval: str = "5m") -> pd.DataFrame:
     """Download Yahoo bars, retry incomplete 5m RTH dates, flag quality problems.
 
@@ -112,9 +118,9 @@ def download_data(start: str, end: str, symbol: str = "INTC",
         end=(last+timedelta(days=1)).isoformat(), interval=interval,
         prepost=True, auto_adjust=False, progress=False, threads=False,
     )
-    data = _normalize_yahoo(raw)
+    data = clean_downloaded_candles(raw)
     if interval in ("5m", "5min"):
-        missing = _rth_missing_5m(data)
+        missing = find_missing_regular_hours_candles(data)
         if missing:
             print(f"[Rudra Three-Candle] DATA WARNING: {len(missing)} missing RTH 5m bars; retrying dates")
             for day in sorted({t.date() for t in missing}):
@@ -125,12 +131,12 @@ def download_data(start: str, end: str, symbol: str = "INTC",
                     progress=False, threads=False,
                 )
                 if not retry.empty:
-                    extra = _normalize_yahoo(retry)
+                    extra = clean_downloaded_candles(retry)
                     data = pd.concat([data, extra]).sort_index()
                     data = data.loc[~data.index.duplicated(keep="last")]
         if symbol == "NQ=F":
-            data = _quarantine_nq_outliers(data)
-        unresolved = _rth_missing_5m(data)
+            data = remove_suspicious_nq_candles(data)
+        unresolved = find_missing_regular_hours_candles(data)
         if unresolved:
             print(f"[Rudra Three-Candle] DATA WARNING: {len(unresolved)} RTH 5m bars still missing/invalid:")
             for stamp in unresolved:
@@ -139,7 +145,10 @@ def download_data(start: str, end: str, symbol: str = "INTC",
     return data
 
 
-def resample_rth_5m(raw: pd.DataFrame, start: str, end: str,
+# 03. BUILD MARKET SESSION CANDLES
+# Completed RTH or extended-futures bars from 5-minute source data.
+
+def build_regular_market_candles(raw: pd.DataFrame, start: str, end: str,
                     symbol: str = "INTC", interval: str = "15min") -> pd.DataFrame:
     """Completed US RTH bars from 5m, anchored at 09:30 ET for any supported timeframe."""
     if raw.index.tz is None:
@@ -147,11 +156,11 @@ def resample_rth_5m(raw: pd.DataFrame, start: str, end: str,
     first, last = date.fromisoformat(start), date.fromisoformat(end)
     if last < first:
         raise ValueError("end before start")
-    minutes = timeframe_minutes(interval)
+    minutes = get_timeframe_minutes(interval)
     group_size = minutes // 5
     data = raw[COLS].apply(pd.to_numeric, errors="coerce").dropna().sort_index()
     if symbol == "NQ=F":
-        data = _quarantine_nq_outliers(data)
+        data = remove_suspicious_nq_candles(data)
     data.index = data.index.tz_convert("America/New_York")
     data = data.loc[(pd.Index(data.index.date) >= first) &
                     (pd.Index(data.index.date) <= last)]
@@ -181,7 +190,7 @@ def resample_rth_5m(raw: pd.DataFrame, start: str, end: str,
 
 
 
-def futures_session_dates(data: pd.DataFrame):
+def get_trading_session_dates(data: pd.DataFrame):
     """NY 18:00 futures open belongs to the following ET trading date."""
     eastern = data.index.tz_convert("America/New_York")
     if data.attrs.get("session_type") == "nq_extended":
@@ -189,7 +198,7 @@ def futures_session_dates(data: pd.DataFrame):
     return eastern.date
 
 
-def resample_nq_extended_4h(raw: pd.DataFrame, start: str,
+def build_extended_nq_4hour_candles(raw: pd.DataFrame, start: str,
                             end: str) -> pd.DataFrame:
     """Full 4h NQ futures candles, 18:00 ET anchored; omit partial 14–17 bar.
 
@@ -202,7 +211,7 @@ def resample_nq_extended_4h(raw: pd.DataFrame, start: str,
     if last < first:
         raise ValueError("end before start")
     data = raw[COLS].apply(pd.to_numeric, errors="coerce").dropna().sort_index()
-    data = _quarantine_nq_outliers(data)
+    data = remove_suspicious_nq_candles(data)
     data.index = data.index.tz_convert("America/New_York")
     labels = (data.index + pd.Timedelta(hours=6)).date
     data = data.loc[(pd.Index(labels) >= first) & (pd.Index(labels) <= last)]
@@ -234,7 +243,7 @@ def resample_nq_extended_4h(raw: pd.DataFrame, start: str,
     return result
 
 
-def resample_nq_extended_5m(raw: pd.DataFrame, start: str,
+def build_extended_nq_candles(raw: pd.DataFrame, start: str,
                             end: str, interval: str = "15min") -> pd.DataFrame:
     """Full NQ futures bars anchored to 18:00 ET; exclude 17:00-18:00 ET break.
 
@@ -244,14 +253,14 @@ def resample_nq_extended_5m(raw: pd.DataFrame, start: str,
     """
     if raw.index.tz is None:
         raise ValueError("NQ source timestamps must be timezone-aware")
-    minutes = timeframe_minutes(interval)
+    minutes = get_timeframe_minutes(interval)
     if minutes == 240:
-        return resample_nq_extended_4h(raw, start, end)
+        return build_extended_nq_4hour_candles(raw, start, end)
     first, last = date.fromisoformat(start), date.fromisoformat(end)
     if last < first:
         raise ValueError("end before start")
     data = raw[COLS].apply(pd.to_numeric, errors="coerce").dropna().sort_index()
-    data = _quarantine_nq_outliers(data)
+    data = remove_suspicious_nq_candles(data)
     data.index = data.index.tz_convert("America/New_York")
     # Explicit trade-date assignment avoids treating the evening open as
     # a different calendar trading day.
@@ -289,7 +298,7 @@ def resample_nq_extended_5m(raw: pd.DataFrame, start: str,
     return result
 
 
-def load_historical_5m(path: str, start: str, end: str,
+def load_candles_from_csv(path: str, start: str, end: str,
                        interval: str = "15min", session: str = "RTH") -> pd.DataFrame:
     raw = pd.read_csv(path)
     time_col = "Datetime" if "Datetime" in raw else "datetime_source"
@@ -297,13 +306,16 @@ def load_historical_5m(path: str, start: str, end: str,
         raise ValueError("Expected Datetime or datetime_source CSV column")
     raw.index = pd.DatetimeIndex(pd.to_datetime(raw[time_col], utc=True))
     if session.lower() == "extended":
-        return resample_nq_extended_5m(raw, start, end, interval)
-    if timeframe_minutes(interval) == 240:
-        return resample_nq_extended_4h(raw, start, end)
-    return resample_rth_5m(raw, start, end, Path(path).name.split("_")[0].split(".")[0], interval)
+        return build_extended_nq_candles(raw, start, end, interval)
+    if get_timeframe_minutes(interval) == 240:
+        return build_extended_nq_4hour_candles(raw, start, end)
+    return build_regular_market_candles(raw, start, end, Path(path).name.split("_")[0].split(".")[0], interval)
 
 
-def historical_three_candle(c1: pd.Series, c2: pd.Series,
+# 04. THREE-CANDLE SETUP RULES
+# C1 preceding candle, C2 bullish sweep/reclaim, C3 confirmation.
+
+def is_bullish_three_candle_sweep(c1: pd.Series, c2: pd.Series,
                             c3: pd.Series, check_vol: bool = True) -> bool:
     """Green C2 sweep/reclaim; C3 volume filter is optional."""
     body = float(c2.Close - c2.Open)
@@ -315,15 +327,15 @@ def historical_three_candle(c1: pd.Series, c2: pd.Series,
             and float(c3.Close) > float(c2.Close))
 
 
-def find_historical_signals(data: pd.DataFrame, check_vol: bool = True):
+def find_three_candle_setups(data: pd.DataFrame, check_vol: bool = True):
     """Never join pattern candles across two US trading sessions."""
-    for _, day in data.groupby(futures_session_dates(data)):
+    for _, day in data.groupby(get_trading_session_dates(data)):
         step = pd.Timedelta(minutes=int(data.attrs.get("interval_minutes", 15)))
         for i in range(2, len(day)):
             if day.index[i] - day.index[i-1] != step or day.index[i-1] - day.index[i-2] != step:
                 continue
             c1, c2, c3 = day.iloc[i-2], day.iloc[i-1], day.iloc[i]
-            if not historical_three_candle(c1, c2, c3, check_vol=check_vol):
+            if not is_bullish_three_candle_sweep(c1, c2, c3, check_vol=check_vol):
                 continue
             yield Signal(
                 day.index[i], "LONG", day.index[i-2], day.index[i-1], day.index[i],
@@ -332,13 +344,16 @@ def find_historical_signals(data: pd.DataFrame, check_vol: bool = True):
             )
 
 
-def find_confirmed_swings(data: pd.DataFrame, left: int = 3, right: int = 3) -> list[dict]:
+# 05. SUPPORT / RESISTANCE SWING LEVELS
+# Confirm a pivot only after swingRight further candles have closed.
+
+def find_confirmed_swing_levels(data: pd.DataFrame, left: int = 3, right: int = 3) -> list[dict]:
     """Causal pivot levels: only confirmed after right bars close."""
     if left < 1 or right < 1:
         raise ValueError("swingLeft and swingRight must be positive")
     levels = []
     step = pd.Timedelta(minutes=int(data.attrs.get("interval_minutes", 15)))
-    for trade_day, day in data.groupby(futures_session_dates(data)):
+    for trade_day, day in data.groupby(get_trading_session_dates(data)):
         for i in range(left, len(day)-right):
             window = day.iloc[i-left:i+right+1]
             if any(window.index[j]-window.index[j-1] != step
@@ -357,7 +372,7 @@ def find_confirmed_swings(data: pd.DataFrame, left: int = 3, right: int = 3) -> 
     return levels
 
 
-def nearest_confirmed_swing(signal: Signal, levels: list[dict],
+def find_nearest_swing_for_setup(signal: Signal, levels: list[dict],
                             proximity_pct: float, minutes: int) -> dict:
     """Nearest already-confirmed support to C2 low or resistance to C2 high."""
     if proximity_pct < 0:
@@ -376,12 +391,15 @@ def nearest_confirmed_swing(signal: Signal, levels: list[dict],
     return {"near":distance<=proximity_pct,"distance_pct":distance,"level":level}
 
 
-def historical_target_touches(signals: list[Signal], data: pd.DataFrame,
+# 06. RESEARCH TARGET TOUCH STATISTICS
+# Ex-post touches are NOT executable backtest returns.
+
+def count_future_target_touches(signals: list[Signal], data: pd.DataFrame,
                               r_pct: float = 0.10) -> tuple[int, int, int]:
     """Same-session future highs from C3; stop ordering is deliberately ignored."""
     if r_pct <= 0:
         raise ValueError("r must be positive")
-    ny_dates = futures_session_dates(data)
+    ny_dates = get_trading_session_dates(data)
     hits = [0, 0, 0]
     for signal in signals:
         entry = signal.candle2_close
@@ -399,7 +417,7 @@ def historical_target_touches(signals: list[Signal], data: pd.DataFrame,
     return tuple(hits)
 
 
-def historical_potential_gains(signals: list[Signal], data: pd.DataFrame,
+def sum_hypothetical_target_returns(signals: list[Signal], data: pd.DataFrame,
                                r_pct: float = 0.10) -> tuple[float, float, float]:
     """Sum target-hit gross price returns per hypothetical equal-sized trade.
 
@@ -408,7 +426,7 @@ def historical_potential_gains(signals: list[Signal], data: pd.DataFrame,
     """
     if r_pct <= 0:
         raise ValueError("r must be positive")
-    dates = futures_session_dates(data)
+    dates = get_trading_session_dates(data)
     gains = [0.0, 0.0, 0.0]
     for signal in signals:
         entry = signal.candle2_close
@@ -426,6 +444,9 @@ def historical_potential_gains(signals: list[Signal], data: pd.DataFrame,
                 gains[k-1] += 100*k*step/entry
     return tuple(gains)
 
+
+# 07. MAIN NOTEBOOK METHOD: CHECK SIGNALS
+# Edit user-facing parameters here; keep the method name stable.
 
 def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
                   start: str | None = None, end: str | None = None,
@@ -456,30 +477,30 @@ def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
         raise TypeError("Use check_signals(ticker, start, end) or (ticker, interval, start, end)")
     if start is None or end is None:
         raise TypeError("start and end dates are required")
-    minutes = timeframe_minutes(interval)
+    minutes = get_timeframe_minutes(interval)
     interval_label = f"{minutes}min" if minutes < 60 else f"{minutes//60}h"
     if minutes == 240 and ticker not in ("NQ=F",):
         raise ValueError("4h extended futures mode currently supports NQ=F only")
     active_model = "NQ_EXTENDED_C2_SWEEP_EXPOST" if session == "extended" or minutes == 240 else MODEL
     print(f"[Rudra Three-Candle] v{__version__} | MODEL={active_model} | TIMEFRAME={interval_label} | checkVol={checkVol} | SESSION={session}")
     if source_csv:
-        data = load_historical_5m(source_csv, start, end, interval_label, session=session)
+        data = load_candles_from_csv(source_csv, start, end, interval_label, session=session)
     elif session == "extended" or minutes == 240:
         fetch_start = (date.fromisoformat(start) - timedelta(days=1)).isoformat()
-        data = resample_nq_extended_5m(download_data(fetch_start, end, ticker), start, end, interval_label)
+        data = build_extended_nq_candles(download_candles_from_yahoo(fetch_start, end, ticker), start, end, interval_label)
     else:
-        data = resample_rth_5m(download_data(start, end, ticker),
+        data = build_regular_market_candles(download_candles_from_yahoo(start, end, ticker),
                                start, end, ticker, interval_label)
-    levels = find_confirmed_swings(data, swingLeft, swingRight)
-    signals = list(find_historical_signals(data, check_vol=checkVol))
-    matches = {sig.candle2_time: nearest_confirmed_swing(
+    levels = find_confirmed_swing_levels(data, swingLeft, swingRight)
+    signals = list(find_three_candle_setups(data, check_vol=checkVol))
+    matches = {sig.candle2_time: find_nearest_swing_for_setup(
         sig, levels, swingProximity, minutes) for sig in signals}
     raw_count = len(signals)
     if nearSwingOnly:
         signals = [sig for sig in signals if matches[sig.candle2_time]["near"]]
     near_count = sum(matches[sig.candle2_time]["near"] for sig in signals)
-    hits = historical_target_touches(signals, data, r)
-    gains = historical_potential_gains(signals, data, r)
+    hits = count_future_target_touches(signals, data, r)
+    gains = sum_hypothetical_target_returns(signals, data, r)
     total = len(signals)
     print(f"\n{ticker} | {start} to {end} | {len(data)} {'EXTENDED' if data.attrs.get('session_type') == 'nq_extended' else 'RTH'} {interval_label} candles")
     print(f"=== RUDRA THREE-CANDLE SUMMARY (ex-post price touches; checkVol={checkVol}) ===")
@@ -520,6 +541,9 @@ def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
             "nearSwingOnly":nearSwingOnly}
 
 
+# 08. CHART: ALL SWING PRICE LINES
+# Signals are hidden for now as requested.
+
 def show_chart(test: dict, signal_number: int | None = None) -> None:
     """Draw all confirmed swing support/resistance price lines, with candles.
 
@@ -531,7 +555,7 @@ def show_chart(test: dict, signal_number: int | None = None) -> None:
     data = test["data"]
     levels = test.get("swing_levels", [])
     if not levels:
-        levels = find_confirmed_swings(data)
+        levels = find_confirmed_swing_levels(data)
     fig, (ax, volume) = plt.subplots(
         2, 1, figsize=(15, 7), sharex=True,
         gridspec_kw={"height_ratios":[4,1]},
@@ -578,10 +602,57 @@ def show_chart(test: dict, signal_number: int | None = None) -> None:
     plt.close(fig)
 
 
-def historical_report(path: str, start: str, end: str) -> list[Signal]:
+# 09. COMPATIBILITY AND METHOD-CALL GUIDE
+
+def review_historical_csv(path: str, start: str, end: str) -> list[Signal]:
     """Compatibility helper for archived reproduction."""
     ticker = Path(path).name.split("_")[0].split(".")[0]
     return check_signals(ticker, start, end, source_csv=path)["signals"]
+
+
+def show_method_flow() -> None:
+    """Print the readable processing sequence for notebook review."""
+    print(f"""RUDRA THREE-CANDLE v{__version__} — METHOD CALL FLOW
+check_signals(...)
+  1. get_timeframe_minutes(...) — validate timeframe
+  2. download_candles_from_yahoo(...) OR load_candles_from_csv(...)
+     - clean_downloaded_candles(...)
+     - find_missing_regular_hours_candles(...)
+     - remove_suspicious_nq_candles(...)
+  3. build_regular_market_candles(...) OR build_extended_nq_candles(...)
+     - build_extended_nq_4hour_candles(...) for NQ 4h
+  4. find_confirmed_swing_levels(...) — causal support/resistance pivots
+  5. find_three_candle_setups(...) — C1/C2/C3 sweep
+     - is_bullish_three_candle_sweep(...)
+  6. find_nearest_swing_for_setup(...) — optional proximity flag
+  7. count_future_target_touches(...) — ex-post only
+  8. sum_hypothetical_target_returns(...) — ex-post only
+  9. print summary and return test dictionary
+
+show_chart(test)
+  - draw ALL confirmed swing support/resistance price lines
+  - display candlesticks + volume; NO signals for now
+""")
+
+
+# Backwards-compatible internal aliases (older notebooks may import these).
+timeframe_minutes = get_timeframe_minutes
+_normalize_yahoo = clean_downloaded_candles
+_rth_missing_5m = find_missing_regular_hours_candles
+_quarantine_nq_outliers = remove_suspicious_nq_candles
+download_data = download_candles_from_yahoo
+resample_rth_5m = build_regular_market_candles
+futures_session_dates = get_trading_session_dates
+resample_nq_extended_4h = build_extended_nq_4hour_candles
+resample_nq_extended_5m = build_extended_nq_candles
+load_historical_5m = load_candles_from_csv
+historical_three_candle = is_bullish_three_candle_sweep
+find_historical_signals = find_three_candle_setups
+find_confirmed_swings = find_confirmed_swing_levels
+nearest_confirmed_swing = find_nearest_swing_for_setup
+historical_target_touches = count_future_target_touches
+historical_potential_gains = sum_hypothetical_target_returns
+historical_report = review_historical_csv
 
 
 if __name__ == "__main__":
