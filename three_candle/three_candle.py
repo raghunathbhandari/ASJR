@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 
-__version__ = "2.1.4-20261030"
+__version__ = "2.2.0-20261030"
 MODEL = "RTH_C2_SWEEP_EXPOST"
 print(f"[Rudra Three-Candle] LOADED v{__version__} | MODEL={MODEL}")
 COLS = ["Open", "High", "Low", "Close", "Volume"]
@@ -332,6 +332,50 @@ def find_historical_signals(data: pd.DataFrame, check_vol: bool = True):
             )
 
 
+def find_confirmed_swings(data: pd.DataFrame, left: int = 3, right: int = 3) -> list[dict]:
+    """Causal pivot levels: only confirmed after right bars close."""
+    if left < 1 or right < 1:
+        raise ValueError("swingLeft and swingRight must be positive")
+    levels = []
+    step = pd.Timedelta(minutes=int(data.attrs.get("interval_minutes", 15)))
+    for trade_day, day in data.groupby(futures_session_dates(data)):
+        for i in range(left, len(day)-right):
+            window = day.iloc[i-left:i+right+1]
+            if any(window.index[j]-window.index[j-1] != step
+                   for j in range(1, len(window))):
+                continue
+            others = window.drop(day.index[i])
+            for kind, column, compare in (("SUPPORT","Low",min),
+                                          ("RESISTANCE","High",max)):
+                price = float(day.iloc[i][column])
+                extreme = float(compare(others[column]))
+                if (kind == "SUPPORT" and price < extreme) or (
+                        kind == "RESISTANCE" and price > extreme):
+                    levels.append({"kind":kind,"price":price,"pivot_time":day.index[i],
+                                   "confirmed_at":day.index[i+right]+step,
+                                   "trade_day":trade_day})
+    return levels
+
+
+def nearest_confirmed_swing(signal: Signal, levels: list[dict],
+                            proximity_pct: float, minutes: int) -> dict:
+    """Nearest already-confirmed support to C2 low or resistance to C2 high."""
+    if proximity_pct < 0:
+        raise ValueError("swingProximity must be nonnegative")
+    known_at = signal.candle2_time + pd.Timedelta(minutes=minutes)
+    candidates = []
+    for level in levels:
+        if level["confirmed_at"] > known_at:
+            continue
+        point = signal.candle2_low if level["kind"] == "SUPPORT" else signal.candle2_high
+        distance = abs(point-level["price"])/level["price"]*100
+        candidates.append((distance,level))
+    if not candidates:
+        return {"near":False,"distance_pct":None,"level":None}
+    distance,level = min(candidates,key=lambda x:x[0])
+    return {"near":distance<=proximity_pct,"distance_pct":distance,"level":level}
+
+
 def historical_target_touches(signals: list[Signal], data: pd.DataFrame,
                               r_pct: float = 0.10) -> tuple[int, int, int]:
     """Same-session future highs from C3; stop ordering is deliberately ignored."""
@@ -388,7 +432,10 @@ def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
                   interval: str = "15min", target_r: int = 1,
                   require_breakout: bool = False,
                   source_csv: str | None = None,
-                  checkVol: bool = False, session: str = "RTH") -> dict:
+                  checkVol: bool = False, session: str = "RTH",
+                   swingLeft: int = 3, swingRight: int = 3,
+                   swingProximity: float = 0.25,
+                   nearSwingOnly: bool = False) -> dict:
     """Supports both (ticker,start,end) and (ticker,interval,start,end).\n\n    Historical scanner; not an execution backtest.
 
     target_r/require_breakout remain accepted for older cells but do not
@@ -423,12 +470,22 @@ def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
     else:
         data = resample_rth_5m(download_data(start, end, ticker),
                                start, end, ticker, interval_label)
+    levels = find_confirmed_swings(data, swingLeft, swingRight)
     signals = list(find_historical_signals(data, check_vol=checkVol))
+    matches = {sig.candle2_time: nearest_confirmed_swing(
+        sig, levels, swingProximity, minutes) for sig in signals}
+    raw_count = len(signals)
+    if nearSwingOnly:
+        signals = [sig for sig in signals if matches[sig.candle2_time]["near"]]
+    near_count = sum(matches[sig.candle2_time]["near"] for sig in signals)
     hits = historical_target_touches(signals, data, r)
     gains = historical_potential_gains(signals, data, r)
     total = len(signals)
     print(f"\n{ticker} | {start} to {end} | {len(data)} {'EXTENDED' if data.attrs.get('session_type') == 'nq_extended' else 'RTH'} {interval_label} candles")
     print(f"=== RUDRA THREE-CANDLE SUMMARY (ex-post price touches; checkVol={checkVol}) ===")
+    print(f"Swing levels confirmed: {len(levels)} | pivot {swingLeft}/{swingRight} | proximity {swingProximity:.2f}%")
+    print(f"Signals near swings: {near_count}/{total} | nearSwingOnly={nearSwingOnly}"
+          + (f" | unfiltered signals={raw_count}" if nearSwingOnly else ""))
     print(f"{'Metric':<24} {'Count':>8} {'Rate':>9} {'Gain %':>12}")
     print(f"{'Qualifying signals':<24} {total:>8} {'100%' if total else 'N/A':>9} {'—':>12}")
     for k, count in enumerate(hits, 1):
@@ -448,8 +505,19 @@ def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
                      if s.candle2_volume > 0 else "N/A")
         print(f"C2 close hypothesis {s.candle2_close:.4f} | SL {s.candle2_open:.4f} | "
               f"C3/C2 volume {vol_ratio} (filter {'ON' if checkVol else 'OFF'})")
+        match = matches[s.candle2_time]
+        if match["level"]:
+            level = match["level"]
+            print(f"Swing {'NEAR' if match['near'] else 'FAR'} | "
+                  f"{level['kind']} {level['price']:.2f} | "
+                  f"wick distance {match['distance_pct']:.3f}% | "
+                  f"pivot {level['pivot_time']:%Y-%m-%d %H:%M %Z}")
+        else:
+            print("Swing N/A | no previously confirmed level")
     return {"data":data, "signals":signals, "results":[],
-            "touches":hits, "potential_gains_pct":gains, "model":active_model, "r_pct":r, "interval":interval_label, "checkVol":checkVol, "session":session}
+            "touches":hits, "potential_gains_pct":gains, "model":active_model, "r_pct":r, "interval":interval_label, "checkVol":checkVol, "session":session, "swing_levels":levels,
+            "swing_matches":matches, "swingProximity":swingProximity,
+            "nearSwingOnly":nearSwingOnly}
 
 
 def show_chart(test: dict, signal_number: int | None = None) -> None:
@@ -500,7 +568,20 @@ def show_chart(test: dict, signal_number: int | None = None) -> None:
         for k in (1,2,3):
             ax.axhline(entry+k*step, color="#853fb7", linestyle="-.", alpha=.55,
                        label=f"{k}R reference {entry+k*step:.2f}")
-        ax.set_title(f"{data.attrs.get('symbol','INTC')} | {MODEL} | "
+        # Show closest price lines already confirmed when C2 closed.
+        known_at = s.candle2_time + pd.Timedelta(
+            minutes=int(data.attrs.get("interval_minutes", 15)))
+        known = [lv for lv in test.get("swing_levels", [])
+                 if lv["confirmed_at"] <= known_at]
+        below = sorted((lv for lv in known if lv["price"] <= entry),
+                       key=lambda lv: entry-lv["price"])[:3]
+        above = sorted((lv for lv in known if lv["price"] > entry),
+                       key=lambda lv: lv["price"]-entry)[:3]
+        for lv in below + above:
+            color = "#168d89" if lv["kind"] == "SUPPORT" else "#e58b2a"
+            ax.axhline(lv["price"], color=color, linestyle="--", alpha=.65,
+                       linewidth=1, label=f"{lv['kind']} {lv['price']:.2f}")
+        ax.set_title(f"{data.attrs.get('symbol','INTC')} | {test.get('model',MODEL)} | "
                      f"C3 {s.time:%Y-%m-%d %H:%M %Z} | ex-post, not fills")
         ax.set_ylabel("Price")
         volume.set_ylabel("Volume")
