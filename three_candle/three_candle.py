@@ -1,24 +1,27 @@
-"""Rudra Three-Candle: versioned historical setup research and breakout experiment.
+"""Rudra Three-Candle: original RTH sweep/reclaim research.
 
-This module identifies *setups*, not executable fills or profit results.
-Every filter is independent so its definition can be reviewed or changed.
+Notebook API remains:
+    test = check_signals("INTC", "2026-10-28", "2026-10-28", r=0.10)
+    show_chart(test)
+
+Historical C2-close entry is an EX-POST hypothesis: C3 volume was unavailable
+at entry. Target touches do not prove executed wins or realised profit.
 """
-
 from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass
 from datetime import date, timedelta
-import math
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 
-
-__version__ = "1.2.1-20261030"
-print(f"[Rudra Three-Candle] LOADED v{__version__} | historical RTH research + experimental breakout")
+__version__ = "2.0.0-20261030"
+MODEL = "RTH_C2_SWEEP_EXPOST"
+print(f"[Rudra Three-Candle] LOADED v{__version__} | MODEL={MODEL}")
+COLS = ["Open", "High", "Low", "Close", "Volume"]
 
 
 @dataclass(frozen=True)
@@ -36,441 +39,220 @@ class Signal:
     candle2_volume: float
 
 
-@dataclass(frozen=True)
-class TradeResult:
-    signal_time: pd.Timestamp
-    status: str  # WIN, LOSS, OPEN, NO_FILL, INVALID
-    entry_time: pd.Timestamp | None
-    exit_time: pd.Timestamp | None
-    entry: float
-    exit_price: float | None
-    achieved_r: int
-    realised_r: float | None
-
-
 def download_data(start: str, end: str, symbol: str = "INTC",
-                  interval: str = "15m") -> pd.DataFrame:
-    """Download inclusive calendar dates; return UK-localized OHLCV candles.
-
-    Yahoo typically limits 15-minute history to about 60 days. Yahoo futures
-    volume can be incomplete; validate it before interpreting volume filters.
-    """
-    try:
-        import yfinance as yf
-    except ImportError as exc:
-        raise ImportError("Install yfinance for live Yahoo downloads; archived CSV tests do not need it") from exc
-    first = date.fromisoformat(start)
-    last = date.fromisoformat(end)
+                  interval: str = "5m") -> pd.DataFrame:
+    """Get Yahoo 5-minute bars with timezone and volume (retention limited)."""
+    import yfinance as yf
+    first, last = date.fromisoformat(start), date.fromisoformat(end)
     if last < first:
-        raise ValueError("end must be on/after start")
-    # Query exactly the requested dates. Yahoo's 'end' is exclusive.
-    raw = yf.download(
+        raise ValueError("end before start")
+    data = yf.download(
         symbol, start=first.isoformat(),
-        end=(last + timedelta(days=1)).isoformat(),
-        interval=interval, auto_adjust=False, progress=False,
-        prepost=True, threads=False,
+        end=(last+timedelta(days=1)).isoformat(), interval=interval,
+        prepost=True, auto_adjust=False, progress=False, threads=False,
     )
-    if raw.empty:
-        raise ValueError("No Yahoo candles returned. Check dates, symbol, and 15m retention limit.")
-    if isinstance(raw.columns, pd.MultiIndex):
-        raw.columns = raw.columns.get_level_values(0)
-    raw = raw[["Open", "High", "Low", "Close", "Volume"]].copy()
-    raw = raw.dropna(subset=["Open", "High", "Low", "Close"])
+    if data.empty:
+        raise ValueError("No Yahoo bars: check date range and 5m retention")
+    if isinstance(data.columns, pd.MultiIndex):
+        data.columns = data.columns.get_level_values(0)
+    if data.index.tz is None:
+        raise ValueError("Yahoo data lacks timezone")
+    return data[COLS].copy()
+
+
+def resample_rth_5m(raw: pd.DataFrame, start: str, end: str,
+                    symbol: str = "INTC") -> pd.DataFrame:
+    """Exactly three complete 5m bars per 15m; 09:30 ET session anchoring."""
     if raw.index.tz is None:
-        raise ValueError("Yahoo returned timezone-naive timestamps: cannot safely label candle times")
-    raw.index = raw.index.tz_convert("Europe/London")
-    raw = raw.sort_index()
-    # Date boundaries are interpreted in UK calendar dates.
-    dates = pd.Index(raw.index.date)
-    result = raw.loc[(dates >= first) & (dates <= last)].copy()
-    result.attrs["symbol"] = symbol
+        raise ValueError("Input timestamps must be timezone-aware")
+    first, last = date.fromisoformat(start), date.fromisoformat(end)
+    if last < first:
+        raise ValueError("end before start")
+    data = raw[COLS].apply(pd.to_numeric, errors="coerce").dropna().sort_index()
+    data.index = data.index.tz_convert("America/New_York")
+    data = data.loc[(pd.Index(data.index.date) >= first) &
+                    (pd.Index(data.index.date) <= last)]
+    data = data.between_time("09:30", "15:59")
+    sessions = []
+    for day_date, day in data.groupby(data.index.date):
+        offset = day.index.hour*60 + day.index.minute - 570
+        day = day.loc[offset % 5 == 0]
+        bucket = (day.index.hour*60 + day.index.minute - 570)//15
+        grouped = day.groupby(bucket)
+        count = grouped.size()
+        bars = grouped.agg({"Open":"first", "High":"max", "Low":"min",
+                            "Close":"last", "Volume":"sum"}).loc[count[count==3].index]
+        if bars.empty:
+            continue
+        session_open = pd.Timestamp(day_date, tz="America/New_York") + pd.Timedelta(hours=9, minutes=30)
+        bars.index = pd.DatetimeIndex([
+            session_open + pd.Timedelta(minutes=int(b)*15) for b in bars.index
+        ])
+        sessions.append(bars)
+    if not sessions:
+        raise ValueError("No complete RTH 15m candles")
+    result = pd.concat(sessions)
+    result.index = result.index.tz_convert("Europe/London")
+    result.attrs.update({"symbol":symbol, "model":MODEL})
     return result
-
-
-def download_nq(start: str, end: str, interval: str = "15m") -> pd.DataFrame:
-    """Backward-compatible alias for the original notebook."""
-    return download_data(start, end, symbol="NQ=F", interval=interval)
 
 
 def load_historical_5m(path: str, start: str, end: str) -> pd.DataFrame:
-    """Load archived IBKR/Yahoo UTC 5m CSV and build New York RTH 15m bars.
-
-    Reset at each US session, anchor the first bar at 09:30 ET, and reject
-    incomplete 15m groups. The returned index is UK time for display.
-    """
     raw = pd.read_csv(path)
-    time_column = "Datetime" if "Datetime" in raw else "datetime_source"
-    raw.index = pd.DatetimeIndex(pd.to_datetime(raw[time_column], utc=True))
-    raw = raw[["Open", "High", "Low", "Close", "Volume"]].apply(
-        pd.to_numeric, errors="coerce"
-    ).dropna().sort_index()
-    raw.index = raw.index.tz_convert("America/New_York")
-    first, last = date.fromisoformat(start), date.fromisoformat(end)
-    if first > last:
-        raise ValueError("end must be on/after start")
-    raw = raw.loc[(pd.Index(raw.index.date) >= first)
-                  & (pd.Index(raw.index.date) <= last)]
-    raw = raw.between_time("09:30", "15:59")
-    sessions = []
-    for _, day in raw.groupby(raw.index.date):
-        minutes = day.index.hour * 60 + day.index.minute - 570
-        bucket = minutes // 15
-        counts = day.groupby(bucket).size()
-        complete = counts[counts == 3].index
-        aggregate = day.groupby(bucket).agg({
-            "Open": "first", "High": "max", "Low": "min",
-            "Close": "last", "Volume": "sum"
-        }).loc[complete]
-        if aggregate.empty:
-            continue
-        # Timestamp labels mark candle START, as in the historical study.
-        session_open = day.index[0].normalize() + pd.Timedelta(hours=9, minutes=30)
-        aggregate.index = pd.DatetimeIndex([
-            session_open + pd.Timedelta(minutes=int(b) * 15)
-            for b in aggregate.index
-        ])
-        sessions.append(aggregate)
-    if not sessions:
-        raise ValueError(f"No complete RTH 15m bars in {path} during {start}..{end}")
-    result = pd.concat(sessions)
-    result.index = result.index.tz_convert("Europe/London")
-    result.attrs["symbol"] = Path(path).name.split("_")[0].split(".")[0]
-    result.attrs["model"] = "historical_v1_expost"
-    return result
+    time_col = "Datetime" if "Datetime" in raw else "datetime_source"
+    if time_col not in raw:
+        raise ValueError("Expected Datetime or datetime_source CSV column")
+    raw.index = pd.DatetimeIndex(pd.to_datetime(raw[time_col], utc=True))
+    return resample_rth_5m(raw, start, end, Path(path).name.split("_")[0].split(".")[0])
 
 
 def historical_three_candle(c1: pd.Series, c2: pd.Series,
                             c3: pd.Series) -> bool:
-    """Exact historical 2026-10-25 setup predicates; NOT an executable entry."""
+    """Green C2, lower-wick sweep/reclaim C1 low; strong-volume bullish C3."""
     body = float(c2.Close - c2.Open)
-    return (
-        body > 0
-        and float(c2.Open - c2.Low) > body
-        and float(c2.Low) < float(c1.Low)
-        and float(c2.Close) > float(c1.Low)
-        and candle3_volume_increases(c2, c3)
-        and float(c3.Close) > float(c2.Close)
-    )
+    return (body > 0 and float(c2.Open-c2.Low) > body
+            and float(c2.Low) < float(c1.Low)
+            and float(c2.Close) > float(c1.Low)
+            and pd.notna(c2.Volume) and pd.notna(c3.Volume)
+            and float(c2.Volume) > 0 and float(c3.Volume) > float(c2.Volume)
+            and float(c3.Close) > float(c2.Close))
 
 
 def find_historical_signals(data: pd.DataFrame):
-    """Do not join candles across a US session boundary."""
-    ny_dates = data.index.tz_convert("America/New_York").date
-    for _, session in data.groupby(ny_dates):
-        for i in range(2, len(session)):
-            c1, c2, c3 = session.iloc[i-2], session.iloc[i-1], session.iloc[i]
+    """Never join pattern candles across two US trading sessions."""
+    for _, day in data.groupby(data.index.tz_convert("America/New_York").date):
+        for i in range(2, len(day)):
+            c1, c2, c3 = day.iloc[i-2], day.iloc[i-1], day.iloc[i]
             if not historical_three_candle(c1, c2, c3):
                 continue
             yield Signal(
-                time=session.index[i], direction="LONG",
-                candle1_time=session.index[i-2],
-                candle2_time=session.index[i-1],
-                candle3_time=session.index[i],
-                candle2_high=float(c2.High), candle2_low=float(c2.Low),
-                candle2_open=float(c2.Open), candle2_close=float(c2.Close),
-                candle3_volume=float(c3.Volume), candle2_volume=float(c2.Volume)
+                day.index[i], "LONG", day.index[i-2], day.index[i-1], day.index[i],
+                float(c2.High), float(c2.Low), float(c2.Open), float(c2.Close),
+                float(c3.Volume), float(c2.Volume),
             )
 
 
-def historical_report(path: str, start: str, end: str) -> list[Signal]:
-    print(f"[Rudra Three-Candle] v{__version__} | MODEL=historical_v1_expost")
-    data = load_historical_5m(path, start, end)
-    signals = list(find_historical_signals(data))
-    print(f"{data.attrs['symbol']} | historical_v1_expost | "
-          f"{start}..{end} | {len(data)} RTH 15m bars | "
-          f"{len(signals)} SETUPS (not executed wins)")
-    for s in signals:
-        print(f"  C3 starts {s.time:%Y-%m-%d %H:%M %Z} | "
-              f"C2 close hypothesis {s.candle2_close:.4f} | "
-              f"SL reference {s.candle2_open:.4f}")
-    counts = historical_target_touches(signals, data)
-    print("EX-POST same-session high touches (NOT executable wins): "
-          f"1R={counts[0]}/{len(signals)} | "
-          f"2R={counts[1]}/{len(signals)} | "
-          f"3R={counts[2]}/{len(signals)}")
-    return signals
-
-
-def historical_target_touches(signals: list[Signal],
-                              data: pd.DataFrame) -> tuple[int, int, int]:
-    """Count ex-post same-session highs after C3 begins; ignore stop chronology.
-
-    This reproduces archived *price touch* statistics only. The C2-close
-    hypothesis cannot know final C3 volume; high/low ordering is unknown.
-    """
+def historical_target_touches(signals: list[Signal], data: pd.DataFrame,
+                              r_pct: float = 0.10) -> tuple[int, int, int]:
+    """Same-session future highs from C3; stop ordering is deliberately ignored."""
+    if r_pct <= 0:
+        raise ValueError("r must be positive")
     ny_dates = data.index.tz_convert("America/New_York").date
-    counts = [0, 0, 0]
+    hits = [0, 0, 0]
     for signal in signals:
         entry = signal.candle2_close
-        step = max(entry - signal.candle2_open, entry * 0.001)
+        step = max(entry-signal.candle2_open, entry*r_pct/100)
         day = signal.time.tz_convert("America/New_York").date()
-        future = data.loc[(ny_dates == day) & (data.index >= signal.candle3_time)]
-        if future.empty:
+        later = data.loc[(ny_dates == day) & (data.index >= signal.candle3_time)]
+        if later.empty:
             continue
-        high = float(future.High.max())
-        for k in range(1, 4):
-            counts[k-1] += int(high >= entry + k * step)
-    return tuple(counts)
-
-
-def candle_is_bullish(candle: pd.Series) -> bool:
-    """Direction filter: green candle 2."""
-    return float(candle.Close) > float(candle.Open)
-
-
-def candle2_wick_exceeds_body(candle: pd.Series) -> bool:
-    """Original broad wick filter: either wick longer than candle 2 body."""
-    body = abs(float(candle.Close) - float(candle.Open))
-    upper = float(candle.High) - max(float(candle.Open), float(candle.Close))
-    lower = min(float(candle.Open), float(candle.Close)) - float(candle.Low)
-    return max(upper, lower) > body
-
-
-def candle3_volume_increases(candle2: pd.Series, candle3: pd.Series) -> bool:
-    """Candle 3 volume must strictly exceed candle 2; zero/missing fails."""
-    return (pd.notna(candle2.Volume) and pd.notna(candle3.Volume)
-            and float(candle2.Volume) > 0
-            and float(candle3.Volume) > float(candle2.Volume))
-
-
-def candle3_breaks_candle2_high(candle2: pd.Series, candle3: pd.Series) -> bool:
-    """Optional confirmation: candle 3 traded above candle 2's high."""
-    return float(candle3.High) > float(candle2.High)
-
-
-def check_three_candle(c1: pd.Series, c2: pd.Series, c3: pd.Series,
-                       require_breakout: bool = False) -> bool:
-    """Single readable decision point; edit/disable each filter here."""
-    if not candle_is_bullish(c2):
-        return False
-    if not candle2_wick_exceeds_body(c2):
-        return False
-    if not candle3_volume_increases(c2, c3):
-        return False
-    if require_breakout and not candle3_breaks_candle2_high(c2, c3):
-        return False
-    return True
-
-
-def find_signals(data: pd.DataFrame, require_breakout: bool = False):
-    """Yield each setup chronologically, using completed candles only."""
-    for i in range(2, len(data)):
-        c1, c2, c3 = data.iloc[i-2], data.iloc[i-1], data.iloc[i]
-        if not check_three_candle(c1, c2, c3, require_breakout):
-            continue
-        yield Signal(
-            time=data.index[i], direction="LONG", candle1_time=data.index[i-2],
-            candle2_time=data.index[i-1], candle3_time=data.index[i],
-            candle2_high=float(c2.High), candle2_low=float(c2.Low),
-            candle2_open=float(c2.Open), candle2_close=float(c2.Close),
-            candle3_volume=float(c3.Volume), candle2_volume=float(c2.Volume),
-        )
-
-
-def backtest_signal(signal: Signal, data: pd.DataFrame,
-                    r_pct: float = 0.10, target_r: int = 2) -> TradeResult:
-    """C3-confirmed breakout; reach 2R, then trail 2R, 3R, 4R ...
-
-    Only bars AFTER C3 may fill. Entry=C2 high (stop-buy), initial SL=C2
-    open. Once a bar reaches >=2R, its stepped stop becomes ACTIVE ON THE
-    NEXT BAR. We check the existing stop BEFORE advancing it. If both a stop
-    and a higher milestone occur in one 15m bar, stop wins (conservative).
-    No fees/slippage; intrabar order is unknown. All signals independently
-    evaluated and may overlap. Pending trades at dataset end remain OPEN.
-    """
-    entry = signal.candle2_high
-    initial_stop = signal.candle2_open
-    actual_stop_distance = entry - initial_stop
-    if actual_stop_distance <= 0 or r_pct <= 0 or target_r < 1:
-        return TradeResult(signal.time, "INVALID", None, None, entry, None, 0, None)
-    # Keep the original C2-open stop, but never define 1R below 0.10% of entry.
-    # Hence a stop loss may be LESS than -1R when C2-open is closer than 0.10%.
-    risk = max(actual_stop_distance, entry * r_pct / 100.0)
-
-    start = data.index.get_loc(signal.candle3_time) + 1
-    filled_at = None
-    stop = initial_stop
-    max_r = 0
-    for timestamp, candle in data.iloc[start:].iterrows():
-        high, low = float(candle.High), float(candle.Low)
-        if filled_at is None:
-            if high < entry:
-                continue
-            filled_at = timestamp
-        if low <= stop:
-            # A gap through a stop can fill worse in reality; not modelled.
-            realised = (stop - entry) / risk
-            return TradeResult(signal.time, "WIN" if realised >= target_r else "LOSS",
-                               filled_at, timestamp, entry, stop, max_r, realised)
-        reached = max(0, math.floor((high - entry) / risk + 1e-9))
-        max_r = max(max_r, reached)
-        if max_r >= target_r:
-            stop = max(stop, entry + max_r * risk)
-
-    if filled_at is None:
-        status = "NO_FILL"
-    else:
-        status = "OPEN"
-    return TradeResult(signal.time, status, filled_at, None, entry, None, max_r, None)
-
-
-def print_summary(signals: list[Signal], data: pd.DataFrame,
-                  r_pct: float = 0.10, target_r: int = 2) -> list[TradeResult]:
-    """Show completed 2R-trailing win rate and unresolved counts separately."""
-    results = [backtest_signal(s, data, r_pct=r_pct, target_r=target_r)
-               for s in signals]
-    wins = sum(r.status == "WIN" for r in results)
-    losses = sum(r.status == "LOSS" for r in results)
-    print(f"\n=== {data.attrs.get('symbol', 'SYMBOL')} THREE-CANDLE SUMMARY "
-          f"(min 1R {r_pct:.2f}%, trailing starts {target_r}R, +1R steps) ===")
-    print(f"Signals: {len(results)} | Wins: {wins} | Losses: {losses} | "
-          f"Open: {sum(r.status == 'OPEN' for r in results)} | "
-          f"No fill: {sum(r.status == 'NO_FILL' for r in results)} | "
-          f"Invalid: {sum(r.status == 'INVALID' for r in results)}")
-    print(f"Completed-trade success rate: {wins/(wins+losses)*100:.1f}%"
-          if wins+losses else "Completed-trade success rate: N/A (no closed trades)")
-    for r in results:
-        print(f"{r.signal_time:%Y-%m-%d %H:%M %Z} | {r.status:7} | "
-              f"highest {r.achieved_r}R | realised "
-              f"{r.realised_r if r.realised_r is not None else 'N/A'}R")
-    return results
+        high = float(later.High.max())
+        for k in (1, 2, 3):
+            hits[k-1] += int(high >= entry+k*step)
+    return tuple(hits)
 
 
 def check_signals(ticker: str = "INTC", start: str = "2026-10-29",
                   end: str = "2026-10-30", r: float = 0.10,
-                  target_r: int = 2, require_breakout: bool = False) -> dict:
-    """One-call scan + backtest; return a bundle for show_chart()."""
-    print(f"[Rudra Three-Candle] v{__version__} | MODEL=experimental_breakout")
-    data = download_data(start, end, symbol=ticker)
-    signals = list(find_signals(data, require_breakout=require_breakout))
-    print(f"{ticker} | {start} to {end} | {len(data)} candles | {len(signals)} signals")
-    for signal in signals:
-        print_signal(signal, data)
-    results = print_summary(signals, data, r_pct=r, target_r=target_r)
-    return {"data": data, "signals": signals, "results": results}
+                  target_r: int = 1, require_breakout: bool = False,
+                  source_csv: str | None = None) -> dict:
+    """Notebook-compatible historical scanner; not an execution backtest.
+
+    target_r/require_breakout remain accepted for older cells but do not
+    change the archived fixed pattern, which is a separate research model.
+    """
+    print(f"[Rudra Three-Candle] v{__version__} | MODEL={MODEL}")
+    data = (load_historical_5m(source_csv, start, end) if source_csv else
+            resample_rth_5m(download_data(start, end, ticker), start, end, ticker))
+    signals = list(find_historical_signals(data))
+    print(f"{ticker} | {start} to {end} | {len(data)} RTH candles | {len(signals)} setups")
+    for s in signals:
+        print(f"\nSIGNAL LONG | C3 starts {s.time:%Y-%m-%d %H:%M %Z}")
+        print(data.loc[[s.candle1_time, s.candle2_time, s.candle3_time]].to_string())
+        print(f"C2 close hypothesis {s.candle2_close:.4f} | SL {s.candle2_open:.4f} | "
+              f"C3/C2 volume {s.candle3_volume/s.candle2_volume:.2f}x")
+    hits = historical_target_touches(signals, data, r)
+    print(f"EX-POST PRICE TOUCHES | 1R {hits[0]}/{len(signals)} | "
+          f"2R {hits[1]}/{len(signals)} | 3R {hits[2]}/{len(signals)}")
+    print("Executed win rate: NOT DETERMINED (C3 look-ahead, intrabar stop order).")
+    return {"data":data, "signals":signals, "results":[],
+            "touches":hits, "model":MODEL, "r_pct":r}
 
 
 def show_chart(test: dict, signal_number: int | None = None) -> None:
-    """Show all charts, or just one (1-based signal_number)."""
+    """C1/C2/C3 charts: hypothesis green, initial SL red, R references purple."""
     signals = test["signals"]
     if signal_number is not None:
         if not 1 <= signal_number <= len(signals):
             raise ValueError(f"signal_number must be 1..{len(signals)}")
-        signals = [signals[signal_number - 1]]
-    trade_by_time = {r.signal_time: r for r in test["results"]}
-    for signal in signals:
-        fig = plot_signal(signal, test["data"], trade=trade_by_time.get(signal.time))
+        signals = [signals[signal_number-1]]
+    data = test["data"]
+    ny_dates = data.index.tz_convert("America/New_York").date
+    for s in signals:
+        idx = data.index.get_loc(s.candle3_time)
+        day = s.time.tz_convert("America/New_York").date()
+        last = max(i for i in range(idx, len(data)) if ny_dates[i] == day)
+        view = data.iloc[max(0, idx-10):last+1]
+        fig, (ax, volume) = plt.subplots(
+            2, 1, figsize=(13, 6), sharex=True,
+            gridspec_kw={"height_ratios":[4,1]},
+        )
+        for x, (_, bar) in enumerate(view.iterrows()):
+            color = "#168650" if bar.Close >= bar.Open else "#c64242"
+            ax.vlines(x, bar.Low, bar.High, color=color, linewidth=1.2)
+            ax.add_patch(Rectangle((x-.32, min(bar.Open,bar.Close)), .64,
+                                   max(abs(bar.Close-bar.Open), .005),
+                                   facecolor=color, edgecolor=color))
+            volume.bar(x, bar.Volume, color=color, width=.7)
+        for name, stamp, color in [
+            ("C1",s.candle1_time,"#4c78a8"),
+            ("C2",s.candle2_time,"#d9a128"),
+            ("C3",s.candle3_time,"#7b58a5"),
+        ]:
+            if stamp in view.index:
+                x = view.index.get_loc(stamp)
+                ax.axvspan(x-.45, x+.45, color=color, alpha=.15)
+                ax.annotate(name, (x,view.iloc[x].High), xytext=(0,8),
+                            textcoords="offset points", ha="center",
+                            color=color, weight="bold")
+        entry = s.candle2_close
+        step = max(entry-s.candle2_open, entry*test.get("r_pct", .10)/100)
+        ax.axhline(entry, color="#138a36", linestyle="--",
+                   label=f"C2 close hypothesis {entry:.2f}")
+        ax.axhline(s.candle2_open, color="#d33232", linestyle=":",
+                   label=f"Initial SL {s.candle2_open:.2f}")
+        for k in (1,2,3):
+            ax.axhline(entry+k*step, color="#853fb7", linestyle="-.", alpha=.55,
+                       label=f"{k}R reference {entry+k*step:.2f}")
+        ax.set_title(f"{data.attrs.get('symbol','INTC')} | {MODEL} | "
+                     f"C3 {s.time:%Y-%m-%d %H:%M %Z} | ex-post, not fills")
+        ax.set_ylabel("Price")
+        volume.set_ylabel("Volume")
+        ticks = list(range(0, len(view), max(1,len(view)//9)))
+        volume.set_xticks(ticks, [view.index[i].strftime("%d %b %H:%M") for i in ticks],
+                          rotation=35, ha="right")
+        ax.legend(loc="best", fontsize=8)
+        fig.tight_layout()
         plt.show()
         plt.close(fig)
 
 
-def print_signal(signal: Signal, data: pd.DataFrame) -> None:
-    """Print all three input candles and candidate levels for human review."""
-    print(f"\nSIGNAL {signal.direction} | candle 3 closed {signal.time:%Y-%m-%d %H:%M %Z}")
-    print(data.loc[[signal.candle1_time, signal.candle2_time, signal.candle3_time]].to_string())
-    print(f"Candidate breakout > {signal.candle2_high:.2f} | "
-          f"C2 open reference SL {signal.candle2_open:.2f} | "
-          f"C3/C2 volume {signal.candle3_volume / signal.candle2_volume:.2f}x")
-    print("Research setup only: no entry/fill is assumed at candle 2 close.")
-
-
-def plot_signal(signal: Signal, data: pd.DataFrame, before: int = 12,
-                after: int = 8, trade: TradeResult | None = None):
-    """Plot nearby candles, highlight C1/C2/C3, return matplotlib figure."""
-    idx = data.index.get_loc(signal.candle3_time)
-    left, right = max(0, idx-before), min(len(data), idx+after+1)
-    if trade is not None and trade.exit_time is not None:
-        right = max(right, data.index.get_loc(trade.exit_time) + 1)
-    view = data.iloc[left:right]
-    fig, (ax, vol) = plt.subplots(2, 1, figsize=(13, 6), sharex=True,
-                                   gridspec_kw={"height_ratios": [4, 1]})
-    for x, (_, row) in enumerate(view.iterrows()):
-        up = row.Close >= row.Open
-        color = "#168650" if up else "#c64242"
-        ax.vlines(x, row.Low, row.High, color=color, linewidth=1.2)
-        ax.add_patch(Rectangle((x-0.32, min(row.Open, row.Close)), 0.64,
-                               max(abs(row.Close-row.Open), 0.01),
-                               facecolor=color, edgecolor=color))
-        vol.bar(x, row.Volume, color=color, width=0.7)
-    for label, timestamp, color in [
-        ("C1", signal.candle1_time, "#4c78a8"),
-        ("C2", signal.candle2_time, "#e1a536"),
-        ("C3", signal.candle3_time, "#7b58a5"),
-    ]:
-        x = view.index.get_loc(timestamp)
-        ax.axvspan(x-0.48, x+0.48, color=color, alpha=0.15)
-        ax.annotate(label, (x, float(view.iloc[x].High)), xytext=(0, 8),
-                    textcoords="offset points", ha="center", color=color,
-                    weight="bold")
-    entry = trade.entry if trade is not None else signal.candle2_high
-    entry_label = "Entry" if trade is not None and trade.entry_time is not None else "Entry trigger (unfilled)"
-    ax.axhline(entry, color="#138a36", linestyle="--", linewidth=1.5,
-               label=f"{entry_label} {entry:.2f}")
-    if trade is not None and trade.entry_time is not None:
-        x_entry = view.index.get_loc(trade.entry_time)
-        ax.scatter(x_entry, entry, color="#138a36", marker="^", s=60, zorder=5)
-    if trade is not None and trade.exit_price is not None:
-        exit_color = "#853fb7" if trade.status == "WIN" else "#d33232"
-        exit_label = "TP / trailing exit" if trade.status == "WIN" else "SL exit"
-        ax.axhline(trade.exit_price, color=exit_color, linestyle="-.",
-                   linewidth=1.6, label=f"{exit_label} {trade.exit_price:.2f}")
-        x_exit = view.index.get_loc(trade.exit_time)
-        ax.scatter(x_exit, trade.exit_price, color=exit_color, marker="v",
-                   s=60, zorder=5)
-    ax.axhline(signal.candle2_open, color="#d33232", linestyle=":", alpha=0.7,
-               label=f"Initial SL {signal.candle2_open:.2f}")
-    ax.legend(loc="best")
-    ax.set_title(f"{data.attrs.get('symbol', 'SYMBOL')} 15m | "
-                 f"Setup confirmed at {signal.time:%Y-%m-%d %H:%M %Z}")
-    ax.set_ylabel("Price")
-    vol.set_ylabel("Volume")
-    ticks = list(range(0, len(view), max(1, len(view)//8)))
-    vol.set_xticks(ticks, [view.index[i].strftime("%d %b %H:%M") for i in ticks],
-                   rotation=35, ha="right")
-    fig.tight_layout()
-    return fig
-
-
-def run(start: str, end: str, show_charts: bool = True,
-        require_breakout: bool = False, limit: int | None = None,
-        symbol: str = "INTC", r_pct: float = 0.10, target_r: int = 2):
-    """Download, find, print and optionally plot signals one-by-one."""
-    print(f"[Rudra Three-Candle] v{__version__} | MODEL=experimental_breakout")
-    data = download_data(start, end, symbol=symbol)
-    print(f"{symbol} | {len(data)} 15m candles | {start} to {end} (UK dates)")
-    count = 0
-    shown = []
-    for signal in find_signals(data, require_breakout=require_breakout):
-        count += 1
-        shown.append(signal)
-        print_signal(signal, data)
-        if show_charts:
-            fig = plot_signal(signal, data)
-            plt.show()
-            plt.close(fig)
-        if limit is not None and count >= limit:
-            break
-    print(f"\nTotal setups shown: {count}")
-    print_summary(shown, data, r_pct=r_pct, target_r=target_r)
-    return data
+def historical_report(path: str, start: str, end: str) -> list[Signal]:
+    """Compatibility helper for archived reproduction."""
+    ticker = Path(path).name.split("_")[0].split(".")[0]
+    return check_signals(ticker, start, end, source_csv=path)["signals"]
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--start", required=True, help="YYYY-MM-DD, UK calendar")
-    parser.add_argument("--end", required=True, help="YYYY-MM-DD, inclusive")
-    parser.add_argument("--no-charts", action="store_true")
-    parser.add_argument("--require-breakout", action="store_true")
-    parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument("--start", required=True)
+    parser.add_argument("--end", required=True)
     parser.add_argument("--symbol", default="INTC")
-    parser.add_argument("--r-pct", type=float, default=0.10)
-    parser.add_argument("--target-r", type=int, default=2)
-    parser.add_argument("--historical-csv", default=None,
-                        help="Archived 5m CSV: reproduce the old RTH setup scan; no trade P&L")
+    parser.add_argument("--r-pct", type=float, default=.10)
+    parser.add_argument("--historical-csv", default=None)
+    parser.add_argument("--no-charts", action="store_true")
     args = parser.parse_args()
-    if args.historical_csv:
-        historical_report(args.historical_csv, args.start, args.end)
-    else:
-        run(args.start, args.end, show_charts=not args.no_charts,
-            require_breakout=args.require_breakout, limit=args.limit,
-            symbol=args.symbol, r_pct=args.r_pct, target_r=args.target_r)
+    result = check_signals(args.symbol, args.start, args.end,
+                           r=args.r_pct, source_csv=args.historical_csv)
+    if not args.no_charts:
+        show_chart(result)
