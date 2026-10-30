@@ -1,3 +1,11 @@
+## 2026-10-30 — v2.3.2 minimum-size filter; SELL setup identified for separate research
+
+- User observed that the second BUY (C2 16:30 UK on NQ 29 Oct) is invalid because C1 and C2 are too small. Added **configurable provisional minimum whole-candle (High-Low) ranges**, as percentages of each candle's closing price: `minC1RangePct=0.20`, `minC2RangePct=0.25`. Both must pass. Function parameters in `check_signals` and helpers; existing notebook method names kept. These defaults are initial research choices, **not optimised/validated thresholds**.
+- Exact 29 Oct examples: 14:30 C1 range 0.315%; 14:45 C2 range 0.465% => original BUY candidate remains. 16:15 C1 range 0.156%; 16:30 C2 range 0.181% => second BUY rejected.
+- User's operational BUY entry is **intrabar during C3** upon crossing above the higher of C2 open/close. The historical `check_signals` target-touch method still uses an older ex-post reference; do **not** represent it as executable entry P&L until replaced and intrabar stop ordering verified using 5m/1m data.
+- User also proposed a **separate SELL model** where **C3 is the sweep candle and entry triggers on the next red candle**. This is a research direction, **not yet implemented**; decide exact prior high swept, entry price threshold and confirmation timing before reporting a sell performance.
+- Version: `2.3.2-20261030`. No change to chart colours/signals UI or SELL backtest yet.
+
 ## 2026-10-30 — v2.3.1 relaxed bullish C2 / green C3 confirmation
 
 - Requested: allow bearish **or** bullish C2 sweep, but C3 must be **green** for a BUY signal. C2 no longer has to close above C1 low. The existing C2 lower wick > absolute C2 body and C2 low < C1 low checks remain.
