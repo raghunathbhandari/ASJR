@@ -167,7 +167,7 @@ def check_signals(ticker: str = "INTC", start: str = "2026-10-29",
     signals = list(find_historical_signals(data))
     hits = historical_target_touches(signals, data, r)
     total = len(signals)
-    print(f"\\n{ticker} | {start} to {end} | {len(data)} RTH 15m candles")
+    print(f"\n{ticker} | {start} to {end} | {len(data)} RTH 15m candles")
     print("=== RUDRA THREE-CANDLE SUMMARY (ex-post price touches) ===")
     print(f"{'Metric':<24} {'Count':>8} {'Rate':>9}")
     print(f"{'Qualifying signals':<24} {total:>8} {'100%' if total else 'N/A':>9}")
@@ -175,12 +175,12 @@ def check_signals(ticker: str = "INTC", start: str = "2026-10-29",
         rate = f"{count/total*100:.1f}%" if total else "N/A"
         print(f"{str(k)+'R price touches':<24} {count:>8} {rate:>9}")
     print("Executed win rate: NOT DETERMINED (C3 look-ahead / intrabar order).")
-    print("\\n=== SIGNAL DETAILS (CANDLE 2 ONLY) ===")
+    print("\n=== SIGNAL DETAILS (CANDLE 2 ONLY) ===")
     if not signals:
         print("No qualifying signals.")
     for number, s in enumerate(signals, 1):
         c2 = data.loc[s.candle2_time]
-        print(f"\\n#{number} LONG | C2 {s.candle2_time:%Y-%m-%d %H:%M %Z} | "
+        print(f"\n#{number} LONG | C2 {s.candle2_time:%Y-%m-%d %H:%M %Z} | "
               f"C3 confirmation {s.candle3_time:%H:%M %Z}")
         print(pd.DataFrame([c2], index=[s.candle2_time], columns=COLS).to_string())
         print(f"C2 close hypothesis {s.candle2_close:.4f} | SL {s.candle2_open:.4f} | "
