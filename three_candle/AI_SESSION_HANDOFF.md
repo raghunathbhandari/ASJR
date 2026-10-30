@@ -1,3 +1,14 @@
+## 2026-10-30 — v2.2.0: confirmed swing price lines + Three-Candle proximity
+
+- Kept existing notebook API, default `checkVol=False`, `session="extended"` for NQ; version printed as `2.2.0-20261030`.
+- New kwargs: `swingLeft=3`, `swingRight=3`, `swingProximity=0.25` (percent), `nearSwingOnly=False`.
+- Causal pivot detection: price is a strict local minimum (SUPPORT) or maximum (RESISTANCE) versus `swingLeft` prior candles and `swingRight` subsequent candles. Pivot is known only after last confirming candle closes. Pivot neighbours must be contiguous in the same US session, including NQ extended futures trade-date grouping.
+- Match a Three-Candle C2 sweep to *already-confirmed* price levels: measure C2 low distance to support and C2 high distance to resistance; choose the closest and report `NEAR`/ `FAR` with wick distance percent and pivot timestamp. This is a proximity research metric, **not** yet statistical evidence of signal edge.
+- Console summary prints total confirmed swings and near-swing signal count. Details print the nearest swing price line.
+- `show_chart(test)` overlays the three closest confirmed support prices below the proposed entry and three closest resistance prices above it, turquoise/orange dashed horizontal lines, based only on levels known at C2 close.
+- `nearSwingOnly=True` optionally filters reported signals to those within `swingProximity`. OFF by default so old signal counts and touches remain unchanged. No executed trade P&L model added.
+- Test: synthetic consecutive 15-minute prices produce three pivot levels, all with `confirmed_at > pivot_time`; Python syntax and pivot code executed. A full live Yahoo download and September regression was **not** rerun.
+
 ## 2026-10-30 — v2.1.4 NQ extended session (5m / 15m / 30m / 1h / 4h)
 
 - Added `session="extended"` to `check_signals` (default `"RTH"` preserves all older calls).
