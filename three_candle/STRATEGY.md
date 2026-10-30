@@ -1,6 +1,8 @@
 # Rudra Three-Candle — Strategy and implementation contract
 Updated 2026-10-30 (UK). Research only; no live-execution or verified performance claim.
 
+**Reproduction update (2026-10-30):** `three_candle.py --historical-csv` now implements the archived pattern separately from the original Yahoo breakout scanner, and `test_historical_reproduction.py` matches the September IBKR per-ticker setup counts and 1R/2R/3R price-touch counts, totaling **83 / 83 / 75 / 64**. This validates the archived *ex-post screen*, not fills or profitability.
+
 ## Two distinct models — do not mix results
 
 | Rule | Historical research v1.1 (2026-10-25, `rudra-data-results`) | Current `main/three_candle/three_candle.py` |
