@@ -4,6 +4,17 @@
 
 This is an exploratory **signal scanner and hypothetical OHLC backtest**, not a live order executor or validated fee-adjusted strategy.
 
+## Verified historical reproduction (2026-10-30)
+
+The Python module now contains a **separate** `--historical-csv` research mode implementing the archived 2026-10-25 RTH sweep/reclaim setup. Using the archived September 2026 IBKR 5m files on `rudra-data-results`, its regression test reproduces **83 historical setups** and same-session price-touch counts **83 / 75 / 64** at 1R / 2R / 3R. This is **not** an executed-trade win rate. Current default Yahoo 15m breakout mode remains an independent experiment.
+
+```bash
+python three_candle/three_candle.py --start 2026-09-01 --end 2026-09-30 --historical-csv /path/to/INTC_5m.csv
+ASJR_5M_DIR=/path/to/Backtesting/BacktestData/IBKR/MarketData/5m python -m unittest discover -s three_candle -p test_historical_reproduction.py
+```
+
+The historical mode anchors each 15m RTH candle to 09:30 ET, aggregates exact groups of three 5m candles, resets at the US session boundary, and displays UK times. `historical_target_touches` scans future highs **from C3 onward through that day's close**, irrespective of earlier stop touches. It intentionally makes no trade execution/P&L claim.
+
 ## Start here
 
 - [STRATEGY.md](STRATEGY.md) — side-by-side comparison of the original historical strategy and the **different** current Python implementation, data provenance, and outcome limitations.
