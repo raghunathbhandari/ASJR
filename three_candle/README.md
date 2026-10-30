@@ -1,6 +1,7 @@
 # Rudra Three-Candle — NQ=F 15-minute research
 
-Readable, modular signal discovery. **This is not a profit backtest or an order executor.**
+Readable, modular signal discovery and an exploratory **2R stepped-trailing backtest**.
+This is not an order executor or a fee-adjusted performance estimate.
 
 ## Install
 
@@ -33,11 +34,20 @@ The three candles are consecutive completed 15m NQ=F bars. A setup is
 reported at Candle 3 completion, never at Candle 2 completion. The output
 prints all three OHLCV rows; `plot_signal` shows surrounding candlesticks.
 
-This starter focuses on **long** setups and does not implement actual trade
-fills, R-multiple exits, trailing stops, commissions, or shorts. Candle 2
-open is printed as a *reference* stop, not a validated fill/stop placement.
-The user should visually verify and adjust each filter before adding execution
-logic. In particular, a Candle 2 close entry cannot use future Candle 3 volume.
+This starter focuses on **long** setups. The paper entry is a C2-high
+stop-buy, eligible only on bars after C3 completes; initial stop is C2 open.
+Risk 1R = entry minus C2 open. At 2R reached, stop moves to +2R on the **next**
+bar; at 3R, to +3R; at 4R, to +4R, etc. There is no fixed profit-taking
+order. On a candle that both reaches the existing stop and a new higher R
+milestone, the stop wins (conservative OHLC assumption). Results are WIN (exit
+at >=2R), LOSS, OPEN, NO_FILL or INVALID. The printed win rate divides wins
+by *closed* wins plus losses, excluding all unresolved signals. A single-day
+dataset typically leaves trades unresolved; use more following dates for an
+honest summary. Signals may overlap as independent paper trades.
+
+This does not model fees, slippage, gaps through stops, capital allocation or
+short trades. Review individual setups before relying on results. In
+particular, a C2 close entry cannot use future C3 volume.
 
 Yahoo Finance may only provide approximately the most recent 60 days of 15m
 data. The availability window, missing futures bars, and reported NQ volume
