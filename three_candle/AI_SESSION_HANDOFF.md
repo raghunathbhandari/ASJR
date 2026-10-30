@@ -1,3 +1,65 @@
+## Developer review guide — function map and execution flow (v2.3.0)
+
+The source of truth is `main/three_candle/three_candle.py`.
+The user will review and edit Python personally. Keep method names descriptive and retain
+the public notebook interface. On every future code change, **increment `__version__`**
+and print it on import and when `check_signals()` runs.
+
+### Notebook calls
+
+```python
+import importlib, three_candle
+importlib.reload(three_candle)
+three_candle.show_method_flow()  # prints this processing sequence
+
+test = three_candle.check_signals(
+    "NQ=F", "15min", "2026-10-30", "2026-10-30",
+    r=0.20, checkVol=False, session="extended",
+    swingLeft=3, swingRight=3, swingProximity=0.25,
+    nearSwingOnly=False
+)
+three_candle.show_chart(test)  # all swing price lines; signals hidden
+```
+
+### Exact order of execution
+
+1. `check_signals()` parses ticker/date/timeframe/session, validates `checkVol`.
+2. `get_timeframe_minutes()` converts requested timeframe into numeric minutes.
+3. `download_candles_from_yahoo()` gets raw 5m OHLCV **or** `load_candles_from_csv()` loads research data.
+   - `clean_downloaded_candles()` normalizes columns/time/index.
+   - `find_missing_regular_hours_candles()` detects US RTH gaps for retry and reporting.
+   - `remove_suspicious_nq_candles()` quarantines extreme/invalid NQ bars.
+4. `build_regular_market_candles()` aggregates RTH only, or `build_extended_nq_candles()` aggregates NQ's extended futures session. `build_extended_nq_4hour_candles()` handles the special 4H grouping.
+   - Only complete consecutive 5m groups form higher timeframe bars. No synthetic prices.
+   - `get_trading_session_dates()` keeps pattern sequences inside the correct session.
+5. `find_confirmed_swing_levels()` collects confirmed local support/resistance pivots, using configured `swingLeft` and `swingRight` candles; a level is only available after the right-hand confirming candle has closed.
+6. `find_three_candle_setups()` iterates contiguous C1/C2/C3 and calls `is_bullish_three_candle_sweep()`. Volume comparison is OFF with `checkVol=False`.
+7. `find_nearest_swing_for_setup()` tests each C2 wick against already-confirmed supports/resistances using `swingProximity`. `nearSwingOnly=True` filters results; default False does not.
+8. `count_future_target_touches()` and `sum_hypothetical_target_returns()` produce **ex-post** research metrics only; these are not executable P&L or win rates.
+9. `check_signals()` prints summary/details and returns a dictionary containing `data`, `signals`, `swing_levels`, `swing_matches`, `touches`, `potential_gains_pct`, and settings.
+10. `show_chart(test)` plots full-period candlesticks/volume plus **all** confirmed swing support and resistance price lines. It currently intentionally does NOT plot signal entry, stop, or targets.
+
+### Code edit guide
+
+| What Raghu wants to change | Edit method |
+| --- | --- |
+| Yahoo download/data range | `download_candles_from_yahoo()` |
+| Missing bars or abnormal NQ candles | `find_missing_regular_hours_candles()`, `remove_suspicious_nq_candles()` |
+| RTH versus overnight candle aggregation | `build_regular_market_candles()`, `build_extended_nq_candles()` |
+| C2 wick/sweep and C3 confirmation conditions | `is_bullish_three_candle_sweep()` |
+| Pivot support/resistance sensitivity | `find_confirmed_swing_levels()`; knobs `swingLeft`, `swingRight` |
+| Proximity of Three-Candle C2 to a prior level | `find_nearest_swing_for_setup()`; knob `swingProximity` |
+| Historical target-hit research | `count_future_target_touches()`, `sum_hypothetical_target_returns()` |
+| Print layout and public parameters | `check_signals()` |
+| Chart candle/volume/swing line styling | `show_chart()` |
+
+**Compatibility:** Previous internal function identifiers remain as aliases in the Python file;
+`check_signals()` and `show_chart()` are unchanged public entry points. The Python
+code is version `2.3.0-20261030`. This guide is documentation-only; no code change,
+version bump or new performance claim accompanies this document update.
+
+---
+
 ## 2026-10-30 — v2.3.0: human-readable Python methods for user maintenance
 
 - Renamed internal functions into descriptive verbs (`download_candles_from_yahoo`, `build_extended_nq_candles`, `find_three_candle_setups`, `find_confirmed_swing_levels`, `count_future_target_touches`, etc.).
