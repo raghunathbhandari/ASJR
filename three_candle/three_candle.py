@@ -18,10 +18,21 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 
-__version__ = "2.0.2-20261030"
+__version__ = "2.1.0-20261030"
 MODEL = "RTH_C2_SWEEP_EXPOST"
 print(f"[Rudra Three-Candle] LOADED v{__version__} | MODEL={MODEL}")
 COLS = ["Open", "High", "Low", "Close", "Volume"]
+TIMEFRAMES = {"5min": 5, "15min": 15, "30min": 30, "1h": 60}
+
+
+def timeframe_minutes(value: str) -> int:
+    aliases = {"5m": "5min", "15m": "15min", "30m": "30min",
+               "60m": "1h", "60min": "1h", "1hr": "1h"}
+    key = aliases.get(str(value).lower(), str(value).lower())
+    if key not in TIMEFRAMES:
+        raise ValueError("interval must be 5min, 15min, 30min, or 1h")
+    return TIMEFRAMES[key]
+
 
 
 @dataclass(frozen=True)
@@ -61,13 +72,15 @@ def download_data(start: str, end: str, symbol: str = "INTC",
 
 
 def resample_rth_5m(raw: pd.DataFrame, start: str, end: str,
-                    symbol: str = "INTC") -> pd.DataFrame:
-    """Exactly three complete 5m bars per 15m; 09:30 ET session anchoring."""
+                    symbol: str = "INTC", interval: str = "15min") -> pd.DataFrame:
+    """Completed US RTH bars from 5m, anchored at 09:30 ET for any supported timeframe."""
     if raw.index.tz is None:
         raise ValueError("Input timestamps must be timezone-aware")
     first, last = date.fromisoformat(start), date.fromisoformat(end)
     if last < first:
         raise ValueError("end before start")
+    minutes = timeframe_minutes(interval)
+    group_size = minutes // 5
     data = raw[COLS].apply(pd.to_numeric, errors="coerce").dropna().sort_index()
     data.index = data.index.tz_convert("America/New_York")
     data = data.loc[(pd.Index(data.index.date) >= first) &
@@ -77,33 +90,34 @@ def resample_rth_5m(raw: pd.DataFrame, start: str, end: str,
     for day_date, day in data.groupby(data.index.date):
         offset = day.index.hour*60 + day.index.minute - 570
         day = day.loc[offset % 5 == 0]
-        bucket = (day.index.hour*60 + day.index.minute - 570)//15
+        bucket = (day.index.hour*60 + day.index.minute - 570)//minutes
         grouped = day.groupby(bucket)
         count = grouped.size()
         bars = grouped.agg({"Open":"first", "High":"max", "Low":"min",
-                            "Close":"last", "Volume":"sum"}).loc[count[count==3].index]
+                            "Close":"last", "Volume":"sum"}).loc[count[count==group_size].index]
         if bars.empty:
             continue
         session_open = pd.Timestamp(day_date, tz="America/New_York") + pd.Timedelta(hours=9, minutes=30)
         bars.index = pd.DatetimeIndex([
-            session_open + pd.Timedelta(minutes=int(b)*15) for b in bars.index
+            session_open + pd.Timedelta(minutes=int(b)*minutes) for b in bars.index
         ])
         sessions.append(bars)
     if not sessions:
-        raise ValueError("No complete RTH 15m candles")
+        raise ValueError(f"No complete RTH {interval} candles")
     result = pd.concat(sessions)
     result.index = result.index.tz_convert("Europe/London")
-    result.attrs.update({"symbol":symbol, "model":MODEL})
+    result.attrs.update({"symbol":symbol, "model":MODEL, "interval_minutes":minutes})
     return result
 
 
-def load_historical_5m(path: str, start: str, end: str) -> pd.DataFrame:
+def load_historical_5m(path: str, start: str, end: str,
+                       interval: str = "15min") -> pd.DataFrame:
     raw = pd.read_csv(path)
     time_col = "Datetime" if "Datetime" in raw else "datetime_source"
     if time_col not in raw:
         raise ValueError("Expected Datetime or datetime_source CSV column")
     raw.index = pd.DatetimeIndex(pd.to_datetime(raw[time_col], utc=True))
-    return resample_rth_5m(raw, start, end, Path(path).name.split("_")[0].split(".")[0])
+    return resample_rth_5m(raw, start, end, Path(path).name.split("_")[0].split(".")[0], interval)
 
 
 def historical_three_candle(c1: pd.Series, c2: pd.Series,
@@ -177,23 +191,34 @@ def historical_potential_gains(signals: list[Signal], data: pd.DataFrame,
     return tuple(gains)
 
 
-def check_signals(ticker: str = "INTC", start: str = "2026-10-29",
-                  end: str = "2026-10-30", r: float = 0.10,
-                  target_r: int = 1, require_breakout: bool = False,
+def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
+                  start: str | None = None, end: str | None = None,
+                  interval: str = "15min", target_r: int = 1,
+                  require_breakout: bool = False,
                   source_csv: str | None = None) -> dict:
-    """Notebook-compatible historical scanner; not an execution backtest.
+    """Supports both (ticker,start,end) and (ticker,interval,start,end).\n\n    Historical scanner; not an execution backtest.
 
     target_r/require_breakout remain accepted for older cells but do not
     change the archived fixed pattern, which is a separate research model.
     """
-    print(f"[Rudra Three-Candle] v{__version__} | MODEL={MODEL}")
-    data = (load_historical_5m(source_csv, start, end) if source_csv else
-            resample_rth_5m(download_data(start, end, ticker), start, end, ticker))
+    if len(args) == 2:
+        start, end = args
+    elif len(args) == 3:
+        interval, start, end = args
+    elif len(args) != 0:
+        raise TypeError("Use check_signals(ticker, start, end) or (ticker, interval, start, end)")
+    if start is None or end is None:
+        raise TypeError("start and end dates are required")
+    minutes = timeframe_minutes(interval)
+    interval_label = f"{minutes}min" if minutes < 60 else "1h"
+    print(f"[Rudra Three-Candle] v{__version__} | MODEL={MODEL} | TIMEFRAME={interval_label}")
+    data = (load_historical_5m(source_csv, start, end, interval_label) if source_csv else
+            resample_rth_5m(download_data(start, end, ticker), start, end, ticker, interval_label))
     signals = list(find_historical_signals(data))
     hits = historical_target_touches(signals, data, r)
     gains = historical_potential_gains(signals, data, r)
     total = len(signals)
-    print(f"\n{ticker} | {start} to {end} | {len(data)} RTH 15m candles")
+    print(f"\n{ticker} | {start} to {end} | {len(data)} RTH {interval_label} candles")
     print("=== RUDRA THREE-CANDLE SUMMARY (ex-post price touches) ===")
     print(f"{'Metric':<24} {'Count':>8} {'Rate':>9} {'Gain %':>12}")
     print(f"{'Qualifying signals':<24} {total:>8} {'100%' if total else 'N/A':>9} {'—':>12}")
@@ -208,12 +233,12 @@ def check_signals(ticker: str = "INTC", start: str = "2026-10-29",
     for number, s in enumerate(signals, 1):
         c2 = data.loc[s.candle2_time]
         print(f"\n#{number} LONG | C2 {s.candle2_time:%Y-%m-%d %H:%M %Z} | "
-              f"C3 close/confirmation {(s.candle3_time + pd.Timedelta(minutes=15)):%H:%M %Z}")
+              f"C3 close/confirmation {(s.candle3_time + pd.Timedelta(minutes=minutes)):%H:%M %Z}")
         print(pd.DataFrame([c2], index=[s.candle2_time], columns=COLS).to_string())
         print(f"C2 close hypothesis {s.candle2_close:.4f} | SL {s.candle2_open:.4f} | "
               f"C3/C2 volume {s.candle3_volume/s.candle2_volume:.2f}x")
     return {"data":data, "signals":signals, "results":[],
-            "touches":hits, "potential_gains_pct":gains, "model":MODEL, "r_pct":r}
+            "touches":hits, "potential_gains_pct":gains, "model":MODEL, "r_pct":r, "interval":interval_label}
 
 
 def show_chart(test: dict, signal_number: int | None = None) -> None:
