@@ -1,3 +1,44 @@
+# RUDRA THREE-CANDLE — LOCKED RESEARCH HANDOFF (30 OCT 2026)
+
+## Final user-confirmed signal rules — use these by default for 29/30 Oct comparison
+
+**Data:** NQ=F, verified 5-minute OHLCV resampled to complete consecutive 15-minute bars. All timestamps UK local. Never interpolate missing bars; quarantine anomalous futures quotes, including 30 Oct 19:00 UTC anomalous high 29562. For reproducibility preserve raw data source, date coverage and code version with results.
+
+**BUY (C1/C2/C3):**
+1. C1 is reference candle; minimum complete candle high-low range **0.20% of close**.
+2. C2 has high-low range **at least 0.25% of close**, sweeps below C1 low, and has **lower wick longer than the absolute C2 body**. A **red C2 with long lower wick is preferred**, but red or green C2 is allowed in the code.
+3. Enter **during C3** as soon as its price crosses upward over the **LOWER BOUNDARY OF C2 BODY**: `buy_entry = min(C2.Open,C2.Close)`. For red C2 this is **C2 CLOSE**; for green C2 this is **C2 OPEN**. **Never substitute max(C2.Open,C2.Close), C2 High, or C3 Close for this specified entry level.**
+4. Initial stop: **C2 Low**. For the 29 Oct example: C1 14:30, red C2 14:45, trigger inside C3 15:00, entry **29526.00**, stop **29449.00**.
+5. The current research scanner additionally requires **C3 to close green** and C3 close above C2 close in the legacy pattern finder. This is **look-ahead if used to filter an entry during C3**, so identify as ex-post confirmation only. Do not claim fully executable historical win rates from this rule. Volume optional, default `checkVol=False`.
+
+**SELL — separately defined four-candle sweep reversal:**
+1. Candle C3 makes upside liquidity sweep: `C3.High > max(C1.High,C2.High)`.
+2. Next candle C4 is **red** and crosses **below the LOWER edge of C3's body**: `sell_entry=min(C3.Open,C3.Close)`. Enter during C4 when crossed, stop **C3 High**.
+3. Current historical scanner checks C4 closes red ex-post; avoid asserting the final colour could be known at the immediate breakdown entry.
+4. 29 Oct example: C3 sweep **16:45**, C4 red **17:00**; SELL trigger **29563.50**, stop **29606.75**.
+
+**Backtest mechanics and reporting:**
+- Use `risk_points=max(abs(entry-stop),entry*0.20/100)` for R thresholds in current code. Exact 1R/2R/3R touch calculations must use this floor, not round the 1.96R BUY to 2R.
+- Start observing breakout in C3 for BUY and C4 for SELL. Actual 5-minute order matters; if entry and stop share a bar and sequence is unknown, report *ambiguous*, not a certain win. A bar opening beyond the trigger may require open-price fill, not the theoretical trigger. Include commissions/slippage only when modeled.
+- Always report **Entry, SL, direction, UK timestamps, 1R/2R/3R targets and hit rates, maximum favourable Gain %, realized/stop Gain %, number of signals and data coverage**. Separate maximum favourable excursion (MFE) from booked profit. No profit should be claimed from a target merely touched without an explicit exit rule.
+- Support/resistance confirmation is causal, and nearest-swing filter is OFF for these exploratory comparisons.
+
+## Fixed 29–30 October 2026 RTH reference results (verified 5-minute source)
+
+| Date | Trigger time UK | Direction | Entry | SL | Maximum favourable Gain % | 1R touched | 2R touched | 3R touched | Notes |
+|---|---|---|---:|---:|---:|---|---|---|---|
+| 29 Oct | 15:00 C3 | BUY | 29526.00 | 29449.00 | +0.511% | Yes | **No** | No | Max favourable 1.96R; later initial SL hit |
+| 29 Oct | 17:00 C4 | SELL | 29563.50 | 29606.75 | +0.474% | Yes | Yes | No | No initial SL observed before available data ends; no proved booked profit |
+| 30 Oct | 14:30 C3 | BUY | 28672.75 | 28614.75 | +0.562% | Yes | Yes | No | Later initial SL hit; trigger vs first 5-minute open introduces fill uncertainty |
+
+**Counts from these three retrospectively identified RTH candidates:** 3 setups; **1R touched 3/3 = 100%**, **2R touched 2/3 = 66.7%**, **3R touched 0/3 = 0%**. Sum of maximum favourable instrument price moves **+1.547%** (not portfolio P&L, not realized profit; equal-notional hypothetical excursion sum). The reported 30 Oct 2R uses the 0.20% R floor. The 29 Oct BUY does **not** reach 2R.
+
+**Coverage caveat:** This 3-setup result covers verified **RTH 13:30–20:00 UK** for 29/30 Oct, not full overnight futures sessions. The anomalous 30 Oct 19:00 quote must be excluded. No claim of 100% traded success/profitability or broad statistical reliability.
+
+**Code and compatibility:** Source `three_candle/three_candle.py` version **2.4.3-20261030**; main notebook methods `check_signals()` and `show_chart()` preserved. Dedicated breakout engine `backtest_breakout_reversals()`; legacy `find_three_candle_setups()` uses retrospective C3 conditions and may yield different signal counts. For these locked reference results use breakout engine's rules and verified source, not the legacy touch summaries. The main chart may still draw swing lines only. Preserve this section as primary handoff and document any later experimental variants separately.
+
+---
+
 ## 2026-10-30 — v2.4.3 confirmed C3 body-bottom BUY and 30 October RTH retest
 
 - **BUY**: C1 range >=0.20%; C2 range >=0.25%, C2 lower wick > absolute body, C2 low < C1 low; entry during C3 as it crosses **min(C2.Open,C2.Close)** upward (red C2 -> close; green C2 -> open), stop at C2 low. C3 ultimately green is a **retrospective** pattern-quality filter: not knowable at the real-time breakout. Historical scan with this filter has look-ahead/selection bias.
