@@ -1,3 +1,11 @@
+## 2026-10-30 — v2.4.3 confirmed C3 body-bottom BUY and 30 October RTH retest
+
+- **BUY**: C1 range >=0.20%; C2 range >=0.25%, C2 lower wick > absolute body, C2 low < C1 low; entry during C3 as it crosses **min(C2.Open,C2.Close)** upward (red C2 -> close; green C2 -> open), stop at C2 low. C3 ultimately green is a **retrospective** pattern-quality filter: not knowable at the real-time breakout. Historical scan with this filter has look-ahead/selection bias.
+- **SELL** remains C3 high sweeping both C1/C2 highs; enter on next red C4 breakdown through min(C3.Open,C3.Close), stop at C3 high. This is a separate hypothesis.
+- **30 Oct NQ=F, verified RTH 5m CSV** 13:30–20:00 GMT: 77 observations; quarantined anomalous 19:00 five-minute candle (1278.75-point high-low range). Rebuilt 24 complete 15m candles; excluded incomplete 19:00 15m. **One BUY**: C1 14:00, C2 14:15, C3 14:30; C2 body-bottom entry **28672.75**, SL **28614.75**. C3 first five-minute candle opens 28673.00 (above proposed 28672.75 stop-entry); realistic fill could be >=28673.00, not guaranteed 28672.75. Maximum favourable high before stop **28834.00** = +0.5624% from nominal entry; min 0.20% R floor gives 2R target touches; later SL at 15:40 GMT = -0.2023% gross hypothetical stop-loss if no trailing/target exits. No SELL from cleaned RTH data.
+- Previous 30 Oct **overnight** manually found 01:45 BUY and 05:30 / 06:30 SELL candidates on partial 15m data with a different loose model. Those are *not directly comparable* and this verified CSV covers RTH only. Full extended 30 Oct retest not yet executed.
+- Code version **v2.4.3-20261030** corrects misleading docstring in backtest_breakout_reversals; BUY formula had already been modified in v2.4.2. Existing check_signals/show_chart notebook API retained. Backtest still evaluates initial stops before target on ambiguous same candles; cannot substantiate precise intrabar fills, fees or realized return.
+
 
 ## 2026-10-30 v2.4.2: corrected BUY trigger inside C3
 
