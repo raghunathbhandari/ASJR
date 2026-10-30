@@ -1,5 +1,32 @@
 # Rudra Three-Candle Strategy — Research workspace
 
+## Current implementation — V2.0.0 (2026-10-30)
+
+**Important: the Python module was completely rewritten.** Existing Jupyter calls
+`check_signals("INTC", "2026-10-28", "2026-10-28", r=0.10)` and
+`show_chart(test)` are preserved, but now use **only the original historical
+RTH sweep/reclaim model**. The former experimental breakout execution simulator
+was removed. The console must say `LOADED v2.0.0-20261030 |
+MODEL=RTH_C2_SWEEP_EXPOST`.
+
+Data is downloaded as 5m Yahoo OHLCV (or use `source_csv=...` for archived data),
+converted to New York 09:30–16:00 RTH, then grouped into completed 15m candles.
+C2 must be bullish with lower wick longer than body, sweep C1 low and close
+above C1 low; C3 volume > C2 volume and C3 close > C2 close.
+
+Green entry reference = **C2 close hypothesis**, red = C2 open initial SL,
+purple = 1R/2R/3R *reference levels*, **not filled exits**. C3 volume is not
+known at the C2-close hypothesis time. Only ex-post price-touch counts are
+shown; stop ordering and executable win rate remain unverified.
+
+The archived September ten-ticker regression was rerun successfully:
+**83 setups, 83/75/64 touches at 1R/2R/3R**. Notebook call and chart were
+also exercised using archived INTC data. Live Yahoo retrieval for 28 October
+has not been verified in this environment.
+
+**Note:** Some older sections below describe superseded experimental versions;
+the V2 description above and `three_candle.py` take precedence.
+
 **Primary home:** `main/three_candle/` • Updated 2026-10-30 (UK).
 
 This is an exploratory **signal scanner and hypothetical OHLC backtest**, not a live order executor or validated fee-adjusted strategy.
