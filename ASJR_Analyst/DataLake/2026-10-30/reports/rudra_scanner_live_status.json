@@ -34,7 +34,7 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 73008,
+    "stored_rows": 73242,
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-30/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
@@ -60,6 +60,7 @@
   },
   "collection": {
     "requested": [
+      "MSTR",
       "SPY",
       "QQQ",
       "SMH",
@@ -72,14 +73,14 @@
       "AMAT",
       "AMD",
       "AMZN",
-      "ASST",
       "BE",
       "BMNR",
       "COIN",
       "CRDO",
+      "HOOD",
       "INTC",
-      "IREN",
       "MSFT",
+      "MSTR",
       "NBIS",
       "ORCL",
       "PURR",
