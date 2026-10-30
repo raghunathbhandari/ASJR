@@ -1,4 +1,4 @@
-"""Rudra Three-Candle: transparent NQ=F 15-minute signal research.
+"""Rudra Three-Candle: transparent INTC / NQ=F 15-minute research.
 
 This module identifies *setups*, not executable fills or profit results.
 Every filter is independent so its definition can be reviewed or changed.
@@ -44,7 +44,8 @@ class TradeResult:
     realised_r: float | None
 
 
-def download_nq(start: str, end: str, interval: str = "15m") -> pd.DataFrame:
+def download_data(start: str, end: str, symbol: str = "INTC",
+                  interval: str = "15m") -> pd.DataFrame:
     """Download inclusive calendar dates; return UK-localized OHLCV candles.
 
     Yahoo typically limits 15-minute history to about 60 days. Yahoo futures
@@ -56,7 +57,7 @@ def download_nq(start: str, end: str, interval: str = "15m") -> pd.DataFrame:
         raise ValueError("end must be on/after start")
     # Query exactly the requested dates. Yahoo's 'end' is exclusive.
     raw = yf.download(
-        "NQ=F", start=first.isoformat(),
+        symbol, start=first.isoformat(),
         end=(last + timedelta(days=1)).isoformat(),
         interval=interval, auto_adjust=False, progress=False,
         prepost=True, threads=False,
@@ -73,7 +74,14 @@ def download_nq(start: str, end: str, interval: str = "15m") -> pd.DataFrame:
     raw = raw.sort_index()
     # Date boundaries are interpreted in UK calendar dates.
     dates = pd.Index(raw.index.date)
-    return raw.loc[(dates >= first) & (dates <= last)]
+    result = raw.loc[(dates >= first) & (dates <= last)].copy()
+    result.attrs["symbol"] = symbol
+    return result
+
+
+def download_nq(start: str, end: str, interval: str = "15m") -> pd.DataFrame:
+    """Backward-compatible alias for the original notebook."""
+    return download_data(start, end, symbol="NQ=F", interval=interval)
 
 
 def candle_is_bullish(candle: pd.Series) -> bool:
@@ -130,7 +138,8 @@ def find_signals(data: pd.DataFrame, require_breakout: bool = False):
         )
 
 
-def backtest_signal(signal: Signal, data: pd.DataFrame) -> TradeResult:
+def backtest_signal(signal: Signal, data: pd.DataFrame,
+                    r_pct: float = 0.10, target_r: int = 2) -> TradeResult:
     """C3-confirmed breakout; reach 2R, then trail 2R, 3R, 4R ...
 
     Only bars AFTER C3 may fill. Entry=C2 high (stop-buy), initial SL=C2
@@ -142,9 +151,12 @@ def backtest_signal(signal: Signal, data: pd.DataFrame) -> TradeResult:
     """
     entry = signal.candle2_high
     initial_stop = signal.candle2_open
-    risk = entry - initial_stop
-    if risk <= 0:
+    actual_stop_distance = entry - initial_stop
+    if actual_stop_distance <= 0 or r_pct <= 0 or target_r < 1:
         return TradeResult(signal.time, "INVALID", None, None, entry, None, 0, None)
+    # Keep the original C2-open stop, but never define 1R below 0.10% of entry.
+    # Hence a stop loss may be LESS than -1R when C2-open is closer than 0.10%.
+    risk = max(actual_stop_distance, entry * r_pct / 100.0)
 
     start = data.index.get_loc(signal.candle3_time) + 1
     filled_at = None
@@ -159,11 +171,11 @@ def backtest_signal(signal: Signal, data: pd.DataFrame) -> TradeResult:
         if low <= stop:
             # A gap through a stop can fill worse in reality; not modelled.
             realised = (stop - entry) / risk
-            return TradeResult(signal.time, "WIN" if realised >= 2 else "LOSS",
+            return TradeResult(signal.time, "WIN" if realised >= target_r else "LOSS",
                                filled_at, timestamp, entry, stop, max_r, realised)
         reached = max(0, math.floor((high - entry) / risk + 1e-9))
         max_r = max(max_r, reached)
-        if max_r >= 2:
+        if max_r >= target_r:
             stop = max(stop, entry + max_r * risk)
 
     if filled_at is None:
@@ -173,12 +185,15 @@ def backtest_signal(signal: Signal, data: pd.DataFrame) -> TradeResult:
     return TradeResult(signal.time, status, filled_at, None, entry, None, max_r, None)
 
 
-def print_summary(signals: list[Signal], data: pd.DataFrame) -> list[TradeResult]:
+def print_summary(signals: list[Signal], data: pd.DataFrame,
+                  r_pct: float = 0.10, target_r: int = 2) -> list[TradeResult]:
     """Show completed 2R-trailing win rate and unresolved counts separately."""
-    results = [backtest_signal(s, data) for s in signals]
+    results = [backtest_signal(s, data, r_pct=r_pct, target_r=target_r)
+               for s in signals]
     wins = sum(r.status == "WIN" for r in results)
     losses = sum(r.status == "LOSS" for r in results)
-    print("\n=== RUDRA THREE-CANDLE SUMMARY (2R minimum, +1R steps) ===")
+    print(f"\n=== {data.attrs.get('symbol', 'SYMBOL')} THREE-CANDLE SUMMARY "
+          f"(min 1R {r_pct:.2f}%, trailing starts {target_r}R, +1R steps) ===")
     print(f"Signals: {len(results)} | Wins: {wins} | Losses: {losses} | "
           f"Open: {sum(r.status == 'OPEN' for r in results)} | "
           f"No fill: {sum(r.status == 'NO_FILL' for r in results)} | "
@@ -233,7 +248,8 @@ def plot_signal(signal: Signal, data: pd.DataFrame, before: int = 12,
     ax.axhline(signal.candle2_open, color="orange", linestyle=":", alpha=0.7,
                label=f"C2 open {signal.candle2_open:.2f}")
     ax.legend(loc="best")
-    ax.set_title(f"NQ=F 15m | Setup confirmed at {signal.time:%Y-%m-%d %H:%M %Z}")
+    ax.set_title(f"{data.attrs.get('symbol', 'SYMBOL')} 15m | "
+                 f"Setup confirmed at {signal.time:%Y-%m-%d %H:%M %Z}")
     ax.set_ylabel("Price")
     vol.set_ylabel("Volume")
     ticks = list(range(0, len(view), max(1, len(view)//8)))
@@ -244,10 +260,11 @@ def plot_signal(signal: Signal, data: pd.DataFrame, before: int = 12,
 
 
 def run(start: str, end: str, show_charts: bool = True,
-        require_breakout: bool = False, limit: int | None = None):
+        require_breakout: bool = False, limit: int | None = None,
+        symbol: str = "INTC", r_pct: float = 0.10, target_r: int = 2):
     """Download, find, print and optionally plot signals one-by-one."""
-    data = download_nq(start, end)
-    print(f"NQ=F | {len(data)} 15m candles | {start} to {end} (UK dates)")
+    data = download_data(start, end, symbol=symbol)
+    print(f"{symbol} | {len(data)} 15m candles | {start} to {end} (UK dates)")
     count = 0
     shown = []
     for signal in find_signals(data, require_breakout=require_breakout):
@@ -261,7 +278,7 @@ def run(start: str, end: str, show_charts: bool = True,
         if limit is not None and count >= limit:
             break
     print(f"\nTotal setups shown: {count}")
-    print_summary(shown, data)
+    print_summary(shown, data, r_pct=r_pct, target_r=target_r)
     return data
 
 
@@ -272,6 +289,10 @@ if __name__ == "__main__":
     parser.add_argument("--no-charts", action="store_true")
     parser.add_argument("--require-breakout", action="store_true")
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument("--symbol", default="INTC")
+    parser.add_argument("--r-pct", type=float, default=0.10)
+    parser.add_argument("--target-r", type=int, default=2)
     args = parser.parse_args()
     run(args.start, args.end, show_charts=not args.no_charts,
-        require_breakout=args.require_breakout, limit=args.limit)
+        require_breakout=args.require_breakout, limit=args.limit,
+        symbol=args.symbol, r_pct=args.r_pct, target_r=args.target_r)
