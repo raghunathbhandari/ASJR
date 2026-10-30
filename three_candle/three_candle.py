@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 
-__version__ = "2.3.2-20261030"
+__version__ = "2.4.0-20261030"
 MODEL = "RTH_C2_SWEEP_EXPOST"
 print(f"[Rudra Three-Candle] LOADED v{__version__} | MODEL={MODEL}")
 COLS = ["Open", "High", "Low", "Close", "Volume"]
@@ -361,6 +361,80 @@ def find_three_candle_setups(data: pd.DataFrame, check_vol: bool = True,
             )
 
 
+
+# 04B. BREAKOUT ENTRY RESEARCH (no C3-close entry assumption)
+# This is a retrospective pattern study; 15m OHLC cannot prove intrabar order.
+def backtest_breakout_reversals(data: pd.DataFrame,
+                               min_c1_range_pct: float = 0.20,
+                               min_c2_range_pct: float = 0.25,
+                               r_floor_pct: float = 0.20) -> pd.DataFrame:
+    """Research BUY C3 body-top breakout and SELL post-C3 sweep breakdown.
+
+    BUY: C1/C2 ranges pass filters; C2 long lower wick sweeps C1 low;
+         C3 green and trades above C2 body top. Entry=C2 body top, SL=C2 low.
+    SELL: C3 high sweeps BOTH C1/C2 highs; C4 red and trades below C3
+          body bottom. Entry=C3 body bottom, SL=C3 high.
+    R = max(entry-to-stop distance, entry * r_floor_pct/100).
+    Stops are evaluated conservatively (stop first on ambiguous OHLC bars).
+    All gains are gross instrument-price percentages, not NQ account returns.
+    """
+    step=pd.Timedelta(minutes=int(data.attrs.get("interval_minutes",15)))
+    trades=[]
+    for _,day in data.groupby(get_trading_session_dates(data)):
+        for i in range(2,len(day)):
+            if any(day.index[z]-day.index[z-1]!=step for z in range(i-1,i+1)):
+                continue
+            a,b,c=day.iloc[i-2],day.iloc[i-1],day.iloc[i]
+            def range_pct(x):
+                return 100*(float(x.High)-float(x.Low))/float(x.Close)
+            large=(range_pct(a)>=min_c1_range_pct and
+                   range_pct(b)>=min_c2_range_pct)
+            wick=float(min(b.Open,b.Close)-b.Low)
+            body=abs(float(b.Close-b.Open))
+            buy=(large and wick>body and b.Low<a.Low and
+                 c.Close>c.Open and c.High>max(b.Open,b.Close))
+            if buy:
+                entry=float(max(b.Open,b.Close)); sl=float(b.Low)
+                trades.append(("BUY",day.index[i-1],day.index[i],entry,sl,i))
+            # SELL: C3 sweeps highs; C4 must be red and break below C3 body.
+            if i+1<len(day) and day.index[i+1]-day.index[i]==step:
+                d=day.iloc[i+1]
+                sell=(c.High>max(a.High,b.High) and d.Close<d.Open and
+                      d.Low<min(c.Open,c.Close))
+                if sell:
+                    entry=float(min(c.Open,c.Close)); sl=float(c.High)
+                    trades.append(("SELL",day.index[i],day.index[i+1],entry,sl,i+1))
+        # Stop/target evaluation begins on the actual breakout candle.
+    output=[]
+    for direction,sweep_time,trigger_time,entry,sl,start_i in trades:
+        day_id=(trigger_time.tz_convert("America/New_York")+
+                (pd.Timedelta(hours=6) if data.attrs.get("session_type")=="nq_extended"
+                 else pd.Timedelta(0))).date()
+        day=data.loc[get_trading_session_dates(data)==day_id]
+        if trigger_time not in day.index: continue
+        idx=day.index.get_loc(trigger_time)
+        risk=max(abs(entry-sl),entry*r_floor_pct/100)
+        max_r=0; status="OPEN"; exit_pct=None
+        last=trigger_time-step
+        for t,bar in day.iloc[idx:].iterrows():
+            if t-last!=step: break
+            last=t
+            adverse=(bar.Low<=sl if direction=="BUY" else bar.High>=sl)
+            if adverse:
+                status="SL (OHLC conservative)"
+                exit_pct=100*((sl-entry)/entry if direction=="BUY" else (entry-sl)/entry)
+                break
+            favourable=(bar.High-entry if direction=="BUY" else entry-bar.Low)
+            max_r=max(max_r,min(3,int(max(0,favourable)/risk)))
+        if status=="OPEN": status="UNRESOLVED (end of available data)"
+        output.append({"direction":direction,"sweep_time":sweep_time,
+                       "trigger_time":trigger_time,"entry":entry,"sl":sl,
+                       "r_points":round(risk,3),"max_r_before_sl":max_r,
+                       "highest_target_gain_pct":round(100*max_r*risk/entry,4),
+                       "sl_gain_pct":None if exit_pct is None else round(exit_pct,4),
+                       "status":status})
+    return pd.DataFrame(output)
+
 # 05. SUPPORT / RESISTANCE SWING LEVELS
 # Confirm a pivot only after swingRight further candles have closed.
 
@@ -510,6 +584,12 @@ def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
     else:
         data = build_regular_market_candles(download_candles_from_yahoo(start, end, ticker),
                                start, end, ticker, interval_label)
+    breakout_trades = backtest_breakout_reversals(data, minC1RangePct, minC2RangePct, r)
+    print("\\n=== BREAKOUT BUY / POST-SWEEP SELL RESEARCH (gross Gain %) ===")
+    if breakout_trades.empty:
+        print("No qualifying breakout trades in available candles.")
+    else:
+        print(breakout_trades.to_string(index=False))
     levels = find_confirmed_swing_levels(data, swingLeft, swingRight)
     signals = list(find_three_candle_setups(
         data, check_vol=checkVol, min_c1_range_pct=minC1RangePct,
@@ -556,7 +636,7 @@ def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
                   f"pivot {level['pivot_time']:%Y-%m-%d %H:%M %Z}")
         else:
             print("Swing N/A | no previously confirmed level")
-    return {"data":data, "signals":signals, "results":[],
+    return {"data":data, "signals":signals, "breakout_trades":breakout_trades, "results":[],
             "touches":hits, "potential_gains_pct":gains, "model":active_model, "r_pct":r, "interval":interval_label, "checkVol":checkVol, "session":session, "swing_levels":levels,
             "swing_matches":matches, "swingProximity":swingProximity,
             "nearSwingOnly":nearSwingOnly}
