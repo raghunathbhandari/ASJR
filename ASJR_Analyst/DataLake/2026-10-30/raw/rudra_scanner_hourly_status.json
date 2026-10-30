@@ -1,16 +1,16 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-30T03:32:51.654985+00:00",
+  "generated_at_utc": "2026-10-30T03:44:52.696117+00:00",
   "selected_tickers": [
     "AAOI",
+    "AEHR",
     "AKAM",
     "AMAT",
     "AMD",
     "AMZN",
     "BE",
     "CRDO",
-    "GOOGL",
     "INTC",
     "MSFT",
     "MSTR",
@@ -26,6 +26,10 @@
   ],
   "per_ticker": {
     "AAOI": {
+      "state": "OK",
+      "rows": 560
+    },
+    "AEHR": {
       "state": "OK",
       "rows": 560
     },
@@ -50,10 +54,6 @@
       "rows": 560
     },
     "CRDO": {
-      "state": "OK",
-      "rows": 560
-    },
-    "GOOGL": {
       "state": "OK",
       "rows": 560
     },
@@ -109,13 +109,13 @@
   "rows": 11065,
   "usable_150bars": [
     "AAOI",
+    "AEHR",
     "AKAM",
     "AMAT",
     "AMD",
     "AMZN",
     "BE",
     "CRDO",
-    "GOOGL",
     "INTC",
     "MSFT",
     "MSTR",
