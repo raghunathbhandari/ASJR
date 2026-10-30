@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 
-__version__ = "2.1.2-20261030"
+__version__ = "2.1.3-20261030"
 MODEL = "RTH_C2_SWEEP_EXPOST"
 print(f"[Rudra Three-Candle] LOADED v{__version__} | MODEL={MODEL}")
 COLS = ["Open", "High", "Low", "Close", "Volume"]
@@ -247,18 +247,18 @@ def load_historical_5m(path: str, start: str, end: str,
 
 
 def historical_three_candle(c1: pd.Series, c2: pd.Series,
-                            c3: pd.Series) -> bool:
-    """Green C2, lower-wick sweep/reclaim C1 low; strong-volume bullish C3."""
+                            c3: pd.Series, check_vol: bool = True) -> bool:
+    """Green C2 sweep/reclaim; C3 volume filter is optional."""
     body = float(c2.Close - c2.Open)
     return (body > 0 and float(c2.Open-c2.Low) > body
             and float(c2.Low) < float(c1.Low)
             and float(c2.Close) > float(c1.Low)
-            and pd.notna(c2.Volume) and pd.notna(c3.Volume)
-            and float(c2.Volume) > 0 and float(c3.Volume) > float(c2.Volume)
+            and (not check_vol or (pd.notna(c2.Volume) and pd.notna(c3.Volume)
+                 and float(c2.Volume) > 0 and float(c3.Volume) > float(c2.Volume)))
             and float(c3.Close) > float(c2.Close))
 
 
-def find_historical_signals(data: pd.DataFrame):
+def find_historical_signals(data: pd.DataFrame, check_vol: bool = True):
     """Never join pattern candles across two US trading sessions."""
     for _, day in data.groupby(futures_session_dates(data)):
         step = pd.Timedelta(minutes=int(data.attrs.get("interval_minutes", 15)))
@@ -266,7 +266,7 @@ def find_historical_signals(data: pd.DataFrame):
             if day.index[i] - day.index[i-1] != step or day.index[i-1] - day.index[i-2] != step:
                 continue
             c1, c2, c3 = day.iloc[i-2], day.iloc[i-1], day.iloc[i]
-            if not historical_three_candle(c1, c2, c3):
+            if not historical_three_candle(c1, c2, c3, check_vol=check_vol):
                 continue
             yield Signal(
                 day.index[i], "LONG", day.index[i-2], day.index[i-1], day.index[i],
@@ -330,12 +330,15 @@ def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
                   start: str | None = None, end: str | None = None,
                   interval: str = "15min", target_r: int = 1,
                   require_breakout: bool = False,
-                  source_csv: str | None = None) -> dict:
+                  source_csv: str | None = None,
+                  checkVol: bool = False) -> dict:
     """Supports both (ticker,start,end) and (ticker,interval,start,end).\n\n    Historical scanner; not an execution backtest.
 
     target_r/require_breakout remain accepted for older cells but do not
     change the archived fixed pattern, which is a separate research model.
     """
+    if not isinstance(checkVol, bool):
+        raise TypeError("checkVol must be True or False")
     if len(args) == 2:
         start, end = args
     elif len(args) == 3:
@@ -349,7 +352,7 @@ def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
     if minutes == 240 and ticker not in ("NQ=F",):
         raise ValueError("4h extended futures mode currently supports NQ=F only")
     active_model = "NQ_EXTENDED_C2_SWEEP_EXPOST" if minutes == 240 else MODEL
-    print(f"[Rudra Three-Candle] v{__version__} | MODEL={active_model} | TIMEFRAME={interval_label}")
+    print(f"[Rudra Three-Candle] v{__version__} | MODEL={active_model} | TIMEFRAME={interval_label} | checkVol={checkVol}")
     if source_csv:
         data = load_historical_5m(source_csv, start, end, interval_label)
     elif minutes == 240:
@@ -358,12 +361,12 @@ def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
     else:
         data = resample_rth_5m(download_data(start, end, ticker),
                                start, end, ticker, interval_label)
-    signals = list(find_historical_signals(data))
+    signals = list(find_historical_signals(data, check_vol=checkVol))
     hits = historical_target_touches(signals, data, r)
     gains = historical_potential_gains(signals, data, r)
     total = len(signals)
     print(f"\n{ticker} | {start} to {end} | {len(data)} RTH {interval_label} candles")
-    print("=== RUDRA THREE-CANDLE SUMMARY (ex-post price touches) ===")
+    print(f"=== RUDRA THREE-CANDLE SUMMARY (ex-post price touches; checkVol={checkVol}) ===")
     print(f"{'Metric':<24} {'Count':>8} {'Rate':>9} {'Gain %':>12}")
     print(f"{'Qualifying signals':<24} {total:>8} {'100%' if total else 'N/A':>9} {'—':>12}")
     for k, count in enumerate(hits, 1):
@@ -379,10 +382,12 @@ def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
         print(f"\n#{number} LONG | C2 {s.candle2_time:%Y-%m-%d %H:%M %Z} | "
               f"C3 close/confirmation {(s.candle3_time + pd.Timedelta(minutes=minutes)):%H:%M %Z}")
         print(pd.DataFrame([c2], index=[s.candle2_time], columns=COLS).to_string())
+        vol_ratio = (f"{s.candle3_volume/s.candle2_volume:.2f}x"
+                     if s.candle2_volume > 0 else "N/A")
         print(f"C2 close hypothesis {s.candle2_close:.4f} | SL {s.candle2_open:.4f} | "
-              f"C3/C2 volume {s.candle3_volume/s.candle2_volume:.2f}x")
+              f"C3/C2 volume {vol_ratio} (filter {'ON' if checkVol else 'OFF'})")
     return {"data":data, "signals":signals, "results":[],
-            "touches":hits, "potential_gains_pct":gains, "model":active_model, "r_pct":r, "interval":interval_label}
+            "touches":hits, "potential_gains_pct":gains, "model":active_model, "r_pct":r, "interval":interval_label, "checkVol":checkVol}
 
 
 def show_chart(test: dict, signal_number: int | None = None) -> None:
