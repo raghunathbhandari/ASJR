@@ -227,8 +227,9 @@ def show_chart(test: dict, signal_number: int | None = None) -> None:
         if not 1 <= signal_number <= len(signals):
             raise ValueError(f"signal_number must be 1..{len(signals)}")
         signals = [signals[signal_number - 1]]
+    trade_by_time = {r.signal_time: r for r in test["results"]}
     for signal in signals:
-        fig = plot_signal(signal, test["data"])
+        fig = plot_signal(signal, test["data"], trade=trade_by_time.get(signal.time))
         plt.show()
         plt.close(fig)
 
@@ -244,10 +245,12 @@ def print_signal(signal: Signal, data: pd.DataFrame) -> None:
 
 
 def plot_signal(signal: Signal, data: pd.DataFrame, before: int = 12,
-                after: int = 8):
+                after: int = 8, trade: TradeResult | None = None):
     """Plot nearby candles, highlight C1/C2/C3, return matplotlib figure."""
     idx = data.index.get_loc(signal.candle3_time)
     left, right = max(0, idx-before), min(len(data), idx+after+1)
+    if trade is not None and trade.exit_time is not None:
+        right = max(right, data.index.get_loc(trade.exit_time) + 1)
     view = data.iloc[left:right]
     fig, (ax, vol) = plt.subplots(2, 1, figsize=(13, 6), sharex=True,
                                    gridspec_kw={"height_ratios": [4, 1]})
@@ -269,10 +272,23 @@ def plot_signal(signal: Signal, data: pd.DataFrame, before: int = 12,
         ax.annotate(label, (x, float(view.iloc[x].High)), xytext=(0, 8),
                     textcoords="offset points", ha="center", color=color,
                     weight="bold")
-    ax.axhline(signal.candle2_high, color="blue", linestyle="--", alpha=0.6,
-               label=f"C2 high {signal.candle2_high:.2f}")
-    ax.axhline(signal.candle2_open, color="orange", linestyle=":", alpha=0.7,
-               label=f"C2 open {signal.candle2_open:.2f}")
+    entry = trade.entry if trade is not None else signal.candle2_high
+    entry_label = "Entry" if trade is not None and trade.entry_time is not None else "Entry trigger (unfilled)"
+    ax.axhline(entry, color="#138a36", linestyle="--", linewidth=1.5,
+               label=f"{entry_label} {entry:.2f}")
+    if trade is not None and trade.entry_time is not None:
+        x_entry = view.index.get_loc(trade.entry_time)
+        ax.scatter(x_entry, entry, color="#138a36", marker="^", s=60, zorder=5)
+    if trade is not None and trade.exit_price is not None:
+        exit_color = "#853fb7" if trade.status == "WIN" else "#d33232"
+        exit_label = "TP / trailing exit" if trade.status == "WIN" else "SL exit"
+        ax.axhline(trade.exit_price, color=exit_color, linestyle="-.",
+                   linewidth=1.6, label=f"{exit_label} {trade.exit_price:.2f}")
+        x_exit = view.index.get_loc(trade.exit_time)
+        ax.scatter(x_exit, trade.exit_price, color=exit_color, marker="v",
+                   s=60, zorder=5)
+    ax.axhline(signal.candle2_open, color="#d33232", linestyle=":", alpha=0.7,
+               label=f"Initial SL {signal.candle2_open:.2f}")
     ax.legend(loc="best")
     ax.set_title(f"{data.attrs.get('symbol', 'SYMBOL')} 15m | "
                  f"Setup confirmed at {signal.time:%Y-%m-%d %H:%M %Z}")
