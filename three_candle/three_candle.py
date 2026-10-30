@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 
-__version__ = "2.3.1-20261030"
+__version__ = "2.3.2-20261030"
 MODEL = "RTH_C2_SWEEP_EXPOST"
 print(f"[Rudra Three-Candle] LOADED v{__version__} | MODEL={MODEL}")
 COLS = ["Open", "High", "Low", "Close", "Volume"]
@@ -316,10 +316,20 @@ def load_candles_from_csv(path: str, start: str, end: str,
 # C1 preceding candle, C2 bullish sweep/reclaim, C3 confirmation.
 
 def is_bullish_three_candle_sweep(c1: pd.Series, c2: pd.Series,
-                            c3: pd.Series, check_vol: bool = True) -> bool:
+                            c3: pd.Series, check_vol: bool = True,
+                            min_c1_range_pct: float = 0.20,
+                            min_c2_range_pct: float = 0.25) -> bool:
     """C2 wick sweeps C1; C3 must close green; volume optional."""
     # C2 may be RED or GREEN: require a lower-wick sweep of C1 low.
     # C3 MUST be GREEN and close above C2. Volume remains optional.
+    # Provisional absolute-size gate: rejects weak/tiny C1+C2 patterns.
+    # C1 >= 0.20% and C2 >= 0.25% of their respective closing prices.
+    if min_c1_range_pct < 0 or min_c2_range_pct < 0:
+        raise ValueError("minimum candle ranges must be nonnegative")
+    c1_range_pct = 100 * float(c1.High - c1.Low) / float(c1.Close)
+    c2_range_pct = 100 * float(c2.High - c2.Low) / float(c2.Close)
+    if c1_range_pct < min_c1_range_pct or c2_range_pct < min_c2_range_pct:
+        return False
     body = abs(float(c2.Close - c2.Open))
     lower_wick = float(min(c2.Open, c2.Close) - c2.Low)
     return (lower_wick > body
@@ -330,7 +340,9 @@ def is_bullish_three_candle_sweep(c1: pd.Series, c2: pd.Series,
                  and float(c2.Volume) > 0 and float(c3.Volume) > float(c2.Volume))))
 
 
-def find_three_candle_setups(data: pd.DataFrame, check_vol: bool = True):
+def find_three_candle_setups(data: pd.DataFrame, check_vol: bool = True,
+                             min_c1_range_pct: float = 0.20,
+                             min_c2_range_pct: float = 0.25):
     """Never join pattern candles across two US trading sessions."""
     for _, day in data.groupby(get_trading_session_dates(data)):
         step = pd.Timedelta(minutes=int(data.attrs.get("interval_minutes", 15)))
@@ -338,7 +350,9 @@ def find_three_candle_setups(data: pd.DataFrame, check_vol: bool = True):
             if day.index[i] - day.index[i-1] != step or day.index[i-1] - day.index[i-2] != step:
                 continue
             c1, c2, c3 = day.iloc[i-2], day.iloc[i-1], day.iloc[i]
-            if not is_bullish_three_candle_sweep(c1, c2, c3, check_vol=check_vol):
+            if not is_bullish_three_candle_sweep(c1, c2, c3, check_vol=check_vol,
+                    min_c1_range_pct=min_c1_range_pct,
+                    min_c2_range_pct=min_c2_range_pct):
                 continue
             yield Signal(
                 day.index[i], "LONG", day.index[i-2], day.index[i-1], day.index[i],
@@ -459,7 +473,9 @@ def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
                   checkVol: bool = False, session: str = "RTH",
                    swingLeft: int = 3, swingRight: int = 3,
                    swingProximity: float = 0.25,
-                   nearSwingOnly: bool = False) -> dict:
+                   nearSwingOnly: bool = False,
+                   minC1RangePct: float = 0.20,
+                   minC2RangePct: float = 0.25) -> dict:
     """Supports both (ticker,start,end) and (ticker,interval,start,end).\n\n    Historical scanner; not an execution backtest.
 
     target_r/require_breakout remain accepted for older cells but do not
@@ -495,7 +511,9 @@ def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
         data = build_regular_market_candles(download_candles_from_yahoo(start, end, ticker),
                                start, end, ticker, interval_label)
     levels = find_confirmed_swing_levels(data, swingLeft, swingRight)
-    signals = list(find_three_candle_setups(data, check_vol=checkVol))
+    signals = list(find_three_candle_setups(
+        data, check_vol=checkVol, min_c1_range_pct=minC1RangePct,
+        min_c2_range_pct=minC2RangePct))
     matches = {sig.candle2_time: find_nearest_swing_for_setup(
         sig, levels, swingProximity, minutes) for sig in signals}
     raw_count = len(signals)
