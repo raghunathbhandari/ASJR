@@ -1,3 +1,13 @@
+## 2026-10-30 — v2.1.4 NQ extended session (5m / 15m / 30m / 1h / 4h)
+
+- Added `session="extended"` to `check_signals` (default `"RTH"` preserves all older calls).
+- Exact notebook call: `check_signals("NQ=F", "15min", "2026-10-30", "2026-10-30", r=0.20, checkVol=False, session="extended")`; `show_chart(test)` remains unchanged.
+- Extended is currently NQ=F-only; RTH existing behavior remains unchanged; 4h continues using futures trading hours.
+- 5m-source bars are anchored to 18:00 US Eastern futures-session open, 17:00–18:00 ET exchange break omitted. Start/end refer to US futures *trade dates*. Candles are complete 5m-group aggregates only; no fabricated Yahoo candles, including missing 30 October 18:55 UK bar.
+- NQ overnight 30 October 01:45 UK C2 has long lower wick and reclaims the 01:30 C1 low. Its 02:00 C3 closes higher but has lower volume (3683 vs 4852); `checkVol=False` allows this pattern. A synthetic 5m resampling/logic unit test using the user's **15m OHLC values** verified the 01:45 C2 is detected with volume OFF, excluded with volume ON. **This is not a claim that Yahoo's genuine underlying 5m download has been independently validated**.
+- All signal reports remain **ex-post C2-close hypotheses**, not causal execution backtests. Stop/target order and fees aren't simulated. Separate 01:45 entry at 02:00 with C2-open stop may hit SL before reaching profit targets.
+- Version printed on import and every check: `2.1.4-20261030`. Display labels show session.
+
 # Rudra Three-Candle — AI session handoff
 
 ## Highest-priority update: V2.0.0 rewritten 2026-10-30
