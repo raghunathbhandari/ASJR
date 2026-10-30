@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 
-__version__ = "2.0.0-20261030"
+__version__ = "2.0.1-20261030"
 MODEL = "RTH_C2_SWEEP_EXPOST"
 print(f"[Rudra Three-Candle] LOADED v{__version__} | MODEL={MODEL}")
 COLS = ["Open", "High", "Low", "Close", "Volume"]
@@ -165,16 +165,26 @@ def check_signals(ticker: str = "INTC", start: str = "2026-10-29",
     data = (load_historical_5m(source_csv, start, end) if source_csv else
             resample_rth_5m(download_data(start, end, ticker), start, end, ticker))
     signals = list(find_historical_signals(data))
-    print(f"{ticker} | {start} to {end} | {len(data)} RTH candles | {len(signals)} setups")
-    for s in signals:
-        print(f"\nSIGNAL LONG | C3 starts {s.time:%Y-%m-%d %H:%M %Z}")
-        print(data.loc[[s.candle1_time, s.candle2_time, s.candle3_time]].to_string())
+    hits = historical_target_touches(signals, data, r)
+    total = len(signals)
+    print(f"\\n{ticker} | {start} to {end} | {len(data)} RTH 15m candles")
+    print("=== RUDRA THREE-CANDLE SUMMARY (ex-post price touches) ===")
+    print(f"{'Metric':<24} {'Count':>8} {'Rate':>9}")
+    print(f"{'Qualifying signals':<24} {total:>8} {'100%' if total else 'N/A':>9}")
+    for k, count in enumerate(hits, 1):
+        rate = f"{count/total*100:.1f}%" if total else "N/A"
+        print(f"{str(k)+'R price touches':<24} {count:>8} {rate:>9}")
+    print("Executed win rate: NOT DETERMINED (C3 look-ahead / intrabar order).")
+    print("\\n=== SIGNAL DETAILS (CANDLE 2 ONLY) ===")
+    if not signals:
+        print("No qualifying signals.")
+    for number, s in enumerate(signals, 1):
+        c2 = data.loc[s.candle2_time]
+        print(f"\\n#{number} LONG | C2 {s.candle2_time:%Y-%m-%d %H:%M %Z} | "
+              f"C3 confirmation {s.candle3_time:%H:%M %Z}")
+        print(pd.DataFrame([c2], index=[s.candle2_time], columns=COLS).to_string())
         print(f"C2 close hypothesis {s.candle2_close:.4f} | SL {s.candle2_open:.4f} | "
               f"C3/C2 volume {s.candle3_volume/s.candle2_volume:.2f}x")
-    hits = historical_target_touches(signals, data, r)
-    print(f"EX-POST PRICE TOUCHES | 1R {hits[0]}/{len(signals)} | "
-          f"2R {hits[1]}/{len(signals)} | 3R {hits[2]}/{len(signals)}")
-    print("Executed win rate: NOT DETERMINED (C3 look-ahead, intrabar stop order).")
     return {"data":data, "signals":signals, "results":[],
             "touches":hits, "model":MODEL, "r_pct":r}
 
