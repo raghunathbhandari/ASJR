@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 
-__version__ = "2.3.0-20261030"
+__version__ = "2.3.1-20261030"
 MODEL = "RTH_C2_SWEEP_EXPOST"
 print(f"[Rudra Three-Candle] LOADED v{__version__} | MODEL={MODEL}")
 COLS = ["Open", "High", "Low", "Close", "Volume"]
@@ -317,14 +317,17 @@ def load_candles_from_csv(path: str, start: str, end: str,
 
 def is_bullish_three_candle_sweep(c1: pd.Series, c2: pd.Series,
                             c3: pd.Series, check_vol: bool = True) -> bool:
-    """Green C2 sweep/reclaim; C3 volume filter is optional."""
-    body = float(c2.Close - c2.Open)
-    return (body > 0 and float(c2.Open-c2.Low) > body
+    """C2 wick sweeps C1; C3 must close green; volume optional."""
+    # C2 may be RED or GREEN: require a lower-wick sweep of C1 low.
+    # C3 MUST be GREEN and close above C2. Volume remains optional.
+    body = abs(float(c2.Close - c2.Open))
+    lower_wick = float(min(c2.Open, c2.Close) - c2.Low)
+    return (lower_wick > body
             and float(c2.Low) < float(c1.Low)
-            and float(c2.Close) > float(c1.Low)
+            and float(c3.Close) > float(c3.Open)
+            and float(c3.Close) > float(c2.Close)
             and (not check_vol or (pd.notna(c2.Volume) and pd.notna(c3.Volume)
-                 and float(c2.Volume) > 0 and float(c3.Volume) > float(c2.Volume)))
-            and float(c3.Close) > float(c2.Close))
+                 and float(c2.Volume) > 0 and float(c3.Volume) > float(c2.Volume))))
 
 
 def find_three_candle_setups(data: pd.DataFrame, check_vol: bool = True):
