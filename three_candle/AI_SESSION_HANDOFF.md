@@ -1,3 +1,12 @@
+## 2026-10-30 — v2.3.0: human-readable Python methods for user maintenance
+
+- Renamed internal functions into descriptive verbs (`download_candles_from_yahoo`, `build_extended_nq_candles`, `find_three_candle_setups`, `find_confirmed_swing_levels`, `count_future_target_touches`, etc.).
+- Grouped code under numbered comment sections from inputs through data download, resampling, pattern, swings, ex-post research, public `check_signals` and chart.
+- New `three_candle.show_method_flow()` prints the complete main call sequence.
+- Preserved external notebook API `check_signals(...)` and `show_chart(test)`, current session, `checkVol=False`, all-swing chart behavior and default settings. Old internal names are kept as backwards-compatible aliases.
+- Display version increments and prints `2.3.0-20261030`.
+- Python syntax parse and runtime import/alias/helper checks succeeded on the prior unsectioned v2.3 content; final sectioned version passed Python syntax parsing. Trading performance was not re-backtested; this is intended as a naming/documentation refactor only.
+
 ## 2026-10-30 — v2.2.1 all swing lines first
 
 - `show_chart(test)` now plots **one full-range candle chart** with **all** confirmed swing support (turquoise dashed) and resistance (orange dashed) levels; removed nearest-six limit.
