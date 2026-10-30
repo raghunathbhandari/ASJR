@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 
-__version__ = "2.4.2-20261030"
+__version__ = "2.4.3-20261030"
 MODEL = "RTH_C2_SWEEP_EXPOST"
 print(f"[Rudra Three-Candle] LOADED v{__version__} | MODEL={MODEL}")
 COLS = ["Open", "High", "Low", "Close", "Volume"]
@@ -368,14 +368,14 @@ def backtest_breakout_reversals(data: pd.DataFrame,
                                min_c1_range_pct: float = 0.20,
                                min_c2_range_pct: float = 0.25,
                                r_floor_pct: float = 0.20) -> pd.DataFrame:
-    """Research BUY C3 body-top breakout and SELL post-C3 sweep breakdown.
+    """Research BUY C3 body-bottom breakout and SELL post-C3 sweep breakdown.
 
     BUY: C1/C2 ranges pass filters; C2 long lower wick sweeps C1 low;
-         C3 green and trades above C2 body top. Entry=C2 body bottom, SL=C2 low.
+         C3 green and trades above C2 body bottom. Entry=C2 body bottom, SL=C2 low.\n         Green C3 is an ex-post qualification, not knowable during C3 entry.
     SELL: C3 high sweeps BOTH C1/C2 highs; C4 red and trades below C3
           body bottom. Entry=C3 body bottom, SL=C3 high.
     R = max(entry-to-stop distance, entry * r_floor_pct/100).
-    Stops are evaluated conservatively (stop first on ambiguous OHLC bars).
+    Stops are evaluated conservatively (stop first on ambiguous OHLC bars).\n    Trade identification at C3 close can introduce look-ahead bias.
     All gains are gross instrument-price percentages, not NQ account returns.
     """
     step=pd.Timedelta(minutes=int(data.attrs.get("interval_minutes",15)))
