@@ -17,6 +17,10 @@ from matplotlib.patches import Rectangle
 import pandas as pd
 
 
+__version__ = "1.2.1-20261030"
+print(f"[Rudra Three-Candle] LOADED v{__version__} | historical RTH research + experimental breakout")
+
+
 @dataclass(frozen=True)
 class Signal:
     time: pd.Timestamp
@@ -169,6 +173,7 @@ def find_historical_signals(data: pd.DataFrame):
 
 
 def historical_report(path: str, start: str, end: str) -> list[Signal]:
+    print(f"[Rudra Three-Candle] v{__version__} | MODEL=historical_v1_expost")
     data = load_historical_5m(path, start, end)
     signals = list(find_historical_signals(data))
     print(f"{data.attrs['symbol']} | historical_v1_expost | "
@@ -335,6 +340,7 @@ def check_signals(ticker: str = "INTC", start: str = "2026-10-29",
                   end: str = "2026-10-30", r: float = 0.10,
                   target_r: int = 2, require_breakout: bool = False) -> dict:
     """One-call scan + backtest; return a bundle for show_chart()."""
+    print(f"[Rudra Three-Candle] v{__version__} | MODEL=experimental_breakout")
     data = download_data(start, end, symbol=ticker)
     signals = list(find_signals(data, require_breakout=require_breakout))
     print(f"{ticker} | {start} to {end} | {len(data)} candles | {len(signals)} signals")
@@ -429,6 +435,7 @@ def run(start: str, end: str, show_charts: bool = True,
         require_breakout: bool = False, limit: int | None = None,
         symbol: str = "INTC", r_pct: float = 0.10, target_r: int = 2):
     """Download, find, print and optionally plot signals one-by-one."""
+    print(f"[Rudra Three-Candle] v{__version__} | MODEL=experimental_breakout")
     data = download_data(start, end, symbol=symbol)
     print(f"{symbol} | {len(data)} 15m candles | {start} to {end} (UK dates)")
     count = 0
