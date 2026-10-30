@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 
-__version__ = "2.0.1-20261030"
+__version__ = "2.0.2-20261030"
 MODEL = "RTH_C2_SWEEP_EXPOST"
 print(f"[Rudra Three-Candle] LOADED v{__version__} | MODEL={MODEL}")
 COLS = ["Open", "High", "Low", "Close", "Volume"]
@@ -152,6 +152,31 @@ def historical_target_touches(signals: list[Signal], data: pd.DataFrame,
     return tuple(hits)
 
 
+def historical_potential_gains(signals: list[Signal], data: pd.DataFrame,
+                               r_pct: float = 0.10) -> tuple[float, float, float]:
+    """Sum target-hit gross price returns per hypothetical equal-sized trade.
+
+    NOT realised profit: stop order, C3 look-ahead, overlap, fees and slippage
+    are all ignored. Each kR column is a separate fixed-target scenario.
+    """
+    if r_pct <= 0:
+        raise ValueError("r must be positive")
+    dates = data.index.tz_convert("America/New_York").date
+    gains = [0.0, 0.0, 0.0]
+    for signal in signals:
+        entry = signal.candle2_close
+        step = max(entry-signal.candle2_open, entry*r_pct/100)
+        day = signal.time.tz_convert("America/New_York").date()
+        later = data.loc[(dates == day) & (data.index >= signal.candle3_time)]
+        if later.empty:
+            continue
+        peak = float(later.High.max())
+        for k in (1, 2, 3):
+            if peak >= entry+k*step:
+                gains[k-1] += 100*k*step/entry
+    return tuple(gains)
+
+
 def check_signals(ticker: str = "INTC", start: str = "2026-10-29",
                   end: str = "2026-10-30", r: float = 0.10,
                   target_r: int = 1, require_breakout: bool = False,
@@ -166,14 +191,16 @@ def check_signals(ticker: str = "INTC", start: str = "2026-10-29",
             resample_rth_5m(download_data(start, end, ticker), start, end, ticker))
     signals = list(find_historical_signals(data))
     hits = historical_target_touches(signals, data, r)
+    gains = historical_potential_gains(signals, data, r)
     total = len(signals)
     print(f"\n{ticker} | {start} to {end} | {len(data)} RTH 15m candles")
     print("=== RUDRA THREE-CANDLE SUMMARY (ex-post price touches) ===")
-    print(f"{'Metric':<24} {'Count':>8} {'Rate':>9}")
-    print(f"{'Qualifying signals':<24} {total:>8} {'100%' if total else 'N/A':>9}")
+    print(f"{'Metric':<24} {'Count':>8} {'Rate':>9} {'Gain %':>12}")
+    print(f"{'Qualifying signals':<24} {total:>8} {'100%' if total else 'N/A':>9} {'—':>12}")
     for k, count in enumerate(hits, 1):
         rate = f"{count/total*100:.1f}%" if total else "N/A"
-        print(f"{str(k)+'R price touches':<24} {count:>8} {rate:>9}")
+        print(f"{str(k)+'R price touches':<24} {count:>8} {rate:>9} {gains[k-1]:>11.2f}%")
+    print("Gain % = sum of hypothetical gross target-hit returns at each R; NOT realized P&L.")
     print("Executed win rate: NOT DETERMINED (C3 look-ahead / intrabar order).")
     print("\n=== SIGNAL DETAILS (CANDLE 2 ONLY) ===")
     if not signals:
@@ -181,12 +208,12 @@ def check_signals(ticker: str = "INTC", start: str = "2026-10-29",
     for number, s in enumerate(signals, 1):
         c2 = data.loc[s.candle2_time]
         print(f"\n#{number} LONG | C2 {s.candle2_time:%Y-%m-%d %H:%M %Z} | "
-              f"C3 confirmation {s.candle3_time:%H:%M %Z}")
+              f"C3 close/confirmation {(s.candle3_time + pd.Timedelta(minutes=15)):%H:%M %Z}")
         print(pd.DataFrame([c2], index=[s.candle2_time], columns=COLS).to_string())
         print(f"C2 close hypothesis {s.candle2_close:.4f} | SL {s.candle2_open:.4f} | "
               f"C3/C2 volume {s.candle3_volume/s.candle2_volume:.2f}x")
     return {"data":data, "signals":signals, "results":[],
-            "touches":hits, "model":MODEL, "r_pct":r}
+            "touches":hits, "potential_gains_pct":gains, "model":MODEL, "r_pct":r}
 
 
 def show_chart(test: dict, signal_number: int | None = None) -> None:
