@@ -1,3 +1,11 @@
+
+## 2026-10-30 v2.4.2: corrected BUY trigger inside C3
+
+- BUY entry price is **min(C2.Open, C2.Close)**, the lower edge of C2 body, crossed upward during C3. For the 29 Oct 14:45 red C2, entry=29526.00 rather than 29577.00; stop remains C2 low 29449.00.
+- SELL entry rule stays separate and unchanged (C3 high sweep followed by C4 red breakdown).
+- The BUY scanner still requires C3 to close green in its ex-post pattern qualification; this cannot be known at the intrabar entry time. Consequently historical results are research signals rather than a causal live-executable strategy without modifying that confirmation requirement.
+- Verified against known 29 Oct supplied 15m OHLC and 5m candles; do not interpret target touches as realised profits.
+
 ## 2026-10-30 — v2.4.0 breakout reversal research and 29 October RTH
 
 - Added `backtest_breakout_reversals(data, min_c1_range_pct=0.20, min_c2_range_pct=0.25, r_floor_pct=0.20)` to `three_candle.py`. `check_signals` runs and prints its table and returns `breakout_trades`; existing notebook entrypoints retained. This is a **research model**, not audited execution P&L.
