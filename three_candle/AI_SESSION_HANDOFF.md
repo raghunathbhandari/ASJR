@@ -1,4 +1,27 @@
 # Rudra Three-Candle — AI session handoff
+
+## Highest-priority update: V2.0.0 rewritten 2026-10-30
+
+The user explicitly requested **completely new code, retaining only calling
+functions**. `three_candle.py` was rebuilt around the archived RTH strategy.
+`check_signals(ticker,start,end,r=0.10)` and `show_chart(test)` stay callable.
+Console version `2.0.0-20261030`, model `RTH_C2_SWEEP_EXPOST`. All previous
+breakout default / 2R-trailing references below are **historical only** and
+must not be interpreted as describing the new runtime.
+
+New implementation uses Yahoo 5m data, RTH resampling to completed 15m candles,
+C2 lower-wick sweep/reclaim of C1 low, C3 greater volume and greater close.
+C2-close/SL=C2-open are **hypothetical ex-post levels**, not causal live fills,
+because C3 volume cannot be known at C2 close. Output is 1R/2R/3R future
+price-touch counts only; it no longer fabricates a 0%/100% executed win rate.
+Charts: green C2-close hypothesis, red SL, purple R references (not realised TP).
+
+Tests passed on archived September IBKR 5m ten-ticker data: 83 total setups,
+83/75/64 price touches. `check_signals` and `show_chart` also tested locally
+against archived INTC CSV: 11 INTC signals; 11/9/8 touches. Yahoo retrieval of
+28 October still needs user-side confirmation. Accept old unused
+`target_r` and `require_breakout` notebook keyword arguments for compatibility
+but they do not change the historical pattern.
 Updated: 2026-10-30 (UK). Canonical documentation folder: `main/three_candle/`.
 
 **New validation:** historical CSV mode and archived-data unit test added 2026-10-30. Ten September 2026 tickers exactly reproduce setup counts 5,8,11,10,12,7,9,11,4,6 (total 83), and price touches 83/75/64 at 1R/2R/3R. Executed-trade result is **not** established. See README for the regression command; the original Yahoo post-C3 C2-high breakout logic remains separate.
@@ -35,24 +58,3 @@ First reconcile filters and session alignment, then generate an event-by-event e
 
 ## Change management
 Before changing Python or claiming an improved success rate, record the model version, exact filter diff, data date span/source, fees, same-bar assumption, and test commands. Preserve old research counts as historical rather than rewriting them.
-
-## Notebook compatibility confirmed for user test — 2026-10-30
-
-User is about to run this existing Jupyter cell; preserve the public API:
-
-```python
-import importlib, three_candle
-importlib.reload(three_candle)
-
-test = three_candle.check_signals("INTC", "2026-10-28", "2026-10-28", r=0.10)
-three_candle.show_chart(test)
-```
-
-- `check_signals(ticker, start, end, r=..., target_r=2, require_breakout=False)` and `show_chart(test, signal_number=None)` remain unchanged by the historical mode addition. The notebook cell uses **current Yahoo native-15m experimental breakout mode**, NOT historical RTH sweep/reclaim mode.
-- This call fetches 15m Yahoo data for **28 October only**. A single-day end boundary leaves signals without next-session continuation; NO_FILL and OPEN must not be counted as losses or wins. Yahoo availability, extended-hours volume, and same-bar OHLC sequencing affect results.
-- `r=0.10` is minimum R step size 0.10% of entry, not 0.10% account risk. `target_r=2` defaults to trailing activation at 2R, next bar; 1R lock was a distinct historical hypothesis.
-- On any screenshot/result the user supplies, compare the timestamped C1/C2/C3 OHLCV, entry trigger, initial stop, bar-by-bar stop state, fill/exit times, and WIN/LOSS/OPEN/NO_FILL classifications. Be especially alert that same-bar entry-high and stop-low have unknown order.
-- Chart conventions remain entry green, profitable trailing exit purple, SL/losing exit red. Do not claim the visual proves an executable fill.
-- Historical regression mode is CLI `--historical-csv` and requires an archived 5m file. September IBKR regression was actually run and passed 10 ticker counts and price touches: 83 setups; 83/75/64 1R/2R/3R. It does not alter the notebook's default logic.
-
-**Next action after user test:** inspect their actual notebook output first; do not silently change functions or assume 100% live-trading success. Any proposed rule change must be shown side-by-side and approved or explicitly requested.
