@@ -207,6 +207,32 @@ def print_summary(signals: list[Signal], data: pd.DataFrame,
     return results
 
 
+def check_signals(ticker: str = "INTC", start: str = "2026-10-29",
+                  end: str = "2026-10-30", r: float = 0.10,
+                  target_r: int = 2, require_breakout: bool = False) -> dict:
+    """One-call scan + backtest; return a bundle for show_chart()."""
+    data = download_data(start, end, symbol=ticker)
+    signals = list(find_signals(data, require_breakout=require_breakout))
+    print(f"{ticker} | {start} to {end} | {len(data)} candles | {len(signals)} signals")
+    for signal in signals:
+        print_signal(signal, data)
+    results = print_summary(signals, data, r_pct=r, target_r=target_r)
+    return {"data": data, "signals": signals, "results": results}
+
+
+def show_chart(test: dict, signal_number: int | None = None) -> None:
+    """Show all charts, or just one (1-based signal_number)."""
+    signals = test["signals"]
+    if signal_number is not None:
+        if not 1 <= signal_number <= len(signals):
+            raise ValueError(f"signal_number must be 1..{len(signals)}")
+        signals = [signals[signal_number - 1]]
+    for signal in signals:
+        fig = plot_signal(signal, test["data"])
+        plt.show()
+        plt.close(fig)
+
+
 def print_signal(signal: Signal, data: pd.DataFrame) -> None:
     """Print all three input candles and candidate levels for human review."""
     print(f"\nSIGNAL {signal.direction} | candle 3 closed {signal.time:%Y-%m-%d %H:%M %Z}")
