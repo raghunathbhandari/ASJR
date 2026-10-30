@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 
-__version__ = "2.2.0-20261030"
+__version__ = "2.2.1-20261030"
 MODEL = "RTH_C2_SWEEP_EXPOST"
 print(f"[Rudra Three-Candle] LOADED v{__version__} | MODEL={MODEL}")
 COLS = ["Open", "High", "Low", "Close", "Volume"]
@@ -521,77 +521,61 @@ def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
 
 
 def show_chart(test: dict, signal_number: int | None = None) -> None:
-    """C1/C2/C3 charts: hypothesis green, initial SL red, R references purple."""
-    signals = test["signals"]
-    if signal_number is not None:
-        if not 1 <= signal_number <= len(signals):
-            raise ValueError(f"signal_number must be 1..{len(signals)}")
-        signals = [signals[signal_number-1]]
+    """Draw all confirmed swing support/resistance price lines, with candles.
+
+    No signal, entry, stop or target overlays at this stage. Price lines begin
+    at each swing's confirmation time (not at its historical pivot) so the
+    plotted level is never displayed before it could have been known.
+    signal_number is retained for notebook call compatibility but unused.
+    """
     data = test["data"]
-    ny_dates = futures_session_dates(data)
-    for s in signals:
-        idx = data.index.get_loc(s.candle3_time)
-        day = (s.time.tz_convert("America/New_York") + (
-            pd.Timedelta(hours=6) if data.attrs.get("session_type") == "nq_extended"
-            else pd.Timedelta(0)
-        )).date()
-        last = max(i for i in range(idx, len(data)) if ny_dates[i] == day)
-        view = data.iloc[max(0, idx-10):last+1]
-        fig, (ax, volume) = plt.subplots(
-            2, 1, figsize=(13, 6), sharex=True,
-            gridspec_kw={"height_ratios":[4,1]},
-        )
-        for x, (_, bar) in enumerate(view.iterrows()):
-            color = "#168650" if bar.Close >= bar.Open else "#c64242"
-            ax.vlines(x, bar.Low, bar.High, color=color, linewidth=1.2)
-            ax.add_patch(Rectangle((x-.32, min(bar.Open,bar.Close)), .64,
-                                   max(abs(bar.Close-bar.Open), .005),
-                                   facecolor=color, edgecolor=color))
-            volume.bar(x, bar.Volume, color=color, width=.7)
-        for name, stamp, color in [
-            ("C1",s.candle1_time,"#4c78a8"),
-            ("C2",s.candle2_time,"#d9a128"),
-            ("C3",s.candle3_time,"#7b58a5"),
-        ]:
-            if stamp in view.index:
-                x = view.index.get_loc(stamp)
-                ax.axvspan(x-.45, x+.45, color=color, alpha=.15)
-                ax.annotate(name, (x,view.iloc[x].High), xytext=(0,8),
-                            textcoords="offset points", ha="center",
-                            color=color, weight="bold")
-        entry = s.candle2_close
-        step = max(entry-s.candle2_open, entry*test.get("r_pct", .10)/100)
-        ax.axhline(entry, color="#138a36", linestyle="--",
-                   label=f"C2 close hypothesis {entry:.2f}")
-        ax.axhline(s.candle2_open, color="#d33232", linestyle=":",
-                   label=f"Initial SL {s.candle2_open:.2f}")
-        for k in (1,2,3):
-            ax.axhline(entry+k*step, color="#853fb7", linestyle="-.", alpha=.55,
-                       label=f"{k}R reference {entry+k*step:.2f}")
-        # Show closest price lines already confirmed when C2 closed.
-        known_at = s.candle2_time + pd.Timedelta(
-            minutes=int(data.attrs.get("interval_minutes", 15)))
-        known = [lv for lv in test.get("swing_levels", [])
-                 if lv["confirmed_at"] <= known_at]
-        below = sorted((lv for lv in known if lv["price"] <= entry),
-                       key=lambda lv: entry-lv["price"])[:3]
-        above = sorted((lv for lv in known if lv["price"] > entry),
-                       key=lambda lv: lv["price"]-entry)[:3]
-        for lv in below + above:
-            color = "#168d89" if lv["kind"] == "SUPPORT" else "#e58b2a"
-            ax.axhline(lv["price"], color=color, linestyle="--", alpha=.65,
-                       linewidth=1, label=f"{lv['kind']} {lv['price']:.2f}")
-        ax.set_title(f"{data.attrs.get('symbol','INTC')} | {test.get('model',MODEL)} | "
-                     f"C3 {s.time:%Y-%m-%d %H:%M %Z} | ex-post, not fills")
-        ax.set_ylabel("Price")
-        volume.set_ylabel("Volume")
-        ticks = list(range(0, len(view), max(1,len(view)//9)))
-        volume.set_xticks(ticks, [view.index[i].strftime("%d %b %H:%M") for i in ticks],
-                          rotation=35, ha="right")
-        ax.legend(loc="best", fontsize=8)
-        fig.tight_layout()
-        plt.show()
-        plt.close(fig)
+    levels = test.get("swing_levels", [])
+    if not levels:
+        levels = find_confirmed_swings(data)
+    fig, (ax, volume) = plt.subplots(
+        2, 1, figsize=(15, 7), sharex=True,
+        gridspec_kw={"height_ratios":[4,1]},
+    )
+    for x, (_, bar) in enumerate(data.iterrows()):
+        color = "#168650" if bar.Close >= bar.Open else "#c64242"
+        ax.vlines(x, bar.Low, bar.High, color=color, linewidth=1)
+        ax.add_patch(Rectangle(
+            (x-.3, min(bar.Open,bar.Close)), .6,
+            max(abs(bar.Close-bar.Open), .005),
+            facecolor=color, edgecolor=color))
+        volume.bar(x, bar.Volume, color=color, width=.7)
+
+    # Every confirmed pivot is drawn separately; no nearest-six restriction.
+    for level in levels:
+        price = float(level["price"])
+        known_at = level["confirmed_at"]
+        first = int(data.index.searchsorted(known_at, side="left"))
+        if first >= len(data):
+            continue
+        color = "#008b8b" if level["kind"] == "SUPPORT" else "#dd8626"
+        ax.hlines(price, first, len(data)-.3, color=color,
+                  linestyles="dashed", linewidth=.9, alpha=.7)
+        ax.plot(first, price, marker=".", color=color, markersize=3)
+    ax.set_xlim(-.5, len(data)+3)
+    ax.set_title(f"{data.attrs.get('symbol','INTC')} | "
+                 f"{test.get('interval','15min')} | "
+                 f"{'EXTENDED' if data.attrs.get('session_type') == 'nq_extended' else 'RTH'} "
+                 f"| ALL CONFIRMED SWING LEVELS | "
+                 f"Support {sum(lv['kind']=='SUPPORT' for lv in levels)} / "
+                 f"Resistance {sum(lv['kind']=='RESISTANCE' for lv in levels)}")
+    ax.set_ylabel("Price")
+    volume.set_ylabel("Volume")
+    ticks = list(range(0, len(data), max(1, len(data)//11)))
+    volume.set_xticks(ticks, [data.index[i].strftime("%d %b %H:%M") for i in ticks],
+                      rotation=35, ha="right")
+    from matplotlib.lines import Line2D
+    ax.legend(handles=[
+        Line2D([0],[0],color="#008b8b",ls="--",label="Confirmed support"),
+        Line2D([0],[0],color="#dd8626",ls="--",label="Confirmed resistance"),
+    ],loc="best",fontsize=9)
+    fig.tight_layout()
+    plt.show()
+    plt.close(fig)
 
 
 def historical_report(path: str, start: str, end: str) -> list[Signal]:
