@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-10-30T03:03:08.249451+00:00",
+  "generated_at_utc": "2026-10-30T03:20:53.750013+00:00",
   "selected_tickers": [
     "AAOI",
     "AKAM",
@@ -11,6 +11,7 @@
     "BE",
     "BMNR",
     "CRDO",
+    "HOOD",
     "INTC",
     "MSFT",
     "MSTR",
@@ -19,7 +20,6 @@
     "PURR",
     "QCOM",
     "RDDT",
-    "RIVN",
     "SMCI",
     "WDC",
     "WTTR"
@@ -57,6 +57,10 @@
       "state": "OK",
       "rows": 560
     },
+    "HOOD": {
+      "state": "OK",
+      "rows": 560
+    },
     "INTC": {
       "state": "OK",
       "rows": 560
@@ -89,10 +93,6 @@
       "state": "OK",
       "rows": 560
     },
-    "RIVN": {
-      "state": "OK",
-      "rows": 560
-    },
     "SMCI": {
       "state": "OK",
       "rows": 560
@@ -116,6 +116,7 @@
     "BE",
     "BMNR",
     "CRDO",
+    "HOOD",
     "INTC",
     "MSFT",
     "MSTR",
@@ -124,7 +125,6 @@
     "PURR",
     "QCOM",
     "RDDT",
-    "RIVN",
     "SMCI",
     "WDC",
     "WTTR"
