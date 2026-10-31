@@ -77,3 +77,32 @@ The code prints each eligible trade with timestamps, entry, structural stop, ris
 - Compare September and October, day by day, with out-of-sample tests.
 - Add overlapping-trade portfolio rules, transaction costs, exchange tick size, futures margin and rollover handling.
 - Verify single-bar OHLC stop/target ambiguities with higher-resolution data.
+
+
+## 2026-10-31 update — Swing-turning C2 detector (separate detection stage)
+File: `three_candle/detect_gold_v2_swings.py`.
+
+This is **detection only**, not the full trading/backtest implementation. Detect all strong turning-area setups irrespective of entry stop distance. A later entry engine may reject some.
+
+Experimental causal requirements:
+- C2 is a *meaningful* new local high (SELL) or low (BUY) compared with preceding **8 completed** 15m candles.
+- C2 high–low range >= **1.00 × 14-bar ATR**; swing penetration >= **0.50 × ATR**. ATR is from **14 bars preceding C2**; no C2/future leakage.
+- C1 candle body / total range >= **40%** (avoid flat/doji C1).
+- C3 directional confirmation body / range >= **60%**; C3 high stays below C2 high for SELL, C3 low stays above C2 low for BUY.
+- Pattern is known only at **C3 close**. C2 is the sweep candle even if its close is outside the previous range.
+- The scanner records optional following-candle structural risk but **does not discard** a strong pattern just because its risk >0.20%; this is an execution problem to test separately.
+
+Independent calculation on 30 October 2026 found three reference matches:
+- **05:30 C2 SELL:** range/ATR 1.40, swing penetration/ATR 0.72, next-open C2-high stop distance ~0.497% (not executable under 0.20% rule).
+- **07:45 C2 BUY:** range/ATR 2.07, sweep/ATR 1.65, ~0.448% SL (not executable).
+- **08:45 C2 SELL:** range/ATR 1.17, sweep/ATR 1.01, ~0.190% SL (eligible under risk cap).
+
+The first chart annotation appeared around 05:15 on the TradingView screenshot; 05:30 is the matching *detected historical Yahoo GC=F candle* in this 15m data. Check contract/timestamp differences before claiming exact equivalence.
+
+Usage:
+```bash
+python three_candle/detect_gold_v2_swings.py --date 2026-10-30
+python three_candle/detect_gold_v2_swings.py --date 2026-10-30 --out three_candle/results/gold_v2_turns_20261030.csv
+```
+
+**No full V2 result is claimed by this detection test.** The thresholds were selected from 30 Oct reference signals (in-sample), so verify on other dates before adoption. Existing `backtest_gold_v2.py` has NOT yet been modified to use this new detector automatically.
