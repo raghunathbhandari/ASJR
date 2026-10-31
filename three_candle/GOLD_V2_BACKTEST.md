@@ -177,3 +177,14 @@ Use the **full-candidate** run (without `--reference-only`) for signal count and
 - Full-day C2-only cohort execution and September/October out-of-sample analysis.
 - Compare Gold body-stop SL minimum thresholds (0.08% suggested but not validated) and 0.20% cap without cherry-picking.
 - Portfolio overlap, stop slippage, futures contracts, costs, timezone, price ticks and Yahoo/TradingView rolling differences.
+
+
+## Verified October 2026 frozen-replay result (31 Oct 2026; VPS confirmed)
+**Important: use the FROZEN WICK-STOP method in this section, not the separate body-stop experiment above.**
+- Script: `three_candle/gold_v2_monthly_frozen_replay.py`
+- Historical monthly: **27 C3-confirmed patterns / 26 trades / 14 simulated winners / 12 losers / 53.85% simulated win rate / +5.8591% gross summed per-trade returns**.
+- With initial risk capped at 0.20%: **8 trades, −0.0016% gross summed returns**.
+- Historical selected 30 Oct frozen benchmark: **3 signals, +2.5764%** gross swing-trail sum (05:30 SELL +0.3490%, 07:45 BUY −0.3835%, 08:45 SELL +2.6109%). Three of three had a subsequent favourable price excursion ≥0.20%; this **is not** a 100% execution win rate.
+- The October code cross-checks its 30 Oct entries against the frozen reference. Run via `/root/trading/venv_new/bin/python` on VPS.
+- Look-ahead warning: the early body entry may occur during C3 while signal selection requires C3 close. These are **retrospective in-sample research figures**, and +5.8591% is **not account return** or proven executable profitability.
+- Full independent NQ Three-Candle V2 results/filters and today's methodological lessons: [AI Session Handoff — 2026-10-31](AI_SESSION_HANDOFF_2026-10-31.md). Keep Gold and NQ independent; older sections of this report refer to different experimental versions.
