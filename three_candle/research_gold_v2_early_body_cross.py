@@ -75,7 +75,7 @@ def backtest_one(row, raw, end="21:00", risk_max=0.20):
     subsequent=future.loc[future.index>=t]
     favorable=(subsequent.High.max()-entry if d==1 else entry-subsequent.Low.min())/entry*100
     rec["max_favorable_pct_unordered"]=float(favorable)
-    rec["reached_fixed_0p20"]=bool(favorable>=0.20)
+    rec["reached_fixed_0p20"]=bool(favorable>=0.20)  # descriptive excursion, NOT an executable target hit
     if ambiguous:
         rec["execution_status"]="UNRESOLVED_ENTRY_STOP_5M"
         return rec
@@ -135,15 +135,15 @@ def main():
     print(d[["c2","side","trigger_time","entry","body_stop","entry_risk_pct",
              "c3_confirmed","reached_fixed_0p20","execution_status",
              "step_gain_pct"]].to_string(index=False))
-    print("Movement success:",int(d.reached_fixed_0p20.sum()),"/",len(d),
+    print("Movement success (ALL C2 candidates):",int(d.reached_fixed_0p20.sum()),"/",len(d),
           "(unsequenced price excursion; NOT executed win rate)")
-    evaluable=d.loc[d.execution_status.str.startswith("SIMULATABLE_")]
+    confirmed=d.loc[d.c3_confirmed]\n    print("C3-confirmed historical references:",len(confirmed),\n          "| reached +0.20%:",int(confirmed.reached_fixed_0p20.sum()),\n          "| execution unresolved:",int(confirmed.entry_stop_ambiguous.sum()))\n    print("NOTE: C3 confirmation is retrospective for body entries occurring during C3.")\n    evaluable=d.loc[d.execution_status.str.startswith("SIMULATABLE_")]
     print("Simulatable fills:",len(evaluable),
           "| winners:",int((evaluable.step_gain_pct>0).sum()),
           "| losses:",int((evaluable.step_gain_pct<0).sum()),
           "| unresolved:",int(d.entry_stop_ambiguous.sum()))
     valid=evaluable.loc[evaluable.risk_eligible]
-    print("Within risk cap:",len(valid),"| gross step return:",round(valid.step_gain_pct.sum(),4),"%")
+    print("Within risk cap:",len(valid),"| gross step return:",round(valid.step_gain_pct.sum(),4),"%")\n    print("Verified executable 3/3 win rate: NOT ESTABLISHED (5m entry/stop ordering).")
     print("WARNING: 5m OHLC cannot sequence crossing and stop inside same bar;")
     print("C2 screening at close is causal; reference-only selection is not an unbiased backtest.")
     if a.out:
