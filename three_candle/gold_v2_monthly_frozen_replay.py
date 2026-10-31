@@ -12,6 +12,11 @@ import pandas as pd
 import numpy as np
 from detect_gold_v2_swings import DEFAULT, load, detect
 
+# ================================================================
+# 01. MONTHLY BACKTEST -- GOLD ONLY (NEVER NQ)
+# Select C3-confirmed sweeps, then replay EARLY C2-body entries.
+# C3 selection may look ahead of an entry within C3: RESEARCH ONLY.
+# ================================================================
 def monthly(csv,month):
     raw=pd.read_csv(csv)
     raw.index=pd.to_datetime(raw["Datetime_UTC"],utc=True)
@@ -22,6 +27,8 @@ def monthly(csv,month):
     days=sorted(set(t.strftime("%Y-%m-%d") for t in b.index if start<=t<stop_month))
     signals=pd.concat([detect(b,day) for day in days],ignore_index=True)
     results=[]
+    # 02. SIGNAL LOOP: same entry, C2 wick-stop and swing exit as
+    # gold_v2_frozen_three_reference.py. Do not change one in isolation.
     for signal in signals.itertuples(index=False):
         c2=b.loc[signal.c2]
         side=signal.side
@@ -44,6 +51,8 @@ def monthly(csv,month):
         record.update(EntryTime=entry_time,Entry=entry,
                       InitialRiskPct=100*d*(entry-initial_stop)/entry,
                       EntryStopAmbiguous=bool(first.Low<=initial_stop if d==1 else first.High>=initial_stop))
+        # 03. CONFIRMED SWING TRAILING -- stop is only tightened.
+        # Check 5m bar gaps/stops and exit at stop or session cutoff.
         trail=initial_stop
         exit_t=None;exit_p=None
         for t,bar in after.loc[after.index>=entry_time].iterrows():
@@ -72,6 +81,11 @@ def monthly(csv,month):
         results.append(record)
     return pd.DataFrame(results)
 
+# ================================================================
+# 04. REPORT + REGRESSION CHECK
+# The 30-Oct three-trade total MUST match frozen +2.5764%.
+# The gross sum is NOT a compounded/fee-adjusted account return.
+# ================================================================
 def main():
     p=argparse.ArgumentParser()
     p.add_argument("--csv",type=Path,default=DEFAULT)
