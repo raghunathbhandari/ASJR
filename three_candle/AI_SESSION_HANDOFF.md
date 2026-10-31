@@ -1,3 +1,14 @@
+## 31 Oct 2026 — FULL SEP–OCT NQ matrix learning and proposed filter
+
+See [two-month learnings and precise backtest definitions](results/NQ_SEP_OCT_RESEARCH_LEARNINGS.md). Source 5m Sep+Oct produced independent exploratory NQ 15m extended-session signal count 821 (173 GOOD>=2R, 158 WEAK=1R, 490 BAD below 1R). Preliminary BUY C3 body%, low C3 wick/body and C2 lower-wick%; SELL C3 upper wick% and C2 range%. Proposed filters are **research-only tags** and did not change detection:
+
+- BUY C3 Body_pct>=0.06 AND C3 Wick_body_ratio<=1 AND C2 Lower_wick_pct>=0.06.
+- SELL C3 Upper_wick_pct>=0.05 AND C2 Range_pct>=0.12.
+
+Preliminary combined filter 198 signals: GOOD65, WEAK65, BAD68, 1R+130/198=65.7%; 2R+65/198=32.8%. Max favourable price excursion ~0.455% per selected signal; *not* realized gains. Previously stated indicative +12.4% was synthetic fixed-0.20%-risk net R arithmetic, not true profit. All chosen on Sep+Oct, validation on unseen period essential. Retrospective entry lookahead persists.
+
+A full CSV export helper was added at [export_two_month_signal_matrix.py](export_two_month_signal_matrix.py), to emit `results/NQ_2026-09_10_signal_matrix.csv` with **one signal per row**, single GOOD/WEAK/BAD status, C1/C2/C3 OHLCV and each metric, ASJR 12-band profiles, proposed filter PASS/FAIL. **Export is not yet executed/pushed; do not claim CSV already uploaded**. Run in clean research worktree and push via `git push origin HEAD:refs/heads/main` because checkout may be detached HEAD. Review output counts and parity with independent earlier scan before relying on data.
+
 ## 31 Oct 2026 — post-hoc GOOD/WEAK/BAD labels (research only)
 
 Updated `three_candle/results/NQ_2026-10-29_30_15m_signals_research.csv` with 16 new label columns: 126 columns total, 29 signals. Outcome label based on `max_r_before_sl`: GOOD if 2R+, WEAK if exactly 1R, BAD if below 1R; 8 GOOD / 10 WEAK / 11 BAD. These are outcomes, **not prospective setup quality**. Metrics are heuristically scored per signal based on its **C1/C2/C3** inputs: directional MA9 recovery across C2→C3, C3 vs MA20/MA200, RSI change C2→C3, ADX level, RVOL5, directional ASJR C2→C3 buy-share shift, C2 lower-wick/body, and C3/C2 volume ratio. Missing ASJR is N/A, not BAD. Overall preliminary feature alignment: GOOD if >=5 GOOD and <=2 BAD; BAD if >=4 BAD, otherwise WEAK. This alignment labels only 2 of the 8 2R+ cases GOOD, and labels 2 of the WEAK 1R cases GOOD — **not a validated classifier**. The C2 lower-wick heuristic is BUY-oriented and should not be interpreted as a validated SELL signal-strength metric. Thresholds are descriptive research hypotheses and are not changes to detection logic. Validate out of sample (September, earlier October and forex caveats) before claiming predictive strength. Labels are currently stored in the CSV, not yet regenerated automatically by the Python strategy.
