@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 
-__version__ = "2.5.3-20261031"
+__version__ = "2.5.4-20261031"
 MODEL = "RTH_C2_SWEEP_EXPOST"
 print(f"[Rudra Three-Candle] LOADED v{__version__} | MODEL={MODEL}")
 COLS = ["Open", "High", "Low", "Close", "Volume"]
@@ -467,10 +467,18 @@ def build_candle_research_features(data: pd.DataFrame, rvol_days: int = 5) -> pd
     avg_loss = wilder((-change).clip(lower=0))
     rsi = 100*avg_gain/(avg_gain+avg_loss).replace(0,float("nan"))
     result = pd.DataFrame(index=x.index)
+    result["Wick_body_ratio"] = ((x.High-x[["Open","Close"]].max(axis=1)) +
+                                  (x[["Open","Close"]].min(axis=1)-x.Low)) / (x.Close-x.Open).abs().replace(0,float("nan"))
+    result["Lower_wick_body_ratio"] = (x[["Open","Close"]].min(axis=1)-x.Low)/(x.Close-x.Open).abs().replace(0,float("nan"))
+    result["Upper_wick_body_ratio"] = (x.High-x[["Open","Close"]].max(axis=1))/(x.Close-x.Open).abs().replace(0,float("nan"))
     result["ATR14"] = atr
     result["ATR_pct"] = 100*atr/x.Close
     result["ADX14"] = wilder(dx)
     result["RSI14"] = rsi
+    result["MA9"] = x.Close.rolling(9,min_periods=9).mean()
+    result["MA20"] = x.Close.rolling(20,min_periods=20).mean()
+    result["MA9_distance_pct"] = 100*(x.Close-result.MA9)/result.MA9
+    result["MA20_distance_pct"] = 100*(x.Close-result.MA20)/result.MA20
     result["MA200"] = x.Close.rolling(200,min_periods=200).mean()
     result["MA200_distance_pct"] = 100*(x.Close-result.MA200)/result.MA200
     sessions = pd.Series(get_trading_session_dates(x), index=x.index)
@@ -607,7 +615,8 @@ def build_signal_candle_research(data: pd.DataFrame,
     cols=["signal_id","side","candle","time_uk","Open","High","Low","Close",
           "Volume","Range_pct","Body_pct","Upper_wick_pct","Lower_wick_pct",
           "ATR14","ATR_pct","ADX14","RSI14","RVOL5_cumulative",
-          "MA200","MA200_distance_pct","Gap_pct",
+          "MA9","MA20","MA200","MA9_distance_pct","MA20_distance_pct","MA200_distance_pct","Gap_pct",
+          "Wick_body_ratio","Lower_wick_body_ratio","Upper_wick_body_ratio",
           "ASJR_buy_points","ASJR_sell_points","ASJR_neutral_points",
           "ASJR_buy_share_pct","ASJR_12bands","ASJR_ready"]
     out=[]
@@ -657,7 +666,8 @@ def print_research_summary(trades: pd.DataFrame, candle_data: pd.DataFrame) -> N
         display_cols=["candle","time_uk","Open","High","Low","Close","Volume",
                       "Range_pct","Body_pct","Upper_wick_pct","Lower_wick_pct",
                       "ATR14","ATR_pct","ADX14","RSI14","RVOL5_cumulative",
-                      "MA200_distance_pct","Gap_pct",
+                      "MA9_distance_pct","MA20_distance_pct","MA200_distance_pct","Gap_pct",
+                      "Wick_body_ratio","Lower_wick_body_ratio","Upper_wick_body_ratio",
                       "ASJR_buy_points","ASJR_sell_points","ASJR_buy_share_pct",
                       "ASJR_12bands"]
         print(part[display_cols].round(3).to_string(index=False))
