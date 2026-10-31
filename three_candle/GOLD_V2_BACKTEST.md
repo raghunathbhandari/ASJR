@@ -106,3 +106,29 @@ python three_candle/detect_gold_v2_swings.py --date 2026-10-30 --out three_candl
 ```
 
 **No full V2 result is claimed by this detection test.** The thresholds were selected from 30 Oct reference signals (in-sample), so verify on other dates before adoption. Existing `backtest_gold_v2.py` has NOT yet been modified to use this new detector automatically.
+
+
+## 2026-10-31 BODY-EDGE ENTRY UPDATE — corrected research rule
+The C2 candle's **body**, not wick high/low, supplies the trigger threshold:
+- BUY and C2 RED: C2 **OPEN** (upper body edge).
+- BUY and C2 GREEN: C2 **CLOSE** (upper body edge).
+- SELL and C2 RED: C2 **CLOSE** (lower body edge).
+- SELL and C2 GREEN: C2 **OPEN** (lower body edge).
+In equations BUY threshold=max(C2.Open,C2.Close), SELL threshold=min(C2.Open,C2.Close).
+The first qualifying 5-minute crossing after C2 completes is the simulated entry; the C2 **wick extreme remains the structural stop**. Do not substitute C2 open for a bearish C2 SELL or for a bullish C2 BUY.
+Code: `three_candle/research_gold_v2_early_body_cross.py` updated accordingly (separate from confirmed C4-entry `backtest_gold_v2.py`).
+
+30 Oct 2026 15m turning-point reference events (five-minute execution):
+| C2 GMT | Side | C2 body threshold | First trigger GMT | Entry | C2 structural stop | Risk | Swing-trail exit | Gross swing gain |
+|---|---|---:|---|---:|---:|---:|---|---:|
+| 05:30 | SELL (red C2) | 4011.80 (close) | 05:45 | 4011.80 | 4021.20 | 0.234% | 08:15 @ 3997.80 | +0.349% |
+| 07:45 | BUY (red C2) | 3990.00 (open) | 08:00 | 3990.00 | 3974.70 | 0.383% | 11:55 @ 3974.70 | -0.383% |
+| 08:45 | SELL (green C2) | 3998.60 (open) | 09:35 | 3998.60 | 4009.20 | 0.265% | 19:55 @ 3894.20 | +2.611% |
+
+Gross backtest (three ex-post C3-confirmed selected references, all over the max .20% SL):
+- Swing trailing 2 wins / 1 loss (66.7%), +2.5764% summed.
+- Step trailing 3/3 wins (100%), +0.6891% summed.
+- Half profit + swing 3/3 wins (100%), +1.7800% summed.
+- **Under locked 0.20% structural risk: 0 eligible, no executable return.**
+
+CRITICAL CAUSALITY: These three events were initially selected by a filter that checks C3 confirmation; an entry occurring during C3 **cannot know its close**. Therefore all the above are retrospective research hypotheses, not a valid causal signal-by-signal live backtest. The scanner must evaluate C2-only size/swing conditions at C2 close and independently test all ensuing body-edge triggers, including patterns whose C3 later fails. Avoid look-ahead and selection bias. 5m bars can hide crossing-vs-stop ordering; tick data needed for exact fills.
