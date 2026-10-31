@@ -728,18 +728,6 @@ def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
     hits = count_future_target_touches(signals, data, r)
     gains = sum_hypothetical_target_returns(signals, data, r)
     total = len(signals)
-    print(f"\n{ticker} | {start} to {end} | {len(data)} {'EXTENDED' if data.attrs.get('session_type') == 'nq_extended' else 'RTH'} {interval_label} candles")
-    print(f"=== RUDRA THREE-CANDLE SUMMARY (ex-post price touches; checkVol={checkVol}) ===")
-    print(f"Swing levels confirmed: {len(levels)} | pivot {swingLeft}/{swingRight} | proximity {swingProximity:.2f}%")
-    print(f"Signals near swings: {near_count}/{total} | nearSwingOnly={nearSwingOnly}"
-          + (f" | unfiltered signals={raw_count}" if nearSwingOnly else ""))
-    print(f"{'Metric':<24} {'Count':>8} {'Rate':>9} {'Gain %':>12}")
-    print(f"{'Qualifying signals':<24} {total:>8} {'100%' if total else 'N/A':>9} {'—':>12}")
-    for k, count in enumerate(hits, 1):
-        rate = f"{count/total*100:.1f}%" if total else "N/A"
-        print(f"{str(k)+'R price touches':<24} {count:>8} {rate:>9} {gains[k-1]:>11.2f}%")
-    print("Gain % = sum of hypothetical gross target-hit returns at each R; NOT realized P&L.")
-    print("Executed win rate: NOT DETERMINED (C3 look-ahead / intrabar order).")
     return {"data":data, "signals":signals, "breakout_trades":breakout_trades, "candle_research":candle_research, "results":[],
             "touches":hits, "potential_gains_pct":gains, "model":active_model, "r_pct":r, "interval":interval_label, "checkVol":checkVol, "session":session, "swing_levels":levels,
             "swing_matches":matches, "swingProximity":swingProximity,
