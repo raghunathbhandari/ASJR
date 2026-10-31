@@ -20,7 +20,7 @@ def c2_candidates(b, day, lookback=8, range_atr=1.0, depth_atr=0.5, c1_body=0.4)
     atr=tr.rolling(14,min_periods=14).mean().shift(1)
     rows=[]
     for i in range(max(16,lookback),len(b)-1):
-        c1,c2,c3=b.iloc[i-1:i+2].itertuples(index=False, name=None) if False else (b.iloc[i-1],b.iloc[i],b.iloc[i+1])
+        c1,c2,c3=b.iloc[i-1],b.iloc[i],b.iloc[i+1]
         t1,t2,t3=b.index[i-1:i+2]
         if str(t2.date())!=day or t2-t1!=pd.Timedelta(minutes=15) or t3-t2!=pd.Timedelta(minutes=15):
             continue
