@@ -2,7 +2,7 @@
 """Gold V2 experimental EARLY C2 body-cross entry (does NOT wait for C3).
 
 Research only. Uses completed C2 at t+15m and first subsequent 5m break of
-C2 body OPEN (BUY above / SELL below). Never treat a C3-close result as
+directional C2 body edge (BUY above max(open,close); SELL below min). Never treat a C3-close result as
 available for the earlier entry. Enforces 0.20% structural C2-extreme risk.
 """
 import argparse
@@ -21,7 +21,7 @@ def early_entries(path, day):
     rows=[]
     for z in sig.itertuples(index=False):
         c2=b15.loc[z.c2]
-        boundary=float(c2.Open)
+        boundary=float(max(c2.Open, c2.Close) if z.side=="BUY" else min(c2.Open, c2.Close))
         # Historical body-cross: earliest crossing after C2 closes, search in C3.
         start=z.c2+pd.Timedelta(minutes=15)
         window=raw.loc[(raw.index>=start)&(raw.index<start+pd.Timedelta(minutes=15))]
