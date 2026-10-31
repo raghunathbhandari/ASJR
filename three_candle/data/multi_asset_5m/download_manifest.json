@@ -1,0 +1,150 @@
+{
+  "requested_utc": [
+    "2026-09-01T00:00:00+00:00",
+    "2026-10-31T00:00:00+00:00"
+  ],
+  "created_utc": "2026-10-31T14:38:03.832526+00:00",
+  "source": "Yahoo Finance yfinance 5m, extended hours requested",
+  "symbols": {
+    "MU": {
+      "ticker": "MU",
+      "class": "STOCK",
+      "status": "PARTIAL_OR_UNVERIFIED",
+      "rows": 7242,
+      "errors": [
+        "2026-09-01..2026-09-06: empty"
+      ],
+      "start_utc": "2026-09-08T08:00:00+00:00",
+      "end_utc": "2026-10-30T23:55:00+00:00",
+      "file": "three_candle/data/multi_asset_5m/MU_20260901_20261031_5m_UTC.csv",
+      "zero_volume_rows": 4200,
+      "unique_days": 39
+    },
+    "INTC": {
+      "ticker": "INTC",
+      "class": "STOCK",
+      "status": "PARTIAL_OR_UNVERIFIED",
+      "rows": 7242,
+      "errors": [
+        "2026-09-01..2026-09-06: empty"
+      ],
+      "start_utc": "2026-09-08T08:00:00+00:00",
+      "end_utc": "2026-10-30T23:55:00+00:00",
+      "file": "three_candle/data/multi_asset_5m/INTC_20260901_20261031_5m_UTC.csv",
+      "zero_volume_rows": 4200,
+      "unique_days": 39
+    },
+    "NVDA": {
+      "ticker": "NVDA",
+      "class": "STOCK",
+      "status": "PARTIAL_OR_UNVERIFIED",
+      "rows": 7240,
+      "errors": [
+        "2026-09-01..2026-09-06: empty"
+      ],
+      "start_utc": "2026-09-08T08:00:00+00:00",
+      "end_utc": "2026-10-30T23:55:00+00:00",
+      "file": "three_candle/data/multi_asset_5m/NVDA_20260901_20261031_5m_UTC.csv",
+      "zero_volume_rows": 4197,
+      "unique_days": 39
+    },
+    "AMD": {
+      "ticker": "AMD",
+      "class": "STOCK",
+      "status": "PARTIAL_OR_UNVERIFIED",
+      "rows": 7151,
+      "errors": [
+        "2026-09-01..2026-09-06: empty"
+      ],
+      "start_utc": "2026-09-08T08:00:00+00:00",
+      "end_utc": "2026-10-30T23:55:00+00:00",
+      "file": "three_candle/data/multi_asset_5m/AMD_20260901_20261031_5m_UTC.csv",
+      "zero_volume_rows": 4109,
+      "unique_days": 39
+    },
+    "WDC": {
+      "ticker": "WDC",
+      "class": "STOCK",
+      "status": "PARTIAL_OR_UNVERIFIED",
+      "rows": 7071,
+      "errors": [
+        "2026-09-01..2026-09-06: empty"
+      ],
+      "start_utc": "2026-09-08T08:00:00+00:00",
+      "end_utc": "2026-10-30T23:55:00+00:00",
+      "file": "three_candle/data/multi_asset_5m/WDC_20260901_20261031_5m_UTC.csv",
+      "zero_volume_rows": 4028,
+      "unique_days": 39
+    },
+    "EURUSD": {
+      "ticker": "EURUSD=X",
+      "class": "FX",
+      "status": "PARTIAL_OR_UNVERIFIED",
+      "rows": 11361,
+      "errors": [
+        "2026-09-01..2026-09-06: empty"
+      ],
+      "start_utc": "2026-09-06T23:00:00+00:00",
+      "end_utc": "2026-10-30T21:25:00+00:00",
+      "file": "three_candle/data/multi_asset_5m/EURUSD_20260901_20261031_5m_UTC.csv",
+      "zero_volume_rows": 11361,
+      "unique_days": 47
+    },
+    "GBPUSD": {
+      "ticker": "GBPUSD=X",
+      "class": "FX",
+      "status": "PARTIAL_OR_UNVERIFIED",
+      "rows": 11364,
+      "errors": [
+        "2026-09-01..2026-09-06: empty"
+      ],
+      "start_utc": "2026-09-06T23:00:00+00:00",
+      "end_utc": "2026-10-30T21:25:00+00:00",
+      "file": "three_candle/data/multi_asset_5m/GBPUSD_20260901_20261031_5m_UTC.csv",
+      "zero_volume_rows": 11364,
+      "unique_days": 47
+    },
+    "USDJPY": {
+      "ticker": "JPY=X",
+      "class": "FX",
+      "status": "PARTIAL_OR_UNVERIFIED",
+      "rows": 11316,
+      "errors": [
+        "2026-09-01..2026-09-06: empty"
+      ],
+      "start_utc": "2026-09-06T23:00:00+00:00",
+      "end_utc": "2026-10-30T20:55:00+00:00",
+      "file": "three_candle/data/multi_asset_5m/USDJPY_20260901_20261031_5m_UTC.csv",
+      "zero_volume_rows": 11316,
+      "unique_days": 47
+    },
+    "NQ": {
+      "ticker": "NQ=F",
+      "class": "FUTURES",
+      "status": "PARTIAL_OR_UNVERIFIED",
+      "rows": 10648,
+      "errors": [
+        "2026-09-01..2026-09-06: empty"
+      ],
+      "start_utc": "2026-09-08T04:00:00+00:00",
+      "end_utc": "2026-10-30T21:00:00+00:00",
+      "file": "three_candle/data/multi_asset_5m/NQ_20260901_20261031_5m_UTC.csv",
+      "zero_volume_rows": 40,
+      "unique_days": 46
+    },
+    "GOLD": {
+      "ticker": "GC=F",
+      "class": "FUTURES",
+      "status": "PARTIAL_OR_UNVERIFIED",
+      "rows": 10678,
+      "errors": [
+        "2026-09-01..2026-09-06: empty"
+      ],
+      "start_utc": "2026-09-08T04:00:00+00:00",
+      "end_utc": "2026-10-30T20:55:00+00:00",
+      "file": "three_candle/data/multi_asset_5m/GOLD_20260901_20261031_5m_UTC.csv",
+      "zero_volume_rows": 39,
+      "unique_days": 46
+    }
+  }
+}
