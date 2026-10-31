@@ -1,3 +1,9 @@
+### 31 Oct follow-up — v2.5.1 WIDE SIGNAL DISCOVERY DEFAULT
+
+Phase 1 deliberately sets `minC1RangePct=0.0` and `minC2RangePct=0.0` in `check_signals()` (and zero-size defaults in `backtest_breakout_reversals()`) so small-size candidates are **recorded rather than discarded**. Existing core sweep/wick and retrospective C3/C4 candle-colour conditions still apply, so this is *not literally every possible three-candle combination*. To reproduce the narrow Oct 29–30 benchmark, explicitly pass `minC1RangePct=0.20, minC2RangePct=0.25`. Do NOT compare new wide-mode success percentages with the old narrow-mode benchmark without labeling the change.
+
+Important data-coverage warning: `check_signals()` currently constructs the indicators from the candles in its requested scan period. Single-session calls normally have **NaN** for MA200 and RVOL5 and early ATR/ADX/RSI observations. To collect valid MA200/RVOL5, the engine needs a preceding warm-up history, which is future integration work. Do not fill unavailable features with zero or fabricate prior-session observations. The report prints the same C1/C2/C3 fields even when some values are unavailable.
+
 ## 31 October 2026 — Phase 1 wide research data capture (Python v2.5.0)
 
 User direction: **do not aggressively tighten signal rules in this phase**; identify a broad set of three-candle reversal candidates, then learn which market environments differentiate successful from failed signals. Present the compact signal performance summary FIRST, followed by **one C1/C2/C3 research table per signal**. Remove the former verbose C2-only detail dump.
