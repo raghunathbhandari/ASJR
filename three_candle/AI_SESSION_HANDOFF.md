@@ -1,3 +1,9 @@
+## 31 Oct 2026 — October full-month NQ 5m bridge collection request
+
+Queued bridge operation `three_candle_nq_october_2026`, request ID `research-2026103108319`, file `RudraScanner/ResearchBridge/requests/research-2026103108319.json`. New restricted collector `three_candle/collect_nq_october_2026.py`, allowlisted in `RudraScanner/research_bridge_worker.py`. Destination GitHub `three_candle/data/NQ_2026-10_5m_UTC.csv`, companion `three_candle/data/NQ_2026-10_coverage.json`. Collects NQ=F 5min October 1–30 2026 in Yahoo seven-day chunks; missing data and anomalous bars are explicitly flagged; never invent OHLCV or mark the month complete without verifying continuity.
+
+**Deployment/status:** GitHub request is QUEUED, not proof that the VPS has executed it. The running bridge worker must load this new allowlisted operation (normally updated source plus service restart under administrator control). Do not restart trading bot or Discord for this. Monitor `RudraScanner/ResearchBridge/results/research-2026103108319.json`; only call it collected/published when status SUCCESS and both destination files are present and inspected.
+
 ## 31 October 2026 — two-day execution check, 29/30 October (v2.5.3)
 
 **Authoritative scope:** user-supplied `NQ_5m_VERIFIED_2026-10-29_30.csv`, RTH only, 29 and 30 Oct, UK timestamps; five-minute bars assembled into complete consecutive fifteen-minute bars; exclude anomalous 30 Oct 19:00 5m bar (extreme range). Tested the same breakout rules with **current phase-1 relaxed size defaults** `minC1RangePct=0, minC2RangePct=0`; no indicator changes or further signal filters.
