@@ -13,9 +13,19 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
+# ================================================================
+# 01. INPUT DATA + FROZEN REFERENCE SIGNALS
+# REVIEW HERE: CSV source and the three manually identified C2 bars.
+# Changing REFERENCES changes the historical reference study.
+# ================================================================
 DEFAULT=Path(__file__).resolve().parent/"data/multi_asset_5m/GOLD_20260901_20261031_5m_UTC.csv"
 REFERENCES=[("05:30","SELL"),("07:45","BUY"),("08:45","SELL")]
 
+# ================================================================
+# 02. REPLAY THREE TRADES (READ-ONLY RESEARCH)
+# C2 body edge triggers entry; initial stop uses C2 WICK extreme.
+# This is NOT the separate Gold body-stop experiment.
+# ================================================================
 def run(csv, day="2026-10-30"):
     raw=pd.read_csv(csv)
     raw.index=pd.to_datetime(raw["Datetime_UTC"], utc=True)
@@ -47,6 +57,9 @@ def run(csv, day="2026-10-30"):
         exit_price=None
         favorable=0.0
         ambig=bool(first.Low<=stop if direction==1 else first.High>=stop)
+        # 03. EXIT ENGINE: confirmed 15m swing pivots, checked via 5m bars.
+        # Only pivots with two completed bars to the right can trail the stop.
+        # Historical 5m OHLC cannot prove intrabar tick ordering.
         for t,bar in after.loc[after.index>=entry_time].iterrows():
             if t.minute%15==0:
                 completed=b.loc[b.index+pd.Timedelta(minutes=15)<=t]
@@ -85,6 +98,10 @@ def run(csv, day="2026-10-30"):
     df=pd.DataFrame(output)
     return df
 
+# ================================================================
+# 04. PRINT RESULTS: movement success is NOT realised win rate.
+# Known 30-Oct benchmark: +2.5764% summed gross swing exits.
+# ================================================================
 if __name__=="__main__":
     p=argparse.ArgumentParser()
     p.add_argument("--csv",type=Path,default=DEFAULT)
