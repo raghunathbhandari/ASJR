@@ -1,15 +1,19 @@
 {
   "session_scope": "Extended NQ futures, includes RTH, overnight and pre/postmarket when available",
-  "rth_5m_bars": 1326,
-  "extended_non_rth_5m_bars": 3300,
+  "rth_5m_bars": 1638,
+  "extended_non_rth_5m_bars": 4016,
   "symbol": "NQ=F",
   "source": "Yahoo Finance 5m",
   "timezone": "UTC",
   "requested_calendar_dates": "2026-09-01 through 2026-09-30",
-  "first_timestamp": "2026-09-08 04:00:00+00:00",
+  "first_timestamp": "2026-09-01 04:05:00+00:00",
   "last_timestamp": "2026-09-30 23:55:00+00:00",
-  "rows": 4626,
+  "rows": 5654,
   "observed_ny_dates": {
+    "2026-09-01": 275,
+    "2026-09-02": 275,
+    "2026-09-03": 275,
+    "2026-09-04": 203,
     "2026-09-08": 276,
     "2026-09-09": 275,
     "2026-09-10": 275,
@@ -39,5 +43,14 @@
     }
   ],
   "complete_month_verified": false,
-  "notes": "Observed row counts are not proof of full exchange session coverage. Review missing 5m bars before backtesting."
+  "notes": "Observed row counts are not proof of full exchange session coverage. Review missing 5m bars before backtesting.",
+  "merge_sources": [
+    "RudraScanner/ResearchData/Gann/NQ_2026-09-01_5m.csv",
+    "RudraScanner/ResearchData/Gann/NQ_2026-09-02_5m.csv",
+    "RudraScanner/ResearchData/Gann/NQ_2026-09-03_5m.csv",
+    "RudraScanner/ResearchData/Gann/NQ_2026-09-04_5m.csv"
+  ],
+  "merged_utc_5m_csv": "three_candle/data/NQ_2026-09_5m_UTC.csv",
+  "added_archived_rows": 1028,
+  "remaining_gap_note": "Archived daily files cover NY Sep 1-4; NY Sep 6 evening / Sep 7 Labor Day availability needs separate audit."
 }
