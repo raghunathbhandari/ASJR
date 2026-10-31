@@ -14,6 +14,11 @@ import numpy as np
 import pandas as pd
 from detect_gold_v2_swings import DEFAULT, load
 
+# ================================================================
+# 01. CAUSAL C2-ONLY CANDIDATE DETECTION (GOLD BODY-STOP STUDY)
+# Change the ATR / prior-bar / body filters here for experiments.
+# C3 is recorded as LATER observational confirmation, not entry permission.
+# ================================================================
 def c2_candidates(b, day, lookback=8, range_atr=1.0, depth_atr=0.5, c1_body=0.4):
     close=b.Close.shift(1)
     tr=pd.concat([b.High-b.Low,(b.High-close).abs(),(b.Low-close).abs()],axis=1).max(axis=1)
@@ -48,6 +53,12 @@ def c2_candidates(b, day, lookback=8, range_atr=1.0, depth_atr=0.5, c1_body=0.4)
                              c3_body_ratio=float(body3)))
     return pd.DataFrame(rows)
 
+# ================================================================
+# 02. BODY-TO-BODY EXECUTION EXPERIMENT (DIFFERENT FROM FROZEN)
+# BUY: entry upper C2 body edge, stop lower body edge.
+# SELL: entry lower C2 body edge, stop upper body edge.
+# If a 5m bar touches BOTH entry and stop, classify as unresolved.
+# ================================================================
 def backtest_one(row, raw, end="21:00", risk_max=0.20):
     d=1 if row.side=="BUY" else -1
     start=row.c2+pd.Timedelta(minutes=15)
@@ -105,6 +116,11 @@ def backtest_one(row, raw, end="21:00", risk_max=0.20):
         rec["hit_0p20_after_entry"]=step>=1
     return rec
 
+# ================================================================
+# 03. RUN FULL C2 CANDIDATE SET OR THREE REFERENCE EXAMPLES
+# --reference-only cherry-picks three 30-Oct setups for comparison.
+# Use full-candidate mode for general research statistics.
+# ================================================================
 def run(path, day, reference_only=False, risk_max=.2):
     raw=pd.read_csv(path)
     raw.index=pd.to_datetime(raw["Datetime_UTC"],utc=True)
@@ -120,6 +136,10 @@ def run(path, day, reference_only=False, risk_max=.2):
                       pd.DataFrame([backtest_one(x,raw,risk_max=risk_max)
                                     for x in patterns.itertuples(index=False)])],axis=1)
 
+# ================================================================
+# 04. PRINT SUMMARY
+# +0.20% historical price excursion != true R or executed win.
+# ================================================================
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--csv",type=Path,default=DEFAULT)
