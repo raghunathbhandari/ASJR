@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 
-__version__ = "2.5.1-20261031"
+__version__ = "2.5.2-20261031"
 MODEL = "RTH_C2_SWEEP_EXPOST"
 print(f"[Rudra Three-Candle] LOADED v{__version__} | MODEL={MODEL}")
 COLS = ["Open", "High", "Low", "Close", "Volume"]
@@ -501,6 +501,97 @@ def build_candle_research_features(data: pd.DataFrame, rvol_days: int = 5) -> pd
     return result
 
 
+
+def calculate_asjr_volume_delta_12(data: pd.DataFrame,
+                                    anchor_length: int = 21,
+                                    memory: int = 12,
+                                    local_width: float = 0.45,
+                                    wick_weight: float = 0.35,
+                                    min_tick: float | None = None) -> pd.DataFrame:
+    """Port of ASJR - Volume Delta Pressure v1 Lite Pine v6 12 price-zone score.
+
+    Source: user's Pine script; estimates directional pressure from OHLCV.
+    It is NOT actual order-flow bid/ask delta. Matches the Pine 12-point
+    EMA21-anchor, ATR14 local kernel, 12 prior bars, wick rejection, decay,
+    activity>=0.03, bullish fraction>0.53 and bearish fraction<0.47.
+    Dots are neutral/inactive, not evidence of balanced trading.
+    """
+    import math
+    x=data.sort_index()
+    ans=pd.DataFrame(index=x.index,
+                     columns=["ASJR_buy_points","ASJR_sell_points",
+                              "ASJR_neutral_points","ASJR_buy_share_pct",
+                              "ASJR_12bands","ASJR_ready"], dtype=object)
+    if x.empty:
+        return ans
+    tick = (0.25 if data.attrs.get("symbol") == "NQ=F"
+            else 0.01) if min_tick is None else float(min_tick)
+    close=x.Close.astype(float); open_=x.Open.astype(float)
+    high=x.High.astype(float); low=x.Low.astype(float); volume=x.Volume.astype(float)
+    anchor=close.ewm(span=anchor_length, adjust=False).mean()
+    prev=close.shift(1)
+    true_range=pd.concat([(high-low),(high-prev).abs(),(low-prev).abs()],axis=1).max(axis=1)
+    atr=true_range.ewm(alpha=1/14, adjust=False, min_periods=14).mean()
+    avg_volume=volume.rolling(20,min_periods=20).mean()
+    def clamp(v,lower,upper):
+        return max(lower,min(upper,v))
+    def kernel(distance,width):
+        q=clamp(1-abs(distance)/max(width,tick),0,1)
+        return q*q*(3-2*q)
+    for i in range(len(x)):
+        o=float(open_.iloc[i]); c=float(close.iloc[i])
+        body_low=min(o,c);body_high=max(o,c)
+        a=float(anchor.iloc[i])
+        edge=body_low if a<body_low else (body_high if a>body_high else float("nan"))
+        ready=(i>max(anchor_length,memory+20) and
+               pd.notna(edge) and pd.notna(atr.iloc[i]) and
+               abs(edge-a)>tick*2)
+        ans.iloc[i,ans.columns.get_loc("ASJR_ready")]=bool(ready)
+        if not ready:
+            continue
+        step=(edge-a)/12.0
+        buy_total=0.0;sell_total=0.0;bull=0;bear=0;bands=[]
+        for band in range(12):
+            level=a+step*(band+0.5)
+            bp=0.0;sp=0.0
+            for k in range(memory):
+                j=i-k
+                oo=float(open_.iloc[j]); cc=float(close.iloc[j])
+                hh=float(high.iloc[j]); ll=float(low.iloc[j])
+                spread=max(hh-ll,tick)
+                body=clamp((cc-oo)/spread,-1,1)
+                close_position=clamp((2*cc-hh-ll)/spread,-1,1)
+                buy_share=clamp(0.5+0.5*(0.65*body+0.35*close_position),0,1)
+                traded=max(float(volume.iloc[j]),0.0)
+                lower_wick=(min(oo,cc)-ll)/spread
+                upper_wick=(hh-max(oo,cc))/spread
+                buy_center=0.7*cc+0.3*hh
+                sell_center=0.7*cc+0.3*ll
+                atr_j=float(atr.iloc[j]) if pd.notna(atr.iloc[j]) else float(atr.iloc[i])
+                width=max(atr_j*local_width,abs(step)*1.5)
+                age=math.pow(0.5,k/5.0)
+                bp+=age*traded*(buy_share*kernel(level-buy_center,width)+
+                       wick_weight*lower_wick*kernel(level-ll,width))
+                sp+=age*traded*((1-buy_share)*kernel(level-sell_center,width)+
+                       wick_weight*upper_wick*kernel(level-hh,width))
+            activity=(bp+sp)/max(float(avg_volume.iloc[i]),1.0)
+            if activity>=0.03:
+                fraction=bp/max(bp+sp,0.000001)
+                bull+=int(fraction>0.53)
+                bear+=int(fraction<0.47)
+                buy_total+=bp;sell_total+=sp
+                bands.append("B" if fraction>0.53 else ("S" if fraction<0.47 else "N"))
+            else:
+                bands.append(".")
+        share=(100*buy_total/(buy_total+sell_total)
+               if buy_total+sell_total>0 else 50.0)
+        for col,value in (("ASJR_buy_points",bull),("ASJR_sell_points",bear),
+                          ("ASJR_neutral_points",12-bull-bear),
+                          ("ASJR_buy_share_pct",share),
+                          ("ASJR_12bands","".join(bands))):
+            ans.at[x.index[i],col]=value
+    return ans
+
 def build_signal_candle_research(data: pd.DataFrame,
                                  trades: pd.DataFrame) -> pd.DataFrame:
     """One C1/C2/C3 row per detected trade, with full OHLCV and indicators.
@@ -511,10 +602,14 @@ def build_signal_candle_research(data: pd.DataFrame,
     if trades.empty:
         return pd.DataFrame()
     features=build_candle_research_features(data)
+    asjr=calculate_asjr_volume_delta_12(data)
+    features=features.join(asjr)
     cols=["signal_id","side","candle","time_uk","Open","High","Low","Close",
           "Volume","Range_pct","Body_pct","Upper_wick_pct","Lower_wick_pct",
           "ATR14","ATR_pct","ADX14","RSI14","RVOL5_cumulative",
-          "MA200","MA200_distance_pct","Gap_pct"]
+          "MA200","MA200_distance_pct","Gap_pct",
+          "ASJR_buy_points","ASJR_sell_points","ASJR_neutral_points",
+          "ASJR_buy_share_pct","ASJR_12bands","ASJR_ready"]
     out=[]
     for k,tr in trades.iterrows():
         trigger=tr["trigger_time"]
@@ -560,7 +655,9 @@ def print_research_summary(trades: pd.DataFrame, candle_data: pd.DataFrame) -> N
         display_cols=["candle","time_uk","Open","High","Low","Close","Volume",
                       "Range_pct","Body_pct","Upper_wick_pct","Lower_wick_pct",
                       "ATR14","ATR_pct","ADX14","RSI14","RVOL5_cumulative",
-                      "MA200_distance_pct","Gap_pct"]
+                      "MA200_distance_pct","Gap_pct",
+                      "ASJR_buy_points","ASJR_sell_points","ASJR_buy_share_pct",
+                      "ASJR_12bands"]
         print(part[display_cols].round(3).to_string(index=False))
 
 # 05. SUPPORT / RESISTANCE SWING LEVELS
