@@ -65,11 +65,14 @@ def main() -> int:
     if x.empty:
         print("NQ SEP 2026 | FAILED | all bars rejected")
         return 1
-    x.index.name = "Datetime_UK"  # 29–31 Oct 2026 is GMT, earlier dates are BST!
-    # Use explicit UTC name to avoid confusing early October BST with UTC.
+    # Preserve UTC timestamps; convert to Europe/London only when reporting.
     x.index.name = "Datetime_UTC"
     daily = x.groupby(x.index.tz_convert("America/New_York").date).size()
+    ny_clock = x.index.tz_convert("America/New_York")
+    rth = ((ny_clock.hour * 60 + ny_clock.minute) >= 570) & ((ny_clock.hour * 60 + ny_clock.minute) < 960)
     coverage = {
+        "session_scope":"Extended NQ futures, includes RTH, overnight and pre/postmarket when available",
+        "rth_5m_bars":int(rth.sum()),"extended_non_rth_5m_bars":int((~rth).sum()),
         "symbol":"NQ=F", "source":"Yahoo Finance 5m", "timezone":"UTC",
         "requested_calendar_dates":"2026-09-01 through 2026-09-30",
         "first_timestamp":str(x.index.min()), "last_timestamp":str(x.index.max()),
@@ -104,7 +107,7 @@ def main() -> int:
             if git(folder,"diff","--cached","--quiet").returncode==0:
                 print("NQ SEP 2026 | SUCCESS | UNCHANGED | "+str(len(x))+" rows")
                 return 0
-            if git(folder,"commit","-qm","Research export NQ Oct 2026 5m and coverage").returncode:
+            if git(folder,"commit","-qm","Research export NQ Sep 2026 extended 5m and coverage").returncode:
                 continue
             if git(folder,"push","-q","origin","HEAD:refs/heads/main").returncode==0:
                 print("NQ SEP 2026 | SUCCESS | PUSHED | "+str(len(x))+" rows")
