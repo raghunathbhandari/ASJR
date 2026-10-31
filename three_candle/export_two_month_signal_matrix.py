@@ -11,6 +11,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 import three_candle as strategy
+from research_market_context import calculate_market_context
 
 OUTPUT = ROOT / "results" / "NQ_2026-09_10_signal_matrix.csv"
 SOURCE = [ROOT / "data" / "NQ_2026-09_5m_UTC.csv",
@@ -29,6 +30,12 @@ def main():
         data, min_c1_range_pct=0.0, min_c2_range_pct=0.0, r_floor_pct=0.20
     )
     research = strategy.build_signal_candle_research(data, trades)
+    context = calculate_market_context(data)
+    # Append full descriptive research features by the actual candle time.
+    # C1/C2/C3 times are retained independently; no future features used.
+    context = context.copy()
+    context["research_candle_time"] = context.index
+    research = research.merge(context, left_on="time_uk", right_on="research_candle_time", how="left", validate="many_to_one")
     if trades.empty:
         raise RuntimeError("No signals detected")
     if research.empty:
@@ -49,6 +56,15 @@ def main():
     wide = wide.reset_index()
     combined = header.merge(wide, on="signal_id", how="left", validate="one_to_one")
     combined["signal_id"] = combined["signal_id"].map(lambda i: f"NQ-SEP-OCT-{i:04d}")
+    # SELL confirmation is C4. Include it as observational data, but do not
+    # change SELL signal detection or any trading rule.
+    c4 = context.drop(columns=["research_candle_time"], errors="ignore").add_prefix("C4_")
+    c4 = c4.copy()
+    c4["trigger_time"] = c4.index
+    combined = combined.merge(c4.reset_index(drop=True), on="trigger_time", how="left", validate="many_to_one")
+    for col in c4.columns:
+        if col.startswith("C4_"):
+            combined.loc[combined.direction != "SELL", col] = pd.NA
     def v(row, candle, field):
         return pd.to_numeric(row.get(f"{candle}_{field}"), errors="coerce")
     def filter_name(row):
@@ -62,6 +78,7 @@ def main():
                 v(row,"C2","Range_pct") >= .12)
     combined["proposed_filter_name"] = combined.apply(filter_name, axis=1)
     combined["proposed_filter_pass"] = combined.apply(pass_filter, axis=1)
+    combined["metric_version"] = "CONTEXT_V1_20261031_CAUSAL_BAR_CLOSE"
     # Avoid implying these are realized returns.
     combined["calculation_warning"] = "EXPOST_OHLC_TARGET_HITS_NOT_REALIZED_RETURN"
     front = ["signal_id","time_uk","time_utc","direction","status",
