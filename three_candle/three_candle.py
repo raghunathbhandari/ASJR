@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 
-__version__ = "2.4.3-20261030"
+__version__ = "2.5.0-20261031"
 MODEL = "RTH_C2_SWEEP_EXPOST"
 print(f"[Rudra Three-Candle] LOADED v{__version__} | MODEL={MODEL}")
 COLS = ["Open", "High", "Low", "Close", "Volume"]
@@ -435,6 +435,134 @@ def backtest_breakout_reversals(data: pd.DataFrame,
                        "status":status})
     return pd.DataFrame(output)
 
+
+def build_candle_research_features(data: pd.DataFrame, rvol_days: int = 5) -> pd.DataFrame:
+    """Historical, candle-close features; incomplete warmup stays NaN (never zero).
+
+    ATR/ADX/RSI are Wilder(14); MA200 is 200 bars of the SELECTED chart
+    timeframe, not daily MA200. RVOL5 compares each bar's cumulative session
+    volume with the same elapsed session time on five PRIOR sessions. It is
+    unavailable until all five prior sessions are present at that offset.
+    Gap is today's session open vs previous available session's close; marked
+    unavailable when the immediately prior session is absent/incomplete.
+    """
+    if data.empty:
+        return pd.DataFrame(index=data.index)
+    x = data.sort_index().copy()
+    prev = x.Close.shift()
+    tr = pd.concat([(x.High-x.Low), (x.High-prev).abs(),
+                    (x.Low-prev).abs()], axis=1).max(axis=1)
+    up = x.High.diff()
+    down = -x.Low.diff()
+    plus_dm = up.where((up>down)&(up>0), 0.0)
+    minus_dm = down.where((down>up)&(down>0), 0.0)
+    def wilder(v, n=14):
+        return v.ewm(alpha=1/n, adjust=False, min_periods=n).mean()
+    atr = wilder(tr)
+    plus_di = 100*wilder(plus_dm)/atr.replace(0, float("nan"))
+    minus_di = 100*wilder(minus_dm)/atr.replace(0, float("nan"))
+    dx = 100*(plus_di-minus_di).abs()/(plus_di+minus_di).replace(0,float("nan"))
+    change = x.Close.diff()
+    avg_gain = wilder(change.clip(lower=0))
+    avg_loss = wilder((-change).clip(lower=0))
+    rsi = 100*avg_gain/(avg_gain+avg_loss).replace(0,float("nan"))
+    result = pd.DataFrame(index=x.index)
+    result["ATR14"] = atr
+    result["ATR_pct"] = 100*atr/x.Close
+    result["ADX14"] = wilder(dx)
+    result["RSI14"] = rsi
+    result["MA200"] = x.Close.rolling(200,min_periods=200).mean()
+    result["MA200_distance_pct"] = 100*(x.Close-result.MA200)/result.MA200
+    sessions = pd.Series(get_trading_session_dates(x), index=x.index)
+    gap = pd.Series(float("nan"),index=x.index)
+    rv = pd.Series(float("nan"),index=x.index)
+    dates = list(dict.fromkeys(sessions))
+    step = pd.Timedelta(minutes=int(x.attrs.get("interval_minutes",15)))
+    for pos,day in enumerate(dates):
+        times = sessions[sessions==day].index
+        if not len(times): continue
+        current = x.loc[times]
+        if pos:
+            previous = x.loc[sessions==dates[pos-1]]
+            # Gap only where the previous day's LAST bar directly precedes
+            # this day's session in the provided dataset; archives may omit days.
+            gap.loc[times] = 100*(current.Open.iloc[0]-previous.Close.iloc[-1])/previous.Close.iloc[-1]
+        if pos < rvol_days: continue
+        # Elapsed session index for completed, consecutive timeframe bars.
+        previous_days = [x.loc[sessions==d] for d in dates[pos-rvol_days:pos]]
+        for i,t in enumerate(times):
+            if any(len(daybars)<=i for daybars in previous_days): continue
+            current_cum = float(current.Volume.iloc[:i+1].sum())
+            baseline = [float(daybars.Volume.iloc[:i+1].sum()) for daybars in previous_days]
+            mean = sum(baseline)/rvol_days
+            if mean>0: rv.loc[t] = current_cum/mean
+    result["Gap_pct"] = gap
+    result["RVOL5_cumulative"] = rv
+    return result
+
+
+def build_signal_candle_research(data: pd.DataFrame,
+                                 trades: pd.DataFrame) -> pd.DataFrame:
+    """One C1/C2/C3 row per detected trade, with full OHLCV and indicators.
+
+    SELL uses the last three setup candles ending with the C3 sweep; the
+    breakdown is next C4 (trigger time). Missing indicator history -> NaN.
+    """
+    if trades.empty:
+        return pd.DataFrame()
+    features=build_candle_research_features(data)
+    cols=["signal_id","side","candle","time_uk","Open","High","Low","Close",
+          "Volume","Range_pct","Body_pct","Upper_wick_pct","Lower_wick_pct",
+          "ATR14","ATR_pct","ADX14","RSI14","RVOL5_cumulative",
+          "MA200","MA200_distance_pct","Gap_pct"]
+    out=[]
+    for k,tr in trades.iterrows():
+        trigger=tr["trigger_time"]
+        if trigger not in data.index: continue
+        i=int(data.index.get_loc(trigger))
+        # BUY C3 is trigger; SELL sweep=C3, trigger is next candle C4.
+        end=i if tr["direction"]=="BUY" else i-1
+        if end < 2: continue
+        for n,j in enumerate(range(end-2,end+1),1):
+            bar=data.iloc[j];feat=features.iloc[j]
+            price=float(bar.Close)
+            out.append({"signal_id":k+1,"side":tr["direction"],
+                        "candle":f"C{n}","time_uk":data.index[j],
+                        "Open":float(bar.Open),"High":float(bar.High),
+                        "Low":float(bar.Low),"Close":price,"Volume":float(bar.Volume),
+                        "Range_pct":100*(bar.High-bar.Low)/price,
+                        "Body_pct":100*abs(bar.Close-bar.Open)/price,
+                        "Upper_wick_pct":100*(bar.High-max(bar.Open,bar.Close))/price,
+                        "Lower_wick_pct":100*(min(bar.Open,bar.Close)-bar.Low)/price,
+                        **feat.to_dict()})
+    return pd.DataFrame(out,columns=cols)
+
+
+def print_research_summary(trades: pd.DataFrame, candle_data: pd.DataFrame) -> None:
+    """Compact result first; one C1/C2/C3 research table per signal below."""
+    print("\n=== RUDRA SIGNAL SUMMARY — RESEARCH / NOT REALIZED P&L ===")
+    if trades.empty:
+        print("No signals in available data.")
+        return
+    show=["direction","sweep_time","trigger_time","entry","sl",
+          "max_r_before_sl","highest_target_gain_pct","sl_gain_pct","status"]
+    print(trades[show].to_string(index=False))
+    total=len(trades)
+    for r in (1,2,3):
+        count=int((trades.max_r_before_sl>=r).sum())
+        print(f"{r}R targets: {count}/{total} ({100*count/total:.1f}%)")
+    print("Gain % above is target touch, NOT account return; no fees or fills.")
+    print("\n=== C1 / C2 / C3 SIGNAL RESEARCH DATA ===")
+    print("ATR14, ADX14, RSI14; RVOL5 cumulative session-time; MA200 chart timeframe.")
+    print("NaN means unavailable or insufficient lookback. Gap % is session-open gap.")
+    for sid,part in candle_data.groupby("signal_id"):
+        print(f"\nSignal #{sid} {part.side.iloc[0]} — candle-close feature snapshot")
+        display_cols=["candle","time_uk","Open","High","Low","Close","Volume",
+                      "Range_pct","Body_pct","Upper_wick_pct","Lower_wick_pct",
+                      "ATR14","ATR_pct","ADX14","RSI14","RVOL5_cumulative",
+                      "MA200_distance_pct","Gap_pct"]
+        print(part[display_cols].round(3).to_string(index=False))
+
 # 05. SUPPORT / RESISTANCE SWING LEVELS
 # Confirm a pivot only after swingRight further candles have closed.
 
@@ -585,11 +713,8 @@ def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
         data = build_regular_market_candles(download_candles_from_yahoo(start, end, ticker),
                                start, end, ticker, interval_label)
     breakout_trades = backtest_breakout_reversals(data, minC1RangePct, minC2RangePct, 0.20)
-    print("\\n=== BREAKOUT BUY / POST-SWEEP SELL RESEARCH (gross Gain %) ===")
-    if breakout_trades.empty:
-        print("No qualifying breakout trades in available candles.")
-    else:
-        print(breakout_trades.to_string(index=False))
+    candle_research = build_signal_candle_research(data, breakout_trades)
+    print_research_summary(breakout_trades, candle_research)
     levels = find_confirmed_swing_levels(data, swingLeft, swingRight)
     signals = list(find_three_candle_setups(
         data, check_vol=checkVol, min_c1_range_pct=minC1RangePct,
@@ -615,28 +740,7 @@ def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
         print(f"{str(k)+'R price touches':<24} {count:>8} {rate:>9} {gains[k-1]:>11.2f}%")
     print("Gain % = sum of hypothetical gross target-hit returns at each R; NOT realized P&L.")
     print("Executed win rate: NOT DETERMINED (C3 look-ahead / intrabar order).")
-    print("\n=== SIGNAL DETAILS (CANDLE 2 ONLY) ===")
-    if not signals:
-        print("No qualifying signals.")
-    for number, s in enumerate(signals, 1):
-        c2 = data.loc[s.candle2_time]
-        print(f"\n#{number} LONG | C2 {s.candle2_time:%Y-%m-%d %H:%M %Z} | "
-              f"C3 close/confirmation {(s.candle3_time + pd.Timedelta(minutes=minutes)):%H:%M %Z}")
-        print(pd.DataFrame([c2], index=[s.candle2_time], columns=COLS).to_string())
-        vol_ratio = (f"{s.candle3_volume/s.candle2_volume:.2f}x"
-                     if s.candle2_volume > 0 else "N/A")
-        print(f"C2 close hypothesis {s.candle2_close:.4f} | SL {s.candle2_open:.4f} | "
-              f"C3/C2 volume {vol_ratio} (filter {'ON' if checkVol else 'OFF'})")
-        match = matches[s.candle2_time]
-        if match["level"]:
-            level = match["level"]
-            print(f"Swing {'NEAR' if match['near'] else 'FAR'} | "
-                  f"{level['kind']} {level['price']:.2f} | "
-                  f"wick distance {match['distance_pct']:.3f}% | "
-                  f"pivot {level['pivot_time']:%Y-%m-%d %H:%M %Z}")
-        else:
-            print("Swing N/A | no previously confirmed level")
-    return {"data":data, "signals":signals, "breakout_trades":breakout_trades, "results":[],
+    return {"data":data, "signals":signals, "breakout_trades":breakout_trades, "candle_research":candle_research, "results":[],
             "touches":hits, "potential_gains_pct":gains, "model":active_model, "r_pct":r, "interval":interval_label, "checkVol":checkVol, "session":session, "swing_levels":levels,
             "swing_matches":matches, "swingProximity":swingProximity,
             "nearSwingOnly":nearSwingOnly}
