@@ -18,10 +18,24 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 
-__version__ = "2.0.2-20261030"
+__version__ = "2.5.4-20261031"
 MODEL = "RTH_C2_SWEEP_EXPOST"
 print(f"[Rudra Three-Candle] LOADED v{__version__} | MODEL={MODEL}")
 COLS = ["Open", "High", "Low", "Close", "Volume"]
+TIMEFRAMES = {"5min": 5, "15min": 15, "30min": 30, "1h": 60, "4h": 240}
+
+
+# 01. INPUT SETTINGS AND TIMEFRAMES
+# Timeframe aliases and configuration.
+
+def get_timeframe_minutes(value: str) -> int:
+    aliases = {"5m": "5min", "15m": "15min", "30m": "30min",
+               "60m": "1h", "60min": "1h", "1hr": "1h", "4hr": "4h", "240m": "4h"}
+    key = aliases.get(str(value).lower(), str(value).lower())
+    if key not in TIMEFRAMES:
+        raise ValueError("interval must be 5min, 15min, 30min, 1h, or 4h")
+    return TIMEFRAMES[key]
+
 
 
 @dataclass(frozen=True)
@@ -39,36 +53,114 @@ class Signal:
     candle2_volume: float
 
 
-def download_data(start: str, end: str, symbol: str = "INTC",
+# 02. DOWNLOAD AND DATA QUALITY
+# Detect gaps and invalid prices; never fabricate OHLCV bars.
+
+def clean_downloaded_candles(raw: pd.DataFrame) -> pd.DataFrame:
+    if raw.empty:
+        raise ValueError("No Yahoo bars returned")
+    if isinstance(raw.columns, pd.MultiIndex):
+        raw.columns = raw.columns.get_level_values(0)
+    if raw.index.tz is None:
+        raise ValueError("Yahoo data lacks timezone")
+    data = raw[COLS].copy().sort_index()
+    return data.loc[~data.index.duplicated(keep="last")]
+
+
+def find_missing_regular_hours_candles(data: pd.DataFrame) -> list[pd.Timestamp]:
+    """Identify absent 5m timestamps only for observed US RTH dates."""
+    eastern = data.index.tz_convert("America/New_York")
+    missing = []
+    for day in sorted(set(eastern.date)):
+        observed = eastern[eastern.date == day]
+        if not any((observed.hour >= 9) & (observed.hour <= 15)):
+            continue
+        expected = pd.date_range(
+            pd.Timestamp(day, tz="America/New_York") + pd.Timedelta(hours=9, minutes=30),
+            periods=78, freq="5min",
+        )
+        # Do not flag bars that have not happened yet on an active session.
+        expected = expected[expected <= pd.Timestamp.now(tz="America/New_York")]
+        missing.extend(expected.difference(observed))
+    return missing
+
+
+def remove_suspicious_nq_candles(data: pd.DataFrame) -> pd.DataFrame:
+    """Exclude unverified NQ bars with an extreme 5m range (>2% of prior close)."""
+    if data.empty:
+        return data
+    data = data.sort_index()
+    previous = data.Close.shift(1)
+    abnormal = ((data.High - data.Low) / previous > 0.02) & (previous > 0)
+    # Also ensure OHLC obeys elementary envelope constraints.
+    abnormal |= (data.High < data[["Open", "Close", "Low"]].max(axis=1))
+    abnormal |= (data.Low > data[["Open", "Close", "High"]].min(axis=1))
+    if abnormal.any():
+        print("[Rudra Three-Candle] DATA WARNING: quarantining unverified NQ 5m bars:")
+        for stamp in data.index[abnormal]:
+            print(f"  {stamp.tz_convert('Europe/London'):%Y-%m-%d %H:%M %Z} "
+                  f"range={data.loc[stamp,'High']-data.loc[stamp,'Low']:.2f}")
+    return data.loc[~abnormal].copy()
+
+
+def download_candles_from_yahoo(start: str, end: str, symbol: str = "INTC",
                   interval: str = "5m") -> pd.DataFrame:
-    """Get Yahoo 5-minute bars with timezone and volume (retention limited)."""
+    """Download Yahoo bars, retry incomplete 5m RTH dates, flag quality problems.
+
+    Yahoo cannot guarantee missing data recovery. Never interpolate OHLCV.
+    """
     import yfinance as yf
     first, last = date.fromisoformat(start), date.fromisoformat(end)
     if last < first:
         raise ValueError("end before start")
-    data = yf.download(
+    raw = yf.download(
         symbol, start=first.isoformat(),
         end=(last+timedelta(days=1)).isoformat(), interval=interval,
         prepost=True, auto_adjust=False, progress=False, threads=False,
     )
-    if data.empty:
-        raise ValueError("No Yahoo bars: check date range and 5m retention")
-    if isinstance(data.columns, pd.MultiIndex):
-        data.columns = data.columns.get_level_values(0)
-    if data.index.tz is None:
-        raise ValueError("Yahoo data lacks timezone")
-    return data[COLS].copy()
+    data = clean_downloaded_candles(raw)
+    if interval in ("5m", "5min"):
+        missing = find_missing_regular_hours_candles(data)
+        if missing:
+            print(f"[Rudra Three-Candle] DATA WARNING: {len(missing)} missing RTH 5m bars; retrying dates")
+            for day in sorted({t.date() for t in missing}):
+                retry = yf.download(
+                    symbol, start=(day-timedelta(days=1)).isoformat(),
+                    end=(day+timedelta(days=1)).isoformat(),
+                    interval="5m", prepost=True, auto_adjust=False,
+                    progress=False, threads=False,
+                )
+                if not retry.empty:
+                    extra = clean_downloaded_candles(retry)
+                    data = pd.concat([data, extra]).sort_index()
+                    data = data.loc[~data.index.duplicated(keep="last")]
+        if symbol == "NQ=F":
+            data = remove_suspicious_nq_candles(data)
+        unresolved = find_missing_regular_hours_candles(data)
+        if unresolved:
+            print(f"[Rudra Three-Candle] DATA WARNING: {len(unresolved)} RTH 5m bars still missing/invalid:")
+            for stamp in unresolved:
+                print(f"  {stamp.tz_convert('Europe/London'):%Y-%m-%d %H:%M %Z}")
+            print("[Rudra Three-Candle] Incomplete candle groups will be excluded; no synthetic fills.")
+    return data
 
 
-def resample_rth_5m(raw: pd.DataFrame, start: str, end: str,
-                    symbol: str = "INTC") -> pd.DataFrame:
-    """Exactly three complete 5m bars per 15m; 09:30 ET session anchoring."""
+# 03. BUILD MARKET SESSION CANDLES
+# Completed RTH or extended-futures bars from 5-minute source data.
+
+def build_regular_market_candles(raw: pd.DataFrame, start: str, end: str,
+                    symbol: str = "INTC", interval: str = "15min") -> pd.DataFrame:
+    """Completed US RTH bars from 5m, anchored at 09:30 ET for any supported timeframe."""
     if raw.index.tz is None:
         raise ValueError("Input timestamps must be timezone-aware")
     first, last = date.fromisoformat(start), date.fromisoformat(end)
     if last < first:
         raise ValueError("end before start")
+    minutes = get_timeframe_minutes(interval)
+    group_size = minutes // 5
     data = raw[COLS].apply(pd.to_numeric, errors="coerce").dropna().sort_index()
+    if symbol == "NQ=F":
+        data = remove_suspicious_nq_candles(data)
     data.index = data.index.tz_convert("America/New_York")
     data = data.loc[(pd.Index(data.index.date) >= first) &
                     (pd.Index(data.index.date) <= last)]
@@ -77,53 +169,190 @@ def resample_rth_5m(raw: pd.DataFrame, start: str, end: str,
     for day_date, day in data.groupby(data.index.date):
         offset = day.index.hour*60 + day.index.minute - 570
         day = day.loc[offset % 5 == 0]
-        bucket = (day.index.hour*60 + day.index.minute - 570)//15
+        bucket = (day.index.hour*60 + day.index.minute - 570)//minutes
         grouped = day.groupby(bucket)
         count = grouped.size()
         bars = grouped.agg({"Open":"first", "High":"max", "Low":"min",
-                            "Close":"last", "Volume":"sum"}).loc[count[count==3].index]
+                            "Close":"last", "Volume":"sum"}).loc[count[count==group_size].index]
         if bars.empty:
             continue
         session_open = pd.Timestamp(day_date, tz="America/New_York") + pd.Timedelta(hours=9, minutes=30)
         bars.index = pd.DatetimeIndex([
-            session_open + pd.Timedelta(minutes=int(b)*15) for b in bars.index
+            session_open + pd.Timedelta(minutes=int(b)*minutes) for b in bars.index
         ])
         sessions.append(bars)
     if not sessions:
-        raise ValueError("No complete RTH 15m candles")
+        raise ValueError(f"No complete RTH {interval} candles")
     result = pd.concat(sessions)
     result.index = result.index.tz_convert("Europe/London")
-    result.attrs.update({"symbol":symbol, "model":MODEL})
+    result.attrs.update({"symbol":symbol, "model":MODEL, "interval_minutes":minutes})
     return result
 
 
-def load_historical_5m(path: str, start: str, end: str) -> pd.DataFrame:
+
+def get_trading_session_dates(data: pd.DataFrame):
+    """NY 18:00 futures open belongs to the following ET trading date."""
+    eastern = data.index.tz_convert("America/New_York")
+    if data.attrs.get("session_type") == "nq_extended":
+        return (eastern + pd.Timedelta(hours=6)).date
+    return eastern.date
+
+
+def build_extended_nq_4hour_candles(raw: pd.DataFrame, start: str,
+                            end: str) -> pd.DataFrame:
+    """Full 4h NQ futures candles, 18:00 ET anchored; omit partial 14–17 bar.
+
+    Maintenance 17:00–18:00 ET is excluded. Futures sessions run from
+    18:00 ET of the previous calendar day to 17:00 ET of the trade date.
+    """
+    if raw.index.tz is None:
+        raise ValueError("NQ source timestamps must be timezone-aware")
+    first, last = date.fromisoformat(start), date.fromisoformat(end)
+    if last < first:
+        raise ValueError("end before start")
+    data = raw[COLS].apply(pd.to_numeric, errors="coerce").dropna().sort_index()
+    data = remove_suspicious_nq_candles(data)
+    data.index = data.index.tz_convert("America/New_York")
+    labels = (data.index + pd.Timedelta(hours=6)).date
+    data = data.loc[(pd.Index(labels) >= first) & (pd.Index(labels) <= last)]
+    sessions = []
+    for trade_date, day in data.groupby((data.index + pd.Timedelta(hours=6)).date):
+        session_open = pd.Timestamp(trade_date, tz="America/New_York") - pd.Timedelta(hours=6)
+        offsets = pd.Index((day.index - session_open).total_seconds() / 60).astype(int)
+        # Only full blocks within 18:00–14:00 ET; skip 14:00–17:00 partial.
+        valid = (offsets >= 0) & (offsets < 1200) & (offsets % 5 == 0)
+        day = day.loc[valid]
+        buckets = offsets[valid] // 240
+        grouped = day.groupby(buckets)
+        counts = grouped.size()
+        complete = counts[counts == 48].index
+        bars = grouped.agg({"Open":"first", "High":"max", "Low":"min",
+                            "Close":"last", "Volume":"sum"}).loc[complete]
+        if bars.empty:
+            continue
+        bars.index = pd.DatetimeIndex([
+            session_open + pd.Timedelta(minutes=int(b)*240) for b in bars.index
+        ])
+        sessions.append(bars)
+    if not sessions:
+        raise ValueError("No complete NQ extended-session 4h candles")
+    result = pd.concat(sessions)
+    result.index = result.index.tz_convert("Europe/London")
+    result.attrs.update({"symbol":"NQ=F", "model":"NQ_EXTENDED_C2_SWEEP_EXPOST",
+                         "interval_minutes":240, "session_type":"nq_extended"})
+    return result
+
+
+def build_extended_nq_candles(raw: pd.DataFrame, start: str,
+                            end: str, interval: str = "15min") -> pd.DataFrame:
+    """Full NQ futures bars anchored to 18:00 ET; exclude 17:00-18:00 ET break.
+
+    'start' and 'end' refer to futures *trade dates* (US Eastern).
+    For example, Friday 01:45 UK is included in Friday's futures session.
+    Incomplete groups, missing 5m timestamps and suspicious bars are excluded.
+    """
+    if raw.index.tz is None:
+        raise ValueError("NQ source timestamps must be timezone-aware")
+    minutes = get_timeframe_minutes(interval)
+    if minutes == 240:
+        return build_extended_nq_4hour_candles(raw, start, end)
+    first, last = date.fromisoformat(start), date.fromisoformat(end)
+    if last < first:
+        raise ValueError("end before start")
+    data = raw[COLS].apply(pd.to_numeric, errors="coerce").dropna().sort_index()
+    data = remove_suspicious_nq_candles(data)
+    data.index = data.index.tz_convert("America/New_York")
+    # Explicit trade-date assignment avoids treating the evening open as
+    # a different calendar trading day.
+    trade_days = (data.index + pd.Timedelta(hours=6)).date
+    data = data.loc[(pd.Index(trade_days) >= first) &
+                    (pd.Index(trade_days) <= last)]
+    sessions = []
+    for trade_date, day in data.groupby((data.index + pd.Timedelta(hours=6)).date):
+        session_open = pd.Timestamp(trade_date, tz="America/New_York") - pd.Timedelta(hours=6)
+        offsets = pd.Index((day.index - session_open).total_seconds() / 60).astype(int)
+        valid = (offsets >= 0) & (offsets < 1380) & (offsets % 5 == 0)
+        day = day.loc[valid]
+        buckets = offsets[valid] // minutes
+        grouped = day.groupby(buckets)
+        counts = grouped.size()
+        # Reject partial final 4h/1h blocks ending after the daily 17:00 close.
+        complete = counts[counts == minutes // 5].index
+        complete = [b for b in complete if (int(b)+1)*minutes <= 1380]
+        bars = grouped.agg({"Open":"first", "High":"max", "Low":"min",
+                            "Close":"last", "Volume":"sum"}).loc[complete]
+        if bars.empty:
+            continue
+        bars.index = pd.DatetimeIndex([
+            session_open + pd.Timedelta(minutes=int(b)*minutes)
+            for b in bars.index
+        ])
+        sessions.append(bars)
+    if not sessions:
+        raise ValueError(f"No complete NQ extended-session {interval} candles")
+    result = pd.concat(sessions).sort_index()
+    result.index = result.index.tz_convert("Europe/London")
+    result.attrs.update({"symbol":"NQ=F",
+                         "model":"NQ_EXTENDED_C2_SWEEP_EXPOST",
+                         "interval_minutes":minutes, "session_type":"nq_extended"})
+    return result
+
+
+def load_candles_from_csv(path: str, start: str, end: str,
+                       interval: str = "15min", session: str = "RTH") -> pd.DataFrame:
     raw = pd.read_csv(path)
     time_col = "Datetime" if "Datetime" in raw else "datetime_source"
     if time_col not in raw:
         raise ValueError("Expected Datetime or datetime_source CSV column")
     raw.index = pd.DatetimeIndex(pd.to_datetime(raw[time_col], utc=True))
-    return resample_rth_5m(raw, start, end, Path(path).name.split("_")[0].split(".")[0])
+    if session.lower() == "extended":
+        return build_extended_nq_candles(raw, start, end, interval)
+    if get_timeframe_minutes(interval) == 240:
+        return build_extended_nq_4hour_candles(raw, start, end)
+    return build_regular_market_candles(raw, start, end, Path(path).name.split("_")[0].split(".")[0], interval)
 
 
-def historical_three_candle(c1: pd.Series, c2: pd.Series,
-                            c3: pd.Series) -> bool:
-    """Green C2, lower-wick sweep/reclaim C1 low; strong-volume bullish C3."""
-    body = float(c2.Close - c2.Open)
-    return (body > 0 and float(c2.Open-c2.Low) > body
+# 04. THREE-CANDLE SETUP RULES
+# C1 preceding candle, C2 bullish sweep/reclaim, C3 confirmation.
+
+def is_bullish_three_candle_sweep(c1: pd.Series, c2: pd.Series,
+                            c3: pd.Series, check_vol: bool = True,
+                            min_c1_range_pct: float = 0.0,
+                            min_c2_range_pct: float = 0.25) -> bool:
+    """C2 wick sweeps C1; C3 must close green; volume optional."""
+    # C2 may be RED or GREEN: require a lower-wick sweep of C1 low.
+    # C3 MUST be GREEN and close above C2. Volume remains optional.
+    # Provisional absolute-size gate: rejects weak/tiny C1+C2 patterns.
+    # C1 >= 0.20% and C2 >= 0.25% of their respective closing prices.
+    if min_c1_range_pct < 0 or min_c2_range_pct < 0:
+        raise ValueError("minimum candle ranges must be nonnegative")
+    c1_range_pct = 100 * float(c1.High - c1.Low) / float(c1.Close)
+    c2_range_pct = 100 * float(c2.High - c2.Low) / float(c2.Close)
+    if c1_range_pct < min_c1_range_pct or c2_range_pct < min_c2_range_pct:
+        return False
+    body = abs(float(c2.Close - c2.Open))
+    lower_wick = float(min(c2.Open, c2.Close) - c2.Low)
+    return (lower_wick > body
             and float(c2.Low) < float(c1.Low)
-            and float(c2.Close) > float(c1.Low)
-            and pd.notna(c2.Volume) and pd.notna(c3.Volume)
-            and float(c2.Volume) > 0 and float(c3.Volume) > float(c2.Volume)
-            and float(c3.Close) > float(c2.Close))
+            and float(c3.Close) > float(c3.Open)
+            and float(c3.Close) > float(c2.Close)
+            and (not check_vol or (pd.notna(c2.Volume) and pd.notna(c3.Volume)
+                 and float(c2.Volume) > 0 and float(c3.Volume) > float(c2.Volume))))
 
 
-def find_historical_signals(data: pd.DataFrame):
+def find_three_candle_setups(data: pd.DataFrame, check_vol: bool = True,
+                             min_c1_range_pct: float = 0.20,
+                             min_c2_range_pct: float = 0.25):
     """Never join pattern candles across two US trading sessions."""
-    for _, day in data.groupby(data.index.tz_convert("America/New_York").date):
+    for _, day in data.groupby(get_trading_session_dates(data)):
+        step = pd.Timedelta(minutes=int(data.attrs.get("interval_minutes", 15)))
         for i in range(2, len(day)):
+            if day.index[i] - day.index[i-1] != step or day.index[i-1] - day.index[i-2] != step:
+                continue
             c1, c2, c3 = day.iloc[i-2], day.iloc[i-1], day.iloc[i]
-            if not historical_three_candle(c1, c2, c3):
+            if not is_bullish_three_candle_sweep(c1, c2, c3, check_vol=check_vol,
+                    min_c1_range_pct=min_c1_range_pct,
+                    min_c2_range_pct=min_c2_range_pct):
                 continue
             yield Signal(
                 day.index[i], "LONG", day.index[i-2], day.index[i-1], day.index[i],
@@ -132,17 +361,381 @@ def find_historical_signals(data: pd.DataFrame):
             )
 
 
-def historical_target_touches(signals: list[Signal], data: pd.DataFrame,
+
+# 04B. BREAKOUT ENTRY RESEARCH (no C3-close entry assumption)
+# This is a retrospective pattern study; 15m OHLC cannot prove intrabar order.
+def backtest_breakout_reversals(data: pd.DataFrame,
+                               min_c1_range_pct: float = 0.20,
+                               min_c2_range_pct: float = 0.0,
+                               r_floor_pct: float = 0.20) -> pd.DataFrame:
+    """Research BUY C3 body-bottom breakout and SELL post-C3 sweep breakdown.
+
+    BUY: C1/C2 ranges pass filters; C2 long lower wick sweeps C1 low;
+         C3 green and trades above C2 body bottom. Entry=C2 body bottom, SL=C2 low.\n         Green C3 is an ex-post qualification, not knowable during C3 entry.
+    SELL: C3 high sweeps BOTH C1/C2 highs; C4 red and trades below C3
+          body bottom. Entry=C3 body bottom, SL=C3 high.
+    R = max(entry-to-stop distance, entry * r_floor_pct/100).
+    Stops are evaluated conservatively (stop first on ambiguous OHLC bars).\n    Trade identification at C3 close can introduce look-ahead bias.
+    All gains are gross instrument-price percentages, not NQ account returns.
+    """
+    step=pd.Timedelta(minutes=int(data.attrs.get("interval_minutes",15)))
+    trades=[]
+    for _,day in data.groupby(get_trading_session_dates(data)):
+        for i in range(2,len(day)):
+            if any(day.index[z]-day.index[z-1]!=step for z in range(i-1,i+1)):
+                continue
+            a,b,c=day.iloc[i-2],day.iloc[i-1],day.iloc[i]
+            def range_pct(x):
+                return 100*(float(x.High)-float(x.Low))/float(x.Close)
+            large=(range_pct(a)>=min_c1_range_pct and
+                   range_pct(b)>=min_c2_range_pct)
+            wick=float(min(b.Open,b.Close)-b.Low)
+            body=abs(float(b.Close-b.Open))
+            buy=(large and wick>body and b.Low<a.Low and
+                 c.Close>c.Open and c.High>min(b.Open,b.Close))
+            if buy:
+                entry=float(min(b.Open,b.Close)); sl=float(b.Low)
+                trades.append(("BUY",day.index[i-1],day.index[i],entry,sl,i))
+            # SELL: C3 sweeps highs; C4 must be red and break below C3 body.
+            if i+1<len(day) and day.index[i+1]-day.index[i]==step:
+                d=day.iloc[i+1]
+                sell=(c.High>max(a.High,b.High) and d.Close<d.Open and
+                      d.Low<min(c.Open,c.Close))
+                if sell:
+                    entry=float(min(c.Open,c.Close)); sl=float(c.High)
+                    trades.append(("SELL",day.index[i],day.index[i+1],entry,sl,i+1))
+        # Stop/target evaluation begins on the actual breakout candle.
+    output=[]
+    for direction,sweep_time,trigger_time,entry,sl,start_i in trades:
+        day_id=(trigger_time.tz_convert("America/New_York")+
+                (pd.Timedelta(hours=6) if data.attrs.get("session_type")=="nq_extended"
+                 else pd.Timedelta(0))).date()
+        day=data.loc[get_trading_session_dates(data)==day_id]
+        if trigger_time not in day.index: continue
+        idx=day.index.get_loc(trigger_time)
+        risk=max(abs(entry-sl),entry*r_floor_pct/100)
+        max_r=0; status="OPEN"; exit_pct=None
+        last=trigger_time-step
+        for t,bar in day.iloc[idx:].iterrows():
+            if t-last!=step: break
+            last=t
+            adverse=(bar.Low<=sl if direction=="BUY" else bar.High>=sl)
+            if adverse:
+                status="SL (OHLC conservative)"
+                exit_pct=100*((sl-entry)/entry if direction=="BUY" else (entry-sl)/entry)
+                break
+            favourable=(bar.High-entry if direction=="BUY" else entry-bar.Low)
+            max_r=max(max_r,min(3,int(max(0,favourable)/risk)))
+        if status=="OPEN": status="UNRESOLVED (end of available data)"
+        output.append({"direction":direction,"sweep_time":sweep_time,
+                       "trigger_time":trigger_time,"entry":entry,"sl":sl,
+                       "r_points":round(risk,3),"max_r_before_sl":max_r,
+                       "highest_target_gain_pct":round(100*max_r*risk/entry,4),
+                       "sl_gain_pct":None if exit_pct is None else round(exit_pct,4),
+                       "status":status})
+    return pd.DataFrame(output)
+
+
+def build_candle_research_features(data: pd.DataFrame, rvol_days: int = 5) -> pd.DataFrame:
+    """Historical, candle-close features; incomplete warmup stays NaN (never zero).
+
+    ATR/ADX/RSI are Wilder(14); MA200 is 200 bars of the SELECTED chart
+    timeframe, not daily MA200. RVOL5 compares each bar's cumulative session
+    volume with the same elapsed session time on five PRIOR sessions. It is
+    unavailable until all five prior sessions are present at that offset.
+    Gap is today's session open vs previous available session's close; marked
+    unavailable when the immediately prior session is absent/incomplete.
+    """
+    if data.empty:
+        return pd.DataFrame(index=data.index)
+    x = data.sort_index().copy()
+    prev = x.Close.shift()
+    tr = pd.concat([(x.High-x.Low), (x.High-prev).abs(),
+                    (x.Low-prev).abs()], axis=1).max(axis=1)
+    up = x.High.diff()
+    down = -x.Low.diff()
+    plus_dm = up.where((up>down)&(up>0), 0.0)
+    minus_dm = down.where((down>up)&(down>0), 0.0)
+    def wilder(v, n=14):
+        return v.ewm(alpha=1/n, adjust=False, min_periods=n).mean()
+    atr = wilder(tr)
+    plus_di = 100*wilder(plus_dm)/atr.replace(0, float("nan"))
+    minus_di = 100*wilder(minus_dm)/atr.replace(0, float("nan"))
+    dx = 100*(plus_di-minus_di).abs()/(plus_di+minus_di).replace(0,float("nan"))
+    change = x.Close.diff()
+    avg_gain = wilder(change.clip(lower=0))
+    avg_loss = wilder((-change).clip(lower=0))
+    rsi = 100*avg_gain/(avg_gain+avg_loss).replace(0,float("nan"))
+    result = pd.DataFrame(index=x.index)
+    result["Wick_body_ratio"] = ((x.High-x[["Open","Close"]].max(axis=1)) +
+                                  (x[["Open","Close"]].min(axis=1)-x.Low)) / (x.Close-x.Open).abs().replace(0,float("nan"))
+    result["Lower_wick_body_ratio"] = (x[["Open","Close"]].min(axis=1)-x.Low)/(x.Close-x.Open).abs().replace(0,float("nan"))
+    result["Upper_wick_body_ratio"] = (x.High-x[["Open","Close"]].max(axis=1))/(x.Close-x.Open).abs().replace(0,float("nan"))
+    result["ATR14"] = atr
+    result["ATR_pct"] = 100*atr/x.Close
+    result["ADX14"] = wilder(dx)
+    result["RSI14"] = rsi
+    result["MA9"] = x.Close.rolling(9,min_periods=9).mean()
+    result["MA20"] = x.Close.rolling(20,min_periods=20).mean()
+    result["MA9_distance_pct"] = 100*(x.Close-result.MA9)/result.MA9
+    result["MA20_distance_pct"] = 100*(x.Close-result.MA20)/result.MA20
+    result["MA200"] = x.Close.rolling(200,min_periods=200).mean()
+    result["MA200_distance_pct"] = 100*(x.Close-result.MA200)/result.MA200
+    sessions = pd.Series(get_trading_session_dates(x), index=x.index)
+    gap = pd.Series(float("nan"),index=x.index)
+    rv = pd.Series(float("nan"),index=x.index)
+    dates = list(dict.fromkeys(sessions))
+    step = pd.Timedelta(minutes=int(x.attrs.get("interval_minutes",15)))
+    for pos,day in enumerate(dates):
+        times = sessions[sessions==day].index
+        if not len(times): continue
+        current = x.loc[times]
+        if pos:
+            previous = x.loc[sessions==dates[pos-1]]
+            # Gap only where the previous day's LAST bar directly precedes
+            # this day's session in the provided dataset; archives may omit days.
+            gap.loc[times] = 100*(current.Open.iloc[0]-previous.Close.iloc[-1])/previous.Close.iloc[-1]
+        if pos < rvol_days: continue
+        # Elapsed session index for completed, consecutive timeframe bars.
+        previous_days = [x.loc[sessions==d] for d in dates[pos-rvol_days:pos]]
+        for i,t in enumerate(times):
+            if any(len(daybars)<=i for daybars in previous_days): continue
+            current_cum = float(current.Volume.iloc[:i+1].sum())
+            baseline = [float(daybars.Volume.iloc[:i+1].sum()) for daybars in previous_days]
+            mean = sum(baseline)/rvol_days
+            if mean>0: rv.loc[t] = current_cum/mean
+    result["Gap_pct"] = gap
+    result["RVOL5_cumulative"] = rv
+    return result
+
+
+
+def calculate_asjr_volume_delta_12(data: pd.DataFrame,
+                                    anchor_length: int = 21,
+                                    memory: int = 12,
+                                    local_width: float = 0.45,
+                                    wick_weight: float = 0.35,
+                                    min_tick: float | None = None) -> pd.DataFrame:
+    """Port of ASJR - Volume Delta Pressure v1 Lite Pine v6 12 price-zone score.
+
+    Source: user's Pine script; estimates directional pressure from OHLCV.
+    It is NOT actual order-flow bid/ask delta. Matches the Pine 12-point
+    EMA21-anchor, ATR14 local kernel, 12 prior bars, wick rejection, decay,
+    activity>=0.03, bullish fraction>0.53 and bearish fraction<0.47.
+    Dots are neutral/inactive, not evidence of balanced trading.
+    """
+    import math
+    x=data.sort_index()
+    ans=pd.DataFrame(index=x.index,
+                     columns=["ASJR_buy_points","ASJR_sell_points",
+                              "ASJR_neutral_points","ASJR_buy_share_pct",
+                              "ASJR_12bands","ASJR_ready"], dtype=object)
+    if x.empty:
+        return ans
+    tick = (0.25 if data.attrs.get("symbol") == "NQ=F"
+            else 0.01) if min_tick is None else float(min_tick)
+    close=x.Close.astype(float); open_=x.Open.astype(float)
+    high=x.High.astype(float); low=x.Low.astype(float); volume=x.Volume.astype(float)
+    anchor=close.ewm(span=anchor_length, adjust=False).mean()
+    prev=close.shift(1)
+    true_range=pd.concat([(high-low),(high-prev).abs(),(low-prev).abs()],axis=1).max(axis=1)
+    atr=true_range.ewm(alpha=1/14, adjust=False, min_periods=14).mean()
+    avg_volume=volume.rolling(20,min_periods=20).mean()
+    def clamp(v,lower,upper):
+        return max(lower,min(upper,v))
+    def kernel(distance,width):
+        q=clamp(1-abs(distance)/max(width,tick),0,1)
+        return q*q*(3-2*q)
+    for i in range(len(x)):
+        o=float(open_.iloc[i]); c=float(close.iloc[i])
+        body_low=min(o,c);body_high=max(o,c)
+        a=float(anchor.iloc[i])
+        edge=body_low if a<body_low else (body_high if a>body_high else float("nan"))
+        ready=(i>max(anchor_length,memory+20) and
+               pd.notna(edge) and pd.notna(atr.iloc[i]) and
+               abs(edge-a)>tick*2)
+        ans.iloc[i,ans.columns.get_loc("ASJR_ready")]=bool(ready)
+        if not ready:
+            continue
+        step=(edge-a)/12.0
+        buy_total=0.0;sell_total=0.0;bull=0;bear=0;bands=[]
+        for band in range(12):
+            level=a+step*(band+0.5)
+            bp=0.0;sp=0.0
+            for k in range(memory):
+                j=i-k
+                oo=float(open_.iloc[j]); cc=float(close.iloc[j])
+                hh=float(high.iloc[j]); ll=float(low.iloc[j])
+                spread=max(hh-ll,tick)
+                body=clamp((cc-oo)/spread,-1,1)
+                close_position=clamp((2*cc-hh-ll)/spread,-1,1)
+                buy_share=clamp(0.5+0.5*(0.65*body+0.35*close_position),0,1)
+                traded=max(float(volume.iloc[j]),0.0)
+                lower_wick=(min(oo,cc)-ll)/spread
+                upper_wick=(hh-max(oo,cc))/spread
+                buy_center=0.7*cc+0.3*hh
+                sell_center=0.7*cc+0.3*ll
+                atr_j=float(atr.iloc[j]) if pd.notna(atr.iloc[j]) else float(atr.iloc[i])
+                width=max(atr_j*local_width,abs(step)*1.5)
+                age=math.pow(0.5,k/5.0)
+                bp+=age*traded*(buy_share*kernel(level-buy_center,width)+
+                       wick_weight*lower_wick*kernel(level-ll,width))
+                sp+=age*traded*((1-buy_share)*kernel(level-sell_center,width)+
+                       wick_weight*upper_wick*kernel(level-hh,width))
+            activity=(bp+sp)/max(float(avg_volume.iloc[i]),1.0)
+            if activity>=0.03:
+                fraction=bp/max(bp+sp,0.000001)
+                bull+=int(fraction>0.53)
+                bear+=int(fraction<0.47)
+                buy_total+=bp;sell_total+=sp
+                bands.append("B" if fraction>0.53 else ("S" if fraction<0.47 else "N"))
+            else:
+                bands.append(".")
+        share=(100*buy_total/(buy_total+sell_total)
+               if buy_total+sell_total>0 else 50.0)
+        for col,value in (("ASJR_buy_points",bull),("ASJR_sell_points",bear),
+                          ("ASJR_neutral_points",12-bull-bear),
+                          ("ASJR_buy_share_pct",share),
+                          ("ASJR_12bands","".join(bands))):
+            ans.at[x.index[i],col]=value
+    return ans
+
+def build_signal_candle_research(data: pd.DataFrame,
+                                 trades: pd.DataFrame) -> pd.DataFrame:
+    """One C1/C2/C3 row per detected trade, with full OHLCV and indicators.
+
+    SELL uses the last three setup candles ending with the C3 sweep; the
+    breakdown is next C4 (trigger time). Missing indicator history -> NaN.
+    """
+    if trades.empty:
+        return pd.DataFrame()
+    features=build_candle_research_features(data)
+    asjr=calculate_asjr_volume_delta_12(data)
+    features=features.join(asjr)
+    cols=["signal_id","side","candle","time_uk","Open","High","Low","Close",
+          "Volume","Range_pct","Body_pct","Upper_wick_pct","Lower_wick_pct",
+          "ATR14","ATR_pct","ADX14","RSI14","RVOL5_cumulative",
+          "MA9","MA20","MA200","MA9_distance_pct","MA20_distance_pct","MA200_distance_pct","Gap_pct",
+          "Wick_body_ratio","Lower_wick_body_ratio","Upper_wick_body_ratio",
+          "ASJR_buy_points","ASJR_sell_points","ASJR_neutral_points",
+          "ASJR_buy_share_pct","ASJR_12bands","ASJR_ready"]
+    out=[]
+    for k,tr in trades.iterrows():
+        trigger=tr["trigger_time"]
+        if trigger not in data.index: continue
+        i=int(data.index.get_loc(trigger))
+        # BUY C3 is trigger; SELL sweep=C3, trigger is next candle C4.
+        end=i if tr["direction"]=="BUY" else i-1
+        if end < 2: continue
+        for n,j in enumerate(range(end-2,end+1),1):
+            bar=data.iloc[j];feat=features.iloc[j]
+            price=float(bar.Close)
+            out.append({"signal_id":k+1,"side":tr["direction"],
+                        "candle":f"C{n}","time_uk":data.index[j],
+                        "Open":float(bar.Open),"High":float(bar.High),
+                        "Low":float(bar.Low),"Close":price,"Volume":float(bar.Volume),
+                        "Range_pct":100*(bar.High-bar.Low)/price,
+                        "Body_pct":100*abs(bar.Close-bar.Open)/price,
+                        "Upper_wick_pct":100*(bar.High-max(bar.Open,bar.Close))/price,
+                        "Lower_wick_pct":100*(min(bar.Open,bar.Close)-bar.Low)/price,
+                        **feat.to_dict()})
+    return pd.DataFrame(out,columns=cols)
+
+
+def print_research_summary(trades: pd.DataFrame, candle_data: pd.DataFrame) -> None:
+    """Compact result first; one C1/C2/C3 research table per signal below."""
+    print("\n=== RUDRA SIGNAL SUMMARY — RESEARCH / NOT REALIZED P&L ===")
+    if trades.empty:
+        print("No signals in available data.")
+        return
+    show=["direction","sweep_time","trigger_time","entry","sl",
+          "max_r_before_sl","highest_target_gain_pct","sl_gain_pct","status"]
+    print(trades[show].to_string(index=False))
+    total=len(trades)
+    for r in (1,2,3):
+        count=int((trades.max_r_before_sl>=r).sum())
+        print(f"{r}R targets: {count}/{total} ({100*count/total:.1f}%)")
+    print("Gain % above is target touch, NOT account return; no fees or fills.")
+    print("\n=== C1 / C2 / C3 SIGNAL RESEARCH DATA ===")
+    print("ATR14, ADX14, RSI14; RVOL5 cumulative session-time; MA200 chart timeframe.")
+    print("NaN means unavailable or insufficient lookback. Gap % is session-open gap.")
+    print("ASJR = modeled OHLCV volume pressure, not exchange bid/ask delta.")
+    print("Research-only: C3 green / C4 red can be retrospective at intrabar entry.")
+    for sid,part in candle_data.groupby("signal_id"):
+        print(f"\nSignal #{sid} {part.side.iloc[0]} — candle-close feature snapshot")
+        display_cols=["candle","time_uk","Open","High","Low","Close","Volume",
+                      "Range_pct","Body_pct","Upper_wick_pct","Lower_wick_pct",
+                      "ATR14","ATR_pct","ADX14","RSI14","RVOL5_cumulative",
+                      "MA9_distance_pct","MA20_distance_pct","MA200_distance_pct","Gap_pct",
+                      "Wick_body_ratio","Lower_wick_body_ratio","Upper_wick_body_ratio",
+                      "ASJR_buy_points","ASJR_sell_points","ASJR_buy_share_pct",
+                      "ASJR_12bands"]
+        print(part[display_cols].round(3).to_string(index=False))
+
+# 05. SUPPORT / RESISTANCE SWING LEVELS
+# Confirm a pivot only after swingRight further candles have closed.
+
+def find_confirmed_swing_levels(data: pd.DataFrame, left: int = 3, right: int = 3) -> list[dict]:
+    """Causal pivot levels: only confirmed after right bars close."""
+    if left < 1 or right < 1:
+        raise ValueError("swingLeft and swingRight must be positive")
+    levels = []
+    step = pd.Timedelta(minutes=int(data.attrs.get("interval_minutes", 15)))
+    for trade_day, day in data.groupby(get_trading_session_dates(data)):
+        for i in range(left, len(day)-right):
+            window = day.iloc[i-left:i+right+1]
+            if any(window.index[j]-window.index[j-1] != step
+                   for j in range(1, len(window))):
+                continue
+            others = window.drop(day.index[i])
+            for kind, column, compare in (("SUPPORT","Low",min),
+                                          ("RESISTANCE","High",max)):
+                price = float(day.iloc[i][column])
+                extreme = float(compare(others[column]))
+                if (kind == "SUPPORT" and price < extreme) or (
+                        kind == "RESISTANCE" and price > extreme):
+                    levels.append({"kind":kind,"price":price,"pivot_time":day.index[i],
+                                   "confirmed_at":day.index[i+right]+step,
+                                   "trade_day":trade_day})
+    return levels
+
+
+def find_nearest_swing_for_setup(signal: Signal, levels: list[dict],
+                            proximity_pct: float, minutes: int) -> dict:
+    """Nearest already-confirmed support to C2 low or resistance to C2 high."""
+    if proximity_pct < 0:
+        raise ValueError("swingProximity must be nonnegative")
+    known_at = signal.candle2_time + pd.Timedelta(minutes=minutes)
+    candidates = []
+    for level in levels:
+        if level["confirmed_at"] > known_at:
+            continue
+        point = signal.candle2_low if level["kind"] == "SUPPORT" else signal.candle2_high
+        distance = abs(point-level["price"])/level["price"]*100
+        candidates.append((distance,level))
+    if not candidates:
+        return {"near":False,"distance_pct":None,"level":None}
+    distance,level = min(candidates,key=lambda x:x[0])
+    return {"near":distance<=proximity_pct,"distance_pct":distance,"level":level}
+
+
+# 06. RESEARCH TARGET TOUCH STATISTICS
+# Ex-post touches are NOT executable backtest returns.
+
+def count_future_target_touches(signals: list[Signal], data: pd.DataFrame,
                               r_pct: float = 0.10) -> tuple[int, int, int]:
     """Same-session future highs from C3; stop ordering is deliberately ignored."""
     if r_pct <= 0:
         raise ValueError("r must be positive")
-    ny_dates = data.index.tz_convert("America/New_York").date
+    ny_dates = get_trading_session_dates(data)
     hits = [0, 0, 0]
     for signal in signals:
         entry = signal.candle2_close
         step = max(entry-signal.candle2_open, entry*r_pct/100)
-        day = signal.time.tz_convert("America/New_York").date()
+        day = (signal.time.tz_convert("America/New_York") + (
+            pd.Timedelta(hours=6) if data.attrs.get("session_type") == "nq_extended"
+            else pd.Timedelta(0)
+        )).date()
         later = data.loc[(ny_dates == day) & (data.index >= signal.candle3_time)]
         if later.empty:
             continue
@@ -152,7 +745,7 @@ def historical_target_touches(signals: list[Signal], data: pd.DataFrame,
     return tuple(hits)
 
 
-def historical_potential_gains(signals: list[Signal], data: pd.DataFrame,
+def sum_hypothetical_target_returns(signals: list[Signal], data: pd.DataFrame,
                                r_pct: float = 0.10) -> tuple[float, float, float]:
     """Sum target-hit gross price returns per hypothetical equal-sized trade.
 
@@ -161,12 +754,15 @@ def historical_potential_gains(signals: list[Signal], data: pd.DataFrame,
     """
     if r_pct <= 0:
         raise ValueError("r must be positive")
-    dates = data.index.tz_convert("America/New_York").date
+    dates = get_trading_session_dates(data)
     gains = [0.0, 0.0, 0.0]
     for signal in signals:
         entry = signal.candle2_close
         step = max(entry-signal.candle2_open, entry*r_pct/100)
-        day = signal.time.tz_convert("America/New_York").date()
+        day = (signal.time.tz_convert("America/New_York") + (
+            pd.Timedelta(hours=6) if data.attrs.get("session_type") == "nq_extended"
+            else pd.Timedelta(0)
+        )).date()
         later = data.loc[(dates == day) & (data.index >= signal.candle3_time)]
         if later.empty:
             continue
@@ -177,107 +773,188 @@ def historical_potential_gains(signals: list[Signal], data: pd.DataFrame,
     return tuple(gains)
 
 
-def check_signals(ticker: str = "INTC", start: str = "2026-10-29",
-                  end: str = "2026-10-30", r: float = 0.10,
-                  target_r: int = 1, require_breakout: bool = False,
-                  source_csv: str | None = None) -> dict:
-    """Notebook-compatible historical scanner; not an execution backtest.
+# 07. MAIN NOTEBOOK METHOD: CHECK SIGNALS
+# Edit user-facing parameters here; keep the method name stable.
+
+def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
+                  start: str | None = None, end: str | None = None,
+                  interval: str = "15min", target_r: int = 1,
+                  require_breakout: bool = False,
+                  source_csv: str | None = None,
+                  checkVol: bool = False, session: str = "RTH",
+                   swingLeft: int = 3, swingRight: int = 3,
+                   swingProximity: float = 0.25,
+                   nearSwingOnly: bool = False,
+                   minC1RangePct: float = 0.0,
+                   minC2RangePct: float = 0.0) -> dict:
+    """Supports both (ticker,start,end) and (ticker,interval,start,end).\n\n    Historical scanner; not an execution backtest.
 
     target_r/require_breakout remain accepted for older cells but do not
     change the archived fixed pattern, which is a separate research model.
     """
-    print(f"[Rudra Three-Candle] v{__version__} | MODEL={MODEL}")
-    data = (load_historical_5m(source_csv, start, end) if source_csv else
-            resample_rth_5m(download_data(start, end, ticker), start, end, ticker))
-    signals = list(find_historical_signals(data))
-    hits = historical_target_touches(signals, data, r)
-    gains = historical_potential_gains(signals, data, r)
+    if str(session).lower() not in ("rth", "extended"):
+        raise ValueError("session must be RTH or extended")
+    session = "extended" if session.lower() == "extended" else "RTH"
+    if session == "extended" and ticker != "NQ=F":
+        raise ValueError("extended futures session currently supports NQ=F only")
+    if not isinstance(checkVol, bool):
+        raise TypeError("checkVol must be True or False")
+    if len(args) == 2:
+        start, end = args
+    elif len(args) == 3:
+        interval, start, end = args
+    elif len(args) != 0:
+        raise TypeError("Use check_signals(ticker, start, end) or (ticker, interval, start, end)")
+    if start is None or end is None:
+        raise TypeError("start and end dates are required")
+    minutes = get_timeframe_minutes(interval)
+    interval_label = f"{minutes}min" if minutes < 60 else f"{minutes//60}h"
+    if minutes == 240 and ticker not in ("NQ=F",):
+        raise ValueError("4h extended futures mode currently supports NQ=F only")
+    active_model = "NQ_EXTENDED_C2_SWEEP_EXPOST" if session == "extended" or minutes == 240 else MODEL
+    print(f"[Rudra Three-Candle] v{__version__} | MODEL={active_model} | TIMEFRAME={interval_label} | checkVol={checkVol} | SESSION={session}")
+    if source_csv:
+        data = load_candles_from_csv(source_csv, start, end, interval_label, session=session)
+    elif session == "extended" or minutes == 240:
+        fetch_start = (date.fromisoformat(start) - timedelta(days=1)).isoformat()
+        data = build_extended_nq_candles(download_candles_from_yahoo(fetch_start, end, ticker), start, end, interval_label)
+    else:
+        data = build_regular_market_candles(download_candles_from_yahoo(start, end, ticker),
+                               start, end, ticker, interval_label)
+    breakout_trades = backtest_breakout_reversals(data, minC1RangePct, minC2RangePct, 0.20)
+    candle_research = build_signal_candle_research(data, breakout_trades)
+    print_research_summary(breakout_trades, candle_research)
+    levels = find_confirmed_swing_levels(data, swingLeft, swingRight)
+    signals = list(find_three_candle_setups(
+        data, check_vol=checkVol, min_c1_range_pct=minC1RangePct,
+        min_c2_range_pct=minC2RangePct))
+    matches = {sig.candle2_time: find_nearest_swing_for_setup(
+        sig, levels, swingProximity, minutes) for sig in signals}
+    raw_count = len(signals)
+    if nearSwingOnly:
+        signals = [sig for sig in signals if matches[sig.candle2_time]["near"]]
+    near_count = sum(matches[sig.candle2_time]["near"] for sig in signals)
+    hits = count_future_target_touches(signals, data, r)
+    gains = sum_hypothetical_target_returns(signals, data, r)
     total = len(signals)
-    print(f"\n{ticker} | {start} to {end} | {len(data)} RTH 15m candles")
-    print("=== RUDRA THREE-CANDLE SUMMARY (ex-post price touches) ===")
-    print(f"{'Metric':<24} {'Count':>8} {'Rate':>9} {'Gain %':>12}")
-    print(f"{'Qualifying signals':<24} {total:>8} {'100%' if total else 'N/A':>9} {'—':>12}")
-    for k, count in enumerate(hits, 1):
-        rate = f"{count/total*100:.1f}%" if total else "N/A"
-        print(f"{str(k)+'R price touches':<24} {count:>8} {rate:>9} {gains[k-1]:>11.2f}%")
-    print("Gain % = sum of hypothetical gross target-hit returns at each R; NOT realized P&L.")
-    print("Executed win rate: NOT DETERMINED (C3 look-ahead / intrabar order).")
-    print("\n=== SIGNAL DETAILS (CANDLE 2 ONLY) ===")
-    if not signals:
-        print("No qualifying signals.")
-    for number, s in enumerate(signals, 1):
-        c2 = data.loc[s.candle2_time]
-        print(f"\n#{number} LONG | C2 {s.candle2_time:%Y-%m-%d %H:%M %Z} | "
-              f"C3 close/confirmation {(s.candle3_time + pd.Timedelta(minutes=15)):%H:%M %Z}")
-        print(pd.DataFrame([c2], index=[s.candle2_time], columns=COLS).to_string())
-        print(f"C2 close hypothesis {s.candle2_close:.4f} | SL {s.candle2_open:.4f} | "
-              f"C3/C2 volume {s.candle3_volume/s.candle2_volume:.2f}x")
-    return {"data":data, "signals":signals, "results":[],
-            "touches":hits, "potential_gains_pct":gains, "model":MODEL, "r_pct":r}
+    return {"data":data, "signals":signals, "breakout_trades":breakout_trades, "candle_research":candle_research, "results":[],
+            "touches":hits, "potential_gains_pct":gains, "model":active_model, "r_pct":r, "interval":interval_label, "checkVol":checkVol, "session":session, "swing_levels":levels,
+            "swing_matches":matches, "swingProximity":swingProximity,
+            "nearSwingOnly":nearSwingOnly}
 
+
+# 08. CHART: ALL SWING PRICE LINES
+# Signals are hidden for now as requested.
 
 def show_chart(test: dict, signal_number: int | None = None) -> None:
-    """C1/C2/C3 charts: hypothesis green, initial SL red, R references purple."""
-    signals = test["signals"]
-    if signal_number is not None:
-        if not 1 <= signal_number <= len(signals):
-            raise ValueError(f"signal_number must be 1..{len(signals)}")
-        signals = [signals[signal_number-1]]
+    """Draw all confirmed swing support/resistance price lines, with candles.
+
+    No signal, entry, stop or target overlays at this stage. Price lines begin
+    at each swing's confirmation time (not at its historical pivot) so the
+    plotted level is never displayed before it could have been known.
+    signal_number is retained for notebook call compatibility but unused.
+    """
     data = test["data"]
-    ny_dates = data.index.tz_convert("America/New_York").date
-    for s in signals:
-        idx = data.index.get_loc(s.candle3_time)
-        day = s.time.tz_convert("America/New_York").date()
-        last = max(i for i in range(idx, len(data)) if ny_dates[i] == day)
-        view = data.iloc[max(0, idx-10):last+1]
-        fig, (ax, volume) = plt.subplots(
-            2, 1, figsize=(13, 6), sharex=True,
-            gridspec_kw={"height_ratios":[4,1]},
-        )
-        for x, (_, bar) in enumerate(view.iterrows()):
-            color = "#168650" if bar.Close >= bar.Open else "#c64242"
-            ax.vlines(x, bar.Low, bar.High, color=color, linewidth=1.2)
-            ax.add_patch(Rectangle((x-.32, min(bar.Open,bar.Close)), .64,
-                                   max(abs(bar.Close-bar.Open), .005),
-                                   facecolor=color, edgecolor=color))
-            volume.bar(x, bar.Volume, color=color, width=.7)
-        for name, stamp, color in [
-            ("C1",s.candle1_time,"#4c78a8"),
-            ("C2",s.candle2_time,"#d9a128"),
-            ("C3",s.candle3_time,"#7b58a5"),
-        ]:
-            if stamp in view.index:
-                x = view.index.get_loc(stamp)
-                ax.axvspan(x-.45, x+.45, color=color, alpha=.15)
-                ax.annotate(name, (x,view.iloc[x].High), xytext=(0,8),
-                            textcoords="offset points", ha="center",
-                            color=color, weight="bold")
-        entry = s.candle2_close
-        step = max(entry-s.candle2_open, entry*test.get("r_pct", .10)/100)
-        ax.axhline(entry, color="#138a36", linestyle="--",
-                   label=f"C2 close hypothesis {entry:.2f}")
-        ax.axhline(s.candle2_open, color="#d33232", linestyle=":",
-                   label=f"Initial SL {s.candle2_open:.2f}")
-        for k in (1,2,3):
-            ax.axhline(entry+k*step, color="#853fb7", linestyle="-.", alpha=.55,
-                       label=f"{k}R reference {entry+k*step:.2f}")
-        ax.set_title(f"{data.attrs.get('symbol','INTC')} | {MODEL} | "
-                     f"C3 {s.time:%Y-%m-%d %H:%M %Z} | ex-post, not fills")
-        ax.set_ylabel("Price")
-        volume.set_ylabel("Volume")
-        ticks = list(range(0, len(view), max(1,len(view)//9)))
-        volume.set_xticks(ticks, [view.index[i].strftime("%d %b %H:%M") for i in ticks],
-                          rotation=35, ha="right")
-        ax.legend(loc="best", fontsize=8)
-        fig.tight_layout()
-        plt.show()
-        plt.close(fig)
+    levels = test.get("swing_levels", [])
+    if not levels:
+        levels = find_confirmed_swing_levels(data)
+    fig, (ax, volume) = plt.subplots(
+        2, 1, figsize=(15, 7), sharex=True,
+        gridspec_kw={"height_ratios":[4,1]},
+    )
+    for x, (_, bar) in enumerate(data.iterrows()):
+        color = "#168650" if bar.Close >= bar.Open else "#c64242"
+        ax.vlines(x, bar.Low, bar.High, color=color, linewidth=1)
+        ax.add_patch(Rectangle(
+            (x-.3, min(bar.Open,bar.Close)), .6,
+            max(abs(bar.Close-bar.Open), .005),
+            facecolor=color, edgecolor=color))
+        volume.bar(x, bar.Volume, color=color, width=.7)
+
+    # Every confirmed pivot is drawn separately; no nearest-six restriction.
+    for level in levels:
+        price = float(level["price"])
+        known_at = level["confirmed_at"]
+        first = int(data.index.searchsorted(known_at, side="left"))
+        if first >= len(data):
+            continue
+        color = "#008b8b" if level["kind"] == "SUPPORT" else "#dd8626"
+        ax.hlines(price, first, len(data)-.3, color=color,
+                  linestyles="dashed", linewidth=.9, alpha=.7)
+        ax.plot(first, price, marker=".", color=color, markersize=3)
+    ax.set_xlim(-.5, len(data)+3)
+    ax.set_title(f"{data.attrs.get('symbol','INTC')} | "
+                 f"{test.get('interval','15min')} | "
+                 f"{'EXTENDED' if data.attrs.get('session_type') == 'nq_extended' else 'RTH'} "
+                 f"| ALL CONFIRMED SWING LEVELS | "
+                 f"Support {sum(lv['kind']=='SUPPORT' for lv in levels)} / "
+                 f"Resistance {sum(lv['kind']=='RESISTANCE' for lv in levels)}")
+    ax.set_ylabel("Price")
+    volume.set_ylabel("Volume")
+    ticks = list(range(0, len(data), max(1, len(data)//11)))
+    volume.set_xticks(ticks, [data.index[i].strftime("%d %b %H:%M") for i in ticks],
+                      rotation=35, ha="right")
+    from matplotlib.lines import Line2D
+    ax.legend(handles=[
+        Line2D([0],[0],color="#008b8b",ls="--",label="Confirmed support"),
+        Line2D([0],[0],color="#dd8626",ls="--",label="Confirmed resistance"),
+    ],loc="best",fontsize=9)
+    fig.tight_layout()
+    plt.show()
+    plt.close(fig)
 
 
-def historical_report(path: str, start: str, end: str) -> list[Signal]:
+# 09. COMPATIBILITY AND METHOD-CALL GUIDE
+
+def review_historical_csv(path: str, start: str, end: str) -> list[Signal]:
     """Compatibility helper for archived reproduction."""
     ticker = Path(path).name.split("_")[0].split(".")[0]
     return check_signals(ticker, start, end, source_csv=path)["signals"]
+
+
+def show_method_flow() -> None:
+    """Print the readable processing sequence for notebook review."""
+    print(f"""RUDRA THREE-CANDLE v{__version__} — METHOD CALL FLOW
+check_signals(...)
+  1. get_timeframe_minutes(...) — validate timeframe
+  2. download_candles_from_yahoo(...) OR load_candles_from_csv(...)
+     - clean_downloaded_candles(...)
+     - find_missing_regular_hours_candles(...)
+     - remove_suspicious_nq_candles(...)
+  3. build_regular_market_candles(...) OR build_extended_nq_candles(...)
+     - build_extended_nq_4hour_candles(...) for NQ 4h
+  4. find_confirmed_swing_levels(...) — causal support/resistance pivots
+  5. find_three_candle_setups(...) — C1/C2/C3 sweep
+     - is_bullish_three_candle_sweep(...)
+  6. find_nearest_swing_for_setup(...) — optional proximity flag
+  7. count_future_target_touches(...) — ex-post only
+  8. sum_hypothetical_target_returns(...) — ex-post only
+  9. print summary and return test dictionary
+
+show_chart(test)
+  - draw ALL confirmed swing support/resistance price lines
+  - display candlesticks + volume; NO signals for now
+""")
+
+
+# Backwards-compatible internal aliases (older notebooks may import these).
+timeframe_minutes = get_timeframe_minutes
+_normalize_yahoo = clean_downloaded_candles
+_rth_missing_5m = find_missing_regular_hours_candles
+_quarantine_nq_outliers = remove_suspicious_nq_candles
+download_data = download_candles_from_yahoo
+resample_rth_5m = build_regular_market_candles
+futures_session_dates = get_trading_session_dates
+resample_nq_extended_4h = build_extended_nq_4hour_candles
+resample_nq_extended_5m = build_extended_nq_candles
+load_historical_5m = load_candles_from_csv
+historical_three_candle = is_bullish_three_candle_sweep
+find_historical_signals = find_three_candle_setups
+find_confirmed_swings = find_confirmed_swing_levels
+nearest_confirmed_swing = find_nearest_swing_for_setup
+historical_target_touches = count_future_target_touches
+historical_potential_gains = sum_hypothetical_target_returns
+historical_report = review_historical_csv
 
 
 if __name__ == "__main__":

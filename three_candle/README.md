@@ -1,3 +1,11 @@
+> **FINALIZED RISK AND TRAILING CONTRACT — 31 OCT 2026 (USER-APPROVED)**
+>
+> - A valid trade must have initial stop distance **at most 0.20% of entry price**, measured by `100 * abs(entry - structural_stop) / entry`. If the required structural SL is **above 0.20%**, **reject the trade**, do not widen or silently substitute a synthetic 0.20% stop.
+> - **1R = fixed 0.20% of entry price** for this finalized NQ research variant; nominal initial stop is at the setup's structural level, no further than 1R. For a tighter structural stop, the maximum loss is less than 1R; do not force it wider. Entry and stop must be executable and auditable.
+> - No fixed take-profit cap. **At each reached +1R milestone**, trail the protective stop up/down to that reached milestone: +1R => stop at +1R; +2R => stop at +2R; +3R => stop at +3R, etc. After an achieved milestone, trail becomes effective for subsequent executable price action; model same-bar sequence conservatively with 5m data and clearly flag ambiguities. **Never move stop backwards.** A gap/slippage may fill worse than the stop level.
+> - For BUY: initial SL below entry; for SELL: initial SL above entry. Distinguish 0.20% **price movement** from percentage of leveraged account return.
+> - This finalized contract supersedes conflicting 0.20% *minimum R floor*, flexible wide-stop, fixed-1R-exit and 2R-start trailing text in historical experiments. Do **not** retroactively relabel old backtest results or pretend code was modified. The earlier **821 candidates, 198 filtered, 65.7% reached 1R and illustrative +12.4%** are **LEGACY research results**, **not validated** under this contract. Re-run backtest before publishing success %, gain % or live claims.
+>
 # Rudra Three-Candle Strategy — Research workspace
 
 ## Current implementation — V2.0.0 (2026-10-30)
