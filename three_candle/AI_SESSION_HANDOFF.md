@@ -1,3 +1,11 @@
+## 31 October 2026 — September extension and October EXTENDED coverage
+
+October's published CSV at `three_candle/data/NQ_2026-10_5m_UTC.csv` contains **6,020 5-minute NQ futures bars**, including non-RTH overnight/extended hours. On full-volume weekdays its coverage report shows ~275/276 five-minute bars, far exceeding the 78 bars of equities-style 09:30–16:00 ET RTH. This verifies extended bars are PRESENT, not that every session has no gaps. Audit continuity and the 30 Oct 19:00 UTC quarantined spike; never assume a 24-hour continuous futures market (weekend and exchange maintenance breaks are normal).
+
+New September script `three_candle/collect_nq_september_2026.py` collects NQ 5m for September 1–30 (where Yahoo history permits), including **extended/overnight, RTH, pre/postmarket**, and publishes `three_candle/data/NQ_2026-09_5m_UTC.csv` plus `NQ_2026-09_coverage.json`. The coverage JSON provides RTH vs non-RTH bar counts. Use SSH from the safe `/root/trading/ASJR-Synced` repository as done successfully for October; the script's default REPO constant must be redirected to synced checkout via a temporary sed copy. It has NOT been run and September CSV publication is not yet verified. Yahoo 5m availability and retention limits may cause older September chunks to be missing; retain existing Gann research CSVs as fallback rather than presenting an incomplete download as full history.
+
+User rule: **signal criteria remain unchanged**; all indicators (ATR/ADX/RSI/RVOL5/MA200-distance/gap/ASJR pressure) are per-candle research fields, not new entry filters. UK time presentation, UTC storage. Track comparable RTH-only vs extended-mode outcomes separately.
+
 ## 31 Oct 2026 — October full-month NQ 5m bridge collection request
 
 Queued bridge operation `three_candle_nq_october_2026`, request ID `research-2026103108319`, file `RudraScanner/ResearchBridge/requests/research-2026103108319.json`. New restricted collector `three_candle/collect_nq_october_2026.py`, allowlisted in `RudraScanner/research_bridge_worker.py`. Destination GitHub `three_candle/data/NQ_2026-10_5m_UTC.csv`, companion `three_candle/data/NQ_2026-10_coverage.json`. Collects NQ=F 5min October 1–30 2026 in Yahoo seven-day chunks; missing data and anomalous bars are explicitly flagged; never invent OHLCV or mark the month complete without verifying continuity.
