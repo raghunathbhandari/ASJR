@@ -34,9 +34,7 @@ def main():
     if research.empty:
         raise RuntimeError("No C1/C2/C3 research indicators available")
     header = trades.copy()
-    header["signal_id"] = [
-        f"NQ-SEP-OCT-{i+1:04d}" for i in range(len(header))
-    ]
+    header["signal_id"] = list(range(1, len(header) + 1))
     header["status"] = header.max_r_before_sl.map(
         lambda r: "GOOD" if r >= 2 else "WEAK" if r == 1 else "BAD"
     )
@@ -50,6 +48,7 @@ def main():
     wide.columns = [f"{candle}_{field}" for field, candle in wide.columns]
     wide = wide.reset_index()
     combined = header.merge(wide, on="signal_id", how="left", validate="one_to_one")
+    combined["signal_id"] = combined["signal_id"].map(lambda i: f"NQ-SEP-OCT-{i:04d}")
     def v(row, candle, field):
         return pd.to_numeric(row.get(f"{candle}_{field}"), errors="coerce")
     def filter_name(row):
