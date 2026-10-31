@@ -1,0 +1,43 @@
+{
+  "session_scope": "Extended NQ futures, includes RTH, overnight and pre/postmarket when available",
+  "rth_5m_bars": 1326,
+  "extended_non_rth_5m_bars": 3300,
+  "symbol": "NQ=F",
+  "source": "Yahoo Finance 5m",
+  "timezone": "UTC",
+  "requested_calendar_dates": "2026-09-01 through 2026-09-30",
+  "first_timestamp": "2026-09-08 04:00:00+00:00",
+  "last_timestamp": "2026-09-30 23:55:00+00:00",
+  "rows": 4626,
+  "observed_ny_dates": {
+    "2026-09-08": 276,
+    "2026-09-09": 275,
+    "2026-09-10": 275,
+    "2026-09-11": 203,
+    "2026-09-13": 70,
+    "2026-09-14": 276,
+    "2026-09-15": 275,
+    "2026-09-16": 275,
+    "2026-09-17": 275,
+    "2026-09-18": 203,
+    "2026-09-20": 70,
+    "2026-09-21": 276,
+    "2026-09-22": 275,
+    "2026-09-23": 275,
+    "2026-09-24": 275,
+    "2026-09-25": 204,
+    "2026-09-27": 70,
+    "2026-09-28": 276,
+    "2026-09-29": 275,
+    "2026-09-30": 227
+  },
+  "quarantined_bar_timestamps_utc": [],
+  "failed_chunks": [
+    {
+      "chunk": "2026-08-31",
+      "reason": "empty"
+    }
+  ],
+  "complete_month_verified": false,
+  "notes": "Observed row counts are not proof of full exchange session coverage. Review missing 5m bars before backtesting."
+}
