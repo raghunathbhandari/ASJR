@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 
-__version__ = "2.5.2-20261031"
+__version__ = "2.5.3-20261031"
 MODEL = "RTH_C2_SWEEP_EXPOST"
 print(f"[Rudra Three-Candle] LOADED v{__version__} | MODEL={MODEL}")
 COLS = ["Open", "High", "Low", "Close", "Volume"]
@@ -650,6 +650,8 @@ def print_research_summary(trades: pd.DataFrame, candle_data: pd.DataFrame) -> N
     print("\n=== C1 / C2 / C3 SIGNAL RESEARCH DATA ===")
     print("ATR14, ADX14, RSI14; RVOL5 cumulative session-time; MA200 chart timeframe.")
     print("NaN means unavailable or insufficient lookback. Gap % is session-open gap.")
+    print("ASJR = modeled OHLCV volume pressure, not exchange bid/ask delta.")
+    print("Research-only: C3 green / C4 red can be retrospective at intrabar entry.")
     for sid,part in candle_data.groupby("signal_id"):
         print(f"\nSignal #{sid} {part.side.iloc[0]} — candle-close feature snapshot")
         display_cols=["candle","time_uk","Open","High","Low","Close","Volume",
