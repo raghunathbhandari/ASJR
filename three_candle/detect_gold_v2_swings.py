@@ -11,6 +11,9 @@ import numpy as np
 
 DEFAULT=Path(__file__).parent/"data/multi_asset_5m/GOLD_20260901_20261031_5m_UTC.csv"
 
+# ================================================================
+# 01. LOAD 5M GOLD DATA AND RESAMPLE TO COMPLETE 15M CANDLES
+# ================================================================
 def load(path):
     d=pd.read_csv(path)
     d.index=pd.to_datetime(d["Datetime_UTC"],utc=True)
@@ -20,6 +23,12 @@ def load(path):
     o=o[g.size().eq(3)].dropna()
     return o
 
+# ================================================================
+# 02. GOLD C2 TURNING-AREA DETECTOR
+# Adjustable filters: 8 prior bars, ATR14, C1 body and C3 body.
+# C3 confirmation makes this detection available ONLY at C3 close.
+# This detector alone is NOT a complete execution backtest.
+# ================================================================
 def detect(b, day, lookback=8, min_range_atr=1.0, min_depth_atr=.5,
            min_c1_body=.4, min_c3_body=.6):
     prev=b.Close.shift(1)
@@ -60,6 +69,9 @@ def detect(b, day, lookback=8, min_range_atr=1.0, min_depth_atr=.5,
                                                and risk<=.2)))
     return pd.DataFrame(out)
 
+# ================================================================
+# 03. CLI: SHOW SIGNALS AND OPTIONAL CSV OUTPUT
+# ================================================================
 def main():
     p=argparse.ArgumentParser()
     p.add_argument("--csv",type=Path,default=DEFAULT)
