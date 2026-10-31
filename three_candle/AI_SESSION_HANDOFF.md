@@ -1,3 +1,17 @@
+## 31 October 2026 — Phase 1 wide research data capture (Python v2.5.0)
+
+User direction: **do not aggressively tighten signal rules in this phase**; identify a broad set of three-candle reversal candidates, then learn which market environments differentiate successful from failed signals. Present the compact signal performance summary FIRST, followed by **one C1/C2/C3 research table per signal**. Remove the former verbose C2-only detail dump.
+
+New notebook output: `test["breakout_trades"]` for signal summary and `test["candle_research"]` for full tidy C1/C2/C3 rows. `check_signals()` and `show_chart()` stay callable.
+
+Indicator columns on each candle: timestamp UK, OHLCV, range/body/upper/lower wick percentages, **ATR14**, ATR% of closing price, **ADX14**, **RSI14**, **five-session cumulative RVOL (RVOL5)** relative to comparable elapsed session periods, **200-bar MA** calculated on the chart's timeframe, distance from that MA as signed %, and session-opening **gap %**. Missing indicator warmup is `NaN`, not 0. A 200-period 15-minute average is NOT the same as the daily MA200; for daily MA200 a separate daily price feed is needed. ADX and RSI use Wilder-style smoothed 14-period estimates. The default five-day RVOL needs five prior comparable sessions in the loaded dataset, not just the requested scan day; if there isn't enough history then it remains unavailable.
+
+SELL pattern includes an additional entry trigger candle (C4). Its printed C1/C2/C3 metrics describe the three candles **ending in the C3 upside sweep**; the SELL trigger is the next red candle C4 and is included in the compact signal summary.
+
+**Restrictions:** Do not claim success rates are executable trade win rates: green-C3/red-C4 requirements in the existing scanner are retrospective at intrabar entry, and 15-minute OHLC can be ambiguous about order of entry versus stop. New features must never be used as hidden filters before an actual separate statistical test. Keep previous benchmark outcomes as historical reference only.
+
+**Pending for full statistical analysis:** collect sufficiently long 5m history for 200-bar warmup and RVOL5 baseline, distinguish RTH/extended session offsets, verify prior-session gap history is complete, add independent 20-day RVOL benchmark and daily MA200 if requested, and retain fully causal, lower-timeframe fill simulation before reporting true net profit.
+
 # RUDRA THREE-CANDLE — LOCKED RESEARCH HANDOFF (30 OCT 2026)
 
 ## Final user-confirmed signal rules — use these by default for 29/30 Oct comparison
