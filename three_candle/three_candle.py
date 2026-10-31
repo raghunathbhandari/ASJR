@@ -312,6 +312,12 @@ def load_candles_from_csv(path: str, start: str, end: str,
     return build_regular_market_candles(raw, start, end, Path(path).name.split("_")[0].split(".")[0], interval)
 
 
+# ================================================================
+# NQ V2 REVIEW TIP: THE CORE THREE-CANDLE DETECTION STARTS HERE.
+# The separate NQ V2 filtered report is defined in
+# export_two_month_signal_matrix.py -> pass_filter().
+# Never copy Gold sweep/stop filters into this module.
+# ================================================================
 # 04. THREE-CANDLE SETUP RULES
 # C1 preceding candle, C2 bullish sweep/reclaim, C3 confirmation.
 
@@ -362,6 +368,9 @@ def find_three_candle_setups(data: pd.DataFrame, check_vol: bool = True,
 
 
 
+# NQ EXECUTION REVIEW: breakout reversals here are a different
+# research calculation from simple ex-post target-touch counts.
+# Be explicit about which version produced a published win rate.
 # 04B. BREAKOUT ENTRY RESEARCH (no C3-close entry assumption)
 # This is a retrospective pattern study; 15m OHLC cannot prove intrabar order.
 def backtest_breakout_reversals(data: pd.DataFrame,
@@ -719,6 +728,9 @@ def find_nearest_swing_for_setup(signal: Signal, levels: list[dict],
     return {"near":distance<=proximity_pct,"distance_pct":distance,"level":level}
 
 
+# IMPORTANT: reaching a target in future OHLC is not proof that
+# the trade entered and hit that target before its stop.
+# ================================================================
 # 06. RESEARCH TARGET TOUCH STATISTICS
 # Ex-post touches are NOT executable backtest returns.
 
