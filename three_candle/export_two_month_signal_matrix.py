@@ -91,6 +91,37 @@ def main():
     print(f"CREATED {OUTPUT} | {len(combined)} signals | {len(combined.columns)} columns")
     print(combined.groupby(["direction","status"]).size().to_string())
     print("FILTERED:", combined.groupby(["proposed_filter_pass","status"]).size().to_string())
+    # Stable, Gold-style NQ V2 summary. No change to detection or filters.
+    filtered = combined.loc[combined["proposed_filter_pass"].fillna(False).astype(bool)].copy()
+    filtered["max_r_before_sl"] = pd.to_numeric(filtered["max_r_before_sl"], errors="coerce")
+    filtered["entry"] = pd.to_numeric(filtered["entry"], errors="coerce")
+    filtered["sl"] = pd.to_numeric(filtered["sl"], errors="coerce")
+    filtered["initial_risk_pct"] = (filtered["entry"]-filtered["sl"]).abs() / filtered["entry"] * 100
+    print("\\n" + "="*60)
+    print("RUDRA NQ THREE-CANDLE V2 | FIXED RESEARCH SUMMARY")
+    print("PERIOD: 2026-09 + 2026-10 | Same filters, same definitions")
+    print("="*60)
+    print(f"Raw signals: {len(combined)} | Filtered signals: {len(filtered)}")
+    good = int((filtered["max_r_before_sl"] >= 2).sum())
+    one = int((filtered["max_r_before_sl"] >= 1).sum())
+    bad = len(filtered)-one
+    print(f"At least 1R: {one}/{len(filtered)} ({one/len(filtered)*100:.2f}%)" if len(filtered) else "At least 1R: N/A")
+    print(f"At least 2R: {good}/{len(filtered)} ({good/len(filtered)*100:.2f}%)" if len(filtered) else "At least 2R: N/A")
+    print(f"Below 1R: {bad} | Reached 1R but not 2R: {one-good}")
+    valid = filtered.loc[
+        filtered["initial_risk_pct"].gt(0) &
+        filtered["initial_risk_pct"].notna() &
+        filtered["max_r_before_sl"].notna()
+    ]
+    print(f"Modelled returns: {len(valid)} valid risk records; scenarios assume every target miss = -1R")
+    for target in (1, 2):
+        success = valid["max_r_before_sl"].ge(target)
+        modeled = valid["initial_risk_pct"] * success.map({True: float(target), False: -1.0})
+        print(f"{target}R fixed-target scenario | wins={int(success.sum())} | losses={int((~success).sum())} | "
+              f"win_rate={success.mean()*100:.2f}% | gross_sum={modeled.sum():+.4f}%")
+    print("GAIN DISCLAIMER: hypothetical fixed-R scenarios, not realised trade or account returns.")
+    print("Stop/target ordering, fills, commissions, slippage and trade overlap require separate execution validation.")
+    print("="*60)
 
 if __name__ == "__main__":
     main()
