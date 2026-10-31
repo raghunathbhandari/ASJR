@@ -1,3 +1,37 @@
+## 31 October 2026 — two-day execution check, 29/30 October (v2.5.3)
+
+**Authoritative scope:** user-supplied `NQ_5m_VERIFIED_2026-10-29_30.csv`, RTH only, 29 and 30 Oct, UK timestamps; five-minute bars assembled into complete consecutive fifteen-minute bars; exclude anomalous 30 Oct 19:00 5m bar (extreme range). Tested the same breakout rules with **current phase-1 relaxed size defaults** `minC1RangePct=0, minC2RangePct=0`; no indicator changes or further signal filters.
+
+### Observed candidate table (loose phase-1 rules)
+| Date | Side | Trigger UK | Entry | C2/sweep SL | MFE gain % before SL | 1R | 2R | 3R | Observed initial SL time |
+|---|---|---|---:|---:|---:|---|---|---|---|
+| 29 Oct | BUY | 15:00 | 29526.00 | 29449.00 | +0.511% | Yes | No | No | 17:50 |
+| 29 Oct | BUY | 16:45 | 29564.50 | 29519.75 | +0.143% | No | No | No | 17:10 |
+| 29 Oct | SELL | 17:00 | 29563.50 | 29606.75 | +0.474% | Yes | Yes | No | Not observed by available data end |
+| 30 Oct | BUY | 14:30 | 28672.75 | 28614.75 | +0.562% | Yes | Yes | No | 15:40 |
+
+**Totals for phase-1 loose candidates:** 2 RTH dates; **4 candidates** (3 BUY, 1 SELL); 1R target touch **3/4=75%**, 2R **2/4=50%**, 3R **0/4=0%**; MFE price-excursion sum **+1.690%**, NOT realized strategy P&L. The 29 Oct 16:45 BUY is INCLUDED in discovery mode; it was previously rejected by narrow C1/C2 size rules. It may overlap temporally with 17:00 SELL and is not evidence that both could be held under a single-position portfolio policy. Historical candle color filters are still retrospective; do not market these percentages as executable fill-adjusted trading wins. Intrabar ambiguity must be audited with more granular data.
+
+### Candle feature samples (from 15m candles; Wilder-style indicator using only these two RTH sessions)
+| Signal | Candle | UK | Close | Volume | Range % | Lower wick % of range | ATR14 | ADX14 | RSI14 |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|
+| 29 BUY 15:00 | C1 | 29 14:30 | 29577.50 | 27231 | 0.315 | 45.04 | N/A | N/A | N/A |
+| 29 BUY 15:00 | C2 | 29 14:45 | 29526.00 | 29287 | 0.465 | 56.10 | N/A | N/A | N/A |
+| 29 BUY 15:00 | C3 | 29 15:00 | 29613.00 | 23282 | 0.332 | 1.27 | N/A | N/A | N/A |
+| 29 BUY 16:45 | C1 | 29 16:15 | 29567.75 | 14302 | 0.156 | 54.35 | N/A | N/A | N/A |
+| 29 BUY 16:45 | C2 | 29 16:30 | 29564.50 | 12692 | 0.181 | 83.64 | N/A | N/A | N/A |
+| 29 BUY 16:45 | C3 | 29 16:45 | 29591.75 | 10537 | 0.250 | 41.55 | 136.98 | N/A | N/A |
+| 29 SELL 17:00 | C1 | 29 16:15 | 29567.75 | 14302 | 0.156 | 54.35 | N/A | N/A | N/A |
+| 29 SELL 17:00 | C2 | 29 16:30 | 29564.50 | 12692 | 0.181 | 83.64 | N/A | N/A | N/A |
+| 29 SELL 17:00 | C3 | 29 16:45 | 29591.75 | 10537 | 0.250 | 41.55 | 136.98 | N/A | N/A |
+| 30 BUY 14:30 | C1 | 30 14:00 | 28679.50 | 38111 | 0.629 | 0.69 | 152.87 | 24.05 | 20.83 |
+| 30 BUY 14:30 | C2 | 30 14:15 | 28672.75 | 37098 | 0.314 | 64.44 | 148.37 | 27.19 | 20.72 |
+| 30 BUY 14:30 | C3 | 30 14:30 | 28793.25 | 39961 | 0.588 | 4.87 | 149.87 | 28.62 | 28.45 |
+
+**Not available for these early signal candles from two days alone:** MA200 of 15m close, five-prior-session RVOL5, and full Pine ASJR 12-band readiness. Gap calculations based on the previous *available* session are provisional and should not be equated with true exchange overnight gaps. Gather warmup candles from preceding trading days before reading these indicators. Also note Wilder ADX/ATR estimates can differ from TradingView when the lookback and seed histories differ.
+
+**Testing status:** independently reran the 29/30 October sample candles and reconstructed loose setup matches and approximate 5m target touches with the stored Python logic. This is **not an end-to-end import and execution of the exact GitHub Python module**; Pine parity also not demonstrated. Source Python version **2.5.3-20261031**; concise summary followed by all C1/C2/C3 feature tables, with no new indicator-based exclusions.
+
 ## 31 October 2026 — ASJR Volume Delta Pressure v1 added (Python v2.5.2)
 
 The **user's source Pine v6** `ASJR_Volume_Delta_Pressure_v1_Lite.pine` is the reference. Python `calculate_asjr_volume_delta_12()` mirrors its EMA21 anchored 12 equal price bands, ATR14-localization kernel, preceding 12 candles, exponentially age-decayed volume, body/close-location buy share, lower/upper wick rejection weight 0.35, activity floor 0.03, buy threshold >0.53 and sell threshold <0.47. Default parameters: `anchor_length=21, memory=12, local_width=0.45, wick_weight=0.35`. Use NQ tick size 0.25. Collected per C1/C2/C3: `ASJR_buy_points`, `ASJR_sell_points`, `ASJR_neutral_points`, `ASJR_buy_share_pct`, `ASJR_12bands`, `ASJR_ready`. A 12-point vector uses **B** (buy-dominant), **S** (sell-dominant), **N** (active neutral), **.** (inactive). Neutral/inactive aren't counted in either points score.
