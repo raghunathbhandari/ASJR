@@ -132,3 +132,48 @@ Gross backtest (three ex-post C3-confirmed selected references, all over the max
 - **Under locked 0.20% structural risk: 0 eligible, no executable return.**
 
 CRITICAL CAUSALITY: These three events were initially selected by a filter that checks C3 confirmation; an entry occurring during C3 **cannot know its close**. Therefore all the above are retrospective research hypotheses, not a valid causal signal-by-signal live backtest. The scanner must evaluate C2-only size/swing conditions at C2 close and independently test all ensuing body-edge triggers, including patterns whose C3 later fails. Avoid look-ahead and selection bias. 5m bars can hide crossing-vs-stop ordering; tick data needed for exact fills.
+
+
+## CURRENT GOLD V2 STATUS — 2026-10-31 18:06 GMT (supersedes older research interpretations)
+
+The **correct current research model** is in `research_gold_v2_early_body_cross.py`.
+The older `backtest_gold_v2.py` tests C4 entry with a C2-wick structural stop and is a **different baseline**, not the latest body-stop strategy.
+
+### Rules
+- Identify significant turning-area sweep using C1 / completed C2 only: C2 range ≥1.0× *preceding* ATR14; C2 sweep of preceding 8-bar extreme ≥0.5× ATR14; C1 body/range ≥40%. These threshold values were fitted to the 30 Oct examples.
+- **BUY trigger** = upper C2 body edge, `max(C2.Open,C2.Close)`; **SELL trigger** = lower edge, `min(...)`. Enter on the **first post-C2 5m crossing** (at level unless opening beyond).
+- **BODY stop**: BUY at `min(C2.Open,C2.Close)`, SELL at `max(...)`. C2 wick remains useful for *sweep detection*, not as the body-stop entry risk level.
+- Initial body-risk cap (provisional): **0.20%**; risk measured from executed entry, not necessarily the trigger if price gaps.
+- Price movement **≥+0.20%** is called *fixed milestone reached*, NOT true R when risk is different from 0.20%. True 1R = actual entry-to-body-stop risk, which differs for each trade.
+- C3 confirmation is recorded **after the fact** and not used to allow the earlier C2-body entry, avoiding look-ahead. Compare C2-only candidates against C3-confirmed candidates separately.
+- 5m OHLC can touch entry AND stop in the same candle; mark **UNRESOLVED_ENTRY_STOP_5M**, neither win nor loss until reliable 1m/tick sequencing. Do not assume a favorable path.
+
+### 30 October 2026 highlighted three candidates
+| C2 time UK | Side | Body entry trigger | Actual early-trigger time | Body stop | Body risk | Fixed +0.20% observed? | Swing trailing research illustration | Execution notes |
+|---|---|---:|---|---:|---:|---|---|---|
+| 05:30 | SELL | 4011.80 | 05:45 | 4016.10 | 0.107% | YES | +0.349% | Simulatable, inside 0.20% cap |
+| 07:45 | BUY | 3990.00 | 08:00 | 3984.50 | 0.138% | YES (subsequent high 4009.20) | **NOT VALIDATED** | The 08:00 5m candle had low 3982.20 and high 3996.00; crossed both entry 3990 and stop 3984.50. Intrabar ordering unknown, so NO confirmed win or loss. |
+| 08:45 | SELL | 3998.60 | 09:35 | 4007.20 | 0.215% | YES | +2.611% | Simulatable but EXCEEDS 0.20% cap |
+
+These are **user-selected historical turning-point examples**, not proof that the whole C2-only scanner generates only three candidates, nor that the rules have 100% forward success. A later historical price excursion at +0.20% does not demonstrate a successful live fill if an entry candle is ambiguous.
+
+### Three different, non-interchangeable rates
+- **Fixed +0.20% historical favourable movement:** **3/3 (100%)** for the three retrospectively highlighted patterns. This is a *price-path statistic*, not a realised trading win rate.
+- **Simulated swing-exit outcomes (body-stop model):** 05:30 SELL +0.349%; 08:45 SELL +2.611%; **07:45 BUY unresolved**. On the two assessable historical cases, 2/2 positive, +2.960% summed gross; this is NOT a 3/3 verified strategy win rate.
+- **Within the ≤0.20% body-stop cap and with 5m unambiguous fill:** 05:30 SELL only, +0.349% simulated swing gain. 08:45 SELL is 0.215% risk and ineligible. 07:45 BUY is below cap but its entry/stop sequencing is unresolved. Hence do NOT report +2.960% as risk-compliant portfolio P&L.
+
+The prior historical **07:45 BUY -0.383%/-0.448%** was from the older *C2 wick stop* or hypothetical holding model, and must **not be reused** as an outcome under the revised BODY stop. Prior step/partial “all three winners” numbers were also hypothetical and not valid verified execution results.
+
+### Reproducible scripts
+```bash
+python three_candle/detect_gold_v2_swings.py --date 2026-10-30
+python three_candle/research_gold_v2_early_body_cross.py --date 2026-10-30 --reference-only
+python three_candle/research_gold_v2_early_body_cross.py --date 2026-10-30 --out three_candle/results/gold_v2_body_c2_all.csv
+```
+Use the **full-candidate** run (without `--reference-only`) for signal count and unbiased research metrics. The reference-only run deliberately isolates the three examples the user selected. Verify fills and report date/time in UK local timezone (GMT for 30 Oct).
+
+### Validation outstanding
+- Acquire 1m/tick data to resolve the 07:45 BUY first-bar ordering; don't invent a fill.
+- Full-day C2-only cohort execution and September/October out-of-sample analysis.
+- Compare Gold body-stop SL minimum thresholds (0.08% suggested but not validated) and 0.20% cap without cherry-picking.
+- Portfolio overlap, stop slippage, futures contracts, costs, timezone, price ticks and Yahoo/TradingView rolling differences.
