@@ -13,10 +13,19 @@ sys.path.insert(0, str(ROOT))
 import three_candle as strategy
 from research_market_context import calculate_market_context
 
+# ================================================================
+# 01. NQ V2 DATA PATHS AND OUTPUT FILE
+# Covers September AND October despite the output filename.
+# Edit these paths if the NQ dataset location changes.
+# ================================================================
 OUTPUT = ROOT / "results" / "NQ_2026-09_10_signal_matrix.csv"
 SOURCE = [ROOT / "data" / "NQ_2026-09_5m_UTC.csv",
           ROOT / "data" / "NQ_2026-10_5m_UTC.csv"]
 
+# ================================================================
+# 02. REBUILD NQ THREE-CANDLE RESEARCH MATRIX (NOT GOLD)
+# Imports the existing NQ setup model without modifying its rules.
+# ================================================================
 def main():
     frames = []
     for path in SOURCE:
@@ -69,6 +78,10 @@ def main():
         return pd.to_numeric(row.get(f"{candle}_{field}"), errors="coerce")
     def filter_name(row):
         return "BUY_BODY_WICK_SWEEP_V1" if row.direction == "BUY" else "SELL_SWEEP_RANGE_V1"
+    # 03. NQ V2 FILTERS -- PRIMARY REVIEW/EDIT LOCATION
+    # BUY: C3 body >= .06%, C3 wick/body <= 1, C2 lower wick >= .06%.
+    # SELL: C3 upper wick >= .05%, C2 range >= .12%.
+    # These thresholds do NOT apply to the Gold strategy.
     def pass_filter(row):
         if row.direction == "BUY":
             return (v(row,"C3","Body_pct") >= .06 and
@@ -91,6 +104,9 @@ def main():
     print(f"CREATED {OUTPUT} | {len(combined)} signals | {len(combined.columns)} columns")
     print(combined.groupby(["direction","status"]).size().to_string())
     print("FILTERED:", combined.groupby(["proposed_filter_pass","status"]).size().to_string())
+    # 04. FIXED NQ SUMMARY -- counts and *hypothetical* 1R/2R gains.
+    # The scenario assumes every target miss = -1R; this is NOT
+    # fee-adjusted realised profit or a causal entry/exit simulation.
     # Stable, Gold-style NQ V2 summary. No change to detection or filters.
     filtered = combined.loc[combined["proposed_filter_pass"].fillna(False).astype(bool)].copy()
     filtered["max_r_before_sl"] = pd.to_numeric(filtered["max_r_before_sl"], errors="coerce")
