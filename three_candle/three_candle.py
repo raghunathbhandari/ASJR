@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 
-__version__ = "2.5.0-20261031"
+__version__ = "2.5.1-20261031"
 MODEL = "RTH_C2_SWEEP_EXPOST"
 print(f"[Rudra Three-Candle] LOADED v{__version__} | MODEL={MODEL}")
 COLS = ["Open", "High", "Low", "Close", "Volume"]
@@ -317,7 +317,7 @@ def load_candles_from_csv(path: str, start: str, end: str,
 
 def is_bullish_three_candle_sweep(c1: pd.Series, c2: pd.Series,
                             c3: pd.Series, check_vol: bool = True,
-                            min_c1_range_pct: float = 0.20,
+                            min_c1_range_pct: float = 0.0,
                             min_c2_range_pct: float = 0.25) -> bool:
     """C2 wick sweeps C1; C3 must close green; volume optional."""
     # C2 may be RED or GREEN: require a lower-wick sweep of C1 low.
@@ -366,7 +366,7 @@ def find_three_candle_setups(data: pd.DataFrame, check_vol: bool = True,
 # This is a retrospective pattern study; 15m OHLC cannot prove intrabar order.
 def backtest_breakout_reversals(data: pd.DataFrame,
                                min_c1_range_pct: float = 0.20,
-                               min_c2_range_pct: float = 0.25,
+                               min_c2_range_pct: float = 0.0,
                                r_floor_pct: float = 0.20) -> pd.DataFrame:
     """Research BUY C3 body-bottom breakout and SELL post-C3 sweep breakdown.
 
@@ -676,8 +676,8 @@ def check_signals(ticker: str = "INTC", *args: str, r: float = 0.10,
                    swingLeft: int = 3, swingRight: int = 3,
                    swingProximity: float = 0.25,
                    nearSwingOnly: bool = False,
-                   minC1RangePct: float = 0.20,
-                   minC2RangePct: float = 0.25) -> dict:
+                   minC1RangePct: float = 0.0,
+                   minC2RangePct: float = 0.0) -> dict:
     """Supports both (ticker,start,end) and (ticker,interval,start,end).\n\n    Historical scanner; not an execution backtest.
 
     target_r/require_breakout remain accepted for older cells but do not
