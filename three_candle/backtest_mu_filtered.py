@@ -185,6 +185,15 @@ def main():
     ap.add_argument("--export-bars",action="store_true")
     args=ap.parse_args()
     raw=load_csv(args.csv) if args.csv else download_mu()
+    if args.export_bars:
+        data_dir=Path(__file__).resolve().parent / "data"
+        data_dir.mkdir(parents=True,exist_ok=True)
+        export=raw.copy()
+        export.index=export.index.tz_convert("UTC")
+        export.index.name="Datetime_UTC"
+        export_path=data_dir / "MU_2026-09_10_5m_UTC.csv"
+        export.to_csv(export_path)
+        print(f"Raw MU 5m OHLCV saved: {export_path} ({len(export)} bars)")
     frames,coverage=prepare(raw)
     OUT.mkdir(exist_ok=True,parents=True)
     coverage.to_csv(OUT/"MU_2026-09_10_5m_coverage.csv",index=False)
