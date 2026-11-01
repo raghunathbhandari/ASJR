@@ -24,7 +24,7 @@ if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 REQ_DIR = "RudraScanner/ResearchBridge/requests"
 RESULT_DIR = "RudraScanner/ResearchBridge/results"
-JOB_TYPES = {"health_check", "research_46_batch", "research_46_finalize", "research_46_publish", "gann_nq_20261016", "gann_nq_october_2026", "three_candle_amd_probe", "three_candle_ibkr_one_candle", "ibkr_range_download"}
+JOB_TYPES = {"health_check", "research_46_batch", "research_46_finalize", "research_46_publish", "gann_nq_20261016", "gann_nq_october_2026", "three_candle_amd_probe", "three_candle_ibkr_one_candle", "ibkr_range_download", "yahoo_range_download"}
 MAX_JOBS_PER_TICK = 1
 
 def git(*args, cwd=REPO, timeout=90):
@@ -42,7 +42,7 @@ def safe_job(obj, file_id):
     operation = obj.get("operation")
     if operation not in JOB_TYPES:
         return False
-    if operation == "ibkr_range_download":
+    if operation in {"ibkr_range_download", "yahoo_range_download"}:
         if set(obj) != {"id", "operation", "batch", "schema_version",
                         "ticker", "start_date", "end_date", "timeframe"}:
             return False
@@ -51,7 +51,9 @@ def safe_job(obj, file_id):
         import re
         from datetime import date
         ticker = obj["ticker"]
-        if not isinstance(ticker, str) or not re.fullmatch(r"[A-Z][A-Z0-9.]{0,9}", ticker):
+        if (not isinstance(ticker, str) or not re.fullmatch(
+                r"[A-Z][A-Z0-9.]{0,9}" if operation == "ibkr_range_download"
+                else r"[A-Z][A-Z0-9.=-]{0,14}", ticker)):
             return False
         if obj["timeframe"] not in {"1min", "5min", "15min", "30min", "1h", "1d"}:
             return False
@@ -81,7 +83,13 @@ def run_job(obj):
     if operation == "health_check":
         return {"status": "SUCCESS", "python": sys.version.split()[0],
                 "repo_present": (REPO / "RudraScanner/scan_now.py").is_file()}
-    if operation == "ibkr_range_download":
+    if operation == "yahoo_range_download":
+        cmd = [sys.executable, "three_candle/yahoo_bridge_range_download.py",
+               "--job-id", obj["id"], "--ticker", obj["ticker"],
+               "--start", obj["start_date"], "--end", obj["end_date"],
+               "--timeframe", obj["timeframe"]]
+        timeout = 300
+    elif operation == "ibkr_range_download":
         cmd = [sys.executable, "three_candle/ibkr_bridge_range_download.py",
                "--job-id", obj["id"], "--ticker", obj["ticker"],
                "--start", obj["start_date"], "--end", obj["end_date"],
