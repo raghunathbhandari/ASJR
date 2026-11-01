@@ -411,7 +411,7 @@ def chart_data_and_ma20(result):
 
 
 # 7. PLOT SIGNALS: plot only when called separately
-def plot_signal(result):
+def plot_signal(result, show_sr=False):
     """Show the FULL downloaded NQ candle chart for EACH matching signal."""
     if result is None or result.empty:
         print("No signals to plot.")
@@ -464,6 +464,14 @@ def plot_signal(result):
                   color="#ff6978", linewidth=1.3,
                   label=f"SL reference {row['SL']:.2f}")
 
+        # Add confirmed swing S/R only when requested (passed-signal charts).
+        if show_sr:
+            for kind, pivot, confirmed_at, price in detect_swing_levels(data, left=2, right=2):
+                level_color = "#56c4f5" if kind == "SUPPORT" else "#ff7979"
+                ax.hlines(price, confirmed_at, len(data) - 0.5,
+                          color=level_color, linewidth=1.0,
+                          alpha=0.7, linestyle="--")
+
         every = max(1, len(data) // 15)
         ticks = list(range(0, len(data), every))
         ax.set_xticks(ticks, [data.index[j].strftime("%d %b %H:%M") for j in ticks],
@@ -498,7 +506,7 @@ def plot_signal_passed(result):
         print("No candidates passed all enabled extra filters.")
         return
     # Preserve original candidate numbers in printed headings / chart titles.
-    plot_signal(passed)
+    plot_signal(passed, show_sr=True)
 
 
 # 9. CHART ALL CORE CANDIDATES (one chart, direction-coloured C2 dots)
