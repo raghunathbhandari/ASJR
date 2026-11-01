@@ -21,7 +21,7 @@ The worker runs from `/root/trading/ASJR` on the VPS and normally polls at rough
 | Yahoo Finance through VPS | **Verified** | AMD 5m probe: 609 bars, `research-1793562084207`; no dataset files saved |
 | IBKR Gateway through VPS | **Verified** | AMD single 5m candle: `research-1793562594927`; no dataset files saved |
 | Dynamic IBKR date range | **Verified** | MSFT 2026-10-30 5m: 192 bars, `research-1793563070588`; unique CSV and manifest published |
-| Generic dynamic Yahoo date range | **Not implemented** | Existing AMD Yahoo operation is a read-only fixed probe, not a parameterized exporter |
+| Generic dynamic Yahoo date range | **Verified** | MSFT 2026-10-30 5m: 186 bars, `research-1793563400640`; unique CSV and manifest published |
 
 IBKR Gateway connectivity is **127.0.0.1:4002** on VPS, confirmed with `ss -lntp`. Port `1045` refused connections and must not be used. IBKR uses `ib_insync` from the VPS Python environment. All bridge test and download actions are **historical data only; no orders**.
 
@@ -228,7 +228,7 @@ Future sessions should read the actual current scripts on GitHub before making c
 
 Script: `three_candle/yahoo_bridge_range_download.py`  
 Operation: `yahoo_range_download`  
-Status: Implemented in GitHub, **requires one VPS pull/restart and live verification**.
+Status: **Deployed and live-verified** on 2026-11-01 using MSFT 2026-10-30 5m.
 
 Create a unique request at `RudraScanner/ResearchBridge/requests/<id>.json`:
 
@@ -251,4 +251,4 @@ Every successful job publishes only **new** paths:
 `three_candle/data/yahoo_bridge/<job-id>/<ticker>_<start>_<end>_<timeframe>_UTC.csv`
 and `manifest.json`. It explicitly refuses an existing job directory and never rewrites legacy NQ/GC CSVs. The manifest records row count, first/last UTC timestamps, zero-volume rows and `verified_complete: false`.
 
-**Important:** Old Yahoo AMD probe `three_candle_amd_probe` remains available for a no-write connection test; the new `yahoo_range_download` creates a unique output CSV. A new request and matching result must verify this operation before calling it live-proven.
+**Important:** Old Yahoo AMD probe `three_candle_amd_probe` remains available for a no-write connection test; the new `yahoo_range_download` creates a unique output CSV. Live test `research-1793563400640` returned SUCCESS with 186 rows; unique CSV/manifest published. Compared with IBKR for the same day: IBKR 192, Yahoo 186, 186 matching timestamps, Yahoo 108 zero-volume bars vs IBKR 3. Treat Yahoo volume as incomplete for this sample.
