@@ -621,6 +621,8 @@ def plot_swing_levels(result, left=2, right=2):
         ))
     ax.plot(range(len(data)), ma20, color="#f7c65c",
             linewidth=1.5, label="MA20 (15m close)")
+    ax.plot(range(len(data)), ma200, color="#b58cff",
+            linewidth=1.6, label="MA200 (15m close)")
 
     support_count = 0
     resistance_count = 0
