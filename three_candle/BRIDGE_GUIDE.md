@@ -252,3 +252,100 @@ Every successful job publishes only **new** paths:
 and `manifest.json`. It explicitly refuses an existing job directory and never rewrites legacy NQ/GC CSVs. The manifest records row count, first/last UTC timestamps, zero-volume rows and `verified_complete: false`.
 
 **Important:** Old Yahoo AMD probe `three_candle_amd_probe` remains available for a no-write connection test; the new `yahoo_range_download` creates a unique output CSV. Live test `research-1793563400640` returned SUCCESS with 186 rows; unique CSV/manifest published. Compared with IBKR for the same day: IBKR 192, Yahoo 186, 186 matching timestamps, Yahoo 108 zero-volume bars vs IBKR 3. Treat Yahoo volume as incomplete for this sample.
+
+
+## 10. Copy-ready AI session examples — follow the user's exact instructions
+
+**Default procedure:** When the user says “download <ticker> <start date> to <end date> <timeframe> from IBKR/Yahoo,” preserve all specified values; convert dates to `YYYY-MM-DD`; use a fresh `research-<13digits>` ID; submit an approved request to GitHub `main`; wait for matching result; fetch output CSV and manifest; audit and report. Never silently substitute a different ticker, source, timeframe, or calendar range. Ask when those materially affect the result and are missing.
+
+### A. User: “Download MSFT from IBKR, 30 October 2026, 5m”
+
+Create `RudraScanner/ResearchBridge/requests/<FRESH_ID>.json` with:
+
+```json
+{
+  "schema_version": 1,
+  "id": "<FRESH_ID>",
+  "operation": "ibkr_range_download",
+  "batch": null,
+  "ticker": "MSFT",
+  "start_date": "2026-10-30",
+  "end_date": "2026-10-30",
+  "timeframe": "5min"
+}
+```
+
+Replace both placeholders with the same newly generated ID, e.g. `research-` followed by the current 13-digit millisecond timestamp. If the user says “1 candle only,” use the existing fixed probe only if its ticker/date exactly match; otherwise clarify or use a separate non-saving probe rather than exporting a full day.
+
+### B. User: “Download AMD from Yahoo, 27–30 October 2026, 15m”
+
+```json
+{
+  "schema_version": 1,
+  "id": "<FRESH_ID>",
+  "operation": "yahoo_range_download",
+  "batch": null,
+  "ticker": "AMD",
+  "start_date": "2026-10-27",
+  "end_date": "2026-10-30",
+  "timeframe": "15min"
+}
+```
+
+The new Yahoo operation produces a **unique job folder**. It is distinct from the fixed AMD no-write connectivity probe.
+
+### C. User: “Compare INTC IBKR vs Yahoo, 30 October 2026, 5m”
+
+Submit **two separate request files** with **two distinct IDs**, same ticker/dates/timeframe, operation `ibkr_range_download` for one and `yahoo_range_download` for the other. Once both succeed, compare:
+
+- Row counts, first/last timestamp, and missing 5-minute slots.
+- Timestamp overlap (do not compare misaligned bars).
+- OHLC differences on matched timestamps and zero-volume counts.
+- RTH versus extended coverage and any data-source quality flags.
+
+Do **not** present two sources as identical: the MSFT 2026-10-30 test had 192 IBKR bars versus 186 Yahoo bars, with 108 Yahoo zero-volume rows.
+
+### D. User: “Download 1 September–31 October 2026, 5m”
+
+This exceeds the 31-day job limit. **Split into bounded calendar requests with distinct IDs** (e.g. 1–30 September and 1–31 October) only after checking historical availability and explicit user permission to make multiple exports. Yahoo intraday requests may exceed its rolling availability window; do not claim historical 5m data is available without proof. IBKR and Yahoo exports must remain in separate unique folders. Do not merge them over previously verified NQ/GC files.
+
+### E. Next-session pseudocode for GitHub bridge usage
+
+```python
+# PSEUDOCODE: GitHub connector calls, not a local executable script.
+# Do not paste these calls into the VPS Python console.
+job_id = "research-" + fresh_13_digit_millisecond_timestamp()
+request = {
+    "schema_version": 1,
+    "id": job_id,
+    "operation": "ibkr_range_download",  # or "yahoo_range_download"
+    "batch": None,
+    "ticker": "MSFT",
+    "start_date": "2026-10-30",
+    "end_date": "2026-10-30",
+    "timeframe": "5min",
+}
+# GitHub create_file:
+# path = f"RudraScanner/ResearchBridge/requests/{job_id}.json"
+# content = json.dumps(request)
+# commit on main; never reuse the path
+#
+# Poll GitHub fetch_file:
+# results/{job_id}.json until SUCCESS/FAILED or a reasonable timeout.
+# 404 = PENDING, never SUCCESS.
+#
+# Parse stdout_tail JSON to find the unique CSV path.
+# Fetch CSV and manifest separately; verify that both exist and match the job.
+# Report counts, range, timezone, gaps, errors, source, and direct GitHub links.
+```
+
+### F. Safety checklist before every data job
+
+- [ ] Correct source, ticker, timeframe, inclusive start/end dates.
+- [ ] Job ID fresh; no previous request/output directory with the same ID.
+- [ ] Supported current operation already deployed on VPS; no SSH for routine jobs.
+- [ ] Do not change existing NQ/GC Sep–Oct or any other verified datasets.
+- [ ] No force Git operations, no bot restart, no live DataLake writes.
+- [ ] Success requires result JSON **and** readable CSV/manifest; inspect partial coverage.
+- [ ] Communicate UK display times; CSV timestamps are UTC.
+- [ ] If `FAILED` or no result: diagnose safely; never claim success or overwrite old files.
