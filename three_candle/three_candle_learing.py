@@ -507,7 +507,7 @@ def plot_signal(result, show_sr=False, show_metrics=False):
                 fig.tight_layout(rect=(0, 0, 0.73, 1))
                 fig.text(0.745, 0.96, "23 RESEARCH METRICS", color="#f0f5fa",
                          fontsize=12, va="top", weight="bold")
-                fig.text(0.745, 0.92, "\\n".join(lines), color="#dbe5f0",
+                fig.text(0.745, 0.92, "\n".join(lines), color="#dbe5f0",
                          fontsize=8.8, va="top", family="monospace", linespacing=1.4)
             else:
                 fig.tight_layout()
