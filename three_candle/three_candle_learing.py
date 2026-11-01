@@ -1,6 +1,6 @@
 """Rudra Three-Candle LEARNING file (15-minute charts only).
 
-This is a teaching scanner: it prints C1/C2/C3 and draws each matching setup.
+This is an NQ=F extended-futures teaching scanner: it prints C1/C2/C3\nand draws each matching setup.
 It does NOT place trades, calculate P&L, or simulate stops.
 
 Install once in VS Code terminal:
@@ -38,6 +38,8 @@ def Download_yfinalce(ticker, datetime, timeframe="15m"):
     end = date.fromisoformat(str(date_to))
     if end < start:
         raise ValueError("dateTo must be on or after datefrom")
+    if ticker != "NQ=F":
+        raise ValueError("This learning file is NQ-only: use NQ=F")
     if timeframe not in ("15m", "15min"):
         raise ValueError("Learning version supports 15m only")
 
@@ -46,7 +48,7 @@ def Download_yfinalce(ticker, datetime, timeframe="15m"):
         start=start.isoformat(),
         end=(end + timedelta(days=1)).isoformat(),  # Yahoo end is exclusive
         interval="15m",
-        prepost=(ticker == "NQ=F"),  # include extended futures session
+        prepost=True,  # include NQ overnight / extended futures session
         auto_adjust=False,
         progress=False,
         threads=False,
@@ -146,6 +148,8 @@ def show_three_candle_chart(ticker, times, candles):
 # 6. MAIN LOOP: look at every consecutive group of 3 candles
 def three_candle_signal_learning(tiker, datefrom, dateTo):
     """Print and chart each matching BUY setup. Returns the match count."""
+    if tiker != "NQ=F":
+        raise ValueError("NQ-only learning version: ticker must be NQ=F")
     data = Download_yfinalce(tiker, (datefrom, dateTo), "15m")
     print(f"Downloaded {len(data)} x 15m candles for {tiker}")
     found = 0
@@ -159,11 +163,7 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
         if times[1] - times[0] != step or times[2] - times[1] != step:
             continue
 
-        # Separate calendar dates for stocks; NQ futures may span midnight.
-        if tiker != "NQ=F":
-            ny_dates = [t.tz_convert("America/New_York").date() for t in times]
-            if len(set(ny_dates)) != 1:
-                continue
+        # NQ futures session spans midnight; 15-minute continuity is checked above.
 
         if not passes_three_candle_filters(c1, c2, c3):
             continue
