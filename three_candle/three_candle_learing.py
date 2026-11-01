@@ -103,6 +103,15 @@ def passes_three_candle_filters(c1, c2, c3):
     )
 
 
+# 3B. CORE TURNING PATTERN (BUY only)
+def three_candle_core(c1, c2, c3):
+    """C2 sweeps C1 low, then C3 high breaks C2 BODY top (not C2 high).
+
+    No wick, candle-range, volume, or C3 colour filters are applied.
+    """
+    return bool(c2.Low < c1.Low and c3.High > max(c2.Open, c2.Close))
+
+
 # 4. PRINT ONE CANDLE: easy to compare C1, C2, C3
 def print_single_candle(name, time, candle):
     print(
@@ -223,7 +232,7 @@ def plot_chart(df):
 
 # 6. MAIN LOOP: scan candles and RETURN signals (no charts)
 def three_candle_signal_learning(tiker, datefrom, dateTo):
-    """Return one DataFrame row per BUY setup. No charts or backtesting."""
+    """Return all core BUY candidates with each extra filter result."""
     if tiker != "NQ=F":
         raise ValueError("NQ-only learning version: ticker must be NQ=F")
 
@@ -236,10 +245,15 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
         times = list(data.index[i - 2:i + 1])
         c1, c2, c3 = [data.iloc[j] for j in (i - 2, i - 1, i)]
 
-        # Skip missing bars and session gaps.
+        # Only consecutive 15m candles can form a pattern.
         if times[1] - times[0] != step or times[2] - times[1] != step:
             continue
-        # Show each rule independently, including failed setups.
+
+        # STEP 1: core turning-point detection.
+        if not three_candle_core(c1, c2, c3):
+            continue
+
+        # STEP 2: inspect extra filters, without rejecting core candidates.
         checks = {
             "c1_range_pct": candle_range_pct(c1) >= MIN_C1_RANGE_PCT,
             "c2_range_pct": candle_range_pct(c2) >= MIN_C2_RANGE_PCT,
@@ -248,21 +262,20 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
             "c3_confirms_buy": c3_confirms_buy(c2, c3),
             "c3_volume_higher": c3_volume_higher(c2, c3),
         }
-        matched = passes_three_candle_filters(c1, c2, c3)
-
+        passed = all(value for name, value in checks.items()
+                     if name != "c3_volume_higher" or CHECK_VOLUME)
+        number = len(signals) + 1
         if PRINT_FILTER_DETAILS:
-            print(f"\\nCandidate {i - 1} | C3 {times[2]:%Y-%m-%d %H:%M %Z} | "
-                  f"BUY match: {matched}")
-            for name, passed in checks.items():
-                suffix = " (optional OFF)" if name == "c3_volume_higher" and not CHECK_VOLUME else ""
-                print(f"  {name} = {passed}{suffix}")
+            print(f"\nCandidate {number} | C3 {times[2]:%Y-%m-%d %H:%M %Z} "
+                  f"| CORE=True | Extra filters={passed}")
+            for name, ok in checks.items():
+                note = " (optional OFF)" if name == "c3_volume_higher" and not CHECK_VOLUME else ""
+                print(f"  {name} = {ok}{note}")
 
-        if not matched:
-            continue
-
-        # Keep each candle's OHLCV so plotting needs only 'result'.
         row = {"Ticker": tiker, "Direction": "BUY",
-               "BUY": float(c2.Close), "SL": float(c2.Open)}
+               "BUY": float(c2.Close), "SL": float(c2.Open),
+               "core_match": True, "all_filters_pass": passed}
+        row.update(checks)
         for label, time, candle in zip(("C1", "C2", "C3"), times, (c1, c2, c3)):
             row[f"{label}_time"] = time
             for field in ("Open", "High", "Low", "Close", "Volume"):
@@ -271,7 +284,8 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
 
     result = pd.DataFrame(signals)
     result.attrs["candles"] = data  # Keep the full downloaded chart for plot_signal(result).
-    print(f"Found {len(result)} BUY setups (study references only).")
+    passed_count = int(result["all_filters_pass"].sum()) if not result.empty else 0
+    print(f"Found {len(result)} core candidates; {passed_count} pass extra filters.")
     return result
 
 
