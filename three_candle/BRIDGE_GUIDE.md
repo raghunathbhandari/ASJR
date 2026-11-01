@@ -219,6 +219,36 @@ For reference, previous multi-asset Yahoo 5m data and coverage labels are record
 | IBKR: ticker + start/end + timeframe | `ibkr_range_download` | **Yes**, unique new GitHub directory only |
 | IBKR: one connectivity candle | `three_candle_ibkr_one_candle` | No market-data files |
 | Yahoo: AMD 5m connectivity | `three_candle_amd_probe` | No market-data files |
-| Yahoo: arbitrary ticker/date range | **Not yet supported** | Do not invent an operation |
+| Yahoo: arbitrary ticker/date range | `yahoo_range_download` | **Yes**, unique new GitHub directory (live test pending) |
 
 Future sessions should read the actual current scripts on GitHub before making changes. Preserve existing IBKR NQ/GC and all historical datasets, and require a returned `SUCCESS` result plus CSV/manifest verification.
+
+
+## 9. Dynamic Yahoo date-range downloads (new — live test pending)
+
+Script: `three_candle/yahoo_bridge_range_download.py`  
+Operation: `yahoo_range_download`  
+Status: Implemented in GitHub, **requires one VPS pull/restart and live verification**.
+
+Create a unique request at `RudraScanner/ResearchBridge/requests/<id>.json`:
+
+```json
+{
+  "schema_version": 1,
+  "id": "research-<NEW_13_DIGIT_ID>",
+  "operation": "yahoo_range_download",
+  "batch": null,
+  "ticker": "MSFT",
+  "start_date": "2026-10-30",
+  "end_date": "2026-10-30",
+  "timeframe": "5min"
+}
+```
+
+Exact parameter names and supported timeframes match the IBKR range operation: `1min`, `5min`, `15min`, `30min`, `1h`, `1d`. Range 1–31 calendar days; `1min` max 7 days. Yahoo intraday data must be within the last 59 days. The source is `yfinance`, with `prepost=True` and `auto_adjust=False`. Validated Yahoo symbols may include `NQ=F` or `EURUSD=X`, but specific market coverage must be verified; this does not confer permission to overwrite historical datasets.
+
+Every successful job publishes only **new** paths:
+`three_candle/data/yahoo_bridge/<job-id>/<ticker>_<start>_<end>_<timeframe>_UTC.csv`
+and `manifest.json`. It explicitly refuses an existing job directory and never rewrites legacy NQ/GC CSVs. The manifest records row count, first/last UTC timestamps, zero-volume rows and `verified_complete: false`.
+
+**Important:** Old Yahoo AMD probe `three_candle_amd_probe` remains available for a no-write connection test; the new `yahoo_range_download` creates a unique output CSV. A new request and matching result must verify this operation before calling it live-proven.
