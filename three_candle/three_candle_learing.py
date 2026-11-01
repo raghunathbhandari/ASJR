@@ -554,6 +554,84 @@ def plot_signal_candidate(result):
     plt.close(fig)
 
 
-# 10. RUN DIRECTLY IN VS CODE (or import from your notebook)
+# 10. SWING HIGH / LOW SUPPORT AND RESISTANCE RESEARCH
+def detect_swing_levels(data, left=2, right=2):
+    """Return confirmed swing highs/lows using neighbouring candles.
+
+    A HIGH must exceed highs of 'left' earlier and 'right' later bars.
+    A LOW must be below lows of those bars. A pivot becomes KNOWN only
+    after the right-side candles close (no early/future signal).
+    """
+    levels = []
+    for i in range(left, len(data) - right):
+        high = float(data.High.iloc[i])
+        low = float(data.Low.iloc[i])
+        before = data.iloc[i-left:i]
+        after = data.iloc[i+1:i+1+right]
+        if high > before.High.max() and high > after.High.max():
+            levels.append(("RESISTANCE", i, i + right, high))
+        if low < before.Low.min() and low < after.Low.min():
+            levels.append(("SUPPORT", i, i + right, low))
+    return levels
+
+
+def plot_swing_levels(result, left=2, right=2):
+    """One full 15m chart with MA20 and horizontal swing S/R levels.
+
+    Example: learning.plot_swing_levels(result)
+    Increase left/right for fewer, more important levels.
+    """
+    if result is None:
+        print("No scan result supplied.")
+        return
+    data, ma20 = chart_data_and_ma20(result)
+    levels = detect_swing_levels(data, left=left, right=right)
+
+    fig, ax = plt.subplots(figsize=(20, 9), facecolor="#101722")
+    ax.set_facecolor("#101722")
+    for i, candle in enumerate(data.itertuples()):
+        color = "#23c985" if candle.Close >= candle.Open else "#ff6471"
+        ax.vlines(i, candle.Low, candle.High, color=color, linewidth=0.8)
+        ax.add_patch(Rectangle(
+            (i - 0.3, min(candle.Open, candle.Close)),
+            0.6, max(abs(candle.Close - candle.Open), 0.00001),
+            facecolor=color, edgecolor=color,
+        ))
+    ax.plot(range(len(data)), ma20, color="#f7c65c",
+            linewidth=1.5, label="MA20 (15m close)")
+
+    support_count = 0
+    resistance_count = 0
+    for kind, pivot, confirmed_at, price in levels:
+        # Plot only AFTER confirmation to avoid visual lookahead.
+        color = "#56c4f5" if kind == "SUPPORT" else "#ff7979"
+        ax.hlines(price, confirmed_at, len(data)-0.5, color=color,
+                  linewidth=1.1, alpha=0.78, linestyle="--")
+        ax.scatter(pivot, price, s=34, color=color, zorder=6)
+        if kind == "SUPPORT":
+            support_count += 1
+        else:
+            resistance_count += 1
+
+    every = max(1, len(data) // 15)
+    ticks = list(range(0, len(data), every))
+    ax.set_xticks(ticks, [data.index[j].strftime("%d %b %H:%M") for j in ticks],
+                  rotation=35, ha="right")
+    ax.set_xlim(-1, len(data))
+    ax.set_ylabel("Futures price", color="#dbe5f0")
+    ax.set_title(f"15m swing S/R | Support {support_count} | Resistance {resistance_count} | UK time",
+                 color="#f0f5fa")
+    ax.tick_params(colors="#dbe5f0")
+    for spine in ax.spines.values():
+        spine.set_color("#526174")
+    ax.grid(color="#526174", alpha=0.35)
+    ax.legend(loc="best", facecolor="#1a2534", edgecolor="#526174", labelcolor="white")
+    fig.tight_layout()
+    plt.show()
+    plt.close(fig)
+    print(f"Swing S/R: {support_count} support and {resistance_count} resistance levels")
+
+
+# 11. RUN DIRECTLY IN VS CODE (or import from your notebook)
 if __name__ == "__main__":
     three_candle_signal_learning("NQ=F", "2026-10-29", "2026-10-30")
