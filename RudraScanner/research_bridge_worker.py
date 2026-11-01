@@ -24,7 +24,7 @@ if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 REQ_DIR = "RudraScanner/ResearchBridge/requests"
 RESULT_DIR = "RudraScanner/ResearchBridge/results"
-JOB_TYPES = {"health_check", "research_46_batch", "research_46_finalize", "research_46_publish", "gann_nq_20261016", "gann_nq_october_2026", "three_candle_amd_probe", "three_candle_ibkr_one_candle"}
+JOB_TYPES = {"health_check", "research_46_batch", "research_46_finalize", "research_46_publish", "gann_nq_20261016", "gann_nq_october_2026", "three_candle_amd_probe", "three_candle_ibkr_one_candle", "ibkr_range_download"}
 MAX_JOBS_PER_TICK = 1
 
 def git(*args, cwd=REPO, timeout=90):
@@ -32,18 +32,42 @@ def git(*args, cwd=REPO, timeout=90):
                           capture_output=True, timeout=timeout, check=False)
 
 def safe_job(obj, file_id):
-    if not isinstance(obj, dict) or set(obj) != {"id", "operation", "batch", "schema_version"}:
-        return False
-    if obj["schema_version"] != 1 or obj["id"] != file_id or not isinstance(file_id, str):
+    if not isinstance(obj, dict) or not isinstance(file_id, str):
         return False
     if not (len(file_id) == 22 and file_id.startswith("research-") and
             file_id[9:].isdigit()):
         return False
-    if obj["operation"] not in JOB_TYPES:
+    if obj.get("id") != file_id or obj.get("schema_version") != 1:
         return False
-    return ((obj["operation"] == "research_46_batch" and type(obj["batch"]) is int
+    operation = obj.get("operation")
+    if operation not in JOB_TYPES:
+        return False
+    if operation == "ibkr_range_download":
+        if set(obj) != {"id", "operation", "batch", "schema_version",
+                        "ticker", "start_date", "end_date", "timeframe"}:
+            return False
+        if obj["batch"] is not None:
+            return False
+        import re
+        from datetime import date
+        ticker = obj["ticker"]
+        if not isinstance(ticker, str) or not re.fullmatch(r"[A-Z][A-Z0-9.]{0,9}", ticker):
+            return False
+        if obj["timeframe"] not in {"1min", "5min", "15min", "30min", "1h", "1d"}:
+            return False
+        try:
+            start_date, end_date = date.fromisoformat(obj["start_date"]), date.fromisoformat(obj["end_date"])
+            days = (end_date - start_date).days + 1
+        except (TypeError, ValueError):
+            return False
+        return (1 <= days <= 31 and
+                not (obj["timeframe"] == "1min" and days > 7) and
+                end_date <= datetime.now(timezone.utc).date())
+    if set(obj) != {"id", "operation", "batch", "schema_version"}:
+        return False
+    return ((operation == "research_46_batch" and type(obj["batch"]) is int
              and 1 <= obj["batch"] <= 5) or
-            (obj["operation"] != "research_46_batch" and obj["batch"] is None))
+            (operation != "research_46_batch" and obj["batch"] is None))
 
 def run_job(obj):
     operation = obj["operation"]
@@ -57,7 +81,13 @@ def run_job(obj):
     if operation == "health_check":
         return {"status": "SUCCESS", "python": sys.version.split()[0],
                 "repo_present": (REPO / "RudraScanner/scan_now.py").is_file()}
-    if operation == "three_candle_ibkr_one_candle":
+    if operation == "ibkr_range_download":
+        cmd = [sys.executable, "three_candle/ibkr_bridge_range_download.py",
+               "--job-id", obj["id"], "--ticker", obj["ticker"],
+               "--start", obj["start_date"], "--end", obj["end_date"],
+               "--timeframe", obj["timeframe"]]
+        timeout = 1800
+    elif operation == "three_candle_ibkr_one_candle":
         cmd = [sys.executable, "three_candle/probe_ibkr_one_candle.py"]
         timeout = 60
     elif operation == "three_candle_amd_probe":
