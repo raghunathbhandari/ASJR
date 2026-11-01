@@ -7,7 +7,7 @@ from ib_insync import IB, Stock
 def main():
     ib = IB()
     try:
-        ib.connect("127.0.0.1", 1045, clientId=79431,
+        ib.connect("127.0.0.1", 4002, clientId=79431,
                    readonly=True, timeout=8)
         contract = Stock("AMD", "SMART", "USD")
         ib.qualifyContracts(contract)
