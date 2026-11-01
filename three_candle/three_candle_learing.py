@@ -20,6 +20,7 @@ CHECK_VOLUME = False       # True: C3 volume must exceed C2 volume
 SHOW_CHARTS = True         # Legacy setting; scanner does not draw charts
 MIN_C1_RANGE_PCT = 0.20   # C1 must have at least this high-low range (%)
 MIN_C2_RANGE_PCT = 0.25   # C2 must have at least this high-low range (%)
+PRINT_FILTER_DETAILS = True  # Print PASS/FAIL for each 3-candle window
 
 
 # 2. DOWNLOAD: Yahoo's native 15-minute OHLCV candles
@@ -238,7 +239,25 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
         # Skip missing bars and session gaps.
         if times[1] - times[0] != step or times[2] - times[1] != step:
             continue
-        if not passes_three_candle_filters(c1, c2, c3):
+        # Show each rule independently, including failed setups.
+        checks = {
+            "c1_range_pct": candle_range_pct(c1) >= MIN_C1_RANGE_PCT,
+            "c2_range_pct": candle_range_pct(c2) >= MIN_C2_RANGE_PCT,
+            "c2_lower_wick_longer_than_body": c2_lower_wick_longer_than_body(c2),
+            "c2_sweeps_c1_low": c2_sweeps_c1_low(c1, c2),
+            "c3_confirms_buy": c3_confirms_buy(c2, c3),
+            "c3_volume_higher": c3_volume_higher(c2, c3),
+        }
+        matched = passes_three_candle_filters(c1, c2, c3)
+
+        if PRINT_FILTER_DETAILS:
+            print(f"\\nCandidate {i - 1} | C3 {times[2]:%Y-%m-%d %H:%M %Z} | "
+                  f"BUY match: {matched}")
+            for name, passed in checks.items():
+                suffix = " (optional OFF)" if name == "c3_volume_higher" and not CHECK_VOLUME else ""
+                print(f"  {name} = {passed}{suffix}")
+
+        if not matched:
             continue
 
         # Keep each candle's OHLCV so plotting needs only 'result'.
