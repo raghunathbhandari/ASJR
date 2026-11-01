@@ -93,13 +93,13 @@ def load_learning_candles(ticker, datefrom, dateTo):
         print("IBKR CSV missing; using Yahoo instead:",
               ", ".join(p.name for p in files if not p.is_file()))
         # Yahoo also needs earlier candles to warm up the 20-period MA.
-        earlier = (start - timedelta(days=5)).isoformat()
+        earlier = (start - timedelta(days=12)).isoformat()
         yahoo = Download_yfinalce(ticker, (earlier, dateTo), "15m")
         requested = yahoo.index.date >= start
         if not requested.any():
             raise ValueError("No Yahoo candles within requested dates")
         first = int(requested.argmax())
-        return yahoo.iloc[max(0, first - 20):]
+        return yahoo.iloc[max(0, first - 200):]
 
     # Optional previous-month CSV supplies warmup when requested period
     # starts at the beginning of a month.
@@ -138,15 +138,15 @@ def load_learning_candles(ticker, datefrom, dateTo):
     data = pd.DataFrame(candles, columns=["Time", "Open", "High", "Low", "Close", "Volume"])
     data = data.set_index("Time")
     data.index = data.index.tz_convert("Europe/London")
-    # Keep 20 preceding bars for MA20, but do not count them as signals.
+    # Keep 200 preceding bars for MA20/MA200, but do not count them as signals.
     requested = (data.index.date >= start) & (data.index.date <= end)
     if not requested.any():
         raise ValueError("No complete IBKR 15m bars for requested dates")
     first = int(requested.argmax())
     data = data.iloc[max(0, first - 20):]
     data = data.loc[data.index.date <= end]
-    if first < 20:
-        print("MA20 WARNING: fewer than 20 earlier bars available")
+    if first < 200:
+        print("MA200 WARNING: fewer than 200 earlier bars available")
     if data.empty:
         raise ValueError("No complete IBKR 15m bars for requested dates")
     print(f"Using IBKR CSV: {len(data)} complete 15m bars from {len(files)} file(s)")
@@ -394,20 +394,20 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
 
 
 # Build MA20 on the complete dataset; display only requested dates.
-def chart_data_and_ma20(result):
+def chart_data_and_mas(result):
+    """Compute MA20 and MA200 with hidden historical candles before chart start."""
     full_data = result.attrs.get("candles")
     if full_data is None or full_data.empty:
         raise ValueError("Full candles unavailable. Rerun the scanner.")
-
+    ma20 = full_data.Close.rolling(20, min_periods=20).mean()
+    ma200 = full_data.Close.rolling(200, min_periods=200).mean()
     start = result.attrs.get("requested_start")
     if start is None:
-        # Compatibility with older result objects; rerun scan for warm-up.
-        return full_data, full_data.Close.rolling(20, min_periods=20).mean()
-    ma = full_data.Close.rolling(20, min_periods=20).mean()
+        return full_data, ma20, ma200
     visible = full_data.loc[full_data.index.date >= date.fromisoformat(start)]
     if visible.empty:
         raise ValueError("No candles in requested date range")
-    return visible, ma.reindex(visible.index)
+    return visible, ma20.reindex(visible.index), ma200.reindex(visible.index)
 
 
 # 7. PLOT SIGNALS: plot only when called separately
@@ -417,7 +417,7 @@ def plot_signal(result, show_sr=False):
         print("No signals to plot.")
         return
 
-    data, ma20 = chart_data_and_ma20(result)
+    data, ma20, ma200 = chart_data_and_mas(result)
 
     for number, row in result.iterrows():
         print(f"\\n=== NQ BUY SIGNAL {number + 1}/{len(result)} ===")
@@ -480,6 +480,8 @@ def plot_signal(result, show_sr=False):
                       rotation=35, ha="right")
         ax.plot(range(len(data)), ma20, color="#f7c65c", linewidth=1.5,
                 label="MA20 (15m close)", zorder=4)
+        ax.plot(range(len(data)), ma200, color="#b58cff", linewidth=1.6,
+                label="MA200 (15m close)", zorder=4)
         ax.set_xlim(-1, len(data))
         ax.set_ylabel("NQ futures price", color="#dbe5f0")
         ax.set_title(f"NQ=F | 15m full chart | Signal {number + 1}/{len(result)} | UK time",
@@ -517,7 +519,7 @@ def plot_signal_candidate(result):
     if result is None:
         print("No result supplied.")
         return
-    data, ma20 = chart_data_and_ma20(result)
+    data, ma20, ma200 = chart_data_and_mas(result)
 
     fig, ax = plt.subplots(figsize=(20, 9), facecolor="#101722")
     ax.set_facecolor("#101722")
@@ -558,6 +560,8 @@ def plot_signal_candidate(result):
                   rotation=35, ha="right")
     ax.plot(range(len(data)), ma20, color="#f7c65c", linewidth=1.5,
             label="MA20 (15m close)", zorder=4)
+    ax.plot(range(len(data)), ma200, color="#b58cff", linewidth=1.6,
+                label="MA200 (15m close)", zorder=4)
     ax.legend(loc="best", facecolor="#1a2534", edgecolor="#526174", labelcolor="white")
     ax.set_xlim(-1, len(data))
     ax.set_ylabel("NQ futures price", color="#dbe5f0")
@@ -602,7 +606,7 @@ def plot_swing_levels(result, left=2, right=2):
     if result is None:
         print("No scan result supplied.")
         return
-    data, ma20 = chart_data_and_ma20(result)
+    data, ma20, ma200 = chart_data_and_mas(result)
     levels = detect_swing_levels(data, left=left, right=right)
 
     fig, ax = plt.subplots(figsize=(20, 9), facecolor="#101722")
