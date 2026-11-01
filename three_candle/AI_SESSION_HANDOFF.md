@@ -6,6 +6,56 @@
 > - For BUY: initial SL below entry; for SELL: initial SL above entry. Distinguish 0.20% **price movement** from percentage of leveraged account return.
 > - This finalized contract supersedes conflicting 0.20% *minimum R floor*, flexible wide-stop, fixed-1R-exit and 2R-start trailing text in historical experiments. Do **not** retroactively relabel old backtest results or pretend code was modified. The earlier **821 candidates, 198 filtered, 65.7% reached 1R and illustrative +12.4%** are **LEGACY research results**, **not validated** under this contract. Re-run backtest before publishing success %, gain % or live claims.
 >
+## 1 Nov 2026 — NQ Three-Candle learning module and NQ/GC IBKR data handoff
+
+**Status as of handoff: monthly NQ + GC download is RUNNING on VPS. Do not claim files are complete until confirmed.**
+
+### Repository, VPS, and Python (verified)
+
+- GitHub: `raghunathbhandari/ASJR`, main, folder `three_candle/`.
+- VPS synced working checkout: `/root/trading/ASJR-Synced`.
+- Working Python executable: `/root/trading/venv_new/bin/python` (confirmed imports `ib_insync` and `pandas`). **Do not assume `myvnv` exists in ASJR-Synced.**
+- IBKR paper Gateway currently observed listening on **API port 4002** (Java process); attempts on 1044 and 1045 were refused. Gateway is launched by IBC in `trading_bot` tmux. Avoid restarting Gateway/bot for this research.
+- NQ Dec 2026 IBKR contract qualified as `NQZ6` (conId 563947726, CME, multiplier 20). Earlier read-only request for 29–30 Oct 2026 succeeded: 276 + 252 = **528** five-minute ETH candles in `three_candle/data/NQZ2026_IBKR_5m_2026-10-29_to_2026-10-30.csv`. Saved on VPS; not necessarily committed to GitHub. Coverage still needs validation.
+
+### Current learning source and notebook workflow
+
+New independent file `three_candle/three_candle_learing.py` (user-requested spelling **learing**). Do not alter `three_candle.py` or `test_three_candle.ipynb` without explicit instruction; user has uncommitted local changes. To update just one file on Windows/VPS, use `git fetch origin main` then `git restore --source=origin/main --worktree -- three_candle/<specific-new-file>` after confirming that specific file has no local changes. Never broadly restore or reset.
+
+- Notebook is colocated with learning module in `three_candle/`: `import three_candle_learing as learning; importlib.reload(learning)`. Avoid `from three_candle import ...`: `three_candle.py` shadows the package name.
+- `three_candle_signal_learning("NQ=F", start, end)` downloads Yahoo native 15m extended futures and returns a pandas DataFrame of **all core BUY candidates**. It prints each core candidate's individual filter booleans, then a separate passed-candidate block. It does not draw charts.
+- `three_candle_core(c1,c2,c3)`: C2 low < C1 low **AND** C3 high > max(C2 open, C2 close). This is a retrospective *possible* turning pattern, not executable confirmation. No wick/range/volume/colour checks inside core. SELL core is **not implemented yet**.
+- Additional diagnostic filters: C1 range >=0.20%; C2 range >=0.25%; C2 lower wick > body; C2 low < C1 low; C3 green close > C2 close; optional C3 volume > C2 (currently `CHECK_VOLUME=False`). `all_filters_pass` uses enabled filters. Signals remain in `result` even if extra filters fail.
+- `plot_signal_passed(result)`: separate full-history chart per extra-filter-passed candidate with C1/C2/C3, green BUY and red SL hypothesis lines. `plot_signal_candidate(result)`: one full NQ chart with **green C2-low dots for BUY**, **red C2-high dots for SELL** when SELL exists. `plot_chart(df)` draws an independent candle chart. Dark theme, UK x-axis. `plot_signal(result)` still draws all core candidates, one full chart each.
+- C2 close BUY and C2 open SL are **study references**, not proved executable prices; note that C2 open can be above C2 close, making the alleged BUY stop invalid. No trade simulation or validated win rates in learning module.
+- User values simple/debuggable functions and small VS Code notebook calls; uses comments in major areas.
+
+### Data-quality discovery
+
+Yahoo `NQ=F` native 15-minute download displayed a huge anomalous red candle around **30 Oct 2026, 19:00 UK** absent from the TradingView `NQZ2026` 15m chart. Do **not** treat Yahoo series as validated or use that candle for backtesting. Yahoo continuous contract vs specific Dec contract may contribute to discrepancies, but exact cause unverified. Compare against IBKR specific-contract 5m bars and exclude invalid windows without fabricating replacement OHLCV.
+
+TradingView chart export UI offered a paid upgrade (user's Essential plan); CSV was **not** exported. TradingView showed `CME_MINI_DL:NQZ2026` delayed feed. IBKR became preferred alternative.
+
+### Monthly collector — in progress
+
+GitHub script: `three_candle/download_nq_gc_ibkr_months.py`. Defaults request 5m `TRADES`, `useRTH=False`, 2026-09 and 2026-10 for specific **NQZ2026** (CME) and **GCZ2026** (COMEX). UTC-day calls paced by 2 seconds. Produces per instrument/month CSV with `Datetime_UK`, `Datetime_UTC`, OHLCV, and `_coverage.txt` report. No order placement, no Gateway restart. Missing/failed days and price anomalies are reported without synthetic fills.
+
+VPS run command:
+```bash
+/root/trading/venv_new/bin/python three_candle/download_nq_gc_ibkr_months.py --port 4002
+```
+
+Expected destination `/root/trading/ASJR-Synced/three_candle/data/`:
+- `NQZ2026_IBKR_5m_2026-09.csv`
+- `NQZ2026_IBKR_5m_2026-10.csv`
+- `GCZ2026_IBKR_5m_2026-09.csv`
+- `GCZ2026_IBKR_5m_2026-10.csv`
+- Each matching `*_coverage.txt` report.
+
+**Next AI session must:** obtain actual final downloader console output; check file sizes/row counts, request failures, time gaps, duplicate timestamps and abnormal OHLC ranges; verify NQ around 30 Oct 18:30–19:30 UK against TradingView; verify GC contract and historical permissions. Do not infer September/October completeness from files merely existing. Then add optional IBKR CSV input to learning module **only after agreeing on conversion of complete 5m bars to strict 15m candles, trading-session alignment, and data-quality handling**. Existing `test_three_candle.ipynb` is not to be modified.
+
+---
+
 ## 31 Oct 2026 — FULL SEP–OCT NQ matrix learning and proposed filter
 
 See [two-month learnings and precise backtest definitions](results/NQ_SEP_OCT_RESEARCH_LEARNINGS.md). Source 5m Sep+Oct produced independent exploratory NQ 15m extended-session signal count 821 (173 GOOD>=2R, 158 WEAK=1R, 490 BAD below 1R). Preliminary BUY C3 body%, low C3 wick/body and C2 lower-wick%; SELL C3 upper wick% and C2 range%. Proposed filters are **research-only tags** and did not change detection:
