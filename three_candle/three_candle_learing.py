@@ -92,16 +92,16 @@ def load_learning_candles(ticker, datefrom, dateTo):
     if not all(path.is_file() for path in files):
         print("IBKR CSV missing; using Yahoo instead:",
               ", ".join(p.name for p in files if not p.is_file()))
-        # Yahoo also needs earlier candles to warm up MA20 and MA200.
-        earlier = (start - timedelta(days=12)).isoformat()
+        # Yahoo also needs earlier candles to warm up EMA20 and EMA200.
+        earlier = (start - timedelta(days=24)).isoformat()
         yahoo = Download_yfinalce(ticker, (earlier, dateTo), "15m")
         requested = yahoo.index.date >= start
         if not requested.any():
             raise ValueError("No Yahoo candles within requested dates")
         first = int(requested.argmax())
-        return yahoo.iloc[max(0, first - 200):]
+        return yahoo.iloc[max(0, first - 1000):]
 
-    # Optional previous-month CSV supplies warmup when requested period
+    # Optional previous-month CSV supplies EMA warmup when requested period
     # starts at the beginning of a month.
     previous = start.replace(day=1) - timedelta(days=1)
     previous_file = folder / f"{prefix}Z2026_IBKR_5m_{previous.year}-{previous.month:02d}.csv"
@@ -138,15 +138,15 @@ def load_learning_candles(ticker, datefrom, dateTo):
     data = pd.DataFrame(candles, columns=["Time", "Open", "High", "Low", "Close", "Volume"])
     data = data.set_index("Time")
     data.index = data.index.tz_convert("Europe/London")
-    # Keep 200 preceding bars for MA20/MA200, but do not count them as signals.
+    # Keep up to 1000 preceding bars for EMA20/EMA200, but do not count them as signals.
     requested = (data.index.date >= start) & (data.index.date <= end)
     if not requested.any():
         raise ValueError("No complete IBKR 15m bars for requested dates")
     first = int(requested.argmax())
     data = data.iloc[max(0, first - 200):]
     data = data.loc[data.index.date <= end]
-    if first < 200:
-        print("MA200 WARNING: fewer than 200 earlier bars available")
+    if first < 1000:
+        print("EMA200 NOTICE: fewer than 1000 earlier bars; value may differ from TradingView")
     if data.empty:
         raise ValueError("No complete IBKR 15m bars for requested dates")
     print(f"Using IBKR CSV: {len(data)} complete 15m bars from {len(files)} file(s)")
@@ -395,12 +395,12 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
 
 # Build MA20 on the complete dataset; display only requested dates.
 def chart_data_and_mas(result):
-    """Compute MA20 and MA200 with hidden historical candles before chart start."""
+    """Compute EMA20 and EMA200 with hidden historical candles before chart start."""
     full_data = result.attrs.get("candles")
     if full_data is None or full_data.empty:
         raise ValueError("Full candles unavailable. Rerun the scanner.")
-    ma20 = full_data.Close.rolling(20, min_periods=20).mean()
-    ma200 = full_data.Close.rolling(200, min_periods=200).mean()
+    ma20 = full_data.Close.ewm(span=20, adjust=False).mean()
+    ma200 = full_data.Close.ewm(span=200, adjust=False).mean()
     start = result.attrs.get("requested_start")
     if start is None:
         return full_data, ma20, ma200
@@ -479,9 +479,9 @@ def plot_signal(result, show_sr=False):
         ax.set_xticks(ticks, [data.index[j].strftime("%d %b %H:%M") for j in ticks],
                       rotation=35, ha="right")
         ax.plot(range(len(data)), ma20, color="#f7c65c", linewidth=1.5,
-                label="MA20 (15m close)", zorder=4)
+                label="EMA20 (15m close)", zorder=4)
         ax.plot(range(len(data)), ma200, color="#b58cff", linewidth=1.6,
-                label="MA200 (15m close)", zorder=4)
+                label="EMA200 (15m close)", zorder=4)
         ax.set_xlim(-1, len(data))
         ax.set_ylabel("NQ futures price", color="#dbe5f0")
         ax.set_title(f"NQ=F | 15m full chart | Signal {number + 1}/{len(result)} | UK time",
@@ -559,9 +559,9 @@ def plot_signal_candidate(result):
     ax.set_xticks(ticks, [data.index[j].strftime("%d %b %H:%M") for j in ticks],
                   rotation=35, ha="right")
     ax.plot(range(len(data)), ma20, color="#f7c65c", linewidth=1.5,
-            label="MA20 (15m close)", zorder=4)
+            label="EMA20 (15m close)", zorder=4)
     ax.plot(range(len(data)), ma200, color="#b58cff", linewidth=1.6,
-                label="MA200 (15m close)", zorder=4)
+                label="EMA200 (15m close)", zorder=4)
     ax.legend(loc="best", facecolor="#1a2534", edgecolor="#526174", labelcolor="white")
     ax.set_xlim(-1, len(data))
     ax.set_ylabel("NQ futures price", color="#dbe5f0")
@@ -620,9 +620,9 @@ def plot_swing_levels(result, left=2, right=2):
             facecolor=color, edgecolor=color,
         ))
     ax.plot(range(len(data)), ma20, color="#f7c65c",
-            linewidth=1.5, label="MA20 (15m close)")
+            linewidth=1.5, label="EMA20 (15m close)")
     ax.plot(range(len(data)), ma200, color="#b58cff",
-            linewidth=1.6, label="MA200 (15m close)")
+            linewidth=1.6, label="EMA200 (15m close)")
 
     support_count = 0
     resistance_count = 0
