@@ -8,6 +8,7 @@ Install once in VS Code terminal:
 """
 
 from datetime import date, timedelta
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
@@ -39,8 +40,8 @@ def Download_yfinalce(ticker, datetime, timeframe="15m"):
     end = date.fromisoformat(str(date_to))
     if end < start:
         raise ValueError("dateTo must be on or after datefrom")
-    if ticker != "NQ=F":
-        raise ValueError("This learning file is NQ-only: use NQ=F")
+    if ticker not in ("NQ=F", "GC=F"):
+        raise ValueError("Use NQ=F or GC=F")
     if timeframe not in ("15m", "15min"):
         raise ValueError("Learning version supports 15m only")
 
@@ -66,6 +67,68 @@ def Download_yfinalce(ticker, datetime, timeframe="15m"):
     candles.index = candles.index.tz_convert("Europe/London")
     candles = candles.sort_index()
     return candles[~candles.index.duplicated(keep="last")]
+
+
+# 2B. READ IBKR CSV FIRST; FALL BACK TO YAHOO IF MONTHLY FILES ARE ABSENT
+def load_learning_candles(ticker, datefrom, dateTo):
+    """Build exact 15m bars from local IBKR 5m CSVs, or download Yahoo 15m."""
+    start = date.fromisoformat(str(datefrom))
+    end = date.fromisoformat(str(dateTo))
+    if end < start:
+        raise ValueError("dateTo before datefrom")
+    if ticker not in ("NQ=F", "GC=F"):
+        raise ValueError("Use NQ=F or GC=F")
+
+    prefix = "NQ" if ticker == "NQ=F" else "GC"
+    folder = Path(__file__).resolve().parent / "data"
+    files = []
+    year, month = start.year, start.month
+    while (year, month) <= (end.year, end.month):
+        files.append(folder / f"{prefix}Z2026_IBKR_5m_{year}-{month:02d}.csv")
+        month += 1
+        if month == 13:
+            month, year = 1, year + 1
+
+    if not all(path.is_file() for path in files):
+        print("IBKR CSV missing; using Yahoo instead:",
+              ", ".join(p.name for p in files if not p.is_file()))
+        return Download_yfinalce(ticker, (datefrom, dateTo), "15m")
+
+    raw = pd.concat([pd.read_csv(path) for path in files], ignore_index=True)
+    needed = ["Datetime_UTC", "Open", "High", "Low", "Close", "Volume"]
+    if not set(needed).issubset(raw.columns):
+        raise ValueError("IBKR CSV columns incomplete; not mixing data vendors")
+    raw["Datetime_UTC"] = pd.to_datetime(raw["Datetime_UTC"], utc=True)
+    for col in needed[1:]:
+        raw[col] = pd.to_numeric(raw[col], errors="coerce")
+    raw = raw.dropna(subset=needed).sort_values("Datetime_UTC")
+    raw = raw.drop_duplicates("Datetime_UTC").set_index("Datetime_UTC")
+
+    bad = ((raw.High < raw[["Open", "Close", "Low"]].max(axis=1))
+           | (raw.Low > raw[["Open", "Close", "High"]].min(axis=1))
+           | ((raw.High - raw.Low) / raw.Close > 0.02))
+    if bad.any():
+        print(f"WARNING: excluded {int(bad.sum())} suspicious 5m IBKR bars")
+        raw = raw.loc[~bad]
+
+    # Each 15m candle MUST contain exactly 3 aligned 5m timestamps.
+    candles = []
+    for stamp, group in raw.groupby(raw.index.floor("15min")):
+        expected = [stamp + pd.Timedelta(minutes=n) for n in (0, 5, 10)]
+        if list(group.index) != expected:
+            continue
+        candles.append((stamp, group.Open.iloc[0], group.High.max(),
+                        group.Low.min(), group.Close.iloc[-1], group.Volume.sum()))
+    if not candles:
+        raise ValueError("IBKR files exist but no complete 15m bars")
+    data = pd.DataFrame(candles, columns=["Time", "Open", "High", "Low", "Close", "Volume"])
+    data = data.set_index("Time")
+    data.index = data.index.tz_convert("Europe/London")
+    data = data.loc[(data.index.date >= start) & (data.index.date <= end)]
+    if data.empty:
+        raise ValueError("No complete IBKR 15m bars for requested dates")
+    print(f"Using IBKR CSV: {len(data)} complete 15m bars from {len(files)} file(s)")
+    return data
 
 
 # 3. SMALL FILTERS: each is independent so you can change it
@@ -233,10 +296,10 @@ def plot_chart(df):
 # 6. MAIN LOOP: scan candles and RETURN signals (no charts)
 def three_candle_signal_learning(tiker, datefrom, dateTo):
     """Return all core BUY candidates with each extra filter result."""
-    if tiker != "NQ=F":
-        raise ValueError("NQ-only learning version: ticker must be NQ=F")
+    if tiker not in ("NQ=F", "GC=F"):
+        raise ValueError("Use NQ=F or GC=F")
 
-    data = Download_yfinalce(tiker, (datefrom, dateTo), "15m")
+    data = load_learning_candles(tiker, datefrom, dateTo)
     print(f"Downloaded {len(data)} x 15m candles for {tiker}")
     signals = []
     step = pd.Timedelta(minutes=15)
