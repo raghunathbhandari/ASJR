@@ -285,7 +285,21 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
     result = pd.DataFrame(signals)
     result.attrs["candles"] = data  # Keep the full downloaded chart for plot_signal(result).
     passed_count = int(result["all_filters_pass"].sum()) if not result.empty else 0
-    print(f"Found {len(result)} core candidates; {passed_count} pass extra filters.")
+    print(f"\nFound {len(result)} core candidates; {passed_count} pass extra filters.")
+
+    # Print passing setups at the END, after all candidate diagnostics.
+    print("\n========== PASSED CANDIDATES ==========")
+    if passed_count == 0:
+        print("None")
+    else:
+        for index, row in result[result["all_filters_pass"]].iterrows():
+            print(f"Candidate {index + 1} | C3 {row['C3_time']:%Y-%m-%d %H:%M %Z}"
+                  f" | BUY {row['BUY']:.2f} | SL {row['SL']:.2f}")
+            for name in ("c1_range_pct", "c2_range_pct",
+                         "c2_lower_wick_longer_than_body", "c2_sweeps_c1_low",
+                         "c3_confirms_buy", "c3_volume_higher"):
+                suffix = " (optional OFF)" if name == "c3_volume_higher" and not CHECK_VOLUME else ""
+                print(f"  {name} = {bool(row[name])}{suffix}")
     return result
 
 
