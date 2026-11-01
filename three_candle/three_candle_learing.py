@@ -17,7 +17,7 @@ import yfinance as yf
 
 # 1. SETTINGS: change these while learning
 CHECK_VOLUME = False       # True: C3 volume must exceed C2 volume
-SHOW_CHARTS = True         # False: just print the matching candles
+SHOW_CHARTS = True         # Legacy setting; scanner does not draw charts
 MIN_C1_RANGE_PCT = 0.20   # C1 must have at least this high-low range (%)
 MIN_C2_RANGE_PCT = 0.25   # C2 must have at least this high-low range (%)
 
@@ -114,10 +114,17 @@ def print_single_candle(name, time, candle):
 
 # 5. CHART: exactly 3 candles, with C1/C2/C3 and price references
 def show_three_candle_chart(ticker, times, candles):
-    fig, ax = plt.subplots(figsize=(7, 4))
+    fig, ax = plt.subplots(figsize=(7, 4), facecolor="#101722")
+    ax.set_facecolor("#101722")
+    ax.tick_params(colors="#dbe5f0")
+    ax.xaxis.label.set_color("#dbe5f0")
+    ax.yaxis.label.set_color("#dbe5f0")
+    ax.title.set_color("#f0f5fa")
+    for spine in ax.spines.values():
+        spine.set_color("#526174")
     for i, (name, candle) in enumerate(zip(("C1", "C2", "C3"), candles)):
         up = candle.Close >= candle.Open
-        color = "#15965b" if up else "#df554e"
+        color = "#23c985" if up else "#ff6471"
         ax.vlines(i, candle.Low, candle.High, color=color, linewidth=1.6)
         bottom = min(candle.Open, candle.Close)
         height = max(abs(candle.Close - candle.Open), 0.00001)
@@ -129,17 +136,17 @@ def show_three_candle_chart(ticker, times, candles):
     # These are hypothetical study references, NOT confirmed fills.
     buy_price = float(candles[1].Close)  # C2-close research hypothesis
     sl_price = float(candles[1].Open)    # C2-open reference (may be invalid)
-    ax.axhline(buy_price, color="green", linewidth=1.2,
+    ax.axhline(buy_price, color="#33e99a", linewidth=1.2,
                label=f"BUY reference (C2 close) {buy_price:.2f}")
-    ax.axhline(sl_price, color="red", linewidth=1.2,
+    ax.axhline(sl_price, color="#ff6978", linewidth=1.2,
                label=f"SL reference (C2 open) {sl_price:.2f}")
 
     ax.set_xticks(range(3), [t.strftime("%H:%M") for t in times])
     ax.set_xlim(-0.55, 2.55)
     ax.set_title(f"{ticker} | 15m | {times[2]:%Y-%m-%d} | UK time")
     ax.set_ylabel("Price")
-    ax.grid(alpha=0.2)
-    ax.legend(fontsize=8, loc="best")
+    ax.grid(color="#526174", alpha=0.35)
+    ax.legend(fontsize=8, loc="best", facecolor="#1a2534", edgecolor="#526174", labelcolor="white")
     fig.tight_layout()
     plt.show()
     plt.close(fig)
@@ -213,43 +220,59 @@ def plot_chart(df):
     plt.close(fig)
 
 
-# 6. MAIN LOOP: look at every consecutive group of 3 candles
+# 6. MAIN LOOP: scan candles and RETURN signals (no charts)
 def three_candle_signal_learning(tiker, datefrom, dateTo):
-    """Print and chart each matching BUY setup. Returns the match count."""
+    """Return one DataFrame row per BUY setup. No charts or backtesting."""
     if tiker != "NQ=F":
         raise ValueError("NQ-only learning version: ticker must be NQ=F")
+
     data = Download_yfinalce(tiker, (datefrom, dateTo), "15m")
     print(f"Downloaded {len(data)} x 15m candles for {tiker}")
-    found = 0
+    signals = []
     step = pd.Timedelta(minutes=15)
 
     for i in range(2, len(data)):
         times = list(data.index[i - 2:i + 1])
         c1, c2, c3 = [data.iloc[j] for j in (i - 2, i - 1, i)]
 
-        # Never combine candles across a market break or missing timestamps.
+        # Skip missing bars and session gaps.
         if times[1] - times[0] != step or times[2] - times[1] != step:
             continue
-
-        # NQ futures session spans midnight; 15-minute continuity is checked above.
-
         if not passes_three_candle_filters(c1, c2, c3):
             continue
 
-        found += 1
-        print(f"\n=== BUY SETUP #{found} (study only) ===")
+        # Keep each candle's OHLCV so plotting needs only 'result'.
+        row = {"Ticker": tiker, "Direction": "BUY",
+               "BUY": float(c2.Close), "SL": float(c2.Open)}
         for label, time, candle in zip(("C1", "C2", "C3"), times, (c1, c2, c3)):
-            print_single_candle(label, time, candle)
-        print(f"BUY reference (C2 close): {c2.Close:.2f}")
-        print(f"SL reference  (C2 open):  {c2.Open:.2f}")
+            row[f"{label}_time"] = time
+            for field in ("Open", "High", "Low", "Close", "Volume"):
+                row[f"{label}_{field}"] = float(candle[field])
+        signals.append(row)
 
-        if SHOW_CHARTS:
-            show_three_candle_chart(tiker, times, (c1, c2, c3))
-
-    print(f"\nFinished: {found} matching setups (no trading simulation).")
-    return found
+    result = pd.DataFrame(signals)
+    print(f"Found {len(result)} BUY setups (study references only).")
+    return result
 
 
-# 7. RUN DIRECTLY IN VS CODE (or import from your notebook)
+# 7. PLOT SIGNALS: plot only when called separately
+def plot_signal(result):
+    """Display a separate C1/C2/C3 chart for every row of a scan result."""
+    if result is None or result.empty:
+        print("No signals to plot.")
+        return
+
+    for number, row in result.iterrows():
+        times = [row[f"C{n}_time"] for n in (1, 2, 3)]
+        candles = [
+            pd.Series({field: row[f"C{n}_{field}"]
+                       for field in ("Open", "High", "Low", "Close", "Volume")})
+            for n in (1, 2, 3)
+        ]
+        print(f"Setup {number + 1}/{len(result)} | BUY {row['BUY']:.2f} | SL {row['SL']:.2f}")
+        show_three_candle_chart(row["Ticker"], times, candles)
+
+
+# 8. RUN DIRECTLY IN VS CODE (or import from your notebook)
 if __name__ == "__main__":
     three_candle_signal_learning("NQ=F", "2026-10-29", "2026-10-30")
