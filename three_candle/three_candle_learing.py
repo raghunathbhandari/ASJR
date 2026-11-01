@@ -145,6 +145,67 @@ def show_three_candle_chart(ticker, times, candles):
     plt.close(fig)
 
 
+
+# 5B. EASY NOTEBOOK CHART: pass only your downloaded DataFrame
+def plot_chart(df):
+    """Draw all candles in df and highlight the most recent qualifying C1/C2/C3.
+
+    Example: learning.plot_chart(df)
+    This is a visualization, not a backtest or trading recommendation.
+    """
+    if df.empty:
+        print("Nothing to plot: DataFrame is empty.")
+        return
+
+    # Find the most recent 3-candle BUY setup in this DataFrame.
+    last_match = None
+    step = pd.Timedelta(minutes=15)
+    for i in range(2, len(df)):
+        times = df.index[i - 2:i + 1]
+        if times[1] - times[0] != step or times[2] - times[1] != step:
+            continue
+        if passes_three_candle_filters(df.iloc[i - 2], df.iloc[i - 1], df.iloc[i]):
+            last_match = i
+
+    fig, ax = plt.subplots(figsize=(14, 5))
+    for i, candle in enumerate(df.itertuples()):
+        color = "green" if candle.Close >= candle.Open else "red"
+        ax.vlines(i, candle.Low, candle.High, color=color, linewidth=0.8)
+        body_bottom = min(candle.Open, candle.Close)
+        body_height = max(abs(candle.Close - candle.Open), 0.00001)
+        ax.add_patch(Rectangle((i - 0.3, body_bottom), 0.6, body_height,
+                               color=color, alpha=0.8))
+
+    if last_match is not None:
+        # Label C1/C2/C3 for the latest matching setup.
+        for offset, label in zip((-2, -1, 0), ("C1", "C2", "C3")):
+            pos = last_match + offset
+            ax.annotate(label, (pos, df.iloc[pos].High),
+                        xytext=(0, 10), textcoords="offset points",
+                        ha="center", color="blue", weight="bold")
+        c2 = df.iloc[last_match - 1]
+        ax.axhline(c2.Close, color="green", linestyle="--",
+                   label=f"BUY reference (C2 close) {c2.Close:.2f}")
+        ax.axhline(c2.Open, color="red", linestyle="--",
+                   label=f"SL reference (C2 open) {c2.Open:.2f}")
+        ax.legend(loc="best")
+    else:
+        print("No qualifying BUY setup in this DataFrame; showing all candles.")
+
+    # Reduce tick labels when many candles are displayed.
+    every = max(1, len(df) // 12)
+    positions = list(range(0, len(df), every))
+    ax.set_xticks(positions, [df.index[j].strftime("%d %b %H:%M") for j in positions],
+                  rotation=35, ha="right")
+    ax.set_xlim(-1, len(df))
+    ax.set_ylabel("NQ futures price")
+    ax.set_title("NQ=F | 15-minute candles | UK time")
+    ax.grid(alpha=0.2)
+    fig.tight_layout()
+    plt.show()
+    plt.close(fig)
+
+
 # 6. MAIN LOOP: look at every consecutive group of 3 candles
 def three_candle_signal_learning(tiker, datefrom, dateTo):
     """Print and chart each matching BUY setup. Returns the match count."""
