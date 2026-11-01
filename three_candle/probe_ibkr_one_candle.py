@@ -9,7 +9,7 @@ def main():
     try:
         ib.connect("127.0.0.1", 4002, clientId=79431,
                    readonly=True, timeout=8)
-        contract = Stock("AMD", "SMART", "USD")
+        contract = Stock("MSFT", "SMART", "USD")
         ib.qualifyContracts(contract)
         bars = ib.reqHistoricalData(
             contract,
@@ -23,12 +23,12 @@ def main():
             timeout=25,
         )
         if not bars:
-            print(json.dumps({"source": "IBKR", "ticker": "AMD",
+            print(json.dumps({"source": "IBKR", "ticker": "MSFT",
                               "status": "NO_CANDLE", "saved_files": 0}))
             return 2
         candle = bars[-1]
         print(json.dumps({
-            "source": "IBKR", "ticker": "AMD", "status": "CANDLE_RECEIVED",
+            "source": "IBKR", "ticker": "MSFT", "status": "CANDLE_RECEIVED",
             "time_utc": str(candle.date),
             "open": candle.open, "high": candle.high,
             "low": candle.low, "close": candle.close,
@@ -36,7 +36,7 @@ def main():
         }))
         return 0
     except Exception as exc:
-        print(json.dumps({"source": "IBKR", "ticker": "AMD",
+        print(json.dumps({"source": "IBKR", "ticker": "MSFT",
                           "status": "ERROR", "error_type": type(exc).__name__,
                           "message": str(exc)[:250], "saved_files": 0}))
         return 1
