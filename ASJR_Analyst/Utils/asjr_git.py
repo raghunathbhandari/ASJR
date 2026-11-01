@@ -1,128 +1,113 @@
+"""Safe, isolated publisher for ASJR Analyst daily DataLake reports.
+
+Drop-in replacement for ASJR_Analyst/Utils/asjr_git.py.
+The live trading repository is never committed, checked out, or rebased.
+"""
+
 from pathlib import Path
+import os
+import shutil
 import subprocess
+import tempfile
+import time
 
-def _run_git(repo_root, *args, check=True):
+
+def _git(cwd, *args, check=True):
     result = subprocess.run(
-        ["git", *args],
-        cwd=str(repo_root),
-        text=True,
-        capture_output=True,
+        ["git", *args], cwd=str(cwd), text=True, capture_output=True
     )
-
-    if check and result.returncode != 0:
+    if check and result.returncode:
         raise RuntimeError(
-            f"Git command failed: git {' '.join(args)}\n"
-            f"STDOUT:\n{result.stdout}\n"
-            f"STDERR:\n{result.stderr}"
+            f"git {' '.join(args)} failed ({result.returncode})\n"
+            f"{result.stdout}\n{result.stderr}"
         )
-
     return result
 
 
-def submit_datalake(
-    trade_date,
-    day_dir,
-    required_files,
-    remote="origin",
-    branch="main",
-    logger=None,
-):
-    """
-    Verify required DataLake outputs, commit only this trading day's
-    DataLake folder, rebase on latest remote main, then push.
+def _publish_snapshot(branch, relative_dir, snapshot_dir, workdir,
+                      base_sha, attempts=3):
+    for attempt in range(1, attempts + 1):
+        _git(workdir, "fetch", "origin", branch)
+        remote_sha = _git(workdir, "rev-parse", "FETCH_HEAD").stdout.strip()
 
-    No force-push is ever used.
-    """
+        # Never silently replace a remote edit to this day's DataLake folder.
+        if remote_sha != base_sha:
+            changes = _git(
+                workdir, "diff", "--name-only", base_sha, remote_sha,
+                "--", str(relative_dir),
+            ).stdout.splitlines()
+            if changes:
+                raise RuntimeError(
+                    "Remote DataLake folder changed during publication: "
+                    + ", ".join(changes)
+                )
+
+        # The temporary checkout is disposable. Reset never touches production.
+        _git(workdir, "checkout", "--force", "-B", "asjr-publish", remote_sha)
+        target = workdir / relative_dir
+        target.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(snapshot_dir, target, dirs_exist_ok=True)
+        _git(workdir, "add", "--", str(relative_dir))
+        staged = _git(workdir, "diff", "--cached", "--name-only").stdout.strip()
+        if not staged:
+            return {"status": "NO_CHANGES", "commit_sha": remote_sha}
+
+        _git(workdir, "-c", "user.name=ASJR DataLake Publisher",
+             "-c", "user.email=asjr-publisher@localhost", "commit", "-m",
+             f"Update ASJR Analyst DataLake {snapshot_dir.name}")
+        sha = _git(workdir, "rev-parse", "HEAD").stdout.strip()
+        push = _git(workdir, "push", "origin", f"HEAD:refs/heads/{branch}",
+                    check=False)
+        if push.returncode == 0:
+            return {"status": "PUSHED", "commit_sha": sha,
+                    "push_output": (push.stdout or push.stderr).strip()}
+
+        # Only retry races; authentication, hooks and network errors stop.
+        _git(workdir, "fetch", "origin", branch)
+        latest = _git(workdir, "rev-parse", "FETCH_HEAD").stdout.strip()
+        if latest == remote_sha:
+            raise RuntimeError(f"Git push failed: {push.stderr}")
+        if attempt < attempts:
+            time.sleep(attempt)
+
+    raise RuntimeError("Git push race persisted after 3 attempts")
+
+
+def submit_datalake(trade_date, day_dir, required_files,
+                    remote="origin", branch="main", logger=None):
     day_dir = Path(day_dir).resolve()
     repo_root = day_dir.parents[2]
-
-    missing = [
-        str(Path(p))
-        for p in required_files
-        if not Path(p).exists()
-    ]
-
+    missing = [str(p) for p in required_files if not Path(p).is_file()]
     if missing:
-        raise FileNotFoundError(
-            "ASJR DataLake submit aborted. Missing required files:\n"
-            + "\n".join(missing)
-        )
+        raise FileNotFoundError("Missing DataLake outputs: " + ", ".join(missing))
+    if not day_dir.is_dir() or not day_dir.is_relative_to(repo_root):
+        raise RuntimeError("DataLake directory is outside repository")
+    relative_dir = day_dir.relative_to(repo_root)
+    if relative_dir.parts[:2] != ("ASJR_Analyst", "DataLake"):
+        raise RuntimeError(f"Refusing to publish unexpected path: {relative_dir}")
+    if not branch or branch.startswith("-") or "/" in branch:
+        raise ValueError("Invalid publication branch")
 
-    inside = _run_git(
-        repo_root,
-        "rev-parse",
-        "--is-inside-work-tree",
-    ).stdout.strip()
+    # Preserve the files at invocation time; bots may continue generating data.
+    with tempfile.TemporaryDirectory(prefix="asjr-publisher-") as temporary:
+        root = Path(temporary)
+        snapshot = root / "snapshot" / day_dir.name
+        shutil.copytree(day_dir, snapshot, symlinks=False)
+        remote_url = _git(repo_root, "remote", "get-url", remote).stdout.strip()
+        workdir = root / "checkout"
+        _git(root, "clone", "--quiet", "--depth", "1", "--no-checkout", "--single-branch",
+             "--branch", branch, remote_url, str(workdir))
+        base_sha = _git(workdir, "rev-parse", "HEAD").stdout.strip()
 
-    if inside.lower() != "true":
-        raise RuntimeError(
-            f"Not inside a Git repository: {repo_root}"
-        )
+        try:
+            result = _publish_snapshot(branch, relative_dir,
+                                       snapshot, workdir, base_sha)
+        except Exception as exc:
+            # Reporting a publish failure must not mislabel successful collection.
+            if logger:
+                logger.error("DataLake publish pending: %s", exc)
+            return {"status": "PENDING", "trade_date": str(trade_date),
+                    "files_verified": len(required_files), "error": str(exc)}
 
-    relative_day_dir = day_dir.relative_to(repo_root)
-
-    print("\n========== GIT DATALAKE SUBMIT ==========")
-    print("Repo:", repo_root)
-    print("DataLake:", relative_day_dir)
-    print("Verified Files:", len(required_files))
-
-    # Stage only today's DataLake folder.
-    _run_git(
-        repo_root,
-        "add",
-        str(relative_day_dir),
-    )
-
-    staged = _run_git(
-        repo_root,
-        "diff",
-        "--cached",
-        "--name-only",
-    ).stdout.strip()
-
-    if not staged:
-        print("Git: No DataLake changes to commit.")
-        return {
-            "status": "NO_CHANGES",
-            "trade_date": str(trade_date),
-            "files_verified": len(required_files),
-        }
-
-    print("Staged:")
-    print(staged)
-
-    message = f"Update ASJR Analyst DataLake {trade_date}"
-
-    _run_git(
-        repo_root,
-        "commit",
-        "-m",
-        message,
-    )
-
-    # Never rebase while Chakra updates live DataLake files.
-    # Push fails safely if GitHub has newer commits.
-
-    push = _run_git(
-        repo_root,
-        "push",
-        remote,
-        branch,
-    )
-
-    commit_sha = _run_git(
-        repo_root,
-        "rev-parse",
-        "HEAD",
-    ).stdout.strip()
-
-    print("Git Push: SUCCESS")
-    print("Commit:", commit_sha)
-
-    return {
-        "status": "PUSHED",
-        "trade_date": str(trade_date),
-        "files_verified": len(required_files),
-        "commit_sha": commit_sha,
-        "push_output": (push.stdout or push.stderr).strip(),
-    }
+    return {"trade_date": str(trade_date),
+            "files_verified": len(required_files), **result}
