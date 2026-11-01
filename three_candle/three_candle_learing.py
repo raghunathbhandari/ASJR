@@ -167,9 +167,16 @@ def plot_chart(df):
         if passes_three_candle_filters(df.iloc[i - 2], df.iloc[i - 1], df.iloc[i]):
             last_match = i
 
-    fig, ax = plt.subplots(figsize=(14, 5))
+    fig, ax = plt.subplots(figsize=(14, 5), facecolor="#101722")
+    ax.set_facecolor("#101722")
+    ax.tick_params(colors="#dbe5f0")
+    ax.xaxis.label.set_color("#dbe5f0")
+    ax.yaxis.label.set_color("#dbe5f0")
+    ax.title.set_color("#f0f5fa")
+    for spine in ax.spines.values():
+        spine.set_color("#526174")
     for i, candle in enumerate(df.itertuples()):
-        color = "green" if candle.Close >= candle.Open else "red"
+        color = "#23c985" if candle.Close >= candle.Open else "#ff6471"
         ax.vlines(i, candle.Low, candle.High, color=color, linewidth=0.8)
         body_bottom = min(candle.Open, candle.Close)
         body_height = max(abs(candle.Close - candle.Open), 0.00001)
@@ -182,13 +189,13 @@ def plot_chart(df):
             pos = last_match + offset
             ax.annotate(label, (pos, df.iloc[pos].High),
                         xytext=(0, 10), textcoords="offset points",
-                        ha="center", color="blue", weight="bold")
+                        ha="center", color="#77bcff", weight="bold")
         c2 = df.iloc[last_match - 1]
-        ax.axhline(c2.Close, color="green", linestyle="--",
+        ax.axhline(c2.Close, color="#33e99a", linestyle="--",
                    label=f"BUY reference (C2 close) {c2.Close:.2f}")
-        ax.axhline(c2.Open, color="red", linestyle="--",
+        ax.axhline(c2.Open, color="#ff6978", linestyle="--",
                    label=f"SL reference (C2 open) {c2.Open:.2f}")
-        ax.legend(loc="best")
+        ax.legend(loc="best", facecolor="#1a2534", edgecolor="#526174", labelcolor="white")
     else:
         print("No qualifying BUY setup in this DataFrame; showing all candles.")
 
@@ -200,7 +207,7 @@ def plot_chart(df):
     ax.set_xlim(-1, len(df))
     ax.set_ylabel("NQ futures price")
     ax.set_title("NQ=F | 15-minute candles | UK time")
-    ax.grid(alpha=0.2)
+    ax.grid(color="#526174", alpha=0.35)
     fig.tight_layout()
     plt.show()
     plt.close(fig)
