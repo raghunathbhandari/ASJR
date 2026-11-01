@@ -424,6 +424,9 @@ def plot_signal(result):
         ticks = list(range(0, len(data), every))
         ax.set_xticks(ticks, [data.index[j].strftime("%d %b %H:%M") for j in ticks],
                       rotation=35, ha="right")
+        ma20 = data["Close"].rolling(20, min_periods=20).mean()
+        ax.plot(range(len(data)), ma20, color="#f7c65c", linewidth=1.5,
+                label="MA20 (15m close)", zorder=4)
         ax.set_xlim(-1, len(data))
         ax.set_ylabel("NQ futures price", color="#dbe5f0")
         ax.set_title(f"NQ=F | 15m full chart | Signal {number + 1}/{len(result)} | UK time",
@@ -491,6 +494,10 @@ def plot_signal_candidate(result):
     ticks = list(range(0, len(data), every))
     ax.set_xticks(ticks, [data.index[j].strftime("%d %b %H:%M") for j in ticks],
                   rotation=35, ha="right")
+    ma20 = data["Close"].rolling(20, min_periods=20).mean()
+    ax.plot(range(len(data)), ma20, color="#f7c65c", linewidth=1.5,
+            label="MA20 (15m close)", zorder=4)
+    ax.legend(loc="best", facecolor="#1a2534", edgecolor="#526174", labelcolor="white")
     ax.set_xlim(-1, len(data))
     ax.set_ylabel("NQ futures price", color="#dbe5f0")
     ax.set_title(f"NQ=F | 15m | {len(result)} core candidate C2 markers | UK time",
