@@ -656,6 +656,101 @@ def plot_swing_levels(result, left=2, right=2):
     print(f"Swing S/R: {support_count} support and {resistance_count} resistance levels")
 
 
-# 11. RUN DIRECTLY IN VS CODE (or import from your notebook)
+# 11. RESEARCH METRICS: 23 numeric/boolean observations (NO new filters)
+def build_signal_metrics(result):
+    """One row per core candidate, computed using bars available through C3.
+
+    Research fields do not affect core_match or all_filters_pass.
+    Indicator warm-up uses the earlier candles already saved in result.
+    """
+    if result is None or result.empty:
+        return pd.DataFrame()
+    data = result.attrs["candles"]
+    close, high, low, volume = data.Close, data.High, data.Low, data.Volume
+
+    ema20 = close.ewm(span=20, adjust=False).mean()
+    ema200 = close.ewm(span=200, adjust=False).mean()
+    change = close.diff()
+    gains = change.clip(lower=0).ewm(alpha=1/14, adjust=False).mean()
+    losses = (-change).clip(lower=0).ewm(alpha=1/14, adjust=False).mean()
+    rsi = 100 * gains / (gains + losses).replace(0, float("nan"))
+    prev = close.shift()
+    tr = pd.concat([high-low, (high-prev).abs(), (low-prev).abs()], axis=1).max(axis=1)
+    atr = tr.ewm(alpha=1/14, adjust=False).mean()
+    mean20 = close.rolling(20, min_periods=20).mean()
+    std20 = close.rolling(20, min_periods=20).std(ddof=0)
+    prior_low20 = low.shift().rolling(20, min_periods=20).min()
+    prior_high20 = high.shift().rolling(20, min_periods=20).max()
+
+    # Futures trading session changes at 18:00 New York time.
+    eastern = data.index.tz_convert("America/New_York")
+    session = pd.Series((eastern + pd.Timedelta(hours=6)).date, index=data.index)
+    typical_price = (high + low + close) / 3
+    cumulative_vol = volume.groupby(session).cumsum()
+    vwap = (typical_price * volume).groupby(session).cumsum() / cumulative_vol.where(cumulative_vol > 0)
+
+    def pct(part, whole):
+        return 100 * part / whole if whole else float("nan")
+
+    records = []
+    for number, row in result.iterrows():
+        t = row["C3_time"]
+        if t not in data.index:
+            continue
+        i = data.index.get_loc(t)
+        c1, c2, c3 = [data.loc[row[f"C{n}_time"]] for n in (1, 2, 3)]
+        body2 = abs(c2.Close - c2.Open)
+        body3 = abs(c3.Close - c3.Open)
+        upper2 = c2.High - max(c2.Open, c2.Close)
+        lower2 = min(c2.Open, c2.Close) - c2.Low
+        upper3 = c3.High - max(c3.Open, c3.Close)
+        lower3 = min(c3.Open, c3.Close) - c3.Low
+        metrics = {
+            "C1_range_pct": pct(c1.High-c1.Low, c1.Close),
+            "C2_range_pct": pct(c2.High-c2.Low, c2.Close),
+            "C3_range_pct": pct(c3.High-c3.Low, c3.Close),
+            "C2_body_pct": pct(body2, c2.Close),
+            "C3_body_pct": pct(body3, c3.Close),
+            "C2_lower_wick_pct": pct(lower2, c2.Close),
+            "C2_upper_wick_pct": pct(upper2, c2.Close),
+            "C3_upper_wick_pct": pct(upper3, c3.Close),
+            "C3_lower_wick_pct": pct(lower3, c3.Close),
+            "C2_lower_wick_body": lower2/body2 if body2 else float("nan"),
+            "C3_total_wick_body": (upper3+lower3)/body3 if body3 else float("nan"),
+            "C3_C2_volume_ratio": c3.Volume/c2.Volume if c2.Volume else float("nan"),
+            "C3_volume": c3.Volume,
+            "EMA20_distance_pct": pct(c3.Close-ema20.iloc[i], ema20.iloc[i]),
+            "EMA200_distance_pct": pct(c3.Close-ema200.iloc[i], ema200.iloc[i]),
+            "EMA20_slope_3bar_pct": pct(ema20.iloc[i]-ema20.iloc[i-3], ema20.iloc[i-3]) if i >= 3 else float("nan"),
+            "RSI14": rsi.iloc[i],
+            "ATR14_pct": pct(atr.iloc[i], c3.Close),
+            "BB20_width_pct": pct(4*std20.iloc[i], mean20.iloc[i]),
+            "VWAP_distance_pct": pct(c3.Close-vwap.iloc[i], vwap.iloc[i]),
+            "Prior20_low_sweep_pct": pct(prior_low20.iloc[i]-c3.Low, c3.Close) if c3.Low < prior_low20.iloc[i] else 0.0,
+            "Prior20_high_distance_pct": pct(c3.Close-prior_high20.iloc[i], prior_high20.iloc[i]),
+            "C3_confirms_buy": bool(c3.Close > c3.Open and c3.Close > c2.Close),
+        }
+        records.append({"Candidate": number+1, "C3_time": t,
+                        "all_filters_pass": bool(row["all_filters_pass"]), **metrics})
+    return pd.DataFrame(records)
+
+
+def print_signal_metrics(result):
+    """Print 23 metric values for each core candidate, including failed ones."""
+    metrics = build_signal_metrics(result)
+    if metrics.empty:
+        print("No candidate metrics available.")
+        return metrics
+    for _, row in metrics.iterrows():
+        print(f"\n=== Candidate {int(row['Candidate'])} | {row['C3_time']} | "
+              f"Passed={row['all_filters_pass']} ===")
+        for key in list(metrics.columns)[3:]:
+            value = row[key]
+            display = f"{value:.4f}" if isinstance(value, (int, float)) and not isinstance(value, bool) else str(value)
+            print(f"  {key} = {display}")
+    return metrics
+
+
+# 12. RUN DIRECTLY IN VS CODE (or import from your notebook)
 if __name__ == "__main__":
     three_candle_signal_learning("NQ=F", "2026-10-29", "2026-10-30")
