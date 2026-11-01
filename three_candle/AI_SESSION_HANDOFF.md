@@ -1,3 +1,38 @@
+# CURRENT NEXT-SESSION START HERE — 1 Nov 2026 (UK)
+
+> **This section supersedes stale progress statements elsewhere in this historical handoff.** Do not alter existing strategy detection, notebooks, trading bot or historical CSVs without an explicit new request. Historical research and finalized NQ risk contract elsewhere in this document are separate from the **learning-only** candidate scanner.
+
+## Verified status and next goal
+
+- **Goal:** study 15-minute NQ (then GC) three-candle turning-point **candidates**, preserve the existing core and extra-filter logic, inspect the 23 research metrics for patterns, then define an out-of-sample validation plan. Candidate counts and filter passes are **not executed trades or win rates**.
+- GitHub repository: `raghunathbhandari/ASJR`, branch `main`, folder `three_candle/`. Windows working folder: `D:\\Trading\\OmJRTrading\\JRTrading\\ASJR_Trading`; VS Code notebook and Python module are colocated in `three_candle/`. **Do not modify** `test_three_candle.ipynb` or `three_candle.py` for learning work without explicit permission.
+- Learning module: `three_candle/three_candle_learing.py` (spelling intentionally `learing`). Direct notebook import: `import importlib; import three_candle_learing as learning; importlib.reload(learning)`.
+- Use `result = learning.three_candle_signal_learning("NQ=F", "2026-10-30", "2026-10-30")`; this scans and **prints** candidates only, **does not plot**. Call `learning.plot_signal_candidate(result)` for one full dark chart with C2 green BUY dots and short swing-high/low S/R segments, EMA20 gold and EMA200 purple. Call `learning.plot_signal_passed(result)` for each extra-filter-passed setup with highlighted C1/C2/C3, study entry/SL reference lines, indicators and research metrics. `learning.build_signal_metrics(result)` / `learning.print_signal_metrics(result)` inspect the 23 extra research values. Do not confuse these 23 descriptive research metrics with the six displayed extra-filter diagnostics.
+- `three_candle_core(c1,c2,c3)` BUY-only: `C2.Low < C1.Low` AND `C3.High > max(C2.Open,C2.Close)`. C3 breaks the **C2 body top**, not necessarily C2 high. SELL core is not implemented. Extra-filter booleans remain diagnostic; optional C3 volume comparison is OFF. Do not silently expand, invert or optimize the core. C2-close BUY and C2-open SL are **study references**, not guaranteed executable; reject a supposed BUY stop above entry in any later trade model.
+- 30 Oct NQ reference output with historical warm-up: **284 complete 15m bars loaded**, **25 BUY core candidates**, **3 pass extra filters** (C3 14:30, 18:45, 19:00 GMT). Historical 5m IBKR data preferred to Yahoo; counts may differ with date range / resampling / code revisions. Charts display only requested day while earlier bars warm EMA20/EMA200. Both are exponential averages, not SMA; use UK labels.
+
+## Data source and provenance — download completed
+
+- September and October **2026** IBKR **5-minute ETH** CSV files and coverage reports for **NQZ2026 and GCZ2026** are present on GitHub `main` under `three_candle/data/`, pushed in commit `bba688f76`. The earlier note saying monthly downloads were *running* is obsolete.
+- NQ Sep **6024** rows; NQ Oct **6048**; GC Sep **6042**; GC Oct **6048**. All four reports: request errors **0**, invalid OHLC envelopes **0**; GC Sep flagged **one** >2% candle range. Reports still say **NEEDS REVIEW**; do **not** call the data fully certified. Do not overwrite these datasets. The separate NQ 29–30 Oct file existed on VPS but was not part of this four-file push.
+- Learning loader prefers monthly local IBKR CSVs and strict complete 5m→15m aggregation; Yahoo Finance is fallback if a suitable CSV is absent. Historical warm-up is important for EMA200. Yahoo NQ=F had an apparent erroneous giant red bar around 30 Oct 19:00 UK, absent from IBKR/TradingView; compare explicit contract and timezone before concluding sources match.
+- VPS Python: `/root/trading/venv_new/bin/python`; IBKR paper Gateway tested on **127.0.0.1:4002** (1044/1045 refused). VPS paths: deployed bot checkout `/root/trading/ASJR`, separate synced/research checkout `/root/trading/ASJR-Synced`. Consult [BRIDGE_GUIDE.md](BRIDGE_GUIDE.md) for the **current** asynchronous GitHub→VPS→GitHub request operations and dynamic IBKR/Yahoo download examples; this guide contains some earlier chronological paragraphs that are superseded by its later verified status.
+
+## Git safety — PC development, VPS cautious reception
+
+1. **Windows PC:** `git status -sb` first. Preserve all unrelated local edits, especially `three_candle.py` and the notebook. Stage **explicitly chosen files** with `git add <files>`, commit, then `git pull --rebase origin main` only once remaining working tree is clean; resolve conflicts deliberately, then `git push origin main`. If clean and only receiving updates, `git pull --rebase origin main` is sufficient. No force-push.
+2. **Selective PC retrieval:** `git fetch origin main` then `git restore --source=origin/main --worktree -- three_candle/three_candle_learing.py` overwrites **only the named file's working-tree copy**; check for unsaved changes first. This **does not** advance the local branch pointer. Do not mistake it for a full pull.
+3. **VPS:** before deploying, `cd /root/trading/ASJR`; `git status -sb`; `git fetch origin main`; `git diff --name-status HEAD origin/main`; inspect changes; if safe and clean, `git merge --ff-only origin/main`. If detached/divergent/dirty or bot-risky, **stop** and investigate; never reset hard, force merge/push or overwrite live runtime state. Pulling code does not require or authorize restarting a trading bot; restart only the separately affected service when justified.
+4. Git operations and bridge downloads are different workflows: do not stage unrelated runtime logs, request result files, or existing datasets.
+
+## Read next
+
+- [BRIDGE_GUIDE.md](BRIDGE_GUIDE.md) — source-specific and current VPS IBKR/Yahoo bridge instructions, permissions, samples and validation.
+- [README.md](README.md) and [STRATEGY.md](STRATEGY.md) — legacy/main strategy history; sections describing old versions may be stale; **the code and this current learning section govern the learning scanner**.
+- [results/NQ_SEP_OCT_RESEARCH_LEARNINGS.md](results/NQ_SEP_OCT_RESEARCH_LEARNINGS.md) — **separate retrospective v2** NQ study (821 candidates, in-sample filters); not a validated result of `three_candle_learing.py`.
+
+---
+
 > **VPS DATA DOWNLOADS:** Read [BRIDGE_GUIDE.md](BRIDGE_GUIDE.md) before any Yahoo/IBKR bridge request. It covers parameter validation, no-SSH operation, data protection and result verification.\n\n> **FINALIZED RISK AND TRAILING CONTRACT — 31 OCT 2026 (USER-APPROVED)**
 >
 > - A valid trade must have initial stop distance **at most 0.20% of entry price**, measured by `100 * abs(entry - structural_stop) / entry`. If the required structural SL is **above 0.20%**, **reject the trade**, do not widen or silently substitute a synthetic 0.20% stop.
