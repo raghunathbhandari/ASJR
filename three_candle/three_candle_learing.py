@@ -92,7 +92,7 @@ def load_learning_candles(ticker, datefrom, dateTo):
     if not all(path.is_file() for path in files):
         print("IBKR CSV missing; using Yahoo instead:",
               ", ".join(p.name for p in files if not p.is_file()))
-        # Yahoo also needs earlier candles to warm up the 20-period MA.
+        # Yahoo also needs earlier candles to warm up MA20 and MA200.
         earlier = (start - timedelta(days=12)).isoformat()
         yahoo = Download_yfinalce(ticker, (earlier, dateTo), "15m")
         requested = yahoo.index.date >= start
@@ -143,7 +143,7 @@ def load_learning_candles(ticker, datefrom, dateTo):
     if not requested.any():
         raise ValueError("No complete IBKR 15m bars for requested dates")
     first = int(requested.argmax())
-    data = data.iloc[max(0, first - 20):]
+    data = data.iloc[max(0, first - 200):]
     data = data.loc[data.index.date <= end]
     if first < 200:
         print("MA200 WARNING: fewer than 200 earlier bars available")
