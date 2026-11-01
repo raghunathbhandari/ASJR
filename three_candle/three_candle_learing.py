@@ -468,9 +468,11 @@ def plot_signal(result, show_sr=False):
         if show_sr:
             for kind, pivot, confirmed_at, price in detect_swing_levels(data, left=2, right=2):
                 level_color = "#56c4f5" if kind == "SUPPORT" else "#ff7979"
-                ax.hlines(price, confirmed_at, len(data) - 0.5,
-                          color=level_color, linewidth=1.0,
-                          alpha=0.7, linestyle="--")
+                # Short segment centred on the actual swing candle.
+                x1 = max(0, pivot - 2)
+                x2 = min(len(data) - 0.5, pivot + 2.5)
+                ax.hlines(price, x1, x2, color=level_color,
+                          linewidth=2.0, alpha=0.95)
 
         every = max(1, len(data) // 15)
         ticks = list(range(0, len(data), every))
