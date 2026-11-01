@@ -251,26 +251,71 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
         signals.append(row)
 
     result = pd.DataFrame(signals)
+    result.attrs["candles"] = data  # Keep the full downloaded chart for plot_signal(result).
     print(f"Found {len(result)} BUY setups (study references only).")
     return result
 
 
 # 7. PLOT SIGNALS: plot only when called separately
 def plot_signal(result):
-    """Display a separate C1/C2/C3 chart for every row of a scan result."""
+    """Show the FULL downloaded NQ candle chart for EACH matching signal."""
     if result is None or result.empty:
         print("No signals to plot.")
         return
 
+    data = result.attrs.get("candles")
+    if data is None or data.empty:
+        raise ValueError("Full candles unavailable. Pass the original scanner result.")
+
     for number, row in result.iterrows():
-        times = [row[f"C{n}_time"] for n in (1, 2, 3)]
-        candles = [
-            pd.Series({field: row[f"C{n}_{field}"]
-                       for field in ("Open", "High", "Low", "Close", "Volume")})
-            for n in (1, 2, 3)
-        ]
-        print(f"Setup {number + 1}/{len(result)} | BUY {row['BUY']:.2f} | SL {row['SL']:.2f}")
-        show_three_candle_chart(row["Ticker"], times, candles)
+        fig, ax = plt.subplots(figsize=(16, 6), facecolor="#101722")
+        ax.set_facecolor("#101722")
+
+        # Draw the full downloaded range, not just 3 isolated candles.
+        for i, candle in enumerate(data.itertuples()):
+            color = "#23c985" if candle.Close >= candle.Open else "#ff6471"
+            ax.vlines(i, candle.Low, candle.High, color=color, linewidth=0.8)
+            ax.add_patch(Rectangle(
+                (i - 0.3, min(candle.Open, candle.Close)),
+                0.6, max(abs(candle.Close - candle.Open), 0.00001),
+                facecolor=color, edgecolor=color,
+            ))
+
+        # Highlight THIS signal's three candles on the full chart.
+        for label in ("C1", "C2", "C3"):
+            candle_time = row[f"{label}_time"]
+            pos = data.index.get_loc(candle_time)
+            ax.axvspan(pos - 0.45, pos + 0.45, color="#77bcff", alpha=0.13)
+            ax.annotate(label, (pos, data.iloc[pos].High),
+                        xytext=(0, 9), textcoords="offset points",
+                        ha="center", color="#a4d1ff", weight="bold")
+
+        # Only draw BUY and SL lines from C2 through the chart's right edge.
+        c2_position = data.index.get_loc(row["C2_time"])
+        ax.hlines(row["BUY"], c2_position, len(data) - 0.5,
+                  color="#33e99a", linewidth=1.3,
+                  label=f"BUY reference {row['BUY']:.2f}")
+        ax.hlines(row["SL"], c2_position, len(data) - 0.5,
+                  color="#ff6978", linewidth=1.3,
+                  label=f"SL reference {row['SL']:.2f}")
+
+        every = max(1, len(data) // 15)
+        ticks = list(range(0, len(data), every))
+        ax.set_xticks(ticks, [data.index[j].strftime("%d %b %H:%M") for j in ticks],
+                      rotation=35, ha="right")
+        ax.set_xlim(-1, len(data))
+        ax.set_ylabel("NQ futures price", color="#dbe5f0")
+        ax.set_title(f"NQ=F | 15m full chart | Signal {number + 1}/{len(result)} | UK time",
+                     color="#f0f5fa")
+        ax.tick_params(colors="#dbe5f0")
+        for spine in ax.spines.values():
+            spine.set_color("#526174")
+        ax.grid(color="#526174", alpha=0.35)
+        ax.legend(loc="best", facecolor="#1a2534",
+                  edgecolor="#526174", labelcolor="white")
+        fig.tight_layout()
+        plt.show()
+        plt.close(fig)
 
 
 # 8. RUN DIRECTLY IN VS CODE (or import from your notebook)
