@@ -268,6 +268,17 @@ def plot_signal(result):
         raise ValueError("Full candles unavailable. Pass the original scanner result.")
 
     for number, row in result.iterrows():
+        print(f"\\n=== NQ BUY SIGNAL {number + 1}/{len(result)} ===")
+        for label in ("C1", "C2", "C3"):
+            print(
+                f"{label} | {row[f'{label}_time']:%Y-%m-%d %H:%M %Z} | "
+                f"O={row[f'{label}_Open']:.2f} "
+                f"H={row[f'{label}_High']:.2f} "
+                f"L={row[f'{label}_Low']:.2f} "
+                f"C={row[f'{label}_Close']:.2f} "
+                f"Vol={row[f'{label}_Volume']:.0f}"
+            )
+        print(f"BUY reference: {row['BUY']:.2f} | SL reference: {row['SL']:.2f}")
         fig, ax = plt.subplots(figsize=(16, 6), facecolor="#101722")
         ax.set_facecolor("#101722")
 
