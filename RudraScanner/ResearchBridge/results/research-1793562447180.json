@@ -1,0 +1,10 @@
+{
+  "completed_utc": "2026-11-01T19:48:16.179877+00:00",
+  "exit_code": 1,
+  "id": "research-1793562447180",
+  "operation": "three_candle_ibkr_one_candle",
+  "started_utc": "2026-11-01T19:48:16.025004+00:00",
+  "status": "FAILED",
+  "stderr_tail": "API connection failed: ConnectionRefusedError(111, \"Connect call failed ('127.0.0.1', 1045)\")\nMake sure API port on TWS/IBG is open\n",
+  "stdout_tail": "{\"source\": \"IBKR\", \"ticker\": \"AMD\", \"status\": \"ERROR\", \"error_type\": \"ConnectionRefusedError\", \"message\": \"[Errno 111] Connect call failed ('127.0.0.1', 1045)\", \"saved_files\": 0}\n"
+}
