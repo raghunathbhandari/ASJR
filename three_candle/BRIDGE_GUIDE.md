@@ -20,7 +20,7 @@ The worker runs from `/root/trading/ASJR` on the VPS and normally polls at rough
 |---|---|---|
 | Yahoo Finance through VPS | **Verified** | AMD 5m probe: 609 bars, `research-1793562084207`; no dataset files saved |
 | IBKR Gateway through VPS | **Verified** | AMD single 5m candle: `research-1793562594927`; no dataset files saved |
-| Dynamic IBKR date range | **Code committed, live test pending** | Worker and downloader introduced in commit `296edd690` |
+| Dynamic IBKR date range | **Verified** | MSFT 2026-10-30 5m: 192 bars, `research-1793563070588`; unique CSV and manifest published |
 | Generic dynamic Yahoo date range | **Not implemented** | Existing AMD Yahoo operation is a read-only fixed probe, not a parameterized exporter |
 
 IBKR Gateway connectivity is **127.0.0.1:4002** on VPS, confirmed with `ss -lntp`. Port `1045` refused connections and must not be used. IBKR uses `ib_insync` from the VPS Python environment. All bridge test and download actions are **historical data only; no orders**.
@@ -126,7 +126,7 @@ ss -lntp | grep ':4002'
 - Do not stage unrelated runtime logs, live state, locks or CSVs. Do not force-push main.
 - Separate source quality clearly: Yahoo public intraday data and IBKR historical bars can differ in coverage, exchange, session and timestamps.
 - UK time must be displayed to the user. CSV timestamps use explicit UTC, and comparisons must account for BST/GMT transitions.
-- Single-candle and AMD Yahoo bridge results are proven. **The date-range pipeline must still be validated by an actual end-to-end request** before claiming it is production reliable.
+- Single-candle and AMD Yahoo bridge results are proven. The dynamic date-range pipeline passed its first single-day MSFT 5m export; multi-day and other-timeframe ranges still require coverage validation.
 
 ## 7. Handoff status
 
@@ -135,6 +135,6 @@ Last verified:
 - Yahoo read-only AMD probe: SUCCESS, 609 rows, zero saved files.
 - IBKR read-only AMD probe: SUCCESS on port 4002; 2026-10-30 18:55 UTC candle OHLC `494.42/496.49/494.13/495.45`, volume `228606`, zero saved files.
 - NQ overwriting operation disabled.
-- Generic IBKR range code committed as `296edd690`; **VPS deployment confirmation and live test still outstanding at document creation**.
+- Generic IBKR range code committed as `296edd690`; **VPS deployed and single-day MSFT test successful**: `research-1793563070588` (192 5m bars, UTC 08:00–23:55, no reported API errors).
 
 For future sessions: protect existing historical data first; use approved bridge operations, fresh request IDs, source-specific manifests and evidence-backed result verification.
