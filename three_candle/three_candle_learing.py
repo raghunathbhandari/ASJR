@@ -391,9 +391,9 @@ def plot_signal_passed(result):
     plot_signal(passed)
 
 
-# 9. CHART ALL CORE CANDIDATES (one chart, purple C2 dots)
+# 9. CHART ALL CORE CANDIDATES (one chart, direction-coloured C2 dots)
 def plot_signal_candidate(result):
-    """Show the full NQ chart once, with a purple dot at EVERY candidate C2."""
+    """Show NQ once: green C2 dots for BUY, red C2 dots for SELL."""
     if result is None:
         print("No result supplied.")
         return
@@ -414,10 +414,14 @@ def plot_signal_candidate(result):
             facecolor=color, edgecolor=color,
         ))
 
-    # Purple markers identify C2 (the sweep candle), not C3.
+    # Direction-coloured markers identify C2 (the sweep candle), not C3.
     for _, row in result.iterrows():
         pos = data.index.get_loc(row["C2_time"])
-        ax.scatter(pos, row["C2_Low"], color="#ba79ff", s=65,
+        # BUY = green dot below C2; SELL = red dot above C2.
+        direction = str(row["Direction"]).upper()
+        dot_color = "#23c985" if direction == "BUY" else "#ff6471"
+        dot_price = row["C2_Low"] if direction == "BUY" else row["C2_High"]
+        ax.scatter(pos, dot_price, color=dot_color, s=65,
                    edgecolors="#ffffff", linewidths=0.6, zorder=6)
 
     every = max(1, len(data) // 15)
