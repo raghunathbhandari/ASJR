@@ -92,7 +92,21 @@ def load_learning_candles(ticker, datefrom, dateTo):
     if not all(path.is_file() for path in files):
         print("IBKR CSV missing; using Yahoo instead:",
               ", ".join(p.name for p in files if not p.is_file()))
-        return Download_yfinalce(ticker, (datefrom, dateTo), "15m")
+        # Yahoo also needs earlier candles to warm up the 20-period MA.
+        earlier = (start - timedelta(days=5)).isoformat()
+        yahoo = Download_yfinalce(ticker, (earlier, dateTo), "15m")
+        requested = yahoo.index.date >= start
+        if not requested.any():
+            raise ValueError("No Yahoo candles within requested dates")
+        first = int(requested.argmax())
+        return yahoo.iloc[max(0, first - 20):]
+
+    # Optional previous-month CSV supplies warmup when requested period
+    # starts at the beginning of a month.
+    previous = start.replace(day=1) - timedelta(days=1)
+    previous_file = folder / f"{prefix}Z2026_IBKR_5m_{previous.year}-{previous.month:02d}.csv"
+    if previous_file.is_file() and previous_file not in files:
+        files.insert(0, previous_file)
 
     raw = pd.concat([pd.read_csv(path) for path in files], ignore_index=True)
     needed = ["Datetime_UTC", "Open", "High", "Low", "Close", "Volume"]
@@ -124,7 +138,15 @@ def load_learning_candles(ticker, datefrom, dateTo):
     data = pd.DataFrame(candles, columns=["Time", "Open", "High", "Low", "Close", "Volume"])
     data = data.set_index("Time")
     data.index = data.index.tz_convert("Europe/London")
-    data = data.loc[(data.index.date >= start) & (data.index.date <= end)]
+    # Keep 20 preceding bars for MA20, but do not count them as signals.
+    requested = (data.index.date >= start) & (data.index.date <= end)
+    if not requested.any():
+        raise ValueError("No complete IBKR 15m bars for requested dates")
+    first = int(requested.argmax())
+    data = data.iloc[max(0, first - 20):]
+    data = data.loc[data.index.date <= end]
+    if first < 20:
+        print("MA20 WARNING: fewer than 20 earlier bars available")
     if data.empty:
         raise ValueError("No complete IBKR 15m bars for requested dates")
     print(f"Using IBKR CSV: {len(data)} complete 15m bars from {len(files)} file(s)")
@@ -310,6 +332,10 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
 
         # Only consecutive 15m candles can form a pattern.
         if times[1] - times[0] != step or times[2] - times[1] != step:
+            continue
+
+        # Warmup candles are chart-only, not new signal candidates.
+        if times[2].date() < date.fromisoformat(str(datefrom)):
             continue
 
         # STEP 1: core turning-point detection.
