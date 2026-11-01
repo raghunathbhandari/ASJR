@@ -372,7 +372,8 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
         signals.append(row)
 
     result = pd.DataFrame(signals)
-    result.attrs["candles"] = data  # Keep the full downloaded chart for plot_signal(result).
+    result.attrs["candles"] = data  # Includes preceding MA20 warm-up bars.
+    result.attrs["requested_start"] = str(datefrom)
     passed_count = int(result["all_filters_pass"].sum()) if not result.empty else 0
     print(f"\nFound {len(result)} core candidates; {passed_count} pass extra filters.")
 
@@ -392,6 +393,23 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
     return result
 
 
+# Build MA20 on the complete dataset; display only requested dates.
+def chart_data_and_ma20(result):
+    full_data = result.attrs.get("candles")
+    if full_data is None or full_data.empty:
+        raise ValueError("Full candles unavailable. Rerun the scanner.")
+
+    start = result.attrs.get("requested_start")
+    if start is None:
+        # Compatibility with older result objects; rerun scan for warm-up.
+        return full_data, full_data.Close.rolling(20, min_periods=20).mean()
+    ma = full_data.Close.rolling(20, min_periods=20).mean()
+    visible = full_data.loc[full_data.index.date >= date.fromisoformat(start)]
+    if visible.empty:
+        raise ValueError("No candles in requested date range")
+    return visible, ma.reindex(visible.index)
+
+
 # 7. PLOT SIGNALS: plot only when called separately
 def plot_signal(result):
     """Show the FULL downloaded NQ candle chart for EACH matching signal."""
@@ -399,9 +417,7 @@ def plot_signal(result):
         print("No signals to plot.")
         return
 
-    data = result.attrs.get("candles")
-    if data is None or data.empty:
-        raise ValueError("Full candles unavailable. Pass the original scanner result.")
+    data, ma20 = chart_data_and_ma20(result)
 
     for number, row in result.iterrows():
         print(f"\\n=== NQ BUY SIGNAL {number + 1}/{len(result)} ===")
@@ -431,6 +447,8 @@ def plot_signal(result):
         # Highlight THIS signal's three candles on the full chart.
         for label in ("C1", "C2", "C3"):
             candle_time = row[f"{label}_time"]
+            if candle_time not in data.index:
+                continue  # C1/C2 may be just before requested chart start.
             pos = data.index.get_loc(candle_time)
             ax.axvspan(pos - 0.45, pos + 0.45, color="#77bcff", alpha=0.13)
             ax.annotate(label, (pos, data.iloc[pos].High),
@@ -438,7 +456,7 @@ def plot_signal(result):
                         ha="center", color="#a4d1ff", weight="bold")
 
         # Only draw BUY and SL lines from C2 through the chart's right edge.
-        c2_position = data.index.get_loc(row["C2_time"])
+        c2_position = data.index.get_loc(row["C2_time"]) if row["C2_time"] in data.index else 0
         ax.hlines(row["BUY"], c2_position, len(data) - 0.5,
                   color="#33e99a", linewidth=1.3,
                   label=f"BUY reference {row['BUY']:.2f}")
@@ -450,7 +468,6 @@ def plot_signal(result):
         ticks = list(range(0, len(data), every))
         ax.set_xticks(ticks, [data.index[j].strftime("%d %b %H:%M") for j in ticks],
                       rotation=35, ha="right")
-        ma20 = data["Close"].rolling(20, min_periods=20).mean()
         ax.plot(range(len(data)), ma20, color="#f7c65c", linewidth=1.5,
                 label="MA20 (15m close)", zorder=4)
         ax.set_xlim(-1, len(data))
@@ -476,6 +493,7 @@ def plot_signal_passed(result):
         return
     passed = result.loc[result["all_filters_pass"]].copy()
     passed.attrs["candles"] = result.attrs.get("candles")
+    passed.attrs["requested_start"] = result.attrs.get("requested_start")
     if passed.empty:
         print("No candidates passed all enabled extra filters.")
         return
@@ -489,9 +507,7 @@ def plot_signal_candidate(result):
     if result is None:
         print("No result supplied.")
         return
-    data = result.attrs.get("candles")
-    if data is None or data.empty:
-        raise ValueError("Full candles missing; use the original scan result.")
+    data, ma20 = chart_data_and_ma20(result)
 
     fig, ax = plt.subplots(figsize=(20, 9), facecolor="#101722")
     ax.set_facecolor("#101722")
@@ -508,6 +524,8 @@ def plot_signal_candidate(result):
 
     # Direction-coloured markers identify C2 (the sweep candle), not C3.
     for _, row in result.iterrows():
+        if row["C2_time"] not in data.index:
+            continue
         pos = data.index.get_loc(row["C2_time"])
         # BUY = green dot below C2; SELL = red dot above C2.
         direction = str(row["Direction"]).upper()
@@ -520,7 +538,6 @@ def plot_signal_candidate(result):
     ticks = list(range(0, len(data), every))
     ax.set_xticks(ticks, [data.index[j].strftime("%d %b %H:%M") for j in ticks],
                   rotation=35, ha="right")
-    ma20 = data["Close"].rolling(20, min_periods=20).mean()
     ax.plot(range(len(data)), ma20, color="#f7c65c", linewidth=1.5,
             label="MA20 (15m close)", zorder=4)
     ax.legend(loc="best", facecolor="#1a2534", edgecolor="#526174", labelcolor="white")
