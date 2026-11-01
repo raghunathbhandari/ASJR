@@ -1,4 +1,4 @@
-> **FINALIZED RISK AND TRAILING CONTRACT — 31 OCT 2026 (USER-APPROVED)**
+> **VPS DATA DOWNLOADS:** Read [BRIDGE_GUIDE.md](BRIDGE_GUIDE.md) before any Yahoo/IBKR bridge request. It covers parameter validation, no-SSH operation, data protection and result verification.\n\n> **FINALIZED RISK AND TRAILING CONTRACT — 31 OCT 2026 (USER-APPROVED)**
 >
 > - A valid trade must have initial stop distance **at most 0.20% of entry price**, measured by `100 * abs(entry - structural_stop) / entry`. If the required structural SL is **above 0.20%**, **reject the trade**, do not widen or silently substitute a synthetic 0.20% stop.
 > - **1R = fixed 0.20% of entry price** for this finalized NQ research variant; nominal initial stop is at the setup's structural level, no further than 1R. For a tighter structural stop, the maximum loss is less than 1R; do not force it wider. Entry and stop must be executable and auditable.
