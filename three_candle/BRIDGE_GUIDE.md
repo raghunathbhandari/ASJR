@@ -138,3 +138,87 @@ Last verified:
 - Generic IBKR range code committed as `296edd690`; **VPS deployed and single-day MSFT test successful**: `research-1793563070588` (192 5m bars, UTC 08:00–23:55, no reported API errors).
 
 For future sessions: protect existing historical data first; use approved bridge operations, fresh request IDs, source-specific manifests and evidence-backed result verification.
+
+
+## 8. Copy-ready script reference for future AI sessions
+
+### IBKR: dynamic historical downloader (supported and tested)
+
+**Script:** `three_candle/ibkr_bridge_range_download.py`  
+**Worker operation:** `ibkr_range_download`  
+**Python dependencies:** `ib_insync`, `pandas`. VPS Gateway port `4002`.
+
+A future AI session should normally use the **GitHub bridge JSON** below, not SSH:
+
+```json
+{
+  "schema_version": 1,
+  "id": "research-<NEW_13_DIGIT_ID>",
+  "operation": "ibkr_range_download",
+  "batch": null,
+  "ticker": "MSFT",
+  "start_date": "2026-10-30",
+  "end_date": "2026-10-30",
+  "timeframe": "5min"
+}
+```
+
+Substitute a fresh numeric ID in **both** filename and JSON before submitting; the placeholder above is not a valid executable ID. Use exact path `RudraScanner/ResearchBridge/requests/<id>.json`.
+
+For an operator-only, direct command (usually unnecessary):
+
+```bash
+cd /root/trading/ASJR
+/root/trading/venv_new/bin/python three_candle/ibkr_bridge_range_download.py \
+  --job-id research-<NEW_13_DIGIT_ID> \
+  --ticker MSFT --start 2026-10-30 --end 2026-10-30 --timeframe 5min
+```
+
+The command **publishes new CSV and manifest files to GitHub**, so use a never-before-used ID. For diagnostics without publishing, use the one-candle probe only.
+
+The proven dynamic MSFT job `research-1793563070588` returned 192 five-minute bars from 08:00 to 23:55 UTC, with no API errors. CSV path:
+`three_candle/data/ibkr_bridge/research-1793563070588/MSFT_2026-10-30_2026-10-30_5min_UTC.csv`.
+It does not certify every expected candle was present.
+
+**Fixed one-candle IBKR probe:** `three_candle/probe_ibkr_one_candle.py`; worker operation `three_candle_ibkr_one_candle`. Currently fixed to MSFT, 30 Oct 2026, 5m, port 4002. It returns a single OHLCV record and saves zero files. Its fixed script arguments must not be mistaken for dynamic range support.
+
+### Yahoo Finance: existing verified read-only probe
+
+**Script:** `three_candle/probe_amd_direct_download.py`  
+**Worker operation:** `three_candle_amd_probe`  
+**Python dependencies:** `yfinance`, `pandas`.
+
+Copy-ready bridge request:
+
+```json
+{
+  "schema_version": 1,
+  "id": "research-<NEW_13_DIGIT_ID>",
+  "operation": "three_candle_amd_probe",
+  "batch": null
+}
+```
+
+This fixed operation uses `yf.download("AMD", start=now-5days, end=now, interval="5m", prepost=True, ...)` and returns row count/timestamps only. It writes **zero CSV files**. The verified result `research-1793562084207` returned 609 rows.
+
+Operator-only direct command (read-only):
+
+```bash
+cd /root/trading/ASJR
+/root/trading/venv_new/bin/python three_candle/probe_amd_direct_download.py
+```
+
+This is **not a dynamic Yahoo export interface**. Do not submit `ticker`, `start_date`, `end_date` or `timeframe` to this operation; the v1 worker rejects extra keys. A generic dynamic Yahoo downloader would require a separate reviewed implementation and one VPS deployment.
+
+For reference, previous multi-asset Yahoo 5m data and coverage labels are recorded in `three_candle/data/multi_asset_5m/download_manifest.json`. Many rows are flagged `PARTIAL_OR_UNVERIFIED`; never treat that manifest as proof of complete history.
+
+### Quick distinction
+
+| Need | Use | Writes files? |
+|---|---|---|
+| IBKR: ticker + start/end + timeframe | `ibkr_range_download` | **Yes**, unique new GitHub directory only |
+| IBKR: one connectivity candle | `three_candle_ibkr_one_candle` | No market-data files |
+| Yahoo: AMD 5m connectivity | `three_candle_amd_probe` | No market-data files |
+| Yahoo: arbitrary ticker/date range | **Not yet supported** | Do not invent an operation |
+
+Future sessions should read the actual current scripts on GitHub before making changes. Preserve existing IBKR NQ/GC and all historical datasets, and require a returned `SUCCESS` result plus CSV/manifest verification.
