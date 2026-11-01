@@ -411,7 +411,7 @@ def chart_data_and_mas(result):
 
 
 # 7. PLOT SIGNALS: plot only when called separately
-def plot_signal(result, show_sr=False):
+def plot_signal(result, show_sr=False, show_metrics=False):
     """Show the FULL downloaded NQ candle chart for EACH matching signal."""
     if result is None or result.empty:
         print("No signals to plot.")
@@ -419,6 +419,7 @@ def plot_signal(result, show_sr=False):
 
     data, ma20, ma200 = chart_data_and_mas(result)
 
+    metric_table = build_signal_metrics(result) if show_metrics else pd.DataFrame()
     for number, row in result.iterrows():
         print(f"\\n=== NQ BUY SIGNAL {number + 1}/{len(result)} ===")
         for label in ("C1", "C2", "C3"):
@@ -492,7 +493,26 @@ def plot_signal(result, show_sr=False):
         ax.grid(color="#526174", alpha=0.35)
         ax.legend(loc="best", facecolor="#1a2534",
                   edgecolor="#526174", labelcolor="white")
-        fig.tight_layout()
+        if show_metrics and not metric_table.empty:
+            selected = metric_table.loc[metric_table["Candidate"] == number + 1]
+            if not selected.empty:
+                observation = selected.iloc[0]
+                fields = list(metric_table.columns)[3:]
+                lines = []
+                for name in fields:
+                    value = observation[name]
+                    shown = f"{value:.3f}" if isinstance(value, (int, float)) and not isinstance(value, bool) else str(value)
+                    lines.append(f"{name}: {shown}")
+                fig.set_size_inches(22, 10)
+                fig.tight_layout(rect=(0, 0, 0.73, 1))
+                fig.text(0.745, 0.96, "23 RESEARCH METRICS", color="#f0f5fa",
+                         fontsize=12, va="top", weight="bold")
+                fig.text(0.745, 0.92, "\\n".join(lines), color="#dbe5f0",
+                         fontsize=8.8, va="top", family="monospace", linespacing=1.4)
+            else:
+                fig.tight_layout()
+        else:
+            fig.tight_layout()
         plt.show()
         plt.close(fig)
 
@@ -510,7 +530,7 @@ def plot_signal_passed(result):
         print("No candidates passed all enabled extra filters.")
         return
     # Preserve original candidate numbers in printed headings / chart titles.
-    plot_signal(passed, show_sr=True)
+    plot_signal(passed, show_sr=True, show_metrics=True)
 
 
 # 9. CHART ALL CORE CANDIDATES (one chart, direction-coloured C2 dots)
