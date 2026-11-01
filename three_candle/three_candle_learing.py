@@ -376,6 +376,67 @@ def plot_signal(result):
         plt.close(fig)
 
 
-# 8. RUN DIRECTLY IN VS CODE (or import from your notebook)
+# 8. CHART ONLY FULLY PASSED SIGNALS (one chart per signal)
+def plot_signal_passed(result):
+    """Draw one full-price-history chart for each candidate passing extra filters."""
+    if result is None or result.empty:
+        print("No candidates to plot.")
+        return
+    passed = result.loc[result["all_filters_pass"]].copy()
+    passed.attrs["candles"] = result.attrs.get("candles")
+    if passed.empty:
+        print("No candidates passed all enabled extra filters.")
+        return
+    # Preserve original candidate numbers in printed headings / chart titles.
+    plot_signal(passed)
+
+
+# 9. CHART ALL CORE CANDIDATES (one chart, purple C2 dots)
+def plot_signal_candidate(result):
+    """Show the full NQ chart once, with a purple dot at EVERY candidate C2."""
+    if result is None:
+        print("No result supplied.")
+        return
+    data = result.attrs.get("candles")
+    if data is None or data.empty:
+        raise ValueError("Full candles missing; use the original scan result.")
+
+    fig, ax = plt.subplots(figsize=(20, 9), facecolor="#101722")
+    ax.set_facecolor("#101722")
+
+    # Full 15m OHLC candles.
+    for i, candle in enumerate(data.itertuples()):
+        color = "#23c985" if candle.Close >= candle.Open else "#ff6471"
+        ax.vlines(i, candle.Low, candle.High, color=color, linewidth=0.8)
+        ax.add_patch(Rectangle(
+            (i - 0.3, min(candle.Open, candle.Close)),
+            0.6, max(abs(candle.Close - candle.Open), 0.00001),
+            facecolor=color, edgecolor=color,
+        ))
+
+    # Purple markers identify C2 (the sweep candle), not C3.
+    for _, row in result.iterrows():
+        pos = data.index.get_loc(row["C2_time"])
+        ax.scatter(pos, row["C2_Low"], color="#ba79ff", s=65,
+                   edgecolors="#ffffff", linewidths=0.6, zorder=6)
+
+    every = max(1, len(data) // 15)
+    ticks = list(range(0, len(data), every))
+    ax.set_xticks(ticks, [data.index[j].strftime("%d %b %H:%M") for j in ticks],
+                  rotation=35, ha="right")
+    ax.set_xlim(-1, len(data))
+    ax.set_ylabel("NQ futures price", color="#dbe5f0")
+    ax.set_title(f"NQ=F | 15m | {len(result)} core candidate C2 markers | UK time",
+                 color="#f0f5fa")
+    ax.tick_params(colors="#dbe5f0")
+    for spine in ax.spines.values():
+        spine.set_color("#526174")
+    ax.grid(color="#526174", alpha=0.35)
+    fig.tight_layout()
+    plt.show()
+    plt.close(fig)
+
+
+# 10. RUN DIRECTLY IN VS CODE (or import from your notebook)
 if __name__ == "__main__":
     three_candle_signal_learning("NQ=F", "2026-10-29", "2026-10-30")
