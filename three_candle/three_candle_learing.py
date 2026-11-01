@@ -542,6 +542,14 @@ def plot_signal_candidate(result):
         ax.scatter(pos, dot_price, color=dot_color, s=65,
                    edgecolors="#ffffff", linewidths=0.6, zorder=6)
 
+    # Short local S/R segments at each confirmed swing (not full-width lines).
+    for kind, pivot, confirmed_at, price in detect_swing_levels(data, left=2, right=2):
+        level_color = "#56c4f5" if kind == "SUPPORT" else "#ff7979"
+        x1 = max(0, pivot - 2)
+        x2 = min(len(data) - 0.5, pivot + 2.5)
+        ax.hlines(price, x1, x2, color=level_color, linewidth=2.0,
+                  alpha=0.95, zorder=5)
+
     every = max(1, len(data) // 15)
     ticks = list(range(0, len(data), every))
     ax.set_xticks(ticks, [data.index[j].strftime("%d %b %H:%M") for j in ticks],
