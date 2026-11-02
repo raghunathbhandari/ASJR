@@ -589,7 +589,7 @@ def plot_signal(result, show_sr=False, show_metrics=False):
                     lines.append(f"{name}: {shown}")
                 fig.set_size_inches(22, 10)
                 fig.tight_layout(rect=(0, 0, 0.73, 1))
-                fig.text(0.745, 0.96, "23 RESEARCH METRICS", color="#f0f5fa",
+                fig.text(0.745, 0.96, "RESEARCH METRICS (PRINT ONLY)", color="#f0f5fa",
                          fontsize=12, va="top", weight="bold")
                 fig.text(0.745, 0.92, "\n".join(lines), color="#dbe5f0",
                          fontsize=8.8, va="top", family="monospace", linespacing=1.4)
@@ -760,7 +760,7 @@ def plot_swing_levels(result, left=2, right=2):
     print(f"Swing S/R: {support_count} support and {resistance_count} resistance levels")
 
 
-# 11. RESEARCH METRICS: 23 numeric/boolean observations (NO new filters)
+# 11. RESEARCH METRICS: observational values (NO signal filters)
 def build_signal_metrics(result):
     """One row per core candidate, computed using bars available through C3.
 
@@ -844,7 +844,7 @@ def build_signal_metrics(result):
 
 
 def print_signal_metrics(result):
-    """Print 23 metric values for each core candidate, including failed ones."""
+    """Print observational metrics for each core candidate, including failed ones."""
     metrics = build_signal_metrics(result)
     if metrics.empty:
         print("No candidate metrics available.")
