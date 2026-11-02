@@ -383,9 +383,22 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
             continue   # Warm-up candles are not reported as new candidates.
         c1, c2, c3 = (data.iloc[c1_i], data.iloc[c2_i], data.iloc[c3_i])
 
-        # EXACT existing six diagnostic checks — not part of core finding.
-        # These checks were written for BUY; SELL uses them as descriptive
-        # historical columns, not an invented SELL pass/fail model.
+        # All checks are print-only; core detection never depends on them.
+        # Additional direction-neutral measures mirror BUY and SELL.
+        body2 = abs(c2.Close - c2.Open)
+        sweep_distance = (c1.Low - c2.Low if direction == "BUY"
+                          else c2.High - c1.High)
+        tick_size = {"NQ=F": 0.25, "GC=F": 0.10}[tiker]
+        sweep_ticks = sweep_distance / tick_size
+        directional_wick = (min(c2.Open, c2.Close) - c2.Low
+                            if direction == "BUY"
+                            else c2.High - max(c2.Open, c2.Close))
+        c3_close_break = (c3.Close > max(c2.Open, c2.Close)
+                          if direction == "BUY"
+                          else c3.Close < min(c2.Open, c2.Close))
+        c3_directional = (c3.Close > c3.Open and c3.Close > c2.Close
+                          if direction == "BUY"
+                          else c3.Close < c3.Open and c3.Close < c2.Close)
         checks = {
             "c1_range_pct": candle_range_pct(c1) >= MIN_C1_RANGE_PCT,
             "c2_range_pct": candle_range_pct(c2) >= MIN_C2_RANGE_PCT,
@@ -393,11 +406,18 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
             "c2_sweeps_c1_low": c2_sweeps_c1_low(c1, c2),
             "c3_confirms_buy": c3_confirms_buy(c2, c3),
             "c3_volume_higher": c3_volume_higher(c2, c3),
+            "directional_wick_gt_body": directional_wick > body2,
+            "directional_sweep": sweep_distance > 0,
+            "c3_directional_strength": c3_directional,
+            "c3_close_beyond_c2_body": c3_close_break,
+            "sweep_at_least_1_tick": sweep_ticks >= 1 - 1e-7,
+            "sweep_at_least_2_ticks": sweep_ticks >= 2 - 1e-7,
         }
-        passed = (direction == "BUY" and all(
-            ok for name, ok in checks.items()
-            if name != "c3_volume_higher" or CHECK_VOLUME
-        ))
+        # Descriptive 'pass' flag, NOT a gate for core candidates.
+        passed = all(checks[key] for key in (
+            "c1_range_pct", "c2_range_pct", "directional_wick_gt_body",
+            "directional_sweep", "c3_directional_strength"
+        )) and (not CHECK_VOLUME or checks["c3_volume_higher"])
         number = len(signals) + 1
         if PRINT_FILTER_DETAILS:
             print(f"\nCandidate {number} | {direction} | "
@@ -414,6 +434,7 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
         row = {"Ticker": tiker, "Direction": direction,
                "BUY": float(c2.Close), "SL": float(c2.Open),
                "C3_wait_bars": wait_bars,
+               "C2_sweep_ticks": float(sweep_ticks),
                "core_match": True, "all_filters_pass": passed}
         row.update(checks)
         for label, stamp, candle in zip(("C1", "C2", "C3"), times, (c1, c2, c3)):
