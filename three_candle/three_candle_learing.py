@@ -239,11 +239,20 @@ def scan_core_candidates(data):
         c2 = data.iloc[c2_i]
         invalid = (candle.Low < c2.Low if side == "BUY"
                    else candle.High > c2.High)
+        confirmed = three_candle_core(c1, c2, candle, side)
+        if invalid and confirmed:
+            # Intrabar sequencing unknown: record, never count as confirmed.
+            data.attrs.setdefault("ambiguous", []).append({
+                "C1_time": data.index[c1_i],
+                "C2_time": data.index[c2_i],
+                "C3_time": data.index[i],
+                "Direction": side,
+            })
         if invalid:
             c1_i, c2_i, side = i, None, None
             continue
 
-        if three_candle_core(c1, c2, candle, side):
+        if confirmed:
             yield c1_i, c2_i, i, side, i - c2_i
             c1_i, c2_i, side = i, None, None
 
@@ -444,10 +453,12 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
         signals.append(row)
 
     result = pd.DataFrame(signals)
+    result.attrs["ambiguous"] = data.attrs.get("ambiguous", [])
     result.attrs["candles"] = data
     result.attrs["requested_start"] = str(datefrom)
     passed_count = int(result["all_filters_pass"].sum()) if not result.empty else 0
-    print(f"\nFound {len(result)} core candidates; {passed_count} pass extra filters.")
+    print(f"\nFound {len(result)} core candidates; {passed_count} meet descriptive checks.")
+    print(f"Ambiguous confirmation/invalidation candles: {len(result.attrs['ambiguous'])}")
     print("\n========== PASSED CANDIDATES ==========")
     if passed_count == 0:
         print("None")
@@ -822,6 +833,10 @@ def build_signal_metrics(result):
             "Prior20_low_sweep_pct": pct(prior_low20.iloc[i]-c3.Low, c3.Close) if c3.Low < prior_low20.iloc[i] else 0.0,
             "Prior20_high_distance_pct": pct(c3.Close-prior_high20.iloc[i], prior_high20.iloc[i]),
             "C3_confirms_buy": bool(c3.Close > c3.Open and c3.Close > c2.Close),
+            "C3_directional_strength": bool(
+                c3.Close > c3.Open and c3.Close > c2.Close
+                if row["Direction"] == "BUY"
+                else c3.Close < c3.Open and c3.Close < c2.Close),
         }
         records.append({"Candidate": number+1, "C3_time": t,
                         "all_filters_pass": bool(row["all_filters_pass"]), **metrics})
