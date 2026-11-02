@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 14093,
-    "completed_rows": 14093,
+    "input_rows": 14260,
+    "completed_rows": 14260,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 14093,
+    "no_wap_rows": 14260,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -34,8 +34,8 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 76362,
-    "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-10-30/processed/rudra_scanner_rvol20_baseline.csv",
+    "stored_rows": 76908,
+    "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-02/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
     "output": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-02/processed/rudra_scanner_rvol20_baseline.csv"
@@ -60,16 +60,16 @@
   },
   "collection": {
     "requested": [
-      "AVR",
+      "AAOI",
       "AXTI",
       "CRWV",
       "IREN",
+      "LITE",
       "MSTR",
-      "NBIS",
+      "PL",
       "PURR",
       "RDDT",
       "SPCX",
-      "UAL",
       "SPY",
       "QQQ",
       "SMH",
@@ -77,24 +77,24 @@
       "XLK"
     ],
     "symbols": [
+      "AAOI",
       "AKAM",
       "AMAT",
-      "AVR",
       "AXTI",
       "CRDO",
       "CRWV",
       "INTC",
       "IREN",
+      "LITE",
       "MSFT",
       "MSTR",
-      "NBIS",
       "ORCL",
+      "PL",
       "PURR",
       "QCOM",
       "RDDT",
       "SMCI",
       "SPCX",
-      "UAL",
       "WDC",
       "WTTR",
       "SPY",
@@ -114,7 +114,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 14093,
+    "count": 14260,
     "source": "SAME_IBKR_APP"
   }
 }
