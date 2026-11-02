@@ -1,14 +1,14 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-02T17:24:49.528235+00:00",
+  "generated_at_utc": "2026-11-02T17:31:48.360107+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
     "AVR",
     "CRDO",
-    "HELP",
     "INTC",
+    "LITE",
     "MRVL",
     "MSFT",
     "NWL",
@@ -19,9 +19,9 @@
     "RIVN",
     "SGML",
     "SMCI",
+    "TEM",
     "ULCC",
     "WDC",
-    "WING",
     "WTTR"
   ],
   "per_ticker": {
@@ -41,11 +41,11 @@
       "state": "OK",
       "rows": 553
     },
-    "HELP": {
-      "state": "OK",
-      "rows": 542
-    },
     "INTC": {
+      "state": "OK",
+      "rows": 553
+    },
+    "LITE": {
       "state": "OK",
       "rows": 553
     },
@@ -89,6 +89,10 @@
       "state": "OK",
       "rows": 553
     },
+    "TEM": {
+      "state": "OK",
+      "rows": 553
+    },
     "ULCC": {
       "state": "OK",
       "rows": 493
@@ -97,23 +101,19 @@
       "state": "OK",
       "rows": 553
     },
-    "WING": {
-      "state": "OK",
-      "rows": 452
-    },
     "WTTR": {
       "state": "OK",
       "rows": 430
     }
   },
-  "rows": 10440,
+  "rows": 10552,
   "usable_150bars": [
     "AKAM",
     "AMAT",
     "AVR",
     "CRDO",
-    "HELP",
     "INTC",
+    "LITE",
     "MRVL",
     "MSFT",
     "NWL",
@@ -124,9 +124,9 @@
     "RIVN",
     "SGML",
     "SMCI",
+    "TEM",
     "ULCC",
     "WDC",
-    "WING",
     "WTTR"
   ]
 }
