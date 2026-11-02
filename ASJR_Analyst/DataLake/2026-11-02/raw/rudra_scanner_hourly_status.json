@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-02T16:57:01.780146+00:00",
+  "generated_at_utc": "2026-11-02T17:10:40.273915+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
@@ -19,9 +19,9 @@
     "RIVN",
     "SGML",
     "SMCI",
+    "TEM",
     "ULCC",
     "WDC",
-    "WING",
     "WTTR"
   ],
   "per_ticker": {
@@ -89,6 +89,10 @@
       "state": "OK",
       "rows": 552
     },
+    "TEM": {
+      "state": "OK",
+      "rows": 552
+    },
     "ULCC": {
       "state": "OK",
       "rows": 492
@@ -97,16 +101,12 @@
       "state": "OK",
       "rows": 552
     },
-    "WING": {
-      "state": "OK",
-      "rows": 451
-    },
     "WTTR": {
       "state": "OK",
       "rows": 429
     }
   },
-  "rows": 10431,
+  "rows": 10532,
   "usable_150bars": [
     "AKAM",
     "AMAT",
@@ -124,9 +124,9 @@
     "RIVN",
     "SGML",
     "SMCI",
+    "TEM",
     "ULCC",
     "WDC",
-    "WING",
     "WTTR"
   ]
 }
