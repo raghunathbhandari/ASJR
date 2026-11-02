@@ -1,132 +1,131 @@
 {
-  "state": "COMPLETE",
+  "state": "PARTIAL",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-02T03:34:45.199907+00:00",
+  "generated_at_utc": "2026-11-02T16:35:38.307300+00:00",
   "selected_tickers": [
-    "AAOI",
     "AKAM",
     "AMAT",
-    "ASST",
-    "AXTI",
-    "BMNR",
+    "AVR",
     "CRDO",
     "INTC",
-    "IREN",
     "LITE",
+    "MRVL",
     "MSFT",
-    "MSTR",
-    "NBIS",
+    "NWL",
+    "NXT",
     "ORCL",
+    "PGEN",
     "QCOM",
+    "RIVN",
+    "SGML",
     "SMCI",
-    "SNDK",
-    "SPCX",
+    "ULCC",
     "WDC",
+    "WING",
     "WTTR"
   ],
   "per_ticker": {
-    "AAOI": {
-      "state": "OK",
-      "rows": 560
-    },
     "AKAM": {
       "state": "OK",
-      "rows": 553
+      "rows": 545
     },
     "AMAT": {
       "state": "OK",
-      "rows": 560
+      "rows": 552
     },
-    "ASST": {
+    "AVR": {
       "state": "OK",
-      "rows": 560
-    },
-    "AXTI": {
-      "state": "OK",
-      "rows": 560
-    },
-    "BMNR": {
-      "state": "OK",
-      "rows": 560
+      "rows": 464
     },
     "CRDO": {
       "state": "OK",
-      "rows": 560
+      "rows": 552
     },
     "INTC": {
       "state": "OK",
-      "rows": 560
-    },
-    "IREN": {
-      "state": "OK",
-      "rows": 560
+      "rows": 552
     },
     "LITE": {
       "state": "OK",
-      "rows": 560
+      "rows": 552
+    },
+    "MRVL": {
+      "state": "OK",
+      "rows": 552
     },
     "MSFT": {
       "state": "OK",
-      "rows": 560
+      "rows": 552
     },
-    "MSTR": {
+    "NWL": {
       "state": "OK",
-      "rows": 560
+      "rows": 452
     },
-    "NBIS": {
+    "NXT": {
       "state": "OK",
-      "rows": 560
+      "rows": 483
     },
     "ORCL": {
       "state": "OK",
-      "rows": 560
+      "rows": 552
+    },
+    "PGEN": {
+      "state": "OK",
+      "rows": 513
     },
     "QCOM": {
       "state": "OK",
-      "rows": 560
+      "rows": 552
+    },
+    "RIVN": {
+      "state": "OK",
+      "rows": 552
+    },
+    "SGML": {
+      "state": "OK",
+      "rows": 530
     },
     "SMCI": {
       "state": "OK",
-      "rows": 560
+      "rows": 552
     },
-    "SNDK": {
-      "state": "OK",
-      "rows": 560
-    },
-    "SPCX": {
-      "state": "OK",
-      "rows": 560
+    "ULCC": {
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "WDC": {
       "state": "OK",
-      "rows": 560
+      "rows": 552
+    },
+    "WING": {
+      "state": "OK",
+      "rows": 451
     },
     "WTTR": {
       "state": "OK",
-      "rows": 434
+      "rows": 429
     }
   },
-  "rows": 11067,
+  "rows": 9939,
   "usable_150bars": [
-    "AAOI",
     "AKAM",
     "AMAT",
-    "ASST",
-    "AXTI",
-    "BMNR",
+    "AVR",
     "CRDO",
     "INTC",
-    "IREN",
     "LITE",
+    "MRVL",
     "MSFT",
-    "MSTR",
-    "NBIS",
+    "NWL",
+    "NXT",
     "ORCL",
+    "PGEN",
     "QCOM",
+    "RIVN",
+    "SGML",
     "SMCI",
-    "SNDK",
-    "SPCX",
     "WDC",
+    "WING",
     "WTTR"
   ]
 }
