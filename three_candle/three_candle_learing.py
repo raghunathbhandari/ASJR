@@ -40,8 +40,8 @@ def Download_yfinalce(ticker, datetime, timeframe="15m"):
     end = date.fromisoformat(str(date_to))
     if end < start:
         raise ValueError("dateTo must be on or after datefrom")
-    if ticker not in ("NQ=F", "GC=F"):
-        raise ValueError("Use NQ=F or GC=F")
+    if ticker not in ("NQ=F", "GC=F", "MES=F"):
+        raise ValueError("Use NQ=F, GC=F, or MES=F")
     if timeframe not in ("15m", "15min"):
         raise ValueError("Learning version supports 15m only")
 
@@ -76,10 +76,10 @@ def load_learning_candles(ticker, datefrom, dateTo):
     end = date.fromisoformat(str(dateTo))
     if end < start:
         raise ValueError("dateTo before datefrom")
-    if ticker not in ("NQ=F", "GC=F"):
-        raise ValueError("Use NQ=F or GC=F")
+    if ticker not in ("NQ=F", "GC=F", "MES=F"):
+        raise ValueError("Use NQ=F, GC=F, or MES=F")
 
-    prefix = "NQ" if ticker == "NQ=F" else "GC"
+    prefix = {"NQ=F": "NQ", "GC=F": "GC", "MES=F": "MES"}[ticker]
     folder = Path(__file__).resolve().parent / "data"
     files = []
     year, month = start.year, start.month
@@ -378,8 +378,8 @@ def plot_chart(df):
 # 6. MAIN NOTEBOOK CALL — keep this public method name/signature unchanged
 def three_candle_signal_learning(tiker, datefrom, dateTo):
     """Find BUY and SELL core patterns, then PRINT other filters only."""
-    if tiker not in ("NQ=F", "GC=F"):
-        raise ValueError("Use NQ=F or GC=F")
+    if tiker not in ("NQ=F", "GC=F", "MES=F"):
+        raise ValueError("Use NQ=F, GC=F, or MES=F")
 
     data = load_learning_candles(tiker, datefrom, dateTo)
     print(f"Downloaded {len(data)} x 15m candles for {tiker}")
@@ -397,7 +397,7 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
         body2 = abs(c2.Close - c2.Open)
         sweep_distance = (c1.Low - c2.Low if direction == "BUY"
                           else c2.High - c1.High)
-        tick_size = {"NQ=F": 0.25, "GC=F": 0.10}[tiker]
+        tick_size = {"NQ=F": 0.25, "GC=F": 0.10, "MES=F": 0.25}[tiker]
         sweep_ticks = sweep_distance / tick_size
         directional_wick = (min(c2.Open, c2.Close) - c2.Low
                             if direction == "BUY"
