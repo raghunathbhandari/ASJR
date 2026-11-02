@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 11569,
-    "completed_rows": 11569,
+    "input_rows": 11586,
+    "completed_rows": 11586,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 11569,
+    "no_wap_rows": 11586,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -34,7 +34,7 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 79560,
+    "stored_rows": 79716,
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-02/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
@@ -43,10 +43,10 @@
   "context": {
     "state": "LONG",
     "reason": "AS_OF_5M_INDEX_CONFIRMED",
-    "timestamp": "2026-11-02 17:20:00+00:00",
+    "timestamp": "2026-11-02 17:25:00+00:00",
     "index_pct": {
-      "SPY": 0.4711,
-      "QQQ": 0.3273
+      "SPY": 0.434,
+      "QQQ": 0.2462
     },
     "sector_etf": {
       "AKAM": "XLK",
@@ -62,56 +62,56 @@
     "sector_pct": {
       "AKAM": {
         "etf": "XLK",
-        "pct": -0.7463,
-        "vs_spy": -1.2174,
+        "pct": -0.8521,
+        "vs_spy": -1.2862,
         "bias": "WAIT"
       },
       "AMAT": {
         "etf": "SMH",
-        "pct": -0.0574,
-        "vs_spy": -0.5285,
+        "pct": -0.2047,
+        "vs_spy": -0.6387,
         "bias": "WAIT"
       },
       "CRDO": {
         "etf": "SMH",
-        "pct": -0.0574,
-        "vs_spy": -0.5285,
+        "pct": -0.2047,
+        "vs_spy": -0.6387,
         "bias": "WAIT"
       },
       "INTC": {
         "etf": "SMH",
-        "pct": -0.0574,
-        "vs_spy": -0.5285,
+        "pct": -0.2047,
+        "vs_spy": -0.6387,
         "bias": "WAIT"
       },
       "MRVL": {
         "etf": "SMH",
-        "pct": -0.0574,
-        "vs_spy": -0.5285,
+        "pct": -0.2047,
+        "vs_spy": -0.6387,
         "bias": "WAIT"
       },
       "MSFT": {
         "etf": "XLK",
-        "pct": -0.7463,
-        "vs_spy": -1.2174,
+        "pct": -0.8521,
+        "vs_spy": -1.2862,
         "bias": "WAIT"
       },
       "ORCL": {
         "etf": "XLK",
-        "pct": -0.7463,
-        "vs_spy": -1.2174,
+        "pct": -0.8521,
+        "vs_spy": -1.2862,
         "bias": "WAIT"
       },
       "QCOM": {
         "etf": "SMH",
-        "pct": -0.0574,
-        "vs_spy": -0.5285,
+        "pct": -0.2047,
+        "vs_spy": -0.6387,
         "bias": "WAIT"
       },
       "WTTR": {
         "etf": "XLE",
-        "pct": -2.5143,
-        "vs_spy": -2.9854,
+        "pct": -2.3429,
+        "vs_spy": -2.7769,
         "bias": "WAIT"
       }
     },
@@ -128,6 +128,7 @@
     "symbols": [
       "AKAM",
       "AMAT",
+      "ATEC",
       "AVR",
       "CRDO",
       "INTC",
@@ -142,7 +143,6 @@
       "RIVN",
       "SGML",
       "SMCI",
-      "TEM",
       "ULCC",
       "WDC",
       "WTTR",
@@ -164,7 +164,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 11569,
+    "count": 11586,
     "source": "SAME_IBKR_APP"
   }
 }
