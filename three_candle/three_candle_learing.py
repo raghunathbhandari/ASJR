@@ -188,13 +188,64 @@ def passes_three_candle_filters(c1, c2, c3):
     )
 
 
-# 3B. CORE TURNING PATTERN (BUY only)
-def three_candle_core(c1, c2, c3):
-    """C2 sweeps C1 low, then C3 high breaks C2 BODY top (not C2 high).
+# 3B. CORE DETECTION — only candle geometry; NO extra filters
+def three_candle_core(c1, c2, c3, direction="BUY"):
+    """C2 sweeps C1; a later C3 breaks C2's BODY boundary (not wick)."""
+    if direction == "BUY":
+        return bool(c2.Low < c1.Low and c3.High > max(c2.Open, c2.Close))
+    if direction == "SELL":
+        return bool(c2.High > c1.High and c3.Low < min(c2.Open, c2.Close))
+    raise ValueError("direction must be BUY or SELL")
 
-    No wick, candle-range, volume, or C3 colour filters are applied.
+
+def scan_core_candidates(data):
+    """State machine: C1 -> exactly ONE C2 sweep -> wait for C3.
+
+    - C1 stays fixed while subsequent candles are inside its range.
+    - C2 is a single candle sweeping C1 low (BUY) or high (SELL).
+    - Any later candle can be C3 if it crosses C2's body boundary.
+    - If a waiting candle breaks C2's sweep extreme, reset with it as C1.
+    - If a candle both breaks the extreme and confirms, reset first:
+      15m OHLC cannot tell which event occurred first.
+    - Reset at missing 15m timestamps; never connect across gaps.
+    - On confirmation use that C3 as the next C1.
     """
-    return bool(c2.Low < c1.Low and c3.High > max(c2.Open, c2.Close))
+    step = pd.Timedelta(minutes=15)
+    c1_i = None
+    c2_i = None
+    side = None
+
+    for i in range(len(data)):
+        if i and data.index[i] - data.index[i - 1] != step:
+            c1_i, c2_i, side = None, None, None
+        if c1_i is None:
+            c1_i = i
+            continue
+
+        candle = data.iloc[i]
+        c1 = data.iloc[c1_i]
+
+        if c2_i is None:
+            sweep_low = candle.Low < c1.Low
+            sweep_high = candle.High > c1.High
+            if sweep_low and sweep_high:
+                c1_i = i            # Ambiguous two-sided sweep
+            elif sweep_low or sweep_high:
+                c2_i = i
+                side = "BUY" if sweep_low else "SELL"
+            # Otherwise continue watching original C1.
+            continue
+
+        c2 = data.iloc[c2_i]
+        invalid = (candle.Low < c2.Low if side == "BUY"
+                   else candle.High > c2.High)
+        if invalid:
+            c1_i, c2_i, side = i, None, None
+            continue
+
+        if three_candle_core(c1, c2, candle, side):
+            yield c1_i, c2_i, i, side, i - c2_i
+            c1_i, c2_i, side = i, None, None
 
 
 # 4. PRINT ONE CANDLE: easy to compare C1, C2, C3
@@ -315,34 +366,26 @@ def plot_chart(df):
     plt.close(fig)
 
 
-# 6. MAIN LOOP: scan candles and RETURN signals (no charts)
+# 6. MAIN NOTEBOOK CALL — keep this public method name/signature unchanged
 def three_candle_signal_learning(tiker, datefrom, dateTo):
-    """Return all core BUY candidates with each extra filter result."""
+    """Find BUY and SELL core patterns, then PRINT other filters only."""
     if tiker not in ("NQ=F", "GC=F"):
         raise ValueError("Use NQ=F or GC=F")
 
     data = load_learning_candles(tiker, datefrom, dateTo)
     print(f"Downloaded {len(data)} x 15m candles for {tiker}")
     signals = []
-    step = pd.Timedelta(minutes=15)
+    requested_start = date.fromisoformat(str(datefrom))
 
-    for i in range(2, len(data)):
-        times = list(data.index[i - 2:i + 1])
-        c1, c2, c3 = [data.iloc[j] for j in (i - 2, i - 1, i)]
+    for c1_i, c2_i, c3_i, direction, wait_bars in scan_core_candidates(data):
+        times = [data.index[j] for j in (c1_i, c2_i, c3_i)]
+        if times[2].date() < requested_start:
+            continue   # Warm-up candles are not reported as new candidates.
+        c1, c2, c3 = (data.iloc[c1_i], data.iloc[c2_i], data.iloc[c3_i])
 
-        # Only consecutive 15m candles can form a pattern.
-        if times[1] - times[0] != step or times[2] - times[1] != step:
-            continue
-
-        # Warmup candles are chart-only, not new signal candidates.
-        if times[2].date() < date.fromisoformat(str(datefrom)):
-            continue
-
-        # STEP 1: core turning-point detection.
-        if not three_candle_core(c1, c2, c3):
-            continue
-
-        # STEP 2: inspect extra filters, without rejecting core candidates.
+        # EXACT existing six diagnostic checks — not part of core finding.
+        # These checks were written for BUY; SELL uses them as descriptive
+        # historical columns, not an invented SELL pass/fail model.
         checks = {
             "c1_range_pct": candle_range_pct(c1) >= MIN_C1_RANGE_PCT,
             "c2_range_pct": candle_range_pct(c2) >= MIN_C2_RANGE_PCT,
@@ -351,45 +394,54 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
             "c3_confirms_buy": c3_confirms_buy(c2, c3),
             "c3_volume_higher": c3_volume_higher(c2, c3),
         }
-        passed = all(value for name, value in checks.items()
-                     if name != "c3_volume_higher" or CHECK_VOLUME)
+        passed = (direction == "BUY" and all(
+            ok for name, ok in checks.items()
+            if name != "c3_volume_higher" or CHECK_VOLUME
+        ))
         number = len(signals) + 1
         if PRINT_FILTER_DETAILS:
-            print(f"\nCandidate {number} | C3 {times[2]:%Y-%m-%d %H:%M %Z} "
-                  f"| CORE=True | Extra filters={passed}")
+            print(f"\nCandidate {number} | {direction} | "
+                  f"C3 {times[2]:%Y-%m-%d %H:%M %Z} | "
+                  f"CORE=True | Extra filters={passed} | "
+                  f"C3 wait={wait_bars} bar(s)")
             for name, ok in checks.items():
-                note = " (optional OFF)" if name == "c3_volume_higher" and not CHECK_VOLUME else ""
+                note = (" (optional OFF)" if name == "c3_volume_higher"
+                        and not CHECK_VOLUME else "")
                 print(f"  {name} = {ok}{note}")
 
-        row = {"Ticker": tiker, "Direction": "BUY",
+        # BUY/SL columns are retained for notebook compatibility only.
+        # They represent the C2 close/open study references, NOT filled orders.
+        row = {"Ticker": tiker, "Direction": direction,
                "BUY": float(c2.Close), "SL": float(c2.Open),
+               "C3_wait_bars": wait_bars,
                "core_match": True, "all_filters_pass": passed}
         row.update(checks)
-        for label, time, candle in zip(("C1", "C2", "C3"), times, (c1, c2, c3)):
-            row[f"{label}_time"] = time
+        for label, stamp, candle in zip(("C1", "C2", "C3"), times, (c1, c2, c3)):
+            row[f"{label}_time"] = stamp
             for field in ("Open", "High", "Low", "Close", "Volume"):
                 row[f"{label}_{field}"] = float(candle[field])
         signals.append(row)
 
     result = pd.DataFrame(signals)
-    result.attrs["candles"] = data  # Includes preceding MA20 warm-up bars.
+    result.attrs["candles"] = data
     result.attrs["requested_start"] = str(datefrom)
     passed_count = int(result["all_filters_pass"].sum()) if not result.empty else 0
     print(f"\nFound {len(result)} core candidates; {passed_count} pass extra filters.")
-
-    # Print passing setups at the END, after all candidate diagnostics.
     print("\n========== PASSED CANDIDATES ==========")
     if passed_count == 0:
         print("None")
     else:
-        for index, row in result[result["all_filters_pass"]].iterrows():
-            print(f"Candidate {index + 1} | C3 {row['C3_time']:%Y-%m-%d %H:%M %Z}"
-                  f" | BUY {row['BUY']:.2f} | SL {row['SL']:.2f}")
+        for idx, row in result.loc[result["all_filters_pass"]].iterrows():
+            print(f"Candidate {idx+1} | {row['Direction']} | "
+                  f"C3 {row['C3_time']:%Y-%m-%d %H:%M %Z} | "
+                  f"C2 close reference {row['BUY']:.2f} | "
+                  f"C2 open reference {row['SL']:.2f}")
             for name in ("c1_range_pct", "c2_range_pct",
                          "c2_lower_wick_longer_than_body", "c2_sweeps_c1_low",
                          "c3_confirms_buy", "c3_volume_higher"):
-                suffix = " (optional OFF)" if name == "c3_volume_higher" and not CHECK_VOLUME else ""
-                print(f"  {name} = {bool(row[name])}{suffix}")
+                note = (" (optional OFF)" if name == "c3_volume_higher"
+                        and not CHECK_VOLUME else "")
+                print(f"  {name} = {bool(row[name])}{note}")
     return result
 
 
@@ -421,7 +473,7 @@ def plot_signal(result, show_sr=False, show_metrics=False):
 
     metric_table = build_signal_metrics(result) if show_metrics else pd.DataFrame()
     for number, row in result.iterrows():
-        print(f"\\n=== NQ BUY SIGNAL {number + 1}/{len(result)} ===")
+        print(f"\n=== {row['Ticker']} {row['Direction']} SIGNAL {number + 1}/{len(result)} ===")
         for label in ("C1", "C2", "C3"):
             print(
                 f"{label} | {row[f'{label}_time']:%Y-%m-%d %H:%M %Z} | "
@@ -431,7 +483,7 @@ def plot_signal(result, show_sr=False, show_metrics=False):
                 f"C={row[f'{label}_Close']:.2f} "
                 f"Vol={row[f'{label}_Volume']:.0f}"
             )
-        print(f"BUY reference: {row['BUY']:.2f} | SL reference: {row['SL']:.2f}")
+        print(f"C2 close study reference: {row['BUY']:.2f} | C2 open study reference: {row['SL']:.2f}")
         fig, ax = plt.subplots(figsize=(16, 6), facecolor="#101722")
         ax.set_facecolor("#101722")
 
@@ -460,10 +512,10 @@ def plot_signal(result, show_sr=False, show_metrics=False):
         c2_position = data.index.get_loc(row["C2_time"]) if row["C2_time"] in data.index else 0
         ax.hlines(row["BUY"], c2_position, len(data) - 0.5,
                   color="#33e99a", linewidth=1.3,
-                  label=f"BUY reference {row['BUY']:.2f}")
+                  label=f"C2 close reference {row['BUY']:.2f}")
         ax.hlines(row["SL"], c2_position, len(data) - 0.5,
                   color="#ff6978", linewidth=1.3,
-                  label=f"SL reference {row['SL']:.2f}")
+                  label=f"C2 open reference {row['SL']:.2f}")
 
         # Add confirmed swing S/R only when requested (passed-signal charts).
         if show_sr:
@@ -485,7 +537,7 @@ def plot_signal(result, show_sr=False, show_metrics=False):
                 label="EMA200 (15m close)", zorder=4)
         ax.set_xlim(-1, len(data))
         ax.set_ylabel("NQ futures price", color="#dbe5f0")
-        ax.set_title(f"NQ=F | 15m full chart | Signal {number + 1}/{len(result)} | UK time",
+        ax.set_title(f"{row['Ticker']} | 15m | {row['Direction']} Signal {number + 1}/{len(result)} | UK time",
                      color="#f0f5fa")
         ax.tick_params(colors="#dbe5f0")
         for spine in ax.spines.values():
@@ -585,7 +637,7 @@ def plot_signal_candidate(result):
     ax.legend(loc="best", facecolor="#1a2534", edgecolor="#526174", labelcolor="white")
     ax.set_xlim(-1, len(data))
     ax.set_ylabel("NQ futures price", color="#dbe5f0")
-    ax.set_title(f"NQ=F | 15m | {len(result)} core candidate C2 markers | UK time",
+    ax.set_title(f"15m | {len(result)} core candidate C2 markers | UK time",
                  color="#f0f5fa")
     ax.tick_params(colors="#dbe5f0")
     for spine in ax.spines.values():
