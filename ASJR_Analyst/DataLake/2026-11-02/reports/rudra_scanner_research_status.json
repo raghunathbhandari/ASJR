@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 11419,
-    "completed_rows": 11419,
+    "input_rows": 11449,
+    "completed_rows": 11449,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 11419,
+    "no_wap_rows": 11449,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -43,10 +43,10 @@
   "context": {
     "state": "LONG",
     "reason": "AS_OF_5M_INDEX_CONFIRMED",
-    "timestamp": "2026-11-02 16:50:00+00:00",
+    "timestamp": "2026-11-02 17:00:00+00:00",
     "index_pct": {
-      "SPY": 0.5849,
-      "QQQ": 0.4446
+      "SPY": 0.5663,
+      "QQQ": 0.5199
     },
     "sector_etf": {
       "AKAM": "XLK",
@@ -62,56 +62,56 @@
     "sector_pct": {
       "AKAM": {
         "etf": "XLK",
-        "pct": -0.5792,
-        "vs_spy": -1.1641,
+        "pct": -0.4957,
+        "vs_spy": -1.062,
         "bias": "WAIT"
       },
       "AMAT": {
         "etf": "SMH",
-        "pct": -0.0325,
-        "vs_spy": -0.6174,
+        "pct": 0.2391,
+        "vs_spy": -0.3273,
         "bias": "WAIT"
       },
       "CRDO": {
         "etf": "SMH",
-        "pct": -0.0325,
-        "vs_spy": -0.6174,
+        "pct": 0.2391,
+        "vs_spy": -0.3273,
         "bias": "WAIT"
       },
       "INTC": {
         "etf": "SMH",
-        "pct": -0.0325,
-        "vs_spy": -0.6174,
+        "pct": 0.2391,
+        "vs_spy": -0.3273,
         "bias": "WAIT"
       },
       "MRVL": {
         "etf": "SMH",
-        "pct": -0.0325,
-        "vs_spy": -0.6174,
+        "pct": 0.2391,
+        "vs_spy": -0.3273,
         "bias": "WAIT"
       },
       "MSFT": {
         "etf": "XLK",
-        "pct": -0.5792,
-        "vs_spy": -1.1641,
+        "pct": -0.4957,
+        "vs_spy": -1.062,
         "bias": "WAIT"
       },
       "ORCL": {
         "etf": "XLK",
-        "pct": -0.5792,
-        "vs_spy": -1.1641,
+        "pct": -0.4957,
+        "vs_spy": -1.062,
         "bias": "WAIT"
       },
       "QCOM": {
         "etf": "SMH",
-        "pct": -0.0325,
-        "vs_spy": -0.6174,
+        "pct": 0.2391,
+        "vs_spy": -0.3273,
         "bias": "WAIT"
       },
       "WTTR": {
         "etf": "XLE",
-        "pct": -2.8857,
-        "vs_spy": -3.4706,
+        "pct": -2.7286,
+        "vs_spy": -3.2949,
         "bias": "WAIT"
       }
     },
@@ -130,8 +130,8 @@
       "AMAT",
       "AVR",
       "CRDO",
+      "HELP",
       "INTC",
-      "LITE",
       "MRVL",
       "MSFT",
       "NWL",
@@ -164,7 +164,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 11419,
+    "count": 11449,
     "source": "SAME_IBKR_APP"
   }
 }
