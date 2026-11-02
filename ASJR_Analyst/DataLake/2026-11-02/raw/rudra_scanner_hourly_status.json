@@ -1,17 +1,17 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-02T17:52:15.813459+00:00",
+  "generated_at_utc": "2026-11-02T17:59:19.188573+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
+    "ATEC",
     "AVR",
     "CRDO",
     "INTC",
     "LITE",
     "MRVL",
     "MSFT",
-    "NWL",
     "NXT",
     "ORCL",
     "PGEN",
@@ -32,6 +32,10 @@
     "AMAT": {
       "state": "OK",
       "rows": 553
+    },
+    "ATEC": {
+      "state": "OK",
+      "rows": 508
     },
     "AVR": {
       "state": "OK",
@@ -56,10 +60,6 @@
     "MSFT": {
       "state": "OK",
       "rows": 553
-    },
-    "NWL": {
-      "state": "OK",
-      "rows": 453
     },
     "NXT": {
       "state": "OK",
@@ -106,17 +106,17 @@
       "rows": 430
     }
   },
-  "rows": 10552,
+  "rows": 10607,
   "usable_150bars": [
     "AKAM",
     "AMAT",
+    "ATEC",
     "AVR",
     "CRDO",
     "INTC",
     "LITE",
     "MRVL",
     "MSFT",
-    "NWL",
     "NXT",
     "ORCL",
     "PGEN",
