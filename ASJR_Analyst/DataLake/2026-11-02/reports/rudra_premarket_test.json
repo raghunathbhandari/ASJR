@@ -3,9 +3,9 @@
   "signal_quality": {
     "state": "NO_FRESH_COMPLETED_BAR",
     "count": 0,
-    "asof_utc": "2026-11-02T19:47:03.974094+00:00",
+    "asof_utc": "2026-11-02T19:53:38.028222+00:00",
     "latest_seen": 117,
-    "newest_bar_et": "2026-11-02T14:30:00-05:00",
+    "newest_bar_et": "2026-11-02T14:35:00-05:00",
     "latest_completed": 0,
     "rejected_stale_or_not_closed": 117,
     "latest_rvol_ready": 0,
@@ -17,23 +17,23 @@
   "mode": "EVALUATION_REPORT_ONLY",
   "history": {
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/state/rudra_premarket_rvol5.csv",
-    "ready5": 7499,
-    "stored_rows": 413124,
+    "ready5": 7508,
+    "stored_rows": 413376,
     "saved": true
   },
   "tickers": [
     {
       "ticker": "AAOI",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.248,
+      "rvol5": 1.2421,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "ABCL",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -42,43 +42,34 @@
     },
     {
       "ticker": "ABSI",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 0.9716,
-      "rvol5_ready": true,
-      "excluded_open": false,
-      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
-    },
-    {
-      "ticker": "AESI",
-      "bar_et": "2026-11-02 14:30:00-05:00",
-      "session": "RTH",
-      "rvol5": 1.0679,
+      "rvol5": 0.972,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "AKAM",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 0.9502,
+      "rvol5": 0.9468,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "ALAB",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 2.5765,
+      "rvol5": 2.5793,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "ALK",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -87,7 +78,7 @@
     },
     {
       "ticker": "ALKT",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -96,52 +87,52 @@
     },
     {
       "ticker": "AMAT",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.1315,
+      "rvol5": 1.131,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "APLD",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.0267,
+      "rvol5": 1.0316,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "ASTS",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 0.8719,
+      "rvol5": 0.8818,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "AVBP",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.2605,
+      "rvol5": 1.2669,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "AXTI",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.2118,
+      "rvol5": 1.2199,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "BAM",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -150,7 +141,7 @@
     },
     {
       "ticker": "BCAX",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -159,34 +150,34 @@
     },
     {
       "ticker": "BTDR",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.1887,
+      "rvol5": 1.1935,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "CAT",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.169,
+      "rvol5": 1.1614,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "CAVA",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.2833,
+      "rvol5": 1.2877,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "CBRE",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -195,34 +186,25 @@
     },
     {
       "ticker": "CBRS",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 0.9882,
+      "rvol5": 0.9845,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "CIEN",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.5163,
+      "rvol5": 1.5262,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "CPRI",
-      "bar_et": "2026-11-02 14:30:00-05:00",
-      "session": "RTH",
-      "rvol5": null,
-      "rvol5_ready": false,
-      "excluded_open": false,
-      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
-    },
-    {
-      "ticker": "CPRT",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -231,16 +213,16 @@
     },
     {
       "ticker": "CRDO",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 0.8963,
+      "rvol5": 0.9047,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "CRH",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -248,8 +230,17 @@
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
+      "ticker": "CRWV",
+      "bar_et": "2026-11-02 14:35:00-05:00",
+      "session": "RTH",
+      "rvol5": 0.7198,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
       "ticker": "CSGP",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -258,7 +249,7 @@
     },
     {
       "ticker": "CWK",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -267,7 +258,7 @@
     },
     {
       "ticker": "DFTX",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -276,16 +267,16 @@
     },
     {
       "ticker": "DNA",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.138,
+      "rvol5": 1.1358,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "EGY",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -294,7 +285,7 @@
     },
     {
       "ticker": "ENPH",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -303,7 +294,7 @@
     },
     {
       "ticker": "EVC",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -311,8 +302,17 @@
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
+      "ticker": "FLNC",
+      "bar_et": "2026-11-02 14:35:00-05:00",
+      "session": "RTH",
+      "rvol5": 2.4468,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
       "ticker": "FLO",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -321,7 +321,7 @@
     },
     {
       "ticker": "FLUT",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -329,62 +329,62 @@
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
-      "ticker": "FMC",
-      "bar_et": "2026-11-02 14:30:00-05:00",
-      "session": "RTH",
-      "rvol5": 0.5925,
-      "rvol5_ready": true,
-      "excluded_open": false,
-      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
-    },
-    {
       "ticker": "FROG",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.4493,
+      "rvol5": 1.4359,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "FSLR",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.5834,
+      "rvol5": 1.582,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "FSLY",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.2518,
+      "rvol5": 1.247,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
-      "ticker": "GLXY",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "ticker": "FTAI",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.1016,
+      "rvol5": null,
+      "rvol5_ready": false,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "GLXY",
+      "bar_et": "2026-11-02 14:35:00-05:00",
+      "session": "RTH",
+      "rvol5": 1.1071,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "HELP",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 2.6154,
+      "rvol5": 2.6291,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "HGV",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -393,16 +393,7 @@
     },
     {
       "ticker": "HLMN",
-      "bar_et": "2026-11-02 14:30:00-05:00",
-      "session": "RTH",
-      "rvol5": null,
-      "rvol5_ready": false,
-      "excluded_open": false,
-      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
-    },
-    {
-      "ticker": "HP",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -411,16 +402,16 @@
     },
     {
       "ticker": "HUT",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.3479,
+      "rvol5": 1.3519,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "HWM",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -429,7 +420,7 @@
     },
     {
       "ticker": "IMNM",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -438,16 +429,16 @@
     },
     {
       "ticker": "INTC",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.3964,
+      "rvol5": 1.3993,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "KMT",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -456,7 +447,7 @@
     },
     {
       "ticker": "KVYO",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -465,25 +456,25 @@
     },
     {
       "ticker": "LBRT",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 0.8858,
+      "rvol5": 0.9052,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "LITE",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 2.3588,
+      "rvol5": 2.3661,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "LKQ",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -492,25 +483,25 @@
     },
     {
       "ticker": "LRCX",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.2151,
+      "rvol5": 1.2598,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "MCHP",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 0.9665,
+      "rvol5": 0.9689,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "MHK",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -519,7 +510,7 @@
     },
     {
       "ticker": "MLYS",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -528,43 +519,52 @@
     },
     {
       "ticker": "MRVL",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 2.3493,
+      "rvol5": 2.3477,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "MSFT",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.2809,
+      "rvol5": 1.2917,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "MU",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.9925,
+      "rvol5": 1.9827,
+      "rvol5_ready": true,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "NEXT",
+      "bar_et": "2026-11-02 14:35:00-05:00",
+      "session": "RTH",
+      "rvol5": 0.7177,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "NN",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.27,
+      "rvol5": 1.2589,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "NOG",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -573,7 +573,7 @@
     },
     {
       "ticker": "NTRA",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -582,7 +582,7 @@
     },
     {
       "ticker": "NTSK",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -591,34 +591,34 @@
     },
     {
       "ticker": "NWL",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 3.184,
+      "rvol5": 3.1913,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "NXPI",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 0.6333,
+      "rvol5": 0.6355,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "NXT",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 2.1762,
+      "rvol5": 2.1539,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "OKTA",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -627,43 +627,43 @@
     },
     {
       "ticker": "ONDS",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 0.8321,
+      "rvol5": 0.8357,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "OPRX",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.7039,
+      "rvol5": 1.688,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "ORCL",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.6178,
+      "rvol5": 1.5558,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "P",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.1368,
+      "rvol5": 1.1496,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "PAY",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -672,7 +672,7 @@
     },
     {
       "ticker": "PENN",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -681,16 +681,16 @@
     },
     {
       "ticker": "PGEN",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 4.086,
+      "rvol5": 4.1434,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "PNR",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -699,7 +699,7 @@
     },
     {
       "ticker": "PTEN",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -708,97 +708,88 @@
     },
     {
       "ticker": "PURR",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 0.7654,
+      "rvol5": 0.7637,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "QCOM",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 0.8666,
+      "rvol5": 0.8704,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "QDEL",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.7896,
+      "rvol5": 1.7841,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "QMCO",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 0.5618,
+      "rvol5": 0.5743,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "QXO",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.3033,
+      "rvol5": 1.2978,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "REAL",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.0945,
+      "rvol5": 1.1076,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "REPL",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 2.0471,
+      "rvol5": 2.0008,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "RIG",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.0162,
-      "rvol5_ready": true,
-      "excluded_open": false,
-      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
-    },
-    {
-      "ticker": "RIOT",
-      "bar_et": "2026-11-02 14:30:00-05:00",
-      "session": "RTH",
-      "rvol5": 0.8689,
+      "rvol5": 1.0085,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "RIVN",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 2.1884,
+      "rvol5": 2.1663,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "RKT",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -807,25 +798,25 @@
     },
     {
       "ticker": "RPD",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 0.573,
+      "rvol5": 0.5808,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "RUN",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.8927,
+      "rvol5": 1.891,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "SARO",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -834,52 +825,43 @@
     },
     {
       "ticker": "SFM",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.0655,
+      "rvol5": 1.0724,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "SGML",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 16.3935,
-      "rvol5_ready": true,
-      "excluded_open": false,
-      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
-    },
-    {
-      "ticker": "SHAZ",
-      "bar_et": "2026-11-02 14:30:00-05:00",
-      "session": "RTH",
-      "rvol5": 0.6546,
+      "rvol5": 16.3169,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "SLS",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.8064,
+      "rvol5": 1.8335,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "SMCI",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.2753,
+      "rvol5": 1.2706,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "SMPL",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -888,7 +870,7 @@
     },
     {
       "ticker": "SRAD",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -897,7 +879,7 @@
     },
     {
       "ticker": "TALO",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -906,7 +888,7 @@
     },
     {
       "ticker": "TAP",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -915,25 +897,25 @@
     },
     {
       "ticker": "TEM",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 3.663,
+      "rvol5": 3.6134,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "TOST",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.1361,
+      "rvol5": 1.1392,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "TRLV",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -942,43 +924,43 @@
     },
     {
       "ticker": "TSLA",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.2174,
+      "rvol5": 1.2243,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "TWST",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.0504,
+      "rvol5": 1.052,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "TXG",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.0887,
+      "rvol5": 1.0927,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "ULCC",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.9686,
+      "rvol5": 1.9353,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "UPBD",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -987,16 +969,25 @@
     },
     {
       "ticker": "UPST",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 3.7977,
+      "rvol5": 3.8095,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "UPWK",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
+      "session": "RTH",
+      "rvol5": null,
+      "rvol5_ready": false,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "VAL",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -1005,7 +996,7 @@
     },
     {
       "ticker": "VET",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -1014,43 +1005,52 @@
     },
     {
       "ticker": "VG",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.3758,
+      "rvol5": 1.5688,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
-      "ticker": "VYX",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "ticker": "VVV",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.9062,
+      "rvol5": null,
+      "rvol5_ready": false,
+      "excluded_open": false,
+      "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
+    },
+    {
+      "ticker": "VYX",
+      "bar_et": "2026-11-02 14:35:00-05:00",
+      "session": "RTH",
+      "rvol5": 1.891,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "WDC",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 0.8865,
+      "rvol5": 0.9053,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "WING",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.585,
+      "rvol5": 1.5908,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "WSC",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
       "rvol5": null,
       "rvol5_ready": false,
@@ -1059,18 +1059,18 @@
     },
     {
       "ticker": "WTTR",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.1461,
+      "rvol5": 1.1271,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"
     },
     {
       "ticker": "Z",
-      "bar_et": "2026-11-02 14:30:00-05:00",
+      "bar_et": "2026-11-02 14:35:00-05:00",
       "session": "RTH",
-      "rvol5": 1.3888,
+      "rvol5": 1.3902,
       "rvol5_ready": true,
       "excluded_open": false,
       "signal": "SEE_SIGNAL_QUALITY_AND_EVENTS"

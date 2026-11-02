@@ -1,10 +1,11 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-02T19:40:21.084028+00:00",
+  "generated_at_utc": "2026-11-02T19:53:56.095751+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
+    "AVR",
     "CRDO",
     "INTC",
     "LITE",
@@ -18,7 +19,6 @@
     "RIVN",
     "SGML",
     "SMCI",
-    "TEM",
     "ULCC",
     "VG",
     "WDC",
@@ -32,6 +32,10 @@
     "AMAT": {
       "state": "OK",
       "rows": 555
+    },
+    "AVR": {
+      "state": "OK",
+      "rows": 467
     },
     "CRDO": {
       "state": "OK",
@@ -85,10 +89,6 @@
       "state": "OK",
       "rows": 555
     },
-    "TEM": {
-      "state": "OK",
-      "rows": 555
-    },
     "ULCC": {
       "state": "OK",
       "rows": 495
@@ -106,10 +106,11 @@
       "rows": 432
     }
   },
-  "rows": 10680,
+  "rows": 10592,
   "usable_150bars": [
     "AKAM",
     "AMAT",
+    "AVR",
     "CRDO",
     "INTC",
     "LITE",
@@ -123,7 +124,6 @@
     "RIVN",
     "SGML",
     "SMCI",
-    "TEM",
     "ULCC",
     "VG",
     "WDC",
