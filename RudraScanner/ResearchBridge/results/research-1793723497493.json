@@ -1,0 +1,10 @@
+{
+  "completed_utc": "2026-11-03T16:40:24.420701+00:00",
+  "exit_code": 1,
+  "id": "research-1793723497493",
+  "operation": "mnq_month_download",
+  "started_utc": "2026-11-03T16:40:23.676021+00:00",
+  "status": "FAILED",
+  "stderr_tail": "Error 200, reqId 3: No security definition has been found for the request, contract: Future(symbol='MNQ', lastTradeDateOrContractMonth='202512', exchange='CME', currency='USD')\nUnknown contract: Future(symbol='MNQ', lastTradeDateOrContractMonth='202512', exchange='CME', currency='USD')\nTraceback (most recent call last):\n  File \"/root/trading/ASJR/three_candle/ibkr_mnq_bridge_month_download.py\", line 126, in <module>\n    main()\n  File \"/root/trading/ASJR/three_candle/ibkr_mnq_bridge_month_download.py\", line 81, in main\n    raise RuntimeError(\"MNQ contract not uniquely qualified\")\nRuntimeError: MNQ contract not uniquely qualified\n",
+  "stdout_tail": ""
+}
