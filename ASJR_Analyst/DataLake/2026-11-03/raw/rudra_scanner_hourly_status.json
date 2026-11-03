@@ -1,12 +1,10 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-03T10:51:29.098932+00:00",
+  "generated_at_utc": "2026-11-03T11:03:47.643350+00:00",
   "selected_tickers": [
     "AAOI",
     "AAPL",
-    "AEHR",
-    "AG",
     "AKAM",
     "AMAT",
     "BE",
@@ -14,8 +12,10 @@
     "CRDO",
     "CRWV",
     "INTC",
+    "IREN",
+    "MRVL",
     "MSFT",
-    "MU",
+    "NBIS",
     "ORCL",
     "PLTR",
     "QCOM",
@@ -30,14 +30,6 @@
       "rows": 546
     },
     "AAPL": {
-      "state": "OK",
-      "rows": 546
-    },
-    "AEHR": {
-      "state": "OK",
-      "rows": 546
-    },
-    "AG": {
       "state": "OK",
       "rows": 546
     },
@@ -69,11 +61,19 @@
       "state": "OK",
       "rows": 546
     },
+    "IREN": {
+      "state": "OK",
+      "rows": 546
+    },
+    "MRVL": {
+      "state": "OK",
+      "rows": 546
+    },
     "MSFT": {
       "state": "OK",
       "rows": 546
     },
-    "MU": {
+    "NBIS": {
       "state": "OK",
       "rows": 546
     },
@@ -110,8 +110,6 @@
   "usable_150bars": [
     "AAOI",
     "AAPL",
-    "AEHR",
-    "AG",
     "AKAM",
     "AMAT",
     "BE",
@@ -119,8 +117,10 @@
     "CRDO",
     "CRWV",
     "INTC",
+    "IREN",
+    "MRVL",
     "MSFT",
-    "MU",
+    "NBIS",
     "ORCL",
     "PLTR",
     "QCOM",
