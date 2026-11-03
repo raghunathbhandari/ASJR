@@ -1,12 +1,12 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-03T12:23:06.692836+00:00",
+  "generated_at_utc": "2026-11-03T12:29:29.076667+00:00",
   "selected_tickers": [
+    "AAOI",
     "AAPL",
     "AKAM",
     "AMAT",
-    "AMD",
     "BE",
     "BLZE",
     "CRDO",
@@ -25,6 +25,10 @@
     "WTTR"
   ],
   "per_ticker": {
+    "AAOI": {
+      "state": "OK",
+      "rows": 548
+    },
     "AAPL": {
       "state": "OK",
       "rows": 548
@@ -34,10 +38,6 @@
       "rows": 541
     },
     "AMAT": {
-      "state": "OK",
-      "rows": 548
-    },
-    "AMD": {
       "state": "OK",
       "rows": 548
     },
@@ -108,10 +108,10 @@
   },
   "rows": 10711,
   "usable_150bars": [
+    "AAOI",
     "AAPL",
     "AKAM",
     "AMAT",
-    "AMD",
     "BE",
     "BLZE",
     "CRDO",

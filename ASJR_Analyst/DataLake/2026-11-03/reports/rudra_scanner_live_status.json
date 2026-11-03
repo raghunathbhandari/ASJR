@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 10356,
-    "completed_rows": 10356,
+    "input_rows": 10380,
+    "completed_rows": 10380,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 10356,
+    "no_wap_rows": 10380,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -61,8 +61,8 @@
   },
   "collection": {
     "requested": [
+      "AAOI",
       "AAPL",
-      "AMD",
       "SPY",
       "QQQ",
       "SMH",
@@ -70,10 +70,10 @@
       "XLK"
     ],
     "symbols": [
+      "AAOI",
       "AAPL",
       "AKAM",
       "AMAT",
-      "AMD",
       "BE",
       "BLZE",
       "CRDO",
@@ -108,7 +108,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 10356,
+    "count": 10380,
     "source": "SAME_IBKR_APP"
   }
 }
