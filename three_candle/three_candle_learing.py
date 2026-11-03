@@ -464,6 +464,8 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
                "pass_candidate": passed, "candidate_status": (
                    "PASS" if passed else "CORE_ONLY"),
                "V3withBodySize_pass": v3_with_body_size_pass(direction, c3),
+               "V3withBodySize_Wick4to10_pass":
+                   v3_with_body_size_wick4to10_pass(direction, c2, c3),
                "V3withBodySize_C3_body_pct": abs(c3.Close - c3.Open) * 100 / c3.Close}
         row.update(checks)
         row.update(v3_checks)
@@ -479,8 +481,10 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
     result.attrs["requested_start"] = str(datefrom)
     passed_count = int(result["all_filters_pass"].sum()) if not result.empty else 0
     body_count = int(result["V3withBodySize_pass"].sum()) if not result.empty else 0
+    wick_count = int(result["V3withBodySize_Wick4to10_pass"].sum()) if not result.empty else 0
     print(f"\nFound {len(result)} core Candidates; {passed_count} Pass Candidates (all 6 V3 filters).")
     print(f"V3withBodySize SELL C3 body 0.05%-<0.10%: {body_count} research candidates.")
+    print(f"V3withBodySize_Wick4to10 quality candidates: {wick_count}")
     print(f"Ambiguous confirmation/invalidation candles: {len(result.attrs['ambiguous'])}")
     print("\n========== PASSED CANDIDATES ==========")
     if passed_count == 0:
@@ -986,6 +990,21 @@ def v3_pass_checks(values):
     }
 
 
+def v3_with_body_size_wick4to10_pass(direction, c2, c3):
+    """Experimental variant: SELL + C3 body [0.05%,0.10%) + C2 wick/body [4,10).
+
+    Use unrounded OHLC for both thresholds. Zero-body C2 is excluded.
+    Existing V3 core, six-filter status and BodySize stay unchanged.
+    """
+    if not v3_with_body_size_pass(direction, c3):
+        return False
+    body2 = abs(c2.Close - c2.Open)
+    if body2 <= 0:
+        return False
+    upper_wick = c2.High - max(c2.Open, c2.Close)
+    return bool(4.0 <= upper_wick / body2 < 10.0)
+
+
 def v3_with_body_size_pass(direction, c3):
     """V3withBodySize: core candidate + SELL + C3 body [0.05%, 0.10%).
 
@@ -1083,6 +1102,8 @@ def build_signal_metrics(result):
                                    row["Direction"], row["Ticker"])
         records.append({"Candidate": number+1, "C3_time": t,
                         "V3withBodySize_pass": bool(row["V3withBodySize_pass"]),
+                        "V3withBodySize_Wick4to10_pass":
+                            bool(row["V3withBodySize_Wick4to10_pass"]),
                         "all_filters_pass": bool(row["all_filters_pass"]),
                         **{name: row[name] for name in (
                             "filter_3_location", "filter_4_v_shape",
