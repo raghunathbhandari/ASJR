@@ -1,11 +1,12 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-03T12:16:44.299663+00:00",
+  "generated_at_utc": "2026-11-03T12:23:06.692836+00:00",
   "selected_tickers": [
     "AAPL",
     "AKAM",
     "AMAT",
+    "AMD",
     "BE",
     "BLZE",
     "CRDO",
@@ -20,7 +21,6 @@
     "SHOP",
     "SMCI",
     "SNDK",
-    "UPST",
     "WDC",
     "WTTR"
   ],
@@ -34,6 +34,10 @@
       "rows": 541
     },
     "AMAT": {
+      "state": "OK",
+      "rows": 548
+    },
+    "AMD": {
       "state": "OK",
       "rows": 548
     },
@@ -93,10 +97,6 @@
       "state": "OK",
       "rows": 548
     },
-    "UPST": {
-      "state": "OK",
-      "rows": 548
-    },
     "WDC": {
       "state": "OK",
       "rows": 548
@@ -111,6 +111,7 @@
     "AAPL",
     "AKAM",
     "AMAT",
+    "AMD",
     "BE",
     "BLZE",
     "CRDO",
@@ -125,7 +126,6 @@
     "SHOP",
     "SMCI",
     "SNDK",
-    "UPST",
     "WDC",
     "WTTR"
   ]
