@@ -22,6 +22,11 @@ from three_candle_relax_mode_v1 import add_relax_flags, PROFILES
 
 DATA = Path(__file__).resolve().parent / "data"
 MONTHS = ["2026-09", "2026-10"]
+# PROVISIONAL MES research baseline, separate from the MNQ 30/60-point setup.
+# MES multiplier is $5 per S&P 500 index point.
+MES_STOP_POINTS = 3.0
+MES_TARGET_POINTS = 6.0
+MES_DOLLARS_PER_POINT = 5.0
 FILES = [DATA / f"MESZ2026_IBKR_5m_{month}.csv" for month in MONTHS]
 FILTERS = [
     "filter_3_location", "filter_4_v_shape", "filter_5_volume",
@@ -55,6 +60,10 @@ def audit():
 
 def examine(show):
     candles = load_learning_candles("MES=F", "2026-09-01", "2026-10-31")
+    print(f"MES RESEARCH RISK: SL {MES_STOP_POINTS:g} S&P points = "
+          f"$-{MES_STOP_POINTS * MES_DOLLARS_PER_POINT:.2f}; "
+          f"TP {MES_TARGET_POINTS:g} S&P points = "
+          f"+${MES_TARGET_POINTS * MES_DOLLARS_PER_POINT:.2f}; 2R")
     records = []
     for c1i, c2i, c3i, direction, wait in scan_core_candidates(candles):
         t1, t2, t3 = (candles.index[k] for k in (c1i, c2i, c3i))
