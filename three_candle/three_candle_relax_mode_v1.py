@@ -16,8 +16,18 @@ import csv
 from pathlib import Path
 
 VERSION = "ThreeCandle relax mode v1"
-RISK_PCT_NQ = 0.20
-TARGET_R = 3.0
+# MNQ 1-contract research risk configuration (2026-11-03).
+# Stop points are NOT an execution guarantee: live stop-market fills can slip.
+# 1 MNQ point = $2, hence risk = $20 and target = $40 before fees.
+STOP_POINTS_NQ = 10.0
+TARGET_POINTS_NQ = 20.0
+RISK_POINTS_NQ = STOP_POINTS_NQ
+TARGET_R = TARGET_POINTS_NQ / STOP_POINTS_NQ   # 2R
+MNQ_DOLLARS_PER_POINT = 2.0
+TRAIL_TO_BREAKEVEN_AT_POINTS = 10.0
+# Historical September-October backtest still available separately:
+LEGACY_BACKTEST_RISK_PCT_NQ = 0.20
+LEGACY_BACKTEST_TARGET_R = 3.0
 
 # Evaluate combinations independently. Never use F3–F8 as an AND gate.
 PROFILES = {
