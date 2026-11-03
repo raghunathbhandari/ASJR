@@ -150,3 +150,20 @@ The GitHub queue was actually verified from this ChatGPT session, without SSH: c
 ## 11. One-year MES/MNQ historical request (pending bridge extension)
 
 User reports MES and MNQ September/October 2026 5m data downloaded on VPS; the data's completeness has **not** yet been independently audited. Proposed one-year window is 2025-11-01 through 2026-10-31 (12 calendar months) and existing Sep/Oct files must not be overwritten. One must use the appropriate quarterly futures contract for each historical period with an explicit rollover policy, not December 2026 for all dates. Preserve raw contract identifiers, roll mapping and gap reports; do not fabricate continuous bars or mix contracts without labels. Existing stock-only `ibkr_range_download` must never be used for futures. Implement a separate reviewed, allowlisted, read-only futures operation and deploy worker code on VPS before queuing work. Break the request into bounded monthly jobs, report individual results, and limit pacing and Git output size. No futures year download was initiated by this document update.
+
+## 12. MES one-year bridge queue — 2026-11-03
+
+MES monthly downloader: `three_candle/ibkr_mes_bridge_month_download.py`; allowlisted worker operation: `mes_month_download`. Ten historical monthly requests for 2025-11 through 2026-08 were committed to GitHub; September and October 2026 existing MESZ2026 files are protected and not part of this queue. **Requests require one VPS fast-forward pull and worker restart to deploy the MES allowlist.** Per-month bridge results and CSV publication must be verified; queued is not complete.
+
+- 2025-11: `research-1793727140839`
+- 2025-12: `research-1793727142280`
+- 2026-01: `research-1793727143569`
+- 2026-02: `research-1793727144963`
+- 2026-03: `research-1793727146602`
+- 2026-04: `research-1793727148061`
+- 2026-05: `research-1793727149305`
+- 2026-06: `research-1793727150552`
+- 2026-07: `research-1793727151936`
+- 2026-08: `research-1793727153290`
+
+The implementation selects explicit quarterly contracts and uses `includeExpired=True`, `useRTH=False`, read-only IBKR port 4002. Roll-month contract selection is approximate; perform rollover-aware joining and volume/coverage validation before backtesting. No overwrite of historical MES files. Results publish to unique `three_candle/data/ibkr_futures_bridge/<job-id>/` folders through isolated temporary clones.
