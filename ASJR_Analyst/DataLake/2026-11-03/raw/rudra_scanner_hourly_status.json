@@ -1,21 +1,21 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-03T11:03:47.643350+00:00",
+  "generated_at_utc": "2026-11-03T11:10:08.632862+00:00",
   "selected_tickers": [
     "AAOI",
     "AAPL",
     "AKAM",
     "AMAT",
+    "AMD",
     "BE",
     "BLZE",
     "CRDO",
     "CRWV",
     "INTC",
-    "IREN",
     "MRVL",
     "MSFT",
-    "NBIS",
+    "MU",
     "ORCL",
     "PLTR",
     "QCOM",
@@ -41,6 +41,10 @@
       "state": "OK",
       "rows": 546
     },
+    "AMD": {
+      "state": "OK",
+      "rows": 546
+    },
     "BE": {
       "state": "OK",
       "rows": 546
@@ -61,10 +65,6 @@
       "state": "OK",
       "rows": 546
     },
-    "IREN": {
-      "state": "OK",
-      "rows": 546
-    },
     "MRVL": {
       "state": "OK",
       "rows": 546
@@ -73,7 +73,7 @@
       "state": "OK",
       "rows": 546
     },
-    "NBIS": {
+    "MU": {
       "state": "OK",
       "rows": 546
     },
@@ -112,15 +112,15 @@
     "AAPL",
     "AKAM",
     "AMAT",
+    "AMD",
     "BE",
     "BLZE",
     "CRDO",
     "CRWV",
     "INTC",
-    "IREN",
     "MRVL",
     "MSFT",
-    "NBIS",
+    "MU",
     "ORCL",
     "PLTR",
     "QCOM",
