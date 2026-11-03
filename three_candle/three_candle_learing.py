@@ -462,7 +462,9 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
                "C2_sweep_ticks": float(sweep_ticks),
                "core_match": True, "all_filters_pass": passed,
                "pass_candidate": passed, "candidate_status": (
-                   "PASS" if passed else "CORE_ONLY")}
+                   "PASS" if passed else "CORE_ONLY"),
+               "V3withBodySize_pass": v3_with_body_size_pass(direction, c3),
+               "V3withBodySize_C3_body_pct": abs(c3.Close - c3.Open) * 100 / c3.Close}
         row.update(checks)
         row.update(v3_checks)
         for label, stamp, candle in zip(("C1", "C2", "C3"), times, (c1, c2, c3)):
@@ -476,7 +478,9 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
     result.attrs["candles"] = data
     result.attrs["requested_start"] = str(datefrom)
     passed_count = int(result["all_filters_pass"].sum()) if not result.empty else 0
+    body_count = int(result["V3withBodySize_pass"].sum()) if not result.empty else 0
     print(f"\nFound {len(result)} core Candidates; {passed_count} Pass Candidates (all 6 V3 filters).")
+    print(f"V3withBodySize SELL C3 body 0.05%-<0.10%: {body_count} research candidates.")
     print(f"Ambiguous confirmation/invalidation candles: {len(result.attrs['ambiguous'])}")
     print("\n========== PASSED CANDIDATES ==========")
     if passed_count == 0:
@@ -982,6 +986,18 @@ def v3_pass_checks(values):
     }
 
 
+def v3_with_body_size_pass(direction, c3):
+    """V3withBodySize: core candidate + SELL + C3 body [0.05%, 0.10%).
+
+    Separate experimental variant; does not change original V3 six filters.
+    Uses unrounded 15m C3 OHLC values at confirmation time.
+    """
+    if c3.Close <= 0:
+        return False
+    body_pct = abs(c3.Close - c3.Open) * 100 / c3.Close
+    return bool(direction == "SELL" and 0.05 <= body_pct < 0.10)
+
+
 # 11. RESEARCH METRICS: observational values (NO signal filters)
 def build_signal_metrics(result):
     """One row per core candidate, computed using bars available through C3.
@@ -1066,6 +1082,7 @@ def build_signal_metrics(result):
         extra = v3_research_checks(history, row["C2_time"],
                                    row["Direction"], row["Ticker"])
         records.append({"Candidate": number+1, "C3_time": t,
+                        "V3withBodySize_pass": bool(row["V3withBodySize_pass"]),
                         "all_filters_pass": bool(row["all_filters_pass"]),
                         **{name: row[name] for name in (
                             "filter_3_location", "filter_4_v_shape",
