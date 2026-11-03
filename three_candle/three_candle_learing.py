@@ -23,6 +23,21 @@ MIN_C1_RANGE_PCT = 0.20   # C1 must have at least this high-low range (%)
 MIN_C2_RANGE_PCT = 0.25   # C2 must have at least this high-low range (%)
 PRINT_FILTER_DETAILS = True  # Print PASS/FAIL for each 3-candle window
 
+# V3 initial screening thresholds; research defaults, not yet optimized.
+# A Candidate is always a confirmed core pattern.
+# A Pass Candidate must meet ALL six #3-#8 conditions.
+V3_SR_MIN_ROOM_R = 1.0
+V3_V_MIN_RECOVERY_PCT = 0.0
+V3_RANGE_MIN_R = 1.0
+V3_C2_MIN_RVOL20 = 1.20
+V3_C3_MIN_VOLUME_RATIO = 1.00
+V3_ALLOWED_SESSIONS = {
+    "OVERNIGHT", "US_PREMARKET", "US_OPENING_HOUR", "US_RTH", "US_POSTMARKET"
+}  # All sessions initially eligible; tighten after a measured backtest.
+V3_MIN_WICK_BODY = 0.50
+V3_DAILY_MIN_ROOM_R = 1.0
+
+
 
 # 2. DOWNLOAD: Yahoo's native 15-minute OHLCV candles
 def Download_yfinalce(ticker, datetime, timeframe="15m"):
@@ -422,21 +437,22 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
             "sweep_at_least_1_tick": sweep_ticks >= 1 - 1e-7,
             "sweep_at_least_2_ticks": sweep_ticks >= 2 - 1e-7,
         }
-        # Descriptive 'pass' flag, NOT a gate for core candidates.
-        passed = all(checks[key] for key in (
-            "c1_range_pct", "c2_range_pct", "directional_wick_gt_body",
-            "directional_sweep", "c3_directional_strength"
-        )) and (not CHECK_VOLUME or checks["c3_volume_higher"])
+        # The core scanner is the ONLY source of Candidate detection.
+        # These six V3 checks determine Pass Candidate status.
+        history = data.iloc[:c3_i + 1]
+        observations = v3_research_checks(history, times[1], direction, tiker)
+        v3_checks = v3_pass_checks(observations)
+        passed = all(v3_checks.values())
         number = len(signals) + 1
         if PRINT_FILTER_DETAILS:
             print(f"\nCandidate {number} | {direction} | "
                   f"C3 {times[2]:%Y-%m-%d %H:%M %Z} | "
-                  f"CORE=True | Extra filters={passed} | "
+                  f"CORE=True | Pass Candidate={passed} | "
                   f"C3 wait={wait_bars} bar(s)")
+            for name, ok in v3_checks.items():
+                print(f"  {name} = {ok}")
             for name, ok in checks.items():
-                note = (" (optional OFF)" if name == "c3_volume_higher"
-                        and not CHECK_VOLUME else "")
-                print(f"  {name} = {ok}{note}")
+                print(f"  diagnostic_{name} = {ok} (not a V3 pass condition)")
 
         # BUY/SL columns are retained for notebook compatibility only.
         # They represent the C2 close/open study references, NOT filled orders.
@@ -444,8 +460,11 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
                "BUY": float(c2.Close), "SL": float(c2.Open),
                "C3_wait_bars": wait_bars,
                "C2_sweep_ticks": float(sweep_ticks),
-               "core_match": True, "all_filters_pass": passed}
+               "core_match": True, "all_filters_pass": passed,
+               "pass_candidate": passed, "candidate_status": (
+                   "PASS" if passed else "CORE_ONLY")}
         row.update(checks)
+        row.update(v3_checks)
         for label, stamp, candle in zip(("C1", "C2", "C3"), times, (c1, c2, c3)):
             row[f"{label}_time"] = stamp
             for field in ("Open", "High", "Low", "Close", "Volume"):
@@ -457,7 +476,7 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
     result.attrs["candles"] = data
     result.attrs["requested_start"] = str(datefrom)
     passed_count = int(result["all_filters_pass"].sum()) if not result.empty else 0
-    print(f"\nFound {len(result)} core candidates; {passed_count} meet descriptive checks.")
+    print(f"\nFound {len(result)} core Candidates; {passed_count} Pass Candidates (all 6 V3 filters).")
     print(f"Ambiguous confirmation/invalidation candles: {len(result.attrs['ambiguous'])}")
     print("\n========== PASSED CANDIDATES ==========")
     if passed_count == 0:
@@ -468,12 +487,10 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
                   f"C3 {row['C3_time']:%Y-%m-%d %H:%M %Z} | "
                   f"C2 close reference {row['BUY']:.2f} | "
                   f"C2 open reference {row['SL']:.2f}")
-            for name in ("c1_range_pct", "c2_range_pct",
-                         "c2_lower_wick_longer_than_body", "c2_sweeps_c1_low",
-                         "c3_confirms_buy", "c3_volume_higher"):
-                note = (" (optional OFF)" if name == "c3_volume_higher"
-                        and not CHECK_VOLUME else "")
-                print(f"  {name} = {bool(row[name])}{note}")
+            for name in ("filter_3_location", "filter_4_v_shape",
+                         "filter_5_volume", "filter_6_time",
+                         "filter_7_wick", "filter_8_daily_range"):
+                print(f"  {name} = {bool(row[name])}")
     return result
 
 
@@ -910,14 +927,67 @@ def v3_research_checks(history, c2_time, direction, ticker):
     values.update(time_filter(history.index[-1]))
     values.update(wick_filter(c2, direction))
     values.update(daily_range_filter(history, direction, entry, risk))
+    values["v3_risk_pct"] = 100 * risk / entry if entry and pd.notna(risk) else float("nan")
+    values["v3_c3_directional_strength"] = bool(
+        c3.Close > c3.Open and c3.Close > c2.Close if direction == "BUY"
+        else c3.Close < c3.Open and c3.Close < c2.Close)
     return values
+
+
+def v3_pass_checks(values):
+    """V3 #3-#8 pass flags. Missing values fail rather than auto-pass.
+
+    These thresholds are provisional; core candidate detection never changes.
+    """
+    import math
+
+    def enough(value, minimum):
+        try:
+            return math.isfinite(float(value)) and float(value) >= minimum
+        except (ValueError, TypeError):
+            return False
+
+    # #3: confirmed opposing support/resistance at least 1R away.
+    location_ok = enough(values["sr_room_R"], V3_SR_MIN_ROOM_R)
+
+    # #4: directional recovery + 10/20 historical price range sufficient.
+    # 20-bar range expressed as percent; C3-price risk is also percent.
+    needed_range_pct = values["v3_risk_pct"] * V3_RANGE_MIN_R
+    shape_ok = (bool(values["v_shape_observed"])
+                and enough(values["recovery_c2_c3_pct"], V3_V_MIN_RECOVERY_PCT)
+                and enough(values["range_20_pct"], needed_range_pct))
+
+    # #5: volume needs evidence at C2 or increasing confirmation at C3.
+    volume_ok = (enough(values["c2_rvol_20"], V3_C2_MIN_RVOL20)
+                 or enough(values["c3_c2_volume_ratio_v3"],
+                           V3_C3_MIN_VOLUME_RATIO))
+
+    # #6: time is configurable; all known sessions initially eligible.
+    time_ok = values["session_bucket"] in V3_ALLOWED_SESSIONS
+
+    # #7: long wick OR strong directional close/reclaim. No wick is allowed.
+    wick_ok = (enough(values["c2_rejection_wick_to_body"], V3_MIN_WICK_BODY)
+               or bool(values["v3_c3_directional_strength"]))
+
+    # #8: documented previous-session high/low should leave >=1R room.
+    daily_ok = enough(values["room_to_previous_day_level_R"],
+                      V3_DAILY_MIN_ROOM_R)
+    return {
+        "filter_3_location": bool(location_ok),
+        "filter_4_v_shape": bool(shape_ok),
+        "filter_5_volume": bool(volume_ok),
+        "filter_6_time": bool(time_ok),
+        "filter_7_wick": bool(wick_ok),
+        "filter_8_daily_range": bool(daily_ok),
+    }
 
 
 # 11. RESEARCH METRICS: observational values (NO signal filters)
 def build_signal_metrics(result):
     """One row per core candidate, computed using bars available through C3.
 
-    Research fields do not affect core_match or all_filters_pass.
+    Research fields do not affect core_match. V3 pass status is computed
+    separately from six #3-#8 checks at the C3 decision time.
     Indicator warm-up uses the earlier candles already saved in result.
     """
     if result is None or result.empty:
@@ -997,6 +1067,10 @@ def build_signal_metrics(result):
                                    row["Direction"], row["Ticker"])
         records.append({"Candidate": number+1, "C3_time": t,
                         "all_filters_pass": bool(row["all_filters_pass"]),
+                        **{name: row[name] for name in (
+                            "filter_3_location", "filter_4_v_shape",
+                            "filter_5_volume", "filter_6_time",
+                            "filter_7_wick", "filter_8_daily_range")},
                         **metrics, **extra})
     return pd.DataFrame(records)
 
