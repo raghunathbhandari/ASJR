@@ -1,10 +1,9 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-03T12:48:48.556906+00:00",
+  "generated_at_utc": "2026-11-03T12:55:14.561069+00:00",
   "selected_tickers": [
     "AAPL",
-    "AEHR",
     "AKAM",
     "AMAT",
     "BE",
@@ -15,6 +14,7 @@
     "FISV",
     "INTC",
     "MSFT",
+    "MU",
     "ORCL",
     "PLTR",
     "QCOM",
@@ -26,10 +26,6 @@
   ],
   "per_ticker": {
     "AAPL": {
-      "state": "OK",
-      "rows": 548
-    },
-    "AEHR": {
       "state": "OK",
       "rows": 548
     },
@@ -73,6 +69,10 @@
       "state": "OK",
       "rows": 548
     },
+    "MU": {
+      "state": "OK",
+      "rows": 548
+    },
     "ORCL": {
       "state": "OK",
       "rows": 548
@@ -109,7 +109,6 @@
   "rows": 10719,
   "usable_150bars": [
     "AAPL",
-    "AEHR",
     "AKAM",
     "AMAT",
     "BE",
@@ -120,6 +119,7 @@
     "FISV",
     "INTC",
     "MSFT",
+    "MU",
     "ORCL",
     "PLTR",
     "QCOM",
