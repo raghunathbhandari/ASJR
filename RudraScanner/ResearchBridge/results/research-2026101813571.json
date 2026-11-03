@@ -1,10 +1,10 @@
 {
-  "completed_utc": "2026-11-03T15:49:06.276849+00:00",
-  "exit_code": 0,
+  "completed_utc": "2026-11-03T15:50:22.639921+00:00",
+  "exit_code": 1,
   "id": "research-2026101813571",
   "operation": "gann_nq_20261016",
-  "started_utc": "2026-11-03T15:49:03.045660+00:00",
-  "status": "SUCCESS",
-  "stderr_tail": "",
-  "stdout_tail": "NQ IMPORT | SUCCESS | 203 candles | UNCHANGED | RudraScanner/ResearchData/Gann/NQ_2026-10-16_5m.csv\n"
+  "started_utc": "2026-11-03T15:50:11.817117+00:00",
+  "status": "FAILED",
+  "stderr_tail": "\n1 Failed download:\n['NQ=F']: TypeError(\"'NoneType' object is not subscriptable\")\n",
+  "stdout_tail": "NQ IMPORT | FAILED | Yahoo returned zero rows\n"
 }
