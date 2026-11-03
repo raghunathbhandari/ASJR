@@ -1,20 +1,38 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-03T07:09:59.857138+00:00",
+  "generated_at_utc": "2026-11-03T07:15:57.806936+00:00",
   "selected_tickers": [
+    "AAPL",
+    "AEHR",
     "AKAM",
     "AMAT",
+    "AXTI",
+    "BLZE",
     "CRDO",
+    "FISV",
+    "FLY",
     "INTC",
+    "MRVL",
     "MSFT",
+    "MSTR",
+    "NBIS",
     "ORCL",
+    "PLTR",
     "QCOM",
     "SMCI",
     "WDC",
     "WTTR"
   ],
   "per_ticker": {
+    "AAPL": {
+      "state": "OK",
+      "rows": 560
+    },
+    "AEHR": {
+      "state": "OK",
+      "rows": 560
+    },
     "AKAM": {
       "state": "OK",
       "rows": 553
@@ -23,7 +41,23 @@
       "state": "OK",
       "rows": 560
     },
+    "AXTI": {
+      "state": "OK",
+      "rows": 560
+    },
+    "BLZE": {
+      "state": "OK",
+      "rows": 522
+    },
     "CRDO": {
+      "state": "OK",
+      "rows": 560
+    },
+    "FISV": {
+      "state": "OK",
+      "rows": 548
+    },
+    "FLY": {
       "state": "OK",
       "rows": 560
     },
@@ -31,11 +65,27 @@
       "state": "OK",
       "rows": 560
     },
+    "MRVL": {
+      "state": "OK",
+      "rows": 560
+    },
     "MSFT": {
       "state": "OK",
       "rows": 560
     },
+    "MSTR": {
+      "state": "OK",
+      "rows": 560
+    },
+    "NBIS": {
+      "state": "OK",
+      "rows": 560
+    },
     "ORCL": {
+      "state": "OK",
+      "rows": 560
+    },
+    "PLTR": {
       "state": "OK",
       "rows": 560
     },
@@ -56,14 +106,24 @@
       "rows": 437
     }
   },
-  "rows": 5470,
+  "rows": 11020,
   "usable_150bars": [
+    "AAPL",
+    "AEHR",
     "AKAM",
     "AMAT",
+    "AXTI",
+    "BLZE",
     "CRDO",
+    "FISV",
+    "FLY",
     "INTC",
+    "MRVL",
     "MSFT",
+    "MSTR",
+    "NBIS",
     "ORCL",
+    "PLTR",
     "QCOM",
     "SMCI",
     "WDC",
