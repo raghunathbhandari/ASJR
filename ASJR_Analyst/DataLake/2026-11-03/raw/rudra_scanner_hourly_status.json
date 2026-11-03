@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-03T03:48:54.324706+00:00",
+  "generated_at_utc": "2026-11-03T04:01:01.746793+00:00",
   "selected_tickers": [
     "AAPL",
     "AEHR",
@@ -9,18 +9,18 @@
     "AMAT",
     "BE",
     "BLZE",
+    "COIN",
+    "CRCL",
     "CRDO",
     "FISV",
     "INTC",
-    "IONQ",
     "IREN",
-    "MRVL",
     "MSFT",
     "ORCL",
     "PLTR",
     "QCOM",
+    "QUBT",
     "SMCI",
-    "SNDK",
     "WDC",
     "WTTR"
   ],
@@ -49,6 +49,14 @@
       "state": "OK",
       "rows": 522
     },
+    "COIN": {
+      "state": "OK",
+      "rows": 560
+    },
+    "CRCL": {
+      "state": "OK",
+      "rows": 560
+    },
     "CRDO": {
       "state": "OK",
       "rows": 560
@@ -61,15 +69,7 @@
       "state": "OK",
       "rows": 560
     },
-    "IONQ": {
-      "state": "OK",
-      "rows": 560
-    },
     "IREN": {
-      "state": "OK",
-      "rows": 560
-    },
-    "MRVL": {
       "state": "OK",
       "rows": 560
     },
@@ -89,11 +89,11 @@
       "state": "OK",
       "rows": 560
     },
-    "SMCI": {
+    "QUBT": {
       "state": "OK",
       "rows": 560
     },
-    "SNDK": {
+    "SMCI": {
       "state": "OK",
       "rows": 560
     },
@@ -114,18 +114,18 @@
     "AMAT",
     "BE",
     "BLZE",
+    "COIN",
+    "CRCL",
     "CRDO",
     "FISV",
     "INTC",
-    "IONQ",
     "IREN",
-    "MRVL",
     "MSFT",
     "ORCL",
     "PLTR",
     "QCOM",
+    "QUBT",
     "SMCI",
-    "SNDK",
     "WDC",
     "WTTR"
   ]
