@@ -760,6 +760,159 @@ def plot_swing_levels(result, left=2, right=2):
     print(f"Swing S/R: {support_count} support and {resistance_count} resistance levels")
 
 
+
+# V3 POINTS 3-8: SIX INDEPENDENT RESEARCH METHODS.
+# They return measurements only; no threshold changes the core candidates.
+# All inputs end at the C3 bar. No future bar is used.
+
+
+def location_filter(history, direction, entry, risk_points):
+    """#3: Confirmed swing S/R and room toward the opposing level."""
+    # A 2-right-bar pivot becomes known only at pivot + 2.
+    levels = detect_swing_levels(history, left=2, right=2)
+    supports = [price for kind, pivot, known, price in levels
+                if kind == "SUPPORT" and known < len(history) and price <= entry]
+    resistances = [price for kind, pivot, known, price in levels
+                   if kind == "RESISTANCE" and known < len(history) and price >= entry]
+    support = max(supports) if supports else float("nan")
+    resistance = min(resistances) if resistances else float("nan")
+    opposing = resistance if direction == "BUY" else support
+    distance = ((opposing - entry) if direction == "BUY"
+                else (entry - opposing))
+    return {
+        "sr_support": support,
+        "sr_resistance": resistance,
+        "sr_room_points": distance,
+        "sr_room_R": distance / risk_points if risk_points > 0 else float("nan"),
+    }
+
+
+def market_shape_filter(history, c2_position, direction):
+    """#4: 10/20 bar ranges and slope into C2; an early V hypothesis."""
+    def span(n):
+        part = history.iloc[max(0, len(history) - n):]
+        if len(part) < n:
+            return float("nan")
+        return 100 * (part.High.max() - part.Low.min()) / part.Close.iloc[-1]
+
+    # Compare C2 with the close 10 bars before it: approach only, not future.
+    before = history.iloc[:c2_position + 1]
+    approach = before.iloc[-11:] if len(before) >= 11 else pd.DataFrame()
+    approach_pct = (100 * (approach.Close.iloc[-1] / approach.Close.iloc[0] - 1)
+                    if len(approach) == 11 else float("nan"))
+    c3 = history.iloc[-1]
+    c2 = history.iloc[c2_position]
+    recovery_pct = (100 * (c3.Close - c2.Close) / c2.Close
+                    if direction == "BUY" else
+                    100 * (c2.Close - c3.Close) / c2.Close)
+    v_shape = bool(pd.notna(approach_pct) and
+                   (approach_pct < 0 if direction == "BUY" else approach_pct > 0)
+                   and recovery_pct > 0)
+    return {
+        "range_10_pct": span(10), "range_20_pct": span(20),
+        "approach_10_pct": approach_pct,
+        "recovery_c2_c3_pct": recovery_pct,
+        "v_shape_observed": v_shape,
+    }
+
+
+def volume_filter(history, c2_position):
+    """#5: C2 volume against preceding 20 bars; C3/C2 participation."""
+    c2 = history.iloc[c2_position]
+    c3 = history.iloc[-1]
+    previous = history.Volume.iloc[max(0, c2_position - 20):c2_position]
+    avg = previous.mean() if len(previous) >= 20 else float("nan")
+    return {
+        "c2_rvol_20": c2.Volume / avg if pd.notna(avg) and avg > 0 else float("nan"),
+        "c3_c2_volume_ratio_v3": (c3.Volume / c2.Volume
+                                 if c2.Volume > 0 else float("nan")),
+        "c3_volume_increases": bool(c3.Volume > c2.Volume),
+    }
+
+
+def time_filter(c3_time):
+    """#6: Time-of-day in New York session; outputs stay UK-time elsewhere."""
+    et = c3_time.tz_convert("America/New_York")
+    mins = et.hour * 60 + et.minute
+    if 9 * 60 + 30 <= mins < 10 * 60 + 30:
+        label = "US_OPENING_HOUR"
+    elif 10 * 60 + 30 <= mins < 16 * 60:
+        label = "US_RTH"
+    elif 4 * 60 <= mins < 9 * 60 + 30:
+        label = "US_PREMARKET"
+    elif 16 * 60 <= mins < 18 * 60:
+        label = "US_POSTMARKET"
+    else:
+        label = "OVERNIGHT"
+    return {"session_bucket": label, "c3_hour_uk": c3_time.hour}
+
+
+def wick_filter(c2, direction):
+    """#7: C2 directional rejection wick; do not require a wick."""
+    body = abs(c2.Close - c2.Open)
+    wick = (min(c2.Open, c2.Close) - c2.Low if direction == "BUY"
+            else c2.High - max(c2.Open, c2.Close))
+    total = c2.High - c2.Low
+    return {
+        "c2_rejection_wick_points": wick,
+        "c2_rejection_wick_to_body": wick / body if body else float("nan"),
+        "c2_rejection_wick_fraction": wick / total if total else float("nan"),
+        "c2_no_rejection_wick": bool(wick == 0),
+    }
+
+
+def daily_range_filter(history, direction, entry, risk_points):
+    """#8: Current developing futures session and previous completed session."""
+    # Futures session rolls at 18:00 ET, including when UK DST differs.
+    et = history.index.tz_convert("America/New_York")
+    ids = pd.Series((et + pd.Timedelta(hours=6)).date, index=history.index)
+    today = ids.iloc[-1]
+    current = history.loc[ids == today]
+    prior_ids = ids[ids < today]
+    prior = (history.loc[ids == prior_ids.iloc[-1]]
+             if not prior_ids.empty else pd.DataFrame())
+    current_high, current_low = current.High.max(), current.Low.min()
+    width = current_high - current_low
+    prior_high = prior.High.max() if not prior.empty else float("nan")
+    prior_low = prior.Low.min() if not prior.empty else float("nan")
+    # "Room" to these levels is recorded only if they oppose direction.
+    target = (prior_high if direction == "BUY" else prior_low)
+    room = (target - entry if direction == "BUY" else entry - target)
+    if pd.notna(room) and room <= 0:
+        room = float("nan")  # prior-day level already passed: not overhead
+    return {
+        "day_high_so_far": current_high,
+        "day_low_so_far": current_low,
+        "day_range_pct": 100 * width / entry if entry else float("nan"),
+        "day_range_position_pct": 100 * (entry - current_low) / width
+                                  if width else float("nan"),
+        "previous_session_high": prior_high,
+        "previous_session_low": prior_low,
+        "room_to_previous_day_level_R": (
+            room / risk_points if risk_points > 0 else float("nan")),
+    }
+
+
+def v3_research_checks(history, c2_time, direction, ticker):
+    """Run #3-#8 once per core signal. No entry filters, ranking, or lookahead."""
+    if c2_time not in history.index:
+        raise ValueError("C2 missing from historical 15m bars")
+    c2_pos = int(history.index.get_loc(c2_time))
+    c2, c3 = history.iloc[c2_pos], history.iloc[-1]
+    # Assumed study reference for room only; actual fills may be different.
+    entry = float(c3.Close)
+    risk = (entry * 0.002 if ticker == "NQ=F" else
+            3.0 if ticker == "MES=F" else float("nan"))
+    values = {}
+    values.update(location_filter(history, direction, entry, risk))
+    values.update(market_shape_filter(history, c2_pos, direction))
+    values.update(volume_filter(history, c2_pos))
+    values.update(time_filter(history.index[-1]))
+    values.update(wick_filter(c2, direction))
+    values.update(daily_range_filter(history, direction, entry, risk))
+    return values
+
+
 # 11. RESEARCH METRICS: observational values (NO signal filters)
 def build_signal_metrics(result):
     """One row per core candidate, computed using bars available through C3.
@@ -838,8 +991,13 @@ def build_signal_metrics(result):
                 if row["Direction"] == "BUY"
                 else c3.Close < c3.Open and c3.Close < c2.Close),
         }
+        # C3-time slice ensures indicators/levels do not see future candles.
+        history = data.iloc[:i + 1]
+        extra = v3_research_checks(history, row["C2_time"],
+                                   row["Direction"], row["Ticker"])
         records.append({"Candidate": number+1, "C3_time": t,
-                        "all_filters_pass": bool(row["all_filters_pass"]), **metrics})
+                        "all_filters_pass": bool(row["all_filters_pass"]),
+                        **metrics, **extra})
     return pd.DataFrame(records)
 
 
