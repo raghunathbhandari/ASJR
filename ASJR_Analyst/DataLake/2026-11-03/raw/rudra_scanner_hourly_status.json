@@ -1,34 +1,30 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-03T06:37:42.432259+00:00",
+  "generated_at_utc": "2026-11-03T06:43:59.417844+00:00",
   "selected_tickers": [
-    "AAOI",
     "AAPL",
     "AEHR",
     "AG",
     "AKAM",
     "AMAT",
+    "BE",
     "BLZE",
     "CRDO",
     "FISV",
     "FLY",
     "INTC",
-    "IONQ",
     "IREN",
     "MSFT",
     "ORCL",
     "PLTR",
     "QCOM",
     "SMCI",
+    "SNDK",
     "WDC",
     "WTTR"
   ],
   "per_ticker": {
-    "AAOI": {
-      "state": "OK",
-      "rows": 560
-    },
     "AAPL": {
       "state": "OK",
       "rows": 560
@@ -49,6 +45,10 @@
       "state": "OK",
       "rows": 560
     },
+    "BE": {
+      "state": "OK",
+      "rows": 560
+    },
     "BLZE": {
       "state": "OK",
       "rows": 522
@@ -66,10 +66,6 @@
       "rows": 560
     },
     "INTC": {
-      "state": "OK",
-      "rows": 560
-    },
-    "IONQ": {
       "state": "OK",
       "rows": 560
     },
@@ -97,6 +93,10 @@
       "state": "OK",
       "rows": 560
     },
+    "SNDK": {
+      "state": "OK",
+      "rows": 560
+    },
     "WDC": {
       "state": "OK",
       "rows": 560
@@ -108,24 +108,24 @@
   },
   "rows": 11020,
   "usable_150bars": [
-    "AAOI",
     "AAPL",
     "AEHR",
     "AG",
     "AKAM",
     "AMAT",
+    "BE",
     "BLZE",
     "CRDO",
     "FISV",
     "FLY",
     "INTC",
-    "IONQ",
     "IREN",
     "MSFT",
     "ORCL",
     "PLTR",
     "QCOM",
     "SMCI",
+    "SNDK",
     "WDC",
     "WTTR"
   ]
