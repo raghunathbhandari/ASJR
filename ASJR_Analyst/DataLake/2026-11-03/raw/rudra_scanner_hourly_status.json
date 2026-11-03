@@ -1,28 +1,28 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-03T01:26:34.950674+00:00",
+  "generated_at_utc": "2026-11-03T01:32:51.495402+00:00",
   "selected_tickers": [
     "AAOI",
     "AAPL",
     "AEHR",
     "AKAM",
+    "ALAB",
     "AMAT",
     "BE",
     "BLZE",
-    "BMNR",
     "CRDO",
+    "FISV",
     "INTC",
     "IONQ",
-    "LITE",
-    "MRVL",
     "MSFT",
     "ORCL",
     "PLTR",
     "QCOM",
     "SMCI",
     "WDC",
-    "WTTR"
+    "WTTR",
+    "YUMC"
   ],
   "per_ticker": {
     "AAOI": {
@@ -41,6 +41,10 @@
       "state": "OK",
       "rows": 553
     },
+    "ALAB": {
+      "state": "OK",
+      "rows": 560
+    },
     "AMAT": {
       "state": "OK",
       "rows": 560
@@ -53,27 +57,19 @@
       "state": "OK",
       "rows": 522
     },
-    "BMNR": {
-      "state": "OK",
-      "rows": 560
-    },
     "CRDO": {
       "state": "OK",
       "rows": 560
+    },
+    "FISV": {
+      "state": "OK",
+      "rows": 548
     },
     "INTC": {
       "state": "OK",
       "rows": 560
     },
     "IONQ": {
-      "state": "OK",
-      "rows": 560
-    },
-    "LITE": {
-      "state": "OK",
-      "rows": 560
-    },
-    "MRVL": {
       "state": "OK",
       "rows": 560
     },
@@ -104,29 +100,33 @@
     "WTTR": {
       "state": "OK",
       "rows": 437
+    },
+    "YUMC": {
+      "state": "OK",
+      "rows": 518
     }
   },
-  "rows": 11032,
+  "rows": 10978,
   "usable_150bars": [
     "AAOI",
     "AAPL",
     "AEHR",
     "AKAM",
+    "ALAB",
     "AMAT",
     "BE",
     "BLZE",
-    "BMNR",
     "CRDO",
+    "FISV",
     "INTC",
     "IONQ",
-    "LITE",
-    "MRVL",
     "MSFT",
     "ORCL",
     "PLTR",
     "QCOM",
     "SMCI",
     "WDC",
-    "WTTR"
+    "WTTR",
+    "YUMC"
   ]
 }
