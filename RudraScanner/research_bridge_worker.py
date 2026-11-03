@@ -24,7 +24,7 @@ if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 REQ_DIR = "RudraScanner/ResearchBridge/requests"
 RESULT_DIR = "RudraScanner/ResearchBridge/results"
-JOB_TYPES = {"health_check", "research_46_batch", "research_46_finalize", "research_46_publish", "gann_nq_20261016", "gann_nq_october_2026", "three_candle_amd_probe", "three_candle_ibkr_one_candle", "ibkr_range_download", "yahoo_range_download", "mnq_month_download"}
+JOB_TYPES = {"health_check", "research_46_batch", "research_46_finalize", "research_46_publish", "gann_nq_20261016", "gann_nq_october_2026", "three_candle_amd_probe", "three_candle_ibkr_one_candle", "ibkr_range_download", "yahoo_range_download", "mnq_month_download", "mes_month_download"}
 MAX_JOBS_PER_TICK = 1
 
 def git(*args, cwd=REPO, timeout=90):
@@ -42,7 +42,7 @@ def safe_job(obj, file_id):
     operation = obj.get("operation")
     if operation not in JOB_TYPES:
         return False
-    if operation == "mnq_month_download":
+    if operation in {"mnq_month_download", "mes_month_download"}:
         if set(obj) != {"id", "operation", "batch", "schema_version", "month"}:
             return False
         if obj["batch"] is not None:
@@ -91,7 +91,11 @@ def run_job(obj):
     if operation == "health_check":
         return {"status": "SUCCESS", "python": sys.version.split()[0],
                 "repo_present": (REPO / "RudraScanner/scan_now.py").is_file()}
-    if operation == "mnq_month_download":
+    if operation == "mes_month_download":
+        cmd = [sys.executable, "three_candle/ibkr_mes_bridge_month_download.py",
+               "--job-id", obj["id"], "--month", obj["month"]]
+        timeout = 1500
+    elif operation == "mnq_month_download":
         cmd = [sys.executable, "three_candle/ibkr_mnq_bridge_month_download.py",
                "--job-id", obj["id"], "--month", obj["month"]]
         timeout = 1500
