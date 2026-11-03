@@ -1,18 +1,18 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-03T12:29:29.076667+00:00",
+  "generated_at_utc": "2026-11-03T12:35:55.489560+00:00",
   "selected_tickers": [
-    "AAOI",
     "AAPL",
+    "AEHR",
     "AKAM",
     "AMAT",
     "BE",
     "BLZE",
     "CRDO",
+    "DOCN",
     "DT",
     "INTC",
-    "LSCC",
     "MSFT",
     "MU",
     "ORCL",
@@ -25,11 +25,11 @@
     "WTTR"
   ],
   "per_ticker": {
-    "AAOI": {
+    "AAPL": {
       "state": "OK",
       "rows": 548
     },
-    "AAPL": {
+    "AEHR": {
       "state": "OK",
       "rows": 548
     },
@@ -53,6 +53,10 @@
       "state": "OK",
       "rows": 548
     },
+    "DOCN": {
+      "state": "OK",
+      "rows": 527
+    },
     "DT": {
       "state": "OK",
       "rows": 507
@@ -60,10 +64,6 @@
     "INTC": {
       "state": "OK",
       "rows": 548
-    },
-    "LSCC": {
-      "state": "OK",
-      "rows": 507
     },
     "MSFT": {
       "state": "OK",
@@ -106,18 +106,18 @@
       "rows": 426
     }
   },
-  "rows": 10711,
+  "rows": 10731,
   "usable_150bars": [
-    "AAOI",
     "AAPL",
+    "AEHR",
     "AKAM",
     "AMAT",
     "BE",
     "BLZE",
     "CRDO",
+    "DOCN",
     "DT",
     "INTC",
-    "LSCC",
     "MSFT",
     "MU",
     "ORCL",
