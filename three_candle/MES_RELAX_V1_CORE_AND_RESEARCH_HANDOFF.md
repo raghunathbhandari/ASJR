@@ -157,3 +157,38 @@ At 18:45 UK a wide-range candle swept the earlier 18:30 low of 7560.00, reaching
 - **No changes** to `three_candle/three_candle_learing.py` original core, `three_candle/test_three_candle.ipynb`, IBKR September/October source CSVs or historical master datasets.
 - This handoff is documentation only. Any proposed code should live in a separate versioned research module and be tested/diffed before merge.
 - VPS safe sync after GitHub commit: `git fetch origin && git merge --ff-only origin/main`. Never force-push or open a merge editor for normal synchronization.
+
+
+## 9. Structure-first code added 2026-11-03 (R&D; edit-friendly)
+
+New standalone source: [mes_relax_structure_first_v1.py](./mes_relax_structure_first_v1.py) (commit `fd699a7`). **Original V3 unchanged.**
+
+The detector evaluates **confirmed market structure first** (unique 2-left/2-right swing high/low; pivots only after their right-hand candles close), then prior confirmed price levels, then C1/C2 sweep candidates, and then **four independent checks**:
+
+1. `pass_wick2`: C2 directional rejection wick / max(real body, 0.25pt) >= **2.0**.
+2. `pass_sweep2`: C2 sweeps C1 high/low by >= **2.0 MES points**.
+3. `pass_c3_close`: C3 **closes** beyond C2 body in trade direction, and C3 candle itself closes in that direction.
+4. `pass_wick_congestion`: last **5 completed 15-minute candles**, including C3, must have **fewer than 2** candles with excessive wicks. Current implementation: **both** upper and lower shadows >= max(body, 0.25pt). Alternate `EXCESSIVE_WICK_MODE="either"` is exposed separately.
+
+All parameters are grouped at the very top of the Python file, with comments for manual edits. BUY and SELL hypotheses are evaluated in parallel; confirmed HH+HL or LH+LL classification is a gating check by default, and ranging/unknown => WAIT. A prior swing-level touch is recorded; hard level gating is off initially because the interpretation needs calibration. C1/C2 are deliberately consecutive; C3 may arrive within 3 bars. This is a **new candidate universe**, not the original 593-signal persistent-C1 scanner. No signal outcome should be compared as if these universes were identical.
+
+The revised code is a **research scanner**, not an execution or 5m replay backtester. It retains WAIT rows via `--all` and can export CSV. It does **not** automatically classify strong-body displacement continuation (a separate future research path). It is not connected to a live trading bot and sends no orders.
+
+### Commands after safe VPS sync
+
+```bash
+cd /root/trading/ASJR
+git fetch origin
+git merge --ff-only origin/main
+python3 -m py_compile three_candle/mes_relax_structure_first_v1.py
+
+# View every candidate and rejection reason (including WAIT)
+python3 three_candle/mes_relax_structure_first_v1.py --date 2026-10-29 --all
+python3 three_candle/mes_relax_structure_first_v1.py --date 2026-10-30 --all
+
+# Show only passing candidates; optional CSV, never overwrite source masters
+python3 three_candle/mes_relax_structure_first_v1.py --date 2026-10-30 \
+  --output three_candle/results/MES_structure_first_2026-10-30_research.csv
+```
+
+**Validation status:** GitHub source commit completed; executable compilation and full 5m outcome backtest are still to be run on a Python environment holding the IBKR CSVs. Do not claim an improved win rate from code creation alone.
