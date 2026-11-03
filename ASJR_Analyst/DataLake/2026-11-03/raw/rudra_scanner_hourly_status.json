@@ -1,12 +1,13 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-03T04:13:31.825626+00:00",
+  "generated_at_utc": "2026-11-03T04:19:47.770126+00:00",
   "selected_tickers": [
     "AAPL",
     "AEHR",
     "AKAM",
     "AMAT",
+    "AMD",
     "BE",
     "BLZE",
     "COIN",
@@ -19,7 +20,6 @@
     "ORCL",
     "PLTR",
     "QCOM",
-    "QUBT",
     "SMCI",
     "WDC",
     "WTTR"
@@ -38,6 +38,10 @@
       "rows": 553
     },
     "AMAT": {
+      "state": "OK",
+      "rows": 560
+    },
+    "AMD": {
       "state": "OK",
       "rows": 560
     },
@@ -89,10 +93,6 @@
       "state": "OK",
       "rows": 560
     },
-    "QUBT": {
-      "state": "OK",
-      "rows": 560
-    },
     "SMCI": {
       "state": "OK",
       "rows": 560
@@ -112,6 +112,7 @@
     "AEHR",
     "AKAM",
     "AMAT",
+    "AMD",
     "BE",
     "BLZE",
     "COIN",
@@ -124,7 +125,6 @@
     "ORCL",
     "PLTR",
     "QCOM",
-    "QUBT",
     "SMCI",
     "WDC",
     "WTTR"
