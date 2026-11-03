@@ -1,9 +1,10 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-03T12:55:14.561069+00:00",
+  "generated_at_utc": "2026-11-03T13:01:41.604752+00:00",
   "selected_tickers": [
     "AAPL",
+    "AEHR",
     "AKAM",
     "AMAT",
     "BE",
@@ -20,12 +21,15 @@
     "QCOM",
     "SHOP",
     "SMCI",
-    "UPST",
     "WDC",
     "WTTR"
   ],
   "per_ticker": {
     "AAPL": {
+      "state": "OK",
+      "rows": 548
+    },
+    "AEHR": {
       "state": "OK",
       "rows": 548
     },
@@ -93,10 +97,6 @@
       "state": "OK",
       "rows": 548
     },
-    "UPST": {
-      "state": "OK",
-      "rows": 548
-    },
     "WDC": {
       "state": "OK",
       "rows": 548
@@ -109,6 +109,7 @@
   "rows": 10719,
   "usable_150bars": [
     "AAPL",
+    "AEHR",
     "AKAM",
     "AMAT",
     "BE",
@@ -125,7 +126,6 @@
     "QCOM",
     "SHOP",
     "SMCI",
-    "UPST",
     "WDC",
     "WTTR"
   ]
