@@ -24,7 +24,7 @@ if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 REQ_DIR = "RudraScanner/ResearchBridge/requests"
 RESULT_DIR = "RudraScanner/ResearchBridge/results"
-JOB_TYPES = {"health_check", "research_46_batch", "research_46_finalize", "research_46_publish", "gann_nq_20261016", "gann_nq_october_2026", "three_candle_amd_probe", "three_candle_ibkr_one_candle", "ibkr_range_download", "yahoo_range_download"}
+JOB_TYPES = {"health_check", "research_46_batch", "research_46_finalize", "research_46_publish", "gann_nq_20261016", "gann_nq_october_2026", "three_candle_amd_probe", "three_candle_ibkr_one_candle", "ibkr_range_download", "yahoo_range_download", "mnq_month_download"}
 MAX_JOBS_PER_TICK = 1
 
 def git(*args, cwd=REPO, timeout=90):
@@ -42,6 +42,14 @@ def safe_job(obj, file_id):
     operation = obj.get("operation")
     if operation not in JOB_TYPES:
         return False
+    if operation == "mnq_month_download":
+        if set(obj) != {"id", "operation", "batch", "schema_version", "month"}:
+            return False
+        if obj["batch"] is not None:
+            return False
+        return isinstance(obj["month"], str) and obj["month"] in {
+            "2025-11", "2025-12", "2026-01", "2026-02", "2026-03",
+            "2026-04", "2026-05", "2026-06", "2026-07", "2026-08"}
     if operation in {"ibkr_range_download", "yahoo_range_download"}:
         if set(obj) != {"id", "operation", "batch", "schema_version",
                         "ticker", "start_date", "end_date", "timeframe"}:
@@ -83,7 +91,11 @@ def run_job(obj):
     if operation == "health_check":
         return {"status": "SUCCESS", "python": sys.version.split()[0],
                 "repo_present": (REPO / "RudraScanner/scan_now.py").is_file()}
-    if operation == "yahoo_range_download":
+    if operation == "mnq_month_download":
+        cmd = [sys.executable, "three_candle/ibkr_mnq_bridge_month_download.py",
+               "--job-id", obj["id"], "--month", obj["month"]]
+        timeout = 1500
+    elif operation == "yahoo_range_download":
         cmd = [sys.executable, "three_candle/yahoo_bridge_range_download.py",
                "--job-id", obj["id"], "--ticker", obj["ticker"],
                "--start", obj["start_date"], "--end", obj["end_date"],
