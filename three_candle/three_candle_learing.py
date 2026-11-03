@@ -1,4 +1,4 @@
-"""Rudra Three-Candle LEARNING file (15-minute charts only).
+"""Rudra ThreeCandl-V3 LEARNING file (15-minute charts only).
 
 This is an NQ=F extended-futures teaching scanner: it prints C1/C2/C3\nand draws each matching setup.
 It does NOT place trades, calculate P&L, or simulate stops.
