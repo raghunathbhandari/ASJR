@@ -2,12 +2,12 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 14232,
-    "completed_rows": 14232,
+    "input_rows": 8500,
+    "completed_rows": 8500,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
-    "tickers": 25,
+    "tickers": 15,
     "min_periods": 9,
     "session_reset": false,
     "extended_hours_included": true,
@@ -16,17 +16,17 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 14232,
+    "no_wap_rows": 8500,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
   "detector_status": {
     "state": "OK",
-    "tickers": 20,
+    "tickers": 10,
     "emitted": 0,
     "blocked_context": 0,
     "blocked_data": 0,
-    "blocked_session": 20,
+    "blocked_session": 10,
     "mode": "RESEARCH_ONLY"
   },
   "events": [],
@@ -51,7 +51,6 @@
       "CRDO": "SMH",
       "INTC": "SMH",
       "MSFT": "XLK",
-      "MU": "SMH",
       "ORCL": "XLK",
       "QCOM": "SMH",
       "WTTR": "XLE"
@@ -61,12 +60,6 @@
   },
   "collection": {
     "requested": [
-      "AAPL",
-      "AMD",
-      "BE",
-      "CRCL",
-      "FISV",
-      "MSTR",
       "SPY",
       "QQQ",
       "SMH",
@@ -74,22 +67,12 @@
       "XLK"
     ],
     "symbols": [
-      "AAPL",
-      "AEHR",
       "AKAM",
       "AMAT",
-      "AMD",
-      "BE",
-      "BLZE",
-      "CRCL",
       "CRDO",
-      "FISV",
       "INTC",
       "MSFT",
-      "MSTR",
-      "MU",
       "ORCL",
-      "PLTR",
       "QCOM",
       "SMCI",
       "WDC",
@@ -106,13 +89,12 @@
       "CRDO": "SMH",
       "INTC": "SMH",
       "MSFT": "XLK",
-      "MU": "SMH",
       "ORCL": "XLK",
       "QCOM": "SMH",
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 14232,
+    "count": 8500,
     "source": "SAME_IBKR_APP"
   }
 }
