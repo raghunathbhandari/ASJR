@@ -76,7 +76,7 @@ def main():
         ib.connect("127.0.0.1", 4002, clientId=891, timeout=20, readonly=True)
         matches = ib.qualifyContracts(Future(symbol="MNQ",
                            lastTradeDateOrContractMonth=expiry,
-                           exchange="CME", currency="USD"))
+                           exchange="CME", currency="USD", includeExpired=True))
         if len(matches) != 1:
             raise RuntimeError("MNQ contract not uniquely qualified")
         contract = matches[0]
