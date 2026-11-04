@@ -34,7 +34,7 @@ from pathlib import Path
 import mes_relax_structure_first_v1 as base
 
 # ===== EASY-TO-EDIT SETTINGS ===============================================
-DETAIL_DIAGNOSIS = True             # True=ON: all checks/metrics; False=OFF: compact output
+DETAIL_DIAGNOSIS = True             # True: full diagnosis for single-day only; False: always compact
 LOOK_AHEAD_C3_BARS = 3             # Max C3 delay; C3 must CLOSE directionally
 MIN_SWEEP_POINTS = 2.0             # Filter 1: sufficient liquidity sweep
 MIN_C2_REJECTION_WICK_X = 2.0      # Filter 2: directional C2 wick/body ratio
@@ -743,7 +743,7 @@ class MESLearningResults(list):
 # HUMAN-READABLE OUTPUT — all 9 named stages, all available indicator values.
 # Future research metrics may be added without changing the public API.
 # ========================================================================
-def print_signal_details(rows):
+def print_signal_details(rows, detailed=False):
     """Print the FULL nine-stage audit for EACH candidate, including GOOD.
 
     The goal is visual research: understand every observed value, which
@@ -781,7 +781,7 @@ def print_signal_details(rows):
         # One user-controlled switch determines the level of printed detail.
         # OFF: retain useful core outcome, key metrics and liquidity levels.
         # ON: include every stage, check, indicator and stored data field.
-        if not DETAIL_DIAGNOSIS:
+        if not detailed:
             print(f"  Direction context: {row['market_structure']} | "
                   f"Sweep {row['sweep_points']:.2f} pts | "
                   f"C2 rejection wick {row['c2_wick_body']:.2f}x")
@@ -899,7 +899,11 @@ def three_candle_signal(tiker, datefrom, dateTo):
     good = sum(x["decision"] == "GOOD" for x in result)
     print(f"MES | {begin} to {finish} | CORE-TRUE {len(result)} | "
           f"GOOD {good} | WAIT {len(result)-good}")
-    print_signal_details(result)
+    # Multi-day research stays concise; a single-day review shows every check.
+    detailed = DETAIL_DIAGNOSIS and begin == finish
+    print(f"Print mode: {'DETAILED' if detailed else 'COMPACT'} "
+          f"| DETAIL_DIAGNOSIS={DETAIL_DIAGNOSIS} | days={1 if begin == finish else 'multiple'}")
+    print_signal_details(result, detailed=detailed)
     return result
 
 
