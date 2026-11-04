@@ -27,6 +27,7 @@ function so future edits don't mix candle detection with market analysis.
 """
 import argparse
 import csv
+import math
 from datetime import timedelta
 from pathlib import Path
 
@@ -55,6 +56,179 @@ CANDLE_LOOKFORWARD = 7
 PLOT_COLUMNS = 2
 # ============================================================================
 ROOT = Path(__file__).resolve().parent
+
+
+
+
+# ========================================================================
+# INDICATOR HISTORY / WARM-UP: calculation always uses ALL loaded CSV bars.
+# Keep September candles before October plots, never start EMAs at chart day.
+# Return None until a full EMA20/EMA200 seed window is available.
+# ========================================================================
+_INDICATORS = None
+
+
+def calculate_indicators(bars):
+    """Calculate display-only historical indicators once per full CSV series.
+
+    EMA is seeded by the SMA of its FIRST 20/200 observed 15-minute closes.
+    This is a warm-up-aware alternative to treating the first visible close
+    as a valid EMA200. Indicators use bars available through each index ONLY.
+    None indicates missing history. No indicator changes the entry filters.
+    """
+    def ema(values, period):
+        output = [None] * len(values)
+        if len(values) < period:
+            return output
+        average = sum(values[:period]) / period
+        output[period - 1] = average
+        alpha = 2.0 / (period + 1.0)
+        for i in range(period, len(values)):
+            average = alpha * values[i] + (1.0 - alpha) * average
+            output[i] = average
+        return output
+
+    closes = [b.c for b in bars]
+    ema20 = ema(closes, 20)
+    ema200 = ema(closes, 200)
+    output = {
+        "ema20": ema20, "ema200": ema200,
+        "rsi14": [None] * len(bars), "atr14": [None] * len(bars),
+        "bb20_width_pct": [None] * len(bars),
+        "vwap": [None] * len(bars),
+    }
+
+    # Wilder RSI14 and ATR14, without future bars.
+    avg_gain = avg_loss = avg_true = None
+    gains, losses, true_ranges = [], [], []
+    for i, b in enumerate(bars):
+        previous_close = bars[i - 1].c if i else b.c
+        delta = b.c - previous_close
+        gains.append(max(delta, 0.0))
+        losses.append(max(-delta, 0.0))
+        true_ranges.append(max(b.h - b.l, abs(b.h - previous_close),
+                               abs(b.l - previous_close)))
+        if i == 14:
+            avg_gain = sum(gains[1:15]) / 14.0
+            avg_loss = sum(losses[1:15]) / 14.0
+        elif i > 14:
+            avg_gain = (avg_gain * 13.0 + gains[i]) / 14.0
+            avg_loss = (avg_loss * 13.0 + losses[i]) / 14.0
+        if i == 13:
+            avg_true = sum(true_ranges[:14]) / 14.0
+        elif i > 13:
+            avg_true = (avg_true * 13.0 + true_ranges[i]) / 14.0
+        if avg_true is not None:
+            output["atr14"][i] = avg_true
+        if avg_gain is not None:
+            total = avg_gain + avg_loss
+            output["rsi14"][i] = 100.0 * avg_gain / total if total else 50.0
+
+        if i >= 19:
+            last = closes[i-19:i+1]
+            centre = sum(last) / 20.0
+            variance = sum((price-centre)**2 for price in last) / 20.0
+            output["bb20_width_pct"][i] = (
+                400.0 * math.sqrt(variance) / centre if centre else None)
+
+    # Session VWAP rolls at 18:00 New York, even when UK/US DST differs.
+    from datetime import timedelta as _delta
+    from zoneinfo import ZoneInfo
+    eastern = ZoneInfo("America/New_York")
+    session = None
+    vol_sum = price_vol_sum = 0.0
+    for i, b in enumerate(bars):
+        sid = (b.ts.astimezone(eastern) + _delta(hours=6)).date()
+        if sid != session:
+            session, vol_sum, price_vol_sum = sid, 0.0, 0.0
+        typical_price = (b.h + b.l + b.c) / 3.0
+        vol_sum += b.v
+        price_vol_sum += typical_price * b.v
+        output["vwap"][i] = price_vol_sum / vol_sum if vol_sum else None
+    return output
+
+
+def indicator_at(key, i):
+    """Return precomputed indicator or None when its warm-up is incomplete."""
+    return _INDICATORS[key][i] if _INDICATORS is not None else None
+
+
+def indicator_metrics(bars, c1_i, c2_i, c3_i, side):
+    """Bring the original learning diagnostics back, as READ-ONLY metrics."""
+    c1, c2, c3 = bars[c1_i], bars[c2_i], bars[c3_i]
+    close = c3.c
+    ema20 = indicator_at("ema20", c3_i)
+    ema200 = indicator_at("ema200", c3_i)
+    old_ema20 = indicator_at("ema20", c3_i-3) if c3_i>=3 else None
+    vwap = indicator_at("vwap", c3_i)
+    atr14 = indicator_at("atr14", c3_i)
+    def pct(numerator, denominator):
+        return round(100.0*numerator/denominator, 4) if denominator else None
+    def range_pct(c):
+        return pct(c.h-c.l, c.c)
+    c2_body = abs(c2.c-c2.o)
+    c3_body = abs(c3.c-c3.o)
+    _, up2, down2 = base.wick_sizes(c2)
+    _, up3, down3 = base.wick_sizes(c3)
+    recent10 = bars[c3_i-9:c3_i+1] if c3_i>=9 else []
+    recent20 = bars[c3_i-19:c3_i+1] if c3_i>=19 else []
+    approach = bars[c2_i-10:c2_i+1] if c2_i>=10 else []
+    before20 = bars[c3_i-20:c3_i] if c3_i>=20 else []
+    approach_pct = (pct(approach[-1].c-approach[0].c, approach[0].c)
+                    if len(approach)==11 else None)
+    recovery = (c3.c-c2.c if side=="BUY" else c2.c-c3.c)
+    prior_high = max((b.h for b in before20),default=None)
+    prior_low = min((b.l for b in before20),default=None)
+
+    # All C1/C2/C3 OHLC and volume were printed by the first learning study.
+    metrics = {}
+    for name, candle in (("C1",c1),("C2",c2),("C3",c3)):
+        for field, value in (("open",candle.o),("high",candle.h),
+                             ("low",candle.l),("close",candle.c),
+                             ("volume",candle.v)):
+            metrics[f"{name}_{field}"] = value
+    metrics.update({
+        "C1_range_pct":range_pct(c1),
+        "C2_range_pct":range_pct(c2),
+        "C3_range_pct":range_pct(c3),
+        "C2_body_pct":pct(c2_body,c2.c),
+        "C3_body_pct":pct(c3_body,c3.c),
+        "C2_upper_wick_pct":pct(up2,c2.c),
+        "C2_lower_wick_pct":pct(down2,c2.c),
+        "C3_upper_wick_pct":pct(up3,c3.c),
+        "C3_lower_wick_pct":pct(down3,c3.c),
+        "C2_lower_wick_body":down2/c2_body if c2_body else None,
+        "C3_total_wick_body":(up3+down3)/c3_body if c3_body else None,
+        "C3_C2_volume_ratio":c3.v/c2.v if c2.v else None,
+        "C3_volume_increases":c3.v>c2.v,
+        "C2_sweep_ticks":(c1.l-c2.l if side=="BUY" else c2.h-c1.h)/0.25,
+        "EMA20":ema20, "EMA200":ema200,
+        "EMA20_distance_pct":pct(close-ema20,ema20) if ema20 else None,
+        "EMA200_distance_pct":pct(close-ema200,ema200) if ema200 else None,
+        "EMA20_slope_3bar_pct":(pct(ema20-old_ema20,old_ema20)
+                                  if ema20 and old_ema20 else None),
+        "RSI14":indicator_at("rsi14",c3_i),
+        "ATR14":atr14,
+        "ATR14_pct":pct(atr14,close) if atr14 is not None else None,
+        "BB20_width_pct":indicator_at("bb20_width_pct",c3_i),
+        "VWAP":vwap,
+        "VWAP_distance_pct":pct(close-vwap,vwap) if vwap else None,
+        "range_10_pct":(pct(max(b.h for b in recent10)-min(b.l for b in recent10),close)
+                         if recent10 else None),
+        "range_20_pct":(pct(max(b.h for b in recent20)-min(b.l for b in recent20),close)
+                         if recent20 else None),
+        "approach_10_pct":approach_pct,
+        "recovery_c2_c3_pct":pct(recovery,c2.c),
+        "v_shape_observed":(approach_pct is not None
+                            and (approach_pct<0 if side=="BUY" else approach_pct>0)
+                            and recovery>0),
+        "prior20_high":prior_high, "prior20_low":prior_low,
+        "Prior20_low_sweep_pct":(pct(prior_low-c3.l,close)
+                                  if prior_low is not None and c3.l<prior_low else 0.0),
+        "Prior20_high_distance_pct":(pct(close-prior_high,prior_high)
+                                  if prior_high is not None else None),
+    })
+    return metrics
 
 
 def candle_detect_core(bars, c1_i, c2_i, c3_i, side):
@@ -230,7 +404,8 @@ def evaluate_pipeline(bars,c1_i,c2_i,c3_i,core):
         "liquidity":liquidity["liquidity_area_ok"] if REQUIRE_LIQUIDITY_AREA else True,
     }
     failures=[k for k,passed in checks.items() if not passed]
-    return {**core,**metrics,
+    indicators = indicator_metrics(bars,c1_i,c2_i,c3_i,side)
+    return {**core,**metrics,**indicators,
             "market_structure":structure["market_structure"],
             "sr_reference":sr["sr_reference"],"sr_lines":str(sr["sr_lines"]),
             **volume,**wicks,**day,**htf,**liquidity,
@@ -247,6 +422,8 @@ def scan(bars):
     sweep and direction. BUY/SELL states are independent. Missing 15m bars
     break the candidate. Unconfirmed patterns are NOT plotted as candidates.
     """
+    global _INDICATORS
+    _INDICATORS = calculate_indicators(bars)  # Full CSV warm-up, once per scan
     result=[]
     for c2_i in range(1,len(bars)-1):
         c1_i=c2_i-1
@@ -317,6 +494,23 @@ def _swing_lines_on_chart(ax, bars, end_index, chart_start, chart_end):
                       color=colour, linewidth=1.0, alpha=0.7)
 
 
+
+def _plot_ema_lines(ax, bars, start, end):
+    """Overlay EMA20 (gold) and EMA200 (violet) from FULL historical CSV.
+
+    Values in warm-up are None and are NOT drawn as a misleading partial EMA.
+    Long-term EMA200 starts only after at least 200 earlier 15m closes.
+    """
+    # The scanner precomputed this once for all loaded September/October bars.
+    values = _INDICATORS if _INDICATORS is not None else calculate_indicators(bars)
+    x = list(range(end - start + 1))
+    for name, colour in (("ema20", "#f7c65c"), ("ema200", "#b58cff")):
+        y = [value if value is not None else float("nan")
+             for value in values[name][start:end+1]]
+        ax.plot(x, y, color=colour, linewidth=1.55,
+                label=name.upper().replace("EMA", "EMA"), zorder=4)
+
+
 def _plot_candidates_chart(bars, rows, outpath, title="ALL CORE CANDIDATES"):
     """ONE full-range candle chart; PURPLE dots mark C2 of ALL core signals.
 
@@ -360,6 +554,7 @@ def _plot_candidates_chart(bars, rows, outpath, title="ALL CORE CANDIDATES"):
         ax.scatter(i-start, y, s=65, color="#c084fc",
                    edgecolors="white", linewidths=0.6, zorder=8)
     _swing_lines_on_chart(ax, bars, end, start, end)
+    _plot_ema_lines(ax, bars, start, end)
 
     every = max(1, len(candles)//18)
     ticks = list(range(0, len(candles), every))
@@ -369,6 +564,7 @@ def _plot_candidates_chart(bars, rows, outpath, title="ALL CORE CANDIDATES"):
     ax.set_xlim(-1, len(candles))
     ax.set_title(f"MES | {title} | {len(rows)} core signals | purple C2 markers | UK time",
                  color="white", fontsize=13)
+    ax.legend(loc="best", facecolor="#1a2534", edgecolor="#526174",labelcolor="white")
     fig.tight_layout()
     fig.savefig(outpath, dpi=160, facecolor=fig.get_facecolor())
     plt.close(fig)
@@ -425,6 +621,7 @@ def plot_good_candidates(bars, rows, outpath):
                       linestyle=":", linewidth=1.6,
                       label=f"TAKE PROFIT reference {tp:.2f}")
             _swing_lines_on_chart(ax, bars, c3_i, start, end - 1)
+            _plot_ema_lines(ax, bars, start, end - 1)
             every = max(1, len(candles)//14)
             ticks = list(range(0, len(candles), every))
             ax.set_xticks(ticks, [
