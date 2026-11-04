@@ -692,6 +692,24 @@ def print_signal_details(rows):
               f"C3 price {row['c3_close']:.2f} | {outcome}")
         print("=" * 66)
 
+        # GOOD means every ENABLED / REQUIRED quality check passed.
+        # Do not waste the review printout repeating nine method booleans
+        # for GOOD signals. Informational methods may still be false.
+        # All detailed metric values remain stored in the result/CSV.
+        if row["decision"] == "GOOD":
+            print(f"  C1: {row['c1_uk']} | C2: {row['c2_uk']}")
+            print(f"  Core=True | Mandatory filters=PASS")
+            print(f"  Market structure: {row['market_structure']} | "
+                  f"Sweep: {row['sweep_points']:.2f} pts | "
+                  f"Wick/body: {row['c2_wick_body']:.2f}x")
+            print(f"  EMA20: {row['EMA20']:.2f} | EMA200: {row['EMA200']:.2f}"
+                  if row.get("EMA20") is not None and row.get("EMA200") is not None
+                  else "  EMA20/EMA200: N/A (incomplete warm-up)")
+            print("  Full metrics remain available in result and CSV.")
+            continue
+
+        # For WEAK/WAIT candidates, print the nine method booleans,
+        # both required and informational, then EVERY existing metric.
         # The first stage is always true for a stored candidate.
         # Stage booleans use ACTUAL observations, never pass_* bypass flags.
         # A disabled optional filter must NOT be shown as automatically true.
