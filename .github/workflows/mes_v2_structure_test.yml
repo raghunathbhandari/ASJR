@@ -13,6 +13,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Install chart dependency
+        run: python -m pip install matplotlib
       - name: Run causal MES v2 with historical IBKR candles
         shell: bash
         run: |
@@ -54,4 +56,5 @@ jobs:
           path: |
             mes_v2_structure_output.log
             three_candle/results/MES_v2_research/*.csv
+            three_candle/results/MES_v2_research/*.png
           if-no-files-found: warn
