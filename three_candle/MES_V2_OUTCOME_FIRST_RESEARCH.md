@@ -44,3 +44,19 @@ records = replay.validate_all("2026-10-29", "2026-10-30")
 replay.print_summary(records)
 replay.save_csv(records)
 ```
+
+
+## Additional independent-date historical evaluation (2026-11-04)
+
+Code: `three_candle/mes_v2_holdout_analysis.py`. Successful GitHub Actions [run](https://github.com/raghunathbhandari/ASJR/actions/runs/41815411987), [full period CSVs and logs](https://github.com/raghunathbhandari/ASJR/actions/runs/41815411987/artifacts/13314248042). Fixed research hypotheses decided using the Oct 29–30 period: exclude developing V bottom; require same-direction v2 bullish/bearish trend; require both; compare v1 GOOD. Entry/SL/TP/replay assumptions identical across periods. Historical September and earlier October are **date-separated retrospective checks, NOT prospective forward validation**.
+
+| Period | All candidates | All TP/SL/unresolved | Baseline resolved TP% | No V-bottom TP% | Trend-aligned TP% | Trend-aligned excluding V-bottom TP% | v1 GOOD TP/SL/unresolved |
+|---|---:|---|---:|---:|---:|---:|---|
+| Oct 29–30 | 51 | 15/35/1 | 30.0% | 34.1% | 28.6% | 25.0% | 1/1/0 |
+| Sep | 554 | 159/335/60 | 32.2% | 32.0% | 35.0% | 35.8% | 5/11/1 |
+| Oct 1–28 | 540 | 166/342/32 | 32.7% | 32.6% | 30.1% | 29.9% | 6/11/0 |
+
+**Key learning:** Simply excluding developing V-bottom setups was NOT a consistent improvement outside Oct 29–30. Directional trend alignment helped September, harmed October, and was worse during the initial 2-day research sample. The two combinational filters also failed consistency. v1 GOOD classifications are not consistently above 33.3% gross 2R breakeven. Do not fit final v2 trading rules to these few percentages. More independent periods, trade-overlap de-duplication, session and volatility regime segmentation, execution modelling, and level/sweep-quality research required.
+
+### Next research objective
+Re-examine every **resolved TP** rejected by v1 and every **SL** accepted by v1. Identify auditable factors (distance to confirmed liquidity, available target room, C2 actual sweep, ATR-scaled stop, H1 context, time-of-day) without using future candles. Preserve all rejected candidates for hypothesis testing. Prefer multiple independent future periods, not continued optimization of Sep/Oct.
