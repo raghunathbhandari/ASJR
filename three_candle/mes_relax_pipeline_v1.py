@@ -475,6 +475,68 @@ class MESLearningResults(list):
         self.dateTo = dateTo
 
 
+
+# ========================================================================
+# HUMAN-READABLE OUTPUT — all 9 named stages, all available indicator values.
+# Future research metrics may be added without changing the public API.
+# ========================================================================
+def print_signal_details(rows):
+    """Print every core-true signal, including WEAK/WAIT and its failed checks.
+
+    A stage marked True means it meets the CURRENT stage acceptance setting.
+    Optional checks are printed as measured observations too; they are not
+    silently interpreted as trade-quality evidence.
+    """
+    for number, row in enumerate(rows, 1):
+        outcome = "GOOD" if row["decision"] == "GOOD" else "WEAK / WAIT"
+        print()
+        print("=" * 66)
+        print(f"Signal {number}: {row['side']} | {row['c3_uk']} | "
+              f"C3 price {row['c3_close']:.2f} | {outcome}")
+        print("=" * 66)
+
+        # The first stage is always true for a stored candidate.
+        stages = [
+            ("candle_detect_core", row["core_confirmed"], True),
+            ("market_structure", row["pass_market_structure"],
+             REQUIRE_MARKET_ALIGNMENT),
+            ("swing_sr_lines", row["pass_swing_sr"], REQUIRE_SWING_SR_TOUCH),
+            ("volume_detect", row["pass_volume"], REQUIRE_VOLUME),
+            ("wicks_detect", row["pass_wick2"] and row["pass_wick_congestion"], True),
+            ("daily_range_check", row["pass_daily_range"], REQUIRE_DAILY_RANGE),
+            ("display_other_metrics", True, False),
+            ("higher_timeframe_support", row["pass_higher_timeframe"], REQUIRE_HTF),
+            ("Liquidity_area_detect", row["pass_liquidity"], REQUIRE_LIQUIDITY_AREA),
+        ]
+        print("  NINE METHOD CHECKS:")
+        for method, passed, mandatory in stages:
+            suffix = "REQUIRED" if mandatory else "INFO / OPTIONAL"
+            print(f"    {method:<29} = {str(bool(passed)).lower():<5} [{suffix}]")
+
+        # Four individually adjustable candle-quality checks.
+        print("  CANDLE QUALITY SUBCHECKS:")
+        for key in ("pass_sweep2", "pass_wick2", "pass_c3_close",
+                    "pass_wick_congestion"):
+            print(f"    {key:<29} = {str(bool(row[key])).lower()}")
+
+        # Print EVERY public measurement currently returned by the pipeline.
+        # This intentionally adapts automatically as the research grows.
+        print("  ALL AVAILABLE METRICS / INDICATORS:")
+        excluded = {"side", "core_confirmed", "decision", "reason"}
+        for key, value in row.items():
+            if key.startswith("_") or key.startswith("pass_") or key in excluded:
+                continue
+            if isinstance(value, float):
+                text = f"{value:.4f}"
+            elif value is None:
+                text = "N/A (insufficient history)"
+            else:
+                text = str(value)
+            print(f"    {key:<29} = {text}")
+        print(f"  REJECTION REASONS = {row['reason'] or 'None'}")
+
+
+
 def three_candle_signal(tiker, datefrom, dateTo):
     """MAIN PUBLIC METHOD — matches the first learning module's method name.
 
@@ -504,6 +566,7 @@ def three_candle_signal(tiker, datefrom, dateTo):
     good = sum(x["decision"] == "GOOD" for x in result)
     print(f"MES | {begin} to {finish} | CORE-TRUE {len(result)} | "
           f"GOOD {good} | WAIT {len(result)-good}")
+    print_signal_details(result)
     return result
 
 
