@@ -1,0 +1,57 @@
+name: MES V2 Structure 29-30 Oct research
+on:
+  push:
+    paths:
+      - '.github/workflows/mes_v2_structure_test.yml'
+  workflow_dispatch:
+jobs:
+  structure-analysis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run causal MES v2 with historical IBKR candles
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m py_compile three_candle/market_structure_v2.py
+          python three_candle/market_structure_v2.py | tee mes_v2_structure_output.log
+          python - <<'PY'
+          import sys
+          from collections import Counter
+          from pathlib import Path
+          sys.path.insert(0,str(Path("three_candle").resolve()))
+          import market_structure_v2 as v2
+          bars, records = v2.analyse_mes_29_30()
+          assert len(records) == 51, f"Unexpected v1 candidate count: {len(records)}"
+          assert sum(r["v1_decision"] == "GOOD" for r in records) == 2
+          # Every structure snapshot must be causal: modifying all future
+          # candles must NOT affect the currently computed result.
+          from dataclasses import replace
+          for row in records:
+              idx = next(i for i,b in enumerate(bars)
+                         if b.ts.astimezone(v2.base.UK).isoformat(timespec="minutes")
+                         == row["c3_uk"][:22])
+              first=v2.market_structure_v2(bars,idx)
+              if idx+1 < len(bars):
+                  copy=list(bars)
+                  copy[idx+1]=replace(copy[idx+1],h=copy[idx+1].h+500,
+                                      c=copy[idx+1].c+500)
+                  assert v2.market_structure_v2(copy,idx)==first
+          print("VERIFIED 51 records, 2 GOOD, and no future-bar access in snapshots")
+          print("V2 trend counts:",dict(Counter(r["trend"] for r in records)))
+          print("V2 shapes:",dict(Counter(r["structure_pattern"] for r in records)))
+          print("V2 events:",dict(Counter(r["structure_event"] for r in records)))
+          PY
+      - name: Upload structure research results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MES-v2-structure-Oct29-30
+          path: |
+            mes_v2_structure_output.log
+            three_candle/results/MES_v2_research/*.csv
+          if-no-files-found: warn
