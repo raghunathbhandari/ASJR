@@ -353,3 +353,28 @@ plot_signal_passed(result)
 9. Protect the user's notebook and downloaded CSVs unless explicitly asked to change them.
 
 This cross-strategy guideline is a **documentation agreement**: other strategy files are not modified by adding this section.
+
+
+## 15. Nine-method diagnostic printing and original-learning metrics inventory (2026-11-04)
+
+**Implemented:** `three_candle_signal(tiker,datefrom,dateTo)` now invokes `print_signal_details(result)` and prints **EVERY CORE-TRUE signal** (GOOD and WEAK/WAIT), its UK C3 date/time and price, nine method true/false statuses, which checks are required versus informational, four separately reported candle-quality tests, **all fields already present in MES Relax output**, and rejection reasons. This retains the locked public 3-call API and both plot designs.
+
+Important convention: an optional informational method's boolean is **not** a mandatory pass condition. `display_other_metrics` reports True to mean the stage ran; it is not a quality filter. `candle_detect_core=True` is required for a record to appear.
+
+### Inventory from the FIRST `three_candle_learing.py` version
+
+The earlier learning module's `build_signal_metrics()`, `v3_research_checks()` and helper filters report significantly more than current MES Relax. **The following are found there and are proposals to port as diagnostic-only fields** (not yet newly computed in this commit):
+
+- Candle anatomy: C1/C2/C3 range %, C2/C3 body %, individual upper/lower wick %; C2 lower-wick/body, C3 total wick/body, C3 wait bars, C2 sweep ticks.
+- Trend: EMA20 distance %, EMA200 distance %, EMA20 3-bar slope %, EMA20/EMA200 overlays.
+- Momentum/volatility: RSI14, ATR14 %, BB20 width %, rolling 10-bar and 20-bar price-range %.
+- Liquidity/price level: session VWAP distance %, prior-20-candle low sweep %, distance to prior-20-candle high %, nearest confirmed support/resistance and **room in points and R**.
+- Participation: C2 RVOL20, C3/C2 volume ratio, C3 volume, C3 volume increase boolean.
+- Price-action approach: 10-bar approach %, C2-to-C3 directional recovery %, V-shape observation.
+- Time/session: US opening-hour / RTH / premarket / postmarket / overnight bucket, C3 UK hour.
+- Futures daily range: high/low of developing 18:00 ET futures session, current range %, position within range %, previous completed session high/low, room to previous-session target in R.
+- Earlier experimental variants: C3 SELL body 0.05%–<0.10% and C2 wick/body 4x–<10x. Preserve as research diagnostics only, not automatic GOOD conditions.
+
+These metrics should be ported as **human-readable, separately commented** calculations with data warm-up and no lookahead. The most informative first priority is trend EMA20/EMA200, RSI14, ATR14, session VWAP, C3/C2 volume ratio, confirmed support/resistance room, futures-session previous high/low, and C1/C2/C3 OHLC+volume. Review with the user before new filter thresholds or core changes.
+
+**Commit implementing prints:** `18c67ae`. Code is committed, **not runtime-validated** in a Python execution environment yet.
