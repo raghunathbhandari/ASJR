@@ -39,6 +39,70 @@ V3_DAILY_MIN_ROOM_R = 1.0
 
 
 
+# Law of Motion: experimental thresholds from the 2026-10-30 MES labels.
+# Research only; does not change the existing core or six V3 checks.
+config_law_of_motion = {
+    "A1": {
+        "min_approach_points": 25.0,
+        "min_reaction_points": 15.0,
+        "min_c3_body_break_points": 10.0,
+        "max_ema20_distance_pct": -0.20,
+    },
+    "WEAK": {
+        "min_approach_points": 20.0,
+        "min_reaction_points": 10.0,
+        "min_c3_body_break_points": 7.0,
+        "min_ema20_distance_pct": -0.05,
+    },
+    "require_directional_ema5_slope": True,
+    # EMA200 is recorded for analysis but not used as a pass condition.
+}
+
+
+def Filter_law_of_motion(signal, config=None):
+    """Return True if a candidate meets the A1 or WEAK Law of Motion rules.
+
+    Accepts a dict or pandas Series containing the six point-in-time metrics.
+    Use Filter_law_of_motion_grade() to distinguish A1 from WEAK.
+    """
+    return Filter_law_of_motion_grade(signal, config) != "REJECT"
+
+
+def Filter_law_of_motion_grade(signal, config=None):
+    """Classify as A1, WEAK, or REJECT without altering V1/V3 detection."""
+    cfg = config_law_of_motion if config is None else config
+    direction = signal["Direction"]
+    if direction not in ("BUY", "SELL"):
+        return "REJECT"
+    vals = (
+        "approach_distance_points", "bounce_distance_points",
+        "c3_body_break_points", "ema20_distance_pct", "ema5_slope_pct",
+    )
+    if any(pd.isna(signal.get(key)) for key in vals):
+        return "REJECT"
+    if cfg["require_directional_ema5_slope"]:
+        slope = signal["ema5_slope_pct"]
+        if not (slope > 0 if direction == "BUY" else slope < 0):
+            return "REJECT"
+
+    def common_pass(thresholds):
+        return (
+            signal["approach_distance_points"] >= thresholds["min_approach_points"]
+            and signal["bounce_distance_points"] >= thresholds["min_reaction_points"]
+            and signal["c3_body_break_points"] >= thresholds["min_c3_body_break_points"]
+        )
+
+    a1 = cfg["A1"]
+    if common_pass(a1) and signal["ema20_distance_pct"] <= a1["max_ema20_distance_pct"]:
+        return "A1"
+
+    weak = cfg["WEAK"]
+    if common_pass(weak) and signal["ema20_distance_pct"] > weak["min_ema20_distance_pct"]:
+        return "WEAK"
+
+    return "REJECT"
+
+
 # 2. DOWNLOAD: Yahoo's native 15-minute OHLCV candles
 def Download_yfinalce(ticker, datetime, timeframe="15m"):
     """Download ONE date (YYYY-MM-DD) or (start_date, end_date) tuple.
@@ -506,6 +570,8 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
         row.update(checks)
         row.update(v3_checks)
         row.update(six_point_research_metrics(history, c2_i, direction))
+        row["law_of_motion_grade"] = Filter_law_of_motion_grade(row)
+        row["Filter_law_of_motion"] = Filter_law_of_motion(row)
         row["Signal"] = number
         for label, stamp, candle in zip(("C1", "C2", "C3"), times, (c1, c2, c3)):
             row[f"{label}_time"] = stamp
@@ -526,6 +592,7 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
     print(f"Ambiguous confirmation/invalidation candles: {len(result.attrs['ambiguous'])}")
     columns = [
         "Signal", "Direction", "C3_time", "candidate_status",
+        "Filter_law_of_motion", "law_of_motion_grade",
         "filter_3_location", "filter_4_v_shape", "filter_5_volume",
         "filter_6_time", "filter_7_wick", "filter_8_daily_range",
         "approach_distance_points", "bounce_distance_points",
@@ -533,6 +600,10 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
         "ema20_distance_pct", "ema5_slope_pct",
     ]
     print("\n========== SIGNAL COMPARISON (one row per signal) ==========")
+    if not result.empty:
+        print(f"Law of Motion: {int(result['Filter_law_of_motion'].sum())}/{len(result)} True "
+              f"({int((result['law_of_motion_grade'] == 'A1').sum())} A1, "
+              f"{int((result['law_of_motion_grade'] == 'WEAK').sum())} WEAK)")
     if result.empty:
         print("No signals to compare.")
     else:
