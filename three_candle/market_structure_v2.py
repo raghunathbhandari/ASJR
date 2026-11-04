@@ -161,6 +161,7 @@ def analyse_mes_29_30(datefrom="2026-10-29", dateTo="2026-10-30"):
         structure = market_structure_v2(bars, row["_c3_i"])
         report = {
             "side": row["side"],
+            "c2_uk": row["c2_uk"],
             "c3_uk": row["c3_uk"],
             "c3_close": row["c3_close"],
             "v1_decision": row["decision"],
@@ -249,6 +250,11 @@ def plot_structure_days(bars, records, output_dir):
                        edgecolors="#e2e8f0", linewidths=0.65,
                        zorder=8, label=shown)
         for row in rows:
+            c2_idx = lookup.get(row["c2_uk"][:22])
+            if c2_idx is not None:
+                c2_bar = bars[c2_idx]
+                ypos = c2_bar.l - 0.75 if row["side"] == "BUY" else c2_bar.h + 0.75
+                marker(c2_idx-start, ypos, "o", "#c084fc", "V1 candidate C2", 30)
             idx = lookup.get(row["c3_uk"][:22])
             if idx is None:
                 continue
@@ -287,5 +293,6 @@ if __name__ == "__main__":
     print_report(records)
     path = ROOT / "results" / "MES_v2_research" / "MES_2026-10-29_30_structure_v2.csv"
     save_csv(records, path)
+    plot_structure_days(bars, records, path.parent)
     print("\nWritten:", path)
     print("NOTE: v2 exploratory classifications are NOT profitability results.")
