@@ -492,13 +492,14 @@ def six_point_research_metrics(history, c2_position, direction):
     }
 
 
-def three_candle_signal_learning(tiker, datefrom, dateTo):
-    """Find BUY and SELL core patterns, then PRINT other filters only."""
+def three_candle_signal_learning(tiker, datefrom, dateTo, enableDig=False):
+    """Find BUY/SELL patterns; enableDig controls printing only (default off)."""
     if tiker not in ("NQ=F", "GC=F", "MES=F"):
         raise ValueError("Use NQ=F, GC=F, or MES=F")
 
     data = load_learning_candles(tiker, datefrom, dateTo)
-    print(f"Downloaded {len(data)} x 15m candles for {tiker}")
+    if enableDig:
+        print(f"Downloaded {len(data)} x 15m candles for {tiker}")
     signals = []
     requested_start = date.fromisoformat(str(datefrom))
 
@@ -545,7 +546,7 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
         v3_checks = v3_pass_checks(observations)
         passed = all(v3_checks.values())
         number = len(signals) + 1
-        if PRINT_FILTER_DETAILS:
+        if enableDig:
             print(f"\nCandidate {number} | {direction} | "
                   f"C3 {times[2]:%Y-%m-%d %H:%M %Z} | "
                   f"CORE=True | Pass Candidate={passed} | "
@@ -583,32 +584,33 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
     result.attrs["ambiguous"] = data.attrs.get("ambiguous", [])
     result.attrs["candles"] = data
     result.attrs["requested_start"] = str(datefrom)
-    passed_count = int(result["all_filters_pass"].sum()) if not result.empty else 0
-    body_count = int(result["V3withBodySize_pass"].sum()) if not result.empty else 0
-    wick_count = int(result["V3withBodySize_Wick4to10_pass"].sum()) if not result.empty else 0
-    print(f"\nFound {len(result)} core Candidates; {passed_count} Pass Candidates (all 6 V3 filters).")
-    print(f"V3withBodySize SELL C3 body 0.05%-<0.10%: {body_count} research candidates.")
-    print(f"V3withBodySize_Wick4to10 quality candidates: {wick_count}")
-    print(f"Ambiguous confirmation/invalidation candles: {len(result.attrs['ambiguous'])}")
-    columns = [
-        "Signal", "Direction", "C3_time", "candidate_status",
-        "Filter_law_of_motion", "law_of_motion_grade",
-        "filter_3_location", "filter_4_v_shape", "filter_5_volume",
-        "filter_6_time", "filter_7_wick", "filter_8_daily_range",
-        "approach_distance_points", "bounce_distance_points",
-        "c3_body_break_points", "ema200_distance_pct",
-        "ema20_distance_pct", "ema5_slope_pct",
-    ]
-    print("\n========== SIGNAL COMPARISON (one row per signal) ==========")
-    if not result.empty:
-        print(f"Law of Motion: {int(result['Filter_law_of_motion'].sum())}/{len(result)} True "
-              f"({int((result['law_of_motion_grade'] == 'A1').sum())} A1, "
-              f"{int((result['law_of_motion_grade'] == 'WEAK').sum())} WEAK)")
-    if result.empty:
-        print("No signals to compare.")
-    else:
-        from IPython.display import display
-        display(result[columns])
+    if enableDig:
+        passed_count = int(result["all_filters_pass"].sum()) if not result.empty else 0
+        body_count = int(result["V3withBodySize_pass"].sum()) if not result.empty else 0
+        wick_count = int(result["V3withBodySize_Wick4to10_pass"].sum()) if not result.empty else 0
+        print(f"\nFound {len(result)} core Candidates; {passed_count} Pass Candidates (all 6 V3 filters).")
+        print(f"V3withBodySize SELL C3 body 0.05%-<0.10%: {body_count} research candidates.")
+        print(f"V3withBodySize_Wick4to10 quality candidates: {wick_count}")
+        print(f"Ambiguous confirmation/invalidation candles: {len(result.attrs['ambiguous'])}")
+        columns = [
+            "Signal", "Direction", "C3_time", "candidate_status",
+            "Filter_law_of_motion", "law_of_motion_grade",
+            "filter_3_location", "filter_4_v_shape", "filter_5_volume",
+            "filter_6_time", "filter_7_wick", "filter_8_daily_range",
+            "approach_distance_points", "bounce_distance_points",
+            "c3_body_break_points", "ema200_distance_pct",
+            "ema20_distance_pct", "ema5_slope_pct",
+        ]
+        print("\n========== SIGNAL COMPARISON (one row per signal) ==========")
+        if not result.empty:
+            print(f"Law of Motion: {int(result['Filter_law_of_motion'].sum())}/{len(result)} True "
+                  f"({int((result['law_of_motion_grade'] == 'A1').sum())} A1, "
+                  f"{int((result['law_of_motion_grade'] == 'WEAK').sum())} WEAK)")
+        if result.empty:
+            print("No signals to compare.")
+        else:
+            from IPython.display import display
+            display(result[columns])
     return result
 
 
