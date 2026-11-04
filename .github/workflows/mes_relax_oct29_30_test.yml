@@ -1,5 +1,5 @@
 name: MES Relax 29-30 October real-run check
-# Verification rerun: multi-day compact; one-date detailed from same setting.
+# Verification: enableDiag=False compact range; enableDiag=True detailed on selected day.
 on:
   push:
     paths:
@@ -57,7 +57,7 @@ jobs:
                   for row in result:
                       writer.writerow({k:v for k,v in row.items() if not k.startswith("_")})
           print("\n============ SINGLE-DAY FULL DIAGNOSIS ============")
-          single_day = three_candle_signal("MES=F", "2026-10-30", "2026-10-30")
+          single_day = three_candle_signal("MES=F", "2026-10-30", "2026-10-30", enableDiag=True)
           print("SINGLE-DAY DETAILED CHECK:", len(single_day), "candidates")
           print("\n============ PLOTTING PUBLIC API ============")
           print("Overview:",plot_candidates(result))
