@@ -452,6 +452,77 @@ def write_csv(rows,path):
         writer.writeheader();writer.writerows(public)
 
 
+
+# ========================================================================
+# ORIGINAL LEARNING API NAMES — notebook-friendly entry point and plot calls.
+# The function names match three_candle_learing.py; the MES data structure
+# is a lightweight list instead of the old pandas DataFrame.
+# ========================================================================
+class MESLearningResults(list):
+    """List of CORE-TRUE candidate dictionaries, retaining candles for plots."""
+
+    def __init__(self, rows, bars, datefrom, dateTo):
+        super().__init__(rows)
+        self.bars = bars
+        self.datefrom = datefrom
+        self.dateTo = dateTo
+
+
+def three_candle_signal_learning(tiker, datefrom, dateTo):
+    """MAIN PUBLIC METHOD — matches the first learning module's method name.
+
+    Example:
+        result = three_candle_signal_learning("MES=F", "2026-10-29", "2026-10-30")
+        plot_signal_candidate(result)  # one overview with purple C2 dots
+        plot_signal_passed(result)     # one focused chart per GOOD setup
+
+    Scans both directions using existing nine-stage MES pipeline. Retains all
+    CORE-TRUE candidates (GOOD + WAIT). Local UK dates are inclusive. The
+    returned MESLearningResults is list-like, not a pandas DataFrame.
+    """
+    if tiker not in ("MES=F", "MES", "MESZ2026"):
+        raise ValueError("This MES research scanner supports MES=F / MES / MESZ2026")
+    from datetime import date
+    begin = date.fromisoformat(str(datefrom))
+    finish = date.fromisoformat(str(dateTo))
+    if finish < begin:
+        raise ValueError("dateTo cannot be before datefrom")
+    bars = base.to_15m(base.read_ibkr_5m(base.SOURCES))
+    if not bars:
+        raise FileNotFoundError("MES IBKR source CSVs not available in three_candle/data/")
+    # Keep warm-up candles in scan for structure/RVOL, filter only C3 local day.
+    found = [row for row in scan(bars)
+             if begin <= date.fromisoformat(row["c3_uk"][:10]) <= finish]
+    result = MESLearningResults(found, bars, str(begin), str(finish))
+    good = sum(x["decision"] == "GOOD" for x in result)
+    print(f"MES | {begin} to {finish} | CORE-TRUE {len(result)} | "
+          f"GOOD {good} | WAIT {len(result)-good}")
+    return result
+
+
+def plot_signal_candidate(result):
+    """ORIGINAL LEARNING NAME: all CORE-TRUE C2 purple dots on ONE chart."""
+    if not result:
+        print("No core candidates to plot.")
+        return
+    outpath = (ROOT / "results" / "MES_relax_v1_review" /
+               f"MES_{result.datefrom}_to_{result.dateTo}_ALL_CANDIDATES.png")
+    plot_candidates(result.bars, result, outpath)
+    return outpath
+
+
+def plot_signal_passed(result):
+    """ORIGINAL LEARNING NAME: ONE chart per GOOD signal with entry/SL/TP."""
+    good = [row for row in result if row["decision"] == "GOOD"]
+    if not good:
+        print("No GOOD candidates passed the enabled checks.")
+        return
+    outpath = (ROOT / "results" / "MES_relax_v1_review" /
+               f"MES_{result.datefrom}_to_{result.dateTo}_GOOD_CANDIDATES.pdf")
+    plot_good_candidates(result.bars, good, outpath)
+    return outpath
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--date",help="UK date YYYY-MM-DD")
