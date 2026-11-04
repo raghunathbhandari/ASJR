@@ -257,3 +257,59 @@ plot_signal_passed(result)      # ONE chart per GOOD signal: C1/C2/C3, entry/SL/
 - `plot_signal_passed(result)` calls `plot_good_candidates(...)` internally.
 - `main()` remains the CLI entry point used by `python3 three_candle/mes_relax_pipeline_v1.py --date ... --plot-both`.
 - No original learning code was modified. GitHub commit `92a6558`. Python runtime checks and plotted output still require execution.
+
+
+## 13. LOCKED PUBLIC API AND CHART CONTRACT — apply to ALL future MES versions (2026-11-04)
+
+**USER-APPROVED; do not rename or redesign in future versions unless the user explicitly requests it.** This section supersedes older experimental naming examples (`three_candle_signal_learning`, `plot_signal_candidate`) in this historical document. Future refactors must retain a backward-compatible public wrapper for these exact calls.
+
+### Fixed user notebook calls and order
+
+```python
+from mes_relax_pipeline_v1 import three_candle_signal, plot_candidates, plot_signal_passed
+
+# Loads local IBKR CSVs; analyses using internal 9-stage pipeline.
+result = three_candle_signal("MES=F", "2026-10-29", "2026-10-30")
+
+# One FULL-RANGE chart with EVERY core-true C2 highlighted by a PURPLE dot.
+plot_candidates(result)
+
+# One separate, detailed chart per GOOD candidate; C1/C2/C3 and price levels.
+plot_signal_passed(result)
+```
+
+This is the fixed API regardless of future research version; keep function names, positional parameters and the `result` object convention stable. The public main function uses the user-requested exact spelling `three_candle_signal(tiker, datefrom, dateTo)`. Do NOT silently switch to `three_candle_signal_learning()` or require users to pass raw candles into plotting functions. Internally, `plot_candidates(result)` can delegate to `_plot_candidates_chart(...)`, and `plot_signal_passed(result)` can delegate to `plot_good_candidates(...)`.
+
+### Locked chart layouts and colors — retain between versions
+
+**A. `plot_candidates(result)`: ALL candidates**
+- ONE full-price-history candlestick chart for the requested interval.
+- Every candidate for which `candle_detect_core()` is TRUE appears, whether GOOD or WAIT.
+- **Purple dot on the C2/sweep candle**: dot below BUY C2 low, above SELL C2 high; no cluttered per-candidate entry/stop lines.
+- Dark background, green bullish candles, red bearish candles, swing support and resistance lines, and UK local time labels.
+- Keep an overview chart, not one chart per candidate.
+
+**B. `plot_signal_passed(result)`: GOOD candidates**
+- Exactly ONE signal per detailed chart (multipage PDF allowed).
+- Clearly label C1, C2 and C3; show surrounding price candles, highlighted C2 and confirmed swing S/R.
+- Show numeric reference **ENTRY** (blue dashed line), **STOP LOSS / SL** (red dashed line), and **TAKE PROFIT / TP** (purple line), all clearly legible.
+- All times in **UK time**. This is an analytical plot; distinguish reference levels from actual 5-minute historical execution prices and do not invent realized P/L.
+
+### Locked data and analysis responsibilities
+
+1. Main function **reads local IBKR 5-minute CSV data**; no Yahoo/network calls or broker connection are required. Current sources:
+   - `three_candle/data/MESZ2026_IBKR_5m_2026-09.csv`
+   - `three_candle/data/MESZ2026_IBKR_5m_2026-10.csv`
+   - Data is resampled to complete 15-minute candles; keep UTC for calculations and UK labels for presentation.
+2. `candle_detect_core()` must be evaluated first for independent BUY and SELL candidate discovery.
+3. Every CORE-TRUE candidate remains visible in the ALL plot and audit, even if quality checks later fail.
+4. Internally run the confirmed 9 named stages in this order:
+   `candle_detect_core()` → `market_structure()` → `swing_sr_lines()` →
+   `volume_detect()` → `wicks_detect()` → `daily_range_check()` →
+   `display_other_metrics()` → `higher_timeframe_support()` →
+   `Liquidity_area_detect()`.
+5. Classify signals as GOOD or WAIT based on the enabled requirements, retaining reasons and measurements. Plot only GOOD in the second plot.
+6. Preserve original V3, original learning notebook, CSV source data and historical candidate master files. Any future experiment is versioned separately.
+7. Future meetings can discuss method details, detection and new ideas. **Do not modify source code, public names, chart design, thresholds, or assumptions until requested.** Once changes are explicitly approved, change internal implementations without breaking this public contract.
+
+**Current implementation:** `three_candle/mes_relax_pipeline_v1.py`, public function-name correction commit `c2df9f2`. That GitHub code was committed but execution and chart rendering have not yet been verified in a Python runtime.
