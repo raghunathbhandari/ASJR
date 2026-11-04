@@ -90,3 +90,44 @@ python3 three_candle/mes_relax_pipeline_v1.py --date 2026-10-29 --plot-both --sh
 **Important:** GOOD means that all **currently mandatory** checks passed, not necessarily that every one of the nine informational/optional observations is True. In particular, `Liquidity_area_detect()` may be False yet GOOD if disabled as a mandatory check. Printing preference must not modify filtering rules or the two chart formats.
 
 Implemented in MES code commit `4303a4f`. This formatting standard applies across future Three-Candle strategies.
+
+
+## 10. RUDRA THREE-CANDLE — FINAL SESSION CLOSEOUT / IDEAS-ONLY HANDOFF (2026-11-04 08:37 UK)
+
+**Assistant role:** Rudra Three Strategy. All methodology, names, chart design, metrics, CSV history handling, printing conventions and coding rules above are confirmed. **In the next session, discuss trading ideas, evidence and hypotheses only. Do not change strategy code, settings or plots during an ideas discussion unless the user explicitly requests implementation.**
+
+### Stable public notebook API (all Three-Candle variants)
+```python
+result = three_candle_signal(tiker, datefrom, dateTo)
+plot_candidates(result)
+plot_signal_passed(result)
+```
+- `three_candle_signal`: reads the instrument's existing local CSV history, resamples complete 5m to 15m where appropriate, scans every candle chronologically for independent BUY/SELL C1/C2/C3 patterns, runs the fixed nine analysis methods, prints diagnostics, returns CORE-TRUE rows with GOOD/WAIT statuses and indicators. It is the **main method** and owns all signal printing.
+- `plot_candidates`: one entire requested-period dark candle overview (not one chart per candidate). **Purple C2 candidate dots**, confirmed swing S/R, **EMA20 gold**, **EMA200 lavender**, all times UK.
+- `plot_signal_passed`: **one detailed chart per GOOD** with C1/C2/C3, entry blue, SL red, TP purple, actual numeric reference levels, EMA20/EMA200, swing S/R and UK time. These levels are study references, **not execution fills**.
+- The **nine internal names and order**, retained across all future strategies: `candle_detect_core`, `market_structure`, `swing_sr_lines`, `volume_detect`, `wicks_detect`, `daily_range_check`, `display_other_metrics`, `higher_timeframe_support`, `Liquidity_area_detect`.
+- Current supporting methods: `scan`, `evaluate_pipeline`, `calculate_indicators`, `indicator_metrics`, `print_signal_details`. These are internal; avoid exposing them as mandatory notebook calls.
+
+### Confirmed printing convention
+- In `three_candle_signal`, print a numbered header for **every** CORE-TRUE candidate: UK C3 timestamp, direction, close, GOOD or WEAK/WAIT.
+- **WEAK/WAIT:** all **nine true/false method observations** (also mark REQUIRED vs INFO/OPTIONAL), separate candle-quality subchecks, **all existing metrics / indicators** and explicit rejection reasons.
+- **GOOD:** concise signal header, C1/C2 times, price, structure, sweep, wick/body and key EMA levels; say **all enabled mandatory checks PASS**. Do NOT repeat nine method booleans for GOOD. Full diagnostic values are still kept in result and written to CSV when exported.
+- A GOOD candidate **does not mean every informational method returns True**. Optional checks such as `Liquidity_area_detect` can be False. No classification change is implied by print layout.
+
+### Historical CSV / indicator policy
+- Read **all earlier available source CSV data** for sufficient warm-up **before** restricting signal dates or visible chart window; for MES 29–30 October 2026 the September and October 5m IBKR CSVs are merged chronologically and resampled to complete 15m bars.
+- EMA20/EMA200 are calculated on full historical data and drawn on **both** charts; warm-up is **20 / 200 completed 15m candles** respectively. Where unavailable, show N/A, not a prematurely initialized EMA. RSI14, ATR14, BB20 width, session VWAP, RVOL20, OHLCV, candle anatomy, volume ratios and price-context research fields print as diagnostics; do not silently turn into new filters.
+- Use readable variable names, plainly written loops, short documented functions, main-step comments, settings up top with units, and no future lookahead.
+
+### First executed MES validation, important distinctions
+- Actual Python 3.11 GitHub Actions public API run for **29–30 October 2026**: https://github.com/raghunathbhandari/ASJR/actions/runs/41793966304
+- Confirmation run with corrected **observed** optional check booleans: https://github.com/raghunathbhandari/ASJR/actions/runs/41793966304/artifacts/13304478251
+- **29 October: 27 CORE, 0 GOOD, 27 WAIT. 30 October: 24 CORE, 2 GOOD, 22 WAIT. Total 51 CORE, 2 GOOD, 49 WAIT.**
+- Both GOOD were SELL on 30 October: C3 **15:00 UK at 7641.75** (2.75pt C2 high sweep, 4.75× rejection wick); C3 **16:45 UK at 7614.00** (3pt C2 high sweep, 2.57× rejection wick).
+- Overlapping WAIT reasons: `market_structure=30`, `wick2=29`, `wick_congestion=24`, `sweep2=20`.
+- **No trading win rate or P&L established**: only candidate classification and plotted study reference prices, not 5m next-open entry/TP/SL replay.
+- After the final public API real run, printing was updated to omit repeated nine-method check rows for GOOD (`4303a4f`); this formatting-only change has **not been separately rerun**. Earlier stale lines in this handoff that say runtime unverified are superseded by the execution results above.
+- MES-specific experimental thresholds are **not automatically portable** to NQ, GC, or equities.
+
+### Next session: ideas only
+Suggested discussion topics, not instructions to edit: understand why all 29 Oct candidates failed; study two 30 Oct SELL charts; analyse whether market-structure recognition and liquidity level placement match real price action; explore how much room-to-target and previous-session extremes matter; later request 5m execution replay with commissions/slippage when desired. Preserve the existing user notebook, original learning file, existing source CSV and old research master datasets.
