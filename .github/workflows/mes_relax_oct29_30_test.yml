@@ -1,5 +1,5 @@
 name: MES Relax 29-30 October real-run check
-# Verification rerun: DETAIL_DIAGNOSIS=True full checks + metrics for GOOD/WAIT.
+# Verification rerun: multi-day compact; one-date detailed from same setting.
 on:
   push:
     paths:
@@ -56,6 +56,9 @@ jobs:
                   writer.writeheader()
                   for row in result:
                       writer.writerow({k:v for k,v in row.items() if not k.startswith("_")})
+          print("\n============ SINGLE-DAY FULL DIAGNOSIS ============")
+          single_day = three_candle_signal("MES=F", "2026-10-30", "2026-10-30")
+          print("SINGLE-DAY DETAILED CHECK:", len(single_day), "candidates")
           print("\n============ PLOTTING PUBLIC API ============")
           print("Overview:",plot_candidates(result))
           print("GOOD:",plot_signal_passed(result))
