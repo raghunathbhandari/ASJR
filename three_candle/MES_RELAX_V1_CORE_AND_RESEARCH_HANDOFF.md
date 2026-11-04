@@ -234,3 +234,26 @@ Updated `mes_relax_pipeline_v1.py` with **two separate implemented plotting func
 The old learning `plot_signal_candidate()` marked BUY C2 green and SELL C2 red; purple is the **user-requested MES colour override**. The old `plot_signal_passed()` and `plot_signal()` used individual full-history charts; new GOOD views use a **focused candle context around one signal** for legibility, matching the requested one-signal-per-chart rule.
 
 The **reference** ENTRY uses C3 closing price, and stops/targets use 5/10 points around it. It is not represented as a next-5-minute actual fill. No profitability result is claimed by these plots. Original V3/learning notebook unchanged.
+
+
+## 12. Original learning-compatible MAIN method (2026-11-04)
+
+The MES research pipeline now exposes the same **method names** as the first learning module, so notebook usage is familiar:
+
+```python
+from mes_relax_pipeline_v1 import (
+    three_candle_signal_learning,
+    plot_signal_candidate,
+    plot_signal_passed,
+)
+
+result = three_candle_signal_learning("MES=F", "2026-10-29", "2026-10-30")
+plot_signal_candidate(result)   # ONE chart: purple dots on all candidate C2s
+plot_signal_passed(result)      # ONE chart per GOOD signal: C1/C2/C3, entry/SL/TP
+```
+
+- `three_candle_signal_learning(tiker,datefrom,dateTo)` is the **main public function**, same spelling and signature as `three_candle_learing.py`. It returns `MESLearningResults`, a **list of dictionaries with attached candle data**, not pandas DataFrame, so the output format is NOT identical to the original learning module.
+- `plot_signal_candidate(result)` calls `plot_candidates(...)` internally.
+- `plot_signal_passed(result)` calls `plot_good_candidates(...)` internally.
+- `main()` remains the CLI entry point used by `python3 three_candle/mes_relax_pipeline_v1.py --date ... --plot-both`.
+- No original learning code was modified. GitHub commit `92a6558`. Python runtime checks and plotted output still require execution.
