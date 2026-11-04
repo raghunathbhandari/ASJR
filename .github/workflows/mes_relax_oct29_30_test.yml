@@ -15,23 +15,57 @@ jobs:
           python-version: '3.11'
       - name: Install plotting dependency
         run: python -m pip install matplotlib
-      - name: Compile and execute MES 29-30 October scanner
+      - name: Compile and run PUBLIC three_candle_signal API for 29-30 October
         shell: bash
         run: |
           set -o pipefail
           python -m py_compile three_candle/mes_relax_pipeline_v1.py
-          python three_candle/mes_relax_pipeline_v1.py --date 2026-10-29 --plot-both --show-wait > mes_29_stdout.log 2>&1
-          python three_candle/mes_relax_pipeline_v1.py --date 2026-10-30 --plot-both --show-wait > mes_30_stdout.log 2>&1
-          echo '========== 29 OCTOBER =========='
-          cat mes_29_stdout.log
-          echo '========== 30 OCTOBER =========='
-          cat mes_30_stdout.log
-      - name: Upload MES test outputs
+          python - <<'PY' > mes_public_api_detailed.log 2>&1
+          import csv
+          import sys
+          from collections import Counter
+          from pathlib import Path
+
+          sys.path.insert(0, str(Path("three_candle").resolve()))
+          from mes_relax_pipeline_v1 import three_candle_signal, plot_candidates, plot_signal_passed
+
+          result = three_candle_signal("MES=F", "2026-10-29", "2026-10-30")
+          print("\n============== ACTUAL SUMMARY ==============")
+          for day in ("2026-10-29", "2026-10-30"):
+              day_signals = [row for row in result if row["c3_uk"].startswith(day)]
+              good = [row for row in day_signals if row["decision"] == "GOOD"]
+              print(f"{day} | CORE={len(day_signals)} GOOD={len(good)} WAIT={len(day_signals)-len(good)}")
+              for row in good:
+                  print(f"GOOD {row['side']} C1={row['c1_uk']} C2={row['c2_uk']} C3={row['c3_uk']} PRICE={row['c3_close']:.2f} SWEEP={row['sweep_points']:.2f} WICK={row['c2_wick_body']:.2f}x STRUCTURE={row['market_structure']}")
+          print("Failures by required check:")
+          counts = Counter()
+          for row in result:
+              for reason in row["reason"].split(";"):
+                  if reason:
+                      counts[reason] += 1
+          for reason, number in sorted(counts.items(), key=lambda pair: (-pair[1],pair[0])):
+              print(f"  {reason} = {number}")
+
+          output = Path("three_candle/results/MES_relax_v1_review")
+          output.mkdir(parents=True, exist_ok=True)
+          if result:
+              fields = [key for key in result[0] if not key.startswith("_")]
+              with (output/"MES_2026-10-29_to_30_FULL_DIAGNOSTICS.csv").open("w",newline="") as fh:
+                  writer=csv.DictWriter(fh,fieldnames=fields)
+                  writer.writeheader()
+                  for row in result:
+                      writer.writerow({k:v for k,v in row.items() if not k.startswith("_")})
+          print("\n============ PLOTTING PUBLIC API ============")
+          print("Overview:",plot_candidates(result))
+          print("GOOD:",plot_signal_passed(result))
+          PY
+          cat mes_public_api_detailed.log
+      - name: Upload actual outputs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: MES-29-30-Oct-2026-real-run
+          name: MES-29-30-Oct-2026-public-API
           path: |
-            mes_*_stdout.log
+            mes_public_api_detailed.log
             three_candle/results/MES_relax_v1_review/
           if-no-files-found: warn
