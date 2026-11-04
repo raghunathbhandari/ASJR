@@ -204,6 +204,84 @@ def save_csv(records, path):
         writer.writerows(records)
 
 
+
+def plot_structure_days(bars, records, output_dir):
+    """Draw one MES candlestick overview per day with v1 + v2 annotations.
+
+    Purple dots = original v1 candidate C2. Gold diamonds = v1 GOOD C3.
+    Cyan triangles = developing V bottoms, orange inverted triangles = V tops.
+    Structure-break events are annotated only at the C3 they occur.
+    These are research snapshots, not trade confirmations.
+    """
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Rectangle
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    dates = sorted({row["c3_uk"][:10] for row in records})
+    for day in dates:
+        day_indices = [i for i, bar in enumerate(bars)
+                       if bar.ts.astimezone(base.UK).date().isoformat() == day]
+        if not day_indices:
+            continue
+        start, end = day_indices[0], day_indices[-1]
+        rows = [row for row in records if row["c3_uk"][:10] == day]
+        fig, ax = plt.subplots(figsize=(21, 10), facecolor="#101722")
+        ax.set_facecolor("#101722")
+        ax.tick_params(colors="#dbe5f0")
+        ax.grid(color="#526174", alpha=0.25)
+        for i in range(start, end + 1):
+            b = bars[i]
+            colour = "#23c985" if b.c >= b.o else "#ff6471"
+            ax.vlines(i - start, b.l, b.h, color=colour, lw=0.85)
+            ax.add_patch(Rectangle((i - start - 0.3, min(b.o, b.c)),
+                         0.6, max(abs(b.c - b.o), 0.01),
+                         facecolor=colour, edgecolor=colour))
+        # Index lookup avoids time-string conversions or assumptions.
+        lookup = {bar.ts.astimezone(base.UK).isoformat(timespec="minutes"): i
+                  for i, bar in enumerate(bars[start:end + 1], start)}
+        legend_seen = set()
+        def marker(x, y, shape, colour, label, size):
+            shown = label if label not in legend_seen else None
+            legend_seen.add(label)
+            ax.scatter(x, y, marker=shape, color=colour, s=size,
+                       edgecolors="#e2e8f0", linewidths=0.65,
+                       zorder=8, label=shown)
+        for row in rows:
+            idx = lookup.get(row["c3_uk"][:22])
+            if idx is None:
+                continue
+            b = bars[idx]
+            x = idx - start
+            if row["v1_decision"] == "GOOD":
+                marker(x, b.c, "D", "#facc15", "V1 GOOD C3", 95)
+            if row["structure_pattern"] == "V_BOTTOM_DEVELOPING":
+                marker(x, b.l - 2, "^", "#2dd4bf", "V-bottom developing", 65)
+            if row["structure_pattern"] == "V_TOP_DEVELOPING":
+                marker(x, b.h + 2, "v", "#fb923c", "V-top developing", 65)
+            event = row["structure_event"]
+            if event != "NONE":
+                ax.annotate(event.replace("BULLISH_", "B+").replace("BEARISH_", "B-"),
+                            (x, b.h), xytext=(0, 15), textcoords="offset points",
+                            ha="center", fontsize=7, color="#f8fafc",
+                            rotation=40)
+        ticks = list(range(0, end-start+1, max(1, (end-start+1)//18)))
+        ax.set_xticks(ticks, [
+            bars[start+i].ts.astimezone(base.UK).strftime("%H:%M")
+            for i in ticks], rotation=35, ha="right")
+        ax.set_xlim(-1, end-start+2)
+        ax.set_ylabel("MES futures", color="#dbe5f0")
+        ax.set_title(f"MES v2 structure research | {day} UK | "
+                     f"{len(rows)} v1 CORE candidates", color="white", fontsize=14)
+        if legend_seen:
+            ax.legend(facecolor="#1a2534", edgecolor="#526174", labelcolor="white")
+        fig.tight_layout()
+        path = output_dir / f"MES_{day}_v2_structure.png"
+        fig.savefig(path, dpi=145, facecolor=fig.get_facecolor())
+        plt.close(fig)
+        print("CHART:", path)
+
 if __name__ == "__main__":
     bars, records = analyse_mes_29_30()
     print_report(records)
