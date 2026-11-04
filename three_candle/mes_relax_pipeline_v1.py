@@ -693,17 +693,22 @@ def print_signal_details(rows):
         print("=" * 66)
 
         # The first stage is always true for a stored candidate.
+        # Stage booleans use ACTUAL observations, never pass_* bypass flags.
+        # A disabled optional filter must NOT be shown as automatically true.
+        expected_direction = "BULLISH" if row["side"] == "BUY" else "BEARISH"
+        actual_alignment = row["market_structure"] == expected_direction
         stages = [
             ("candle_detect_core", row["core_confirmed"], True),
-            ("market_structure", row["pass_market_structure"],
-             REQUIRE_MARKET_ALIGNMENT),
-            ("swing_sr_lines", row["pass_swing_sr"], REQUIRE_SWING_SR_TOUCH),
-            ("volume_detect", row["pass_volume"], REQUIRE_VOLUME),
-            ("wicks_detect", row["pass_wick2"] and row["pass_wick_congestion"], True),
-            ("daily_range_check", row["pass_daily_range"], REQUIRE_DAILY_RANGE),
+            ("market_structure", actual_alignment, REQUIRE_MARKET_ALIGNMENT),
+            ("swing_sr_lines", row["sr_reference"] is not None,
+             REQUIRE_SWING_SR_TOUCH),
+            ("volume_detect", row["volume_ok"], REQUIRE_VOLUME),
+            ("wicks_detect", row["wick_strong"] and row["wick_congestion_ok"], True),
+            ("daily_range_check", row["daily_range_ok"], REQUIRE_DAILY_RANGE),
             ("display_other_metrics", True, False),
-            ("higher_timeframe_support", row["pass_higher_timeframe"], REQUIRE_HTF),
-            ("Liquidity_area_detect", row["pass_liquidity"], REQUIRE_LIQUIDITY_AREA),
+            ("higher_timeframe_support", row["htf_ok"], REQUIRE_HTF),
+            ("Liquidity_area_detect", row["liquidity_area_ok"],
+             REQUIRE_LIQUIDITY_AREA),
         ]
         print("  NINE METHOD CHECKS:")
         for method, passed, mandatory in stages:
