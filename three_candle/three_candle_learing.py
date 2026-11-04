@@ -1347,14 +1347,14 @@ def print_signal_metrics(result):
 def summarise_signal_result(result, stop_points=6.0, verbose=True):
     """Law of Motion backtest: 6-point R, stepped trailing stop, NO target.
 
-    - Enter at the next 15m bar OPEN after C3 confirmation.
+    - Aggressive entry DURING C3 at the first C2 body break (open/close).
     - Initial SL is 1R (6 points by default).
     - At +1R move SL to entry; at +2R move SL to +1R; and so on.
     - Trailing raises/lowers the stop by complete 1R increments.
     - A stop change becomes active on the NEXT bar (conservative OHLC).
     - Trades exit only on SL. At end of dataset, positions remain OPEN.
     - Sequential, non-overlapping trades; one MES contract equivalent.
-    - No fees or slippage. Closed-trade drawdown excludes open P&L.
+    - Same-C3 stop and entry ordering is unknown: assume SL first (worst case).\n    - No fees or slippage. Closed-trade drawdown excludes open P&L.
     """
     import math
 
@@ -1381,17 +1381,29 @@ def summarise_signal_result(result, stop_points=6.0, verbose=True):
             skipped += 1
             continue
 
-        entry_idx = int(candles.index.get_loc(confirmed_at)) + 1
-        if entry_idx >= len(candles) or entry_idx <= last_exit_idx or busy_until_end:
+        # Entry is triggered inside C3 by crossing C2's body boundary.
+        entry_idx = int(candles.index.get_loc(confirmed_at))
+        if entry_idx <= last_exit_idx or busy_until_end:
             skipped += 1
             continue
-
-        entry = float(candles.iloc[entry_idx].Open)
+        c2_open, c2_close = float(signal["C2_Open"]), float(signal["C2_Close"])
+        boundary = max(c2_open, c2_close) if direction == "BUY" else min(c2_open, c2_close)
+        entry_bar = candles.iloc[entry_idx]
         sign = 1 if direction == "BUY" else -1
+        # If C3 opens past the trigger, model a fill at its open,
+        # otherwise use the C2-body trigger (no additional buffer).
+        entry = (max(float(entry_bar.Open), boundary) if sign == 1
+                 else min(float(entry_bar.Open), boundary))
+        crossed = (float(entry_bar.High) > boundary if sign == 1
+                   else float(entry_bar.Low) < boundary)
+        if not crossed:
+            skipped += 1
+            continue
         stop = entry - sign * stop_points
         highest_r = 0
         exit_idx = None
         exit_price = None
+        ambiguous_entry_bar = False
 
         for bar_idx in range(entry_idx, len(candles)):
             candle = candles.iloc[bar_idx]
@@ -1403,8 +1415,15 @@ def summarise_signal_result(result, stop_points=6.0, verbose=True):
             # retroactively improve its stop. Gap-through uses bar open.
             if hit_stop:
                 exit_idx = bar_idx
-                exit_price = (min(opening, stop) if sign == 1
-                              else max(opening, stop))
+                if bar_idx == entry_idx:
+                    # Within C3 we know the trigger was crossed but cannot
+                    # know whether the low/high came before or after entry.
+                    # Conservative loss at SL, never treat as proven sequence.
+                    ambiguous_entry_bar = True
+                    exit_price = stop
+                else:
+                    exit_price = (min(opening, stop) if sign == 1
+                                  else max(opening, stop))
                 break
 
             favourable = (high - entry) if sign == 1 else (entry - low)
@@ -1435,7 +1454,9 @@ def summarise_signal_result(result, stop_points=6.0, verbose=True):
             "Entry": entry,
             "Exit": exit_price if is_closed else float("nan"),
             "Status": "CLOSED" if is_closed else "OPEN",
-            "Exit_reason": "TRAIL_STOP" if is_closed else "OPEN_AT_DATA_END",
+            "Exit_reason": ("AMBIGUOUS_C3_STOP" if ambiguous_entry_bar else
+                            "TRAIL_STOP" if is_closed else "OPEN_AT_DATA_END"),
+            "C3_intrabar_ambiguous": ambiguous_entry_bar,
             "Final_SL": stop,
             "Max_R_step": highest_r,
             "Points": points,
@@ -1476,9 +1497,13 @@ def summarise_signal_result(result, stop_points=6.0, verbose=True):
         print(f"Realised return       : {net_pct:+.3f}% (sum of trade price returns)")
         print(f"Realised points       : {net_points:+.2f} points")
         print(f"Max drawdown          : {dd_pct:.3f}% / {dd_points:.2f} points (closed only)")
-        print(f"Rules                 : next-open entry, 1R={stop_points:g}pt, "
+        print(f"Rules                 : C3 C2-body-break entry, 1R={stop_points:g}pt, "
               "SL=1R, trail SL +1R per favourable 1R, NO TP / time exit")
         print("No fees/slippage; percentages are not account-equity returns.")
+        ambiguous = int(trade_df["C3_intrabar_ambiguous"].sum()) if len(trade_df) else 0
+        if ambiguous:
+            print(f"C3 stop ambiguity     : {ambiguous} conservative same-bar SL(s); "
+                  "OHLC cannot prove execution order.")
         if len(opened):
             print(f"OPEN unrealised       : {opened.Points.sum():+.2f} points; "
                   "excluded from realised P&L and win rate")
