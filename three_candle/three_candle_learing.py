@@ -224,6 +224,10 @@ def load_learning_candles(ticker, datefrom, dateTo):
     first = int(requested.argmax())
     data = data.iloc[max(0, first - 200):]
     data = data.loc[data.index.date <= end]
+    # Retain the underlying IBKR 5m bars to resolve aggressive C3 fills.
+    # The original 15m candles and their calculations remain unchanged.
+    raw.index = raw.index.tz_convert("Europe/London")
+    data.attrs["ibkr_5m"] = raw[["Open", "High", "Low", "Close", "Volume"]]
     if first < 1000:
         print("EMA200 NOTICE: fewer than 1000 earlier bars; value may differ from TradingView")
     if data.empty:
@@ -583,6 +587,7 @@ def three_candle_signal_learning(tiker, datefrom, dateTo, enableDig=False):
     result = pd.DataFrame(signals)
     result.attrs["ambiguous"] = data.attrs.get("ambiguous", [])
     result.attrs["candles"] = data
+    result.attrs["ibkr_5m"] = data.attrs.get("ibkr_5m")
     result.attrs["requested_start"] = str(datefrom)
     if enableDig:
         passed_count = int(result["all_filters_pass"].sum()) if not result.empty else 0
@@ -1384,29 +1389,34 @@ def print_signal_metrics(result):
 
 
 def summarise_signal_result(result, stop_points=6.0, verbose=True):
-    """Law of Motion backtest: 6-point R, stepped trailing stop, NO target.
+    """Law of Motion: aggressive C3 entry, 6-point R, stepped SL, no TP.
 
-    - Aggressive entry DURING C3 at the first C2 body break (open/close).
-    - Initial SL is 1R (6 points by default).
-    - At +1R move SL to entry; at +2R move SL to +1R; and so on.
-    - Trailing raises/lowers the stop by complete 1R increments.
-    - A stop change becomes active on the NEXT bar (conservative OHLC).
-    - Trades exit only on SL. At end of dataset, positions remain OPEN.
-    - Sequential, non-overlapping trades; one MES contract equivalent.
-    - Same-C3 stop and entry ordering is unknown: assume SL first (worst case).\n    - No fees or slippage. Closed-trade drawdown excludes open P&L.
+    For the C3 entry bar use the original IBKR 5m sub-bars (if present).
+    A low/high *before* the breakout cannot stop a position not yet entered.
+    If entry and SL occur inside the same 5m bar, their order is unknown:
+    classify AMBIGUOUS, not a realised loss. Missing 5m + simultaneous
+    15m entry/SL is also AMBIGUOUS. No future data is used for entry.
+    Subsequent 15m candles retain the conservative trailing-stop logic:
+    each completed +1R improves SL by 1R starting on the next candle.
+    Trades exit only on stop or remain OPEN at end of available data.
+    No fees/slippage; non-overlapping trades; open/ambiguous excluded from
+    confirmed realised P&L, success and drawdown.
     """
     import math
 
-    if result is None or not isinstance(result, pd.DataFrame):
+    if not isinstance(result, pd.DataFrame):
         raise ValueError("result must be a Pandas DataFrame")
     if stop_points <= 0:
         raise ValueError("stop_points must be positive")
-    required = {"Filter_law_of_motion", "Direction", "C3_time"}
+    required = {"Filter_law_of_motion", "Direction", "C3_time", "C2_Open", "C2_Close"}
     if not required.issubset(result.columns):
-        raise ValueError(f"Missing result columns: {sorted(required - set(result.columns))}")
+        raise ValueError(f"Missing columns: {sorted(required - set(result.columns))}")
     candles = result.attrs.get("candles")
     if candles is None or candles.empty:
-        raise ValueError("Original OHLC candles missing; pass the scanner result, not imported JSON")
+        raise ValueError("Missing OHLC history: supply original scanner result")
+    ibkr_5m = result.attrs.get("ibkr_5m")
+    if ibkr_5m is None:
+        ibkr_5m = candles.attrs.get("ibkr_5m")
 
     passed = result.loc[result["Filter_law_of_motion"].fillna(False)].sort_values("C3_time")
     trades = []
@@ -1415,91 +1425,142 @@ def summarise_signal_result(result, stop_points=6.0, verbose=True):
     skipped = 0
     for _, signal in passed.iterrows():
         direction = signal["Direction"]
-        confirmed_at = pd.Timestamp(signal["C3_time"])
-        if direction not in ("BUY", "SELL") or confirmed_at not in candles.index:
+        stamp = pd.Timestamp(signal["C3_time"])
+        if direction not in ("BUY", "SELL") or stamp not in candles.index:
             skipped += 1
             continue
 
-        # Entry is triggered inside C3 by crossing C2's body boundary.
-        entry_idx = int(candles.index.get_loc(confirmed_at))
+        entry_idx = int(candles.index.get_loc(stamp))
         if entry_idx <= last_exit_idx or busy_until_end:
             skipped += 1
             continue
-        c2_open, c2_close = float(signal["C2_Open"]), float(signal["C2_Close"])
-        boundary = max(c2_open, c2_close) if direction == "BUY" else min(c2_open, c2_close)
-        entry_bar = candles.iloc[entry_idx]
+
         sign = 1 if direction == "BUY" else -1
-        # If C3 opens past the trigger, model a fill at its open,
-        # otherwise use the C2-body trigger (no additional buffer).
-        entry = (max(float(entry_bar.Open), boundary) if sign == 1
-                 else min(float(entry_bar.Open), boundary))
-        crossed = (float(entry_bar.High) > boundary if sign == 1
-                   else float(entry_bar.Low) < boundary)
+        boundary = (max(float(signal["C2_Open"]), float(signal["C2_Close"]))
+                    if sign == 1 else
+                    min(float(signal["C2_Open"]), float(signal["C2_Close"])))
+        c3 = candles.iloc[entry_idx]
+        crossed = (float(c3.High) > boundary if sign == 1
+                   else float(c3.Low) < boundary)
         if not crossed:
             skipped += 1
             continue
+
+        entry = None
+        ambiguous = False
+        c3_stop_hit = False
+        c3_exit_price = None
+        initial_5m = False
+        c3_subbars = None
+
+        if isinstance(ibkr_5m, pd.DataFrame) and not ibkr_5m.empty:
+            start = stamp
+            end = stamp + pd.Timedelta(minutes=15)
+            sub = ibkr_5m.loc[(ibkr_5m.index >= start) & (ibkr_5m.index < end)]
+            expected = [start + pd.Timedelta(minutes=n) for n in (0, 5, 10)]
+            if list(sub.index) == expected:
+                initial_5m = True
+                c3_subbars = sub
+
+        if initial_5m:
+            # Observe all 5m bars in C3, entering ONLY at the first breakout.
+            for subbar in c3_subbars.itertuples():
+                op, hi, lo = float(subbar.Open), float(subbar.High), float(subbar.Low)
+                if entry is None:
+                    hit_entry = hi > boundary if sign == 1 else lo < boundary
+                    if not hit_entry:
+                        continue
+                    entry = max(op, boundary) if sign == 1 else min(op, boundary)
+                    stop = entry - sign * stop_points
+                    # If stop and entry lie in this SAME 5m candle, sequence
+                    # cannot be reconstructed from OHLC. Do not invent a loss.
+                    if (lo <= stop if sign == 1 else hi >= stop):
+                        ambiguous = True
+                        break
+                else:
+                    # Entry occurred in a PREVIOUS 5m bar, so a subsequent
+                    # stop hit is chronologically valid.
+                    if (lo <= stop if sign == 1 else hi >= stop):
+                        c3_stop_hit = True
+                        c3_exit_price = (min(op, stop) if sign == 1
+                                         else max(op, stop))
+                        break
+        else:
+            # No verified 5m timeline. Whole-C3 entry/SL is unsequenced.
+            op = float(c3.Open)
+            entry = max(op, boundary) if sign == 1 else min(op, boundary)
+            stop = entry - sign * stop_points
+            if (float(c3.Low) <= stop if sign == 1 else float(c3.High) >= stop):
+                ambiguous = True
+
+        if entry is None:
+            # Defensive case: 15m indicated breakout, but 5m data disagreed.
+            skipped += 1
+            continue
+
         stop = entry - sign * stop_points
         highest_r = 0
         exit_idx = None
         exit_price = None
-        ambiguous_entry_bar = False
+        reason = "OPEN_AT_DATA_END"
 
-        for bar_idx in range(entry_idx, len(candles)):
-            candle = candles.iloc[bar_idx]
-            opening = float(candle.Open)
-            low, high = float(candle.Low), float(candle.High)
-            hit_stop = low <= stop if sign == 1 else high >= stop
-
-            # Stop has priority; a favourable move within this bar cannot
-            # retroactively improve its stop. Gap-through uses bar open.
-            if hit_stop:
-                exit_idx = bar_idx
-                if bar_idx == entry_idx:
-                    # Within C3 we know the trigger was crossed but cannot
-                    # know whether the low/high came before or after entry.
-                    # Conservative loss at SL, never treat as proven sequence.
-                    ambiguous_entry_bar = True
-                    exit_price = stop
-                else:
+        if ambiguous:
+            status = "AMBIGUOUS"
+            reason = "C3_ENTRY_SL_SEQUENCE_UNKNOWN"
+        elif c3_stop_hit:
+            status = "CLOSED"
+            exit_idx, exit_price = entry_idx, c3_exit_price
+            reason = "C3_STOP_5M_CONFIRMED"
+        else:
+            # First trail update is only from the bar AFTER C3.
+            # No C3 full-bar high/low can trigger a premature stop/step.
+            for bar_idx in range(entry_idx + 1, len(candles)):
+                bar = candles.iloc[bar_idx]
+                opening = float(bar.Open)
+                low, high = float(bar.Low), float(bar.High)
+                hit_stop = low <= stop if sign == 1 else high >= stop
+                if hit_stop:
+                    exit_idx = bar_idx
                     exit_price = (min(opening, stop) if sign == 1
                                   else max(opening, stop))
-                break
+                    reason = "TRAIL_STOP"
+                    break
+                favourable = (high - entry) if sign == 1 else (entry - low)
+                new_r = max(0, int(math.floor((favourable + 1e-8) / stop_points)))
+                if new_r > highest_r:
+                    highest_r = new_r
+                    new_stop = entry + sign * (highest_r - 1) * stop_points
+                    stop = max(stop, new_stop) if sign == 1 else min(stop, new_stop)
+            status = "CLOSED" if exit_idx is not None else "OPEN"
 
-            favourable = (high - entry) if sign == 1 else (entry - low)
-            new_r = max(0, int(math.floor((favourable + 1e-8) / stop_points)))
-            if new_r > highest_r:
-                highest_r = new_r
-                candidate_stop = entry + sign * (highest_r - 1) * stop_points
-                stop = max(stop, candidate_stop) if sign == 1 else min(stop, candidate_stop)
-
-        is_closed = exit_idx is not None
-        if is_closed:
+        if status == "CLOSED":
             last_exit_idx = exit_idx
-            mark_price = exit_price
-            final_idx = exit_idx
-        else:
-            # End-of-data is NOT a forced exit. Show unrealised mark-to-market.
+            marked_price = float(exit_price)
+        elif status == "OPEN":
             busy_until_end = True
-            final_idx = len(candles) - 1
-            mark_price = float(candles.iloc[final_idx].Close)
+            marked_price = float(candles.iloc[-1].Close)
+        else:
+            # Exact subsequent position is unknown: do not allow hypothetical
+            # overlapping entries to be counted as confirmed.
+            busy_until_end = True
+            marked_price = float("nan")
 
-        points = sign * (mark_price - entry)
+        points = sign * (marked_price - entry) if pd.notna(marked_price) else float("nan")
         trades.append({
             "Signal": signal.get("Signal"),
             "Grade": signal.get("law_of_motion_grade", "PASS"),
             "Direction": direction,
-            "Entry_time": candles.index[entry_idx],
-            "Exit_time": candles.index[final_idx] if is_closed else pd.NaT,
+            "Entry_time": stamp,
+            "Exit_time": (candles.index[exit_idx] if status == "CLOSED" else pd.NaT),
             "Entry": entry,
-            "Exit": exit_price if is_closed else float("nan"),
-            "Status": "CLOSED" if is_closed else "OPEN",
-            "Exit_reason": ("AMBIGUOUS_C3_STOP" if ambiguous_entry_bar else
-                            "TRAIL_STOP" if is_closed else "OPEN_AT_DATA_END"),
-            "C3_intrabar_ambiguous": ambiguous_entry_bar,
+            "Exit": exit_price if status == "CLOSED" else float("nan"),
+            "Status": status,
+            "Exit_reason": reason,
+            "C3_intrabar_ambiguous": ambiguous,
             "Final_SL": stop,
             "Max_R_step": highest_r,
             "Points": points,
-            "Return_pct": 100.0 * points / entry,
+            "Return_pct": 100 * points / entry if pd.notna(points) else float("nan"),
         })
 
     trade_df = pd.DataFrame(trades)
@@ -1507,14 +1568,15 @@ def summarise_signal_result(result, stop_points=6.0, verbose=True):
               if not trade_df.empty else pd.DataFrame())
     opened = (trade_df.loc[trade_df["Status"] == "OPEN"].copy()
               if not trade_df.empty else pd.DataFrame())
+    ambiguous_df = (trade_df.loc[trade_df["Status"] == "AMBIGUOUS"].copy()
+                    if not trade_df.empty else pd.DataFrame())
     n_closed = len(closed)
     wins = int((closed.Points > 0).sum()) if n_closed else 0
     losses = int((closed.Points < 0).sum()) if n_closed else 0
-    breakeven = n_closed - wins - losses
-    success_rate = 100.0 * wins / n_closed if n_closed else 0.0
+    be = n_closed - wins - losses
+    win_rate = 100 * wins / n_closed if n_closed else 0.0
     net_points = float(closed.Points.sum()) if n_closed else 0.0
     net_pct = float(closed.Return_pct.sum()) if n_closed else 0.0
-
     if n_closed:
         equity = pd.concat([pd.Series([0.0]), closed.Points.cumsum().reset_index(drop=True)],
                            ignore_index=True)
@@ -1529,25 +1591,20 @@ def summarise_signal_result(result, stop_points=6.0, verbose=True):
         print("\n========== LAW OF MOTION — 1R STEPPED TRAILING ==========")
         print(f"Total signals         : {len(result)}")
         print(f"Passed signals        : {len(passed)}")
-        print(f"Executed trades       : {len(trade_df)}")
-        print(f"Closed / Open         : {n_closed} / {len(opened)}")
-        print(f"Wins / Losses / BE    : {wins} / {losses} / {breakeven}")
-        print(f"Success rate          : {success_rate:.2f}% (closed trades only)")
-        print(f"Realised return       : {net_pct:+.3f}% (sum of trade price returns)")
+        print(f"Executed / Open       : {len(trade_df)} / {len(opened)}")
+        print(f"Closed / Ambiguous    : {n_closed} / {len(ambiguous_df)}")
+        print(f"Wins / Losses / BE    : {wins} / {losses} / {be}")
+        print(f"Success rate          : {win_rate:.2f}% (confirmed closed only)")
+        print(f"Realised return       : {net_pct:+.3f}%")
         print(f"Realised points       : {net_points:+.2f} points")
         print(f"Max drawdown          : {dd_pct:.3f}% / {dd_points:.2f} points (closed only)")
-        print(f"Rules                 : C3 C2-body-break entry, 1R={stop_points:g}pt, "
-              "SL=1R, trail SL +1R per favourable 1R, NO TP / time exit")
-        print("No fees/slippage; percentages are not account-equity returns.")
-        ambiguous = int(trade_df["C3_intrabar_ambiguous"].sum()) if len(trade_df) else 0
-        if ambiguous:
-            print(f"C3 stop ambiguity     : {ambiguous} conservative same-bar SL(s); "
-                  "OHLC cannot prove execution order.")
+        print(f"Rules                 : C3 aggressive body-break entry, 1R={stop_points:g}pt, "
+              "step trail +1R every +1R, no TP")
+        print("C3 sequence checked using IBKR 5m where available; ambiguity excluded.")
         if len(opened):
-            print(f"OPEN unrealised       : {opened.Points.sum():+.2f} points; "
-                  "excluded from realised P&L and win rate")
+            print(f"OPEN unrealised       : {opened.Points.sum():+.2f} points (not booked)")
         if skipped:
-            print(f"Skipped passed signals: {skipped} (overlap, no next bar or invalid data)")
+            print(f"Skipped passed        : {skipped}")
         if not trade_df.empty:
             from IPython.display import display
             display(trade_df)
