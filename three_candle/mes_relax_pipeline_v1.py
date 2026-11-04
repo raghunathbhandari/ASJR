@@ -743,96 +743,119 @@ class MESLearningResults(list):
 # Future research metrics may be added without changing the public API.
 # ========================================================================
 def print_signal_details(rows):
-    """Print every core-true signal, including WEAK/WAIT and its failed checks.
+    """Print the FULL nine-stage audit for EACH candidate, including GOOD.
 
-    A stage marked True means it meets the CURRENT stage acceptance setting.
-    Optional checks are printed as measured observations too; they are not
-    silently interpreted as trade-quality evidence.
+    The goal is visual research: understand every observed value, which
+    filters are active, and why an attractive setup is GOOD or WAIT.
+    A False informational result is never silently counted as a rejection.
+    Every stored result field is printed, with no hidden 'pass_' fields.
     """
     for number, row in enumerate(rows, 1):
-        outcome = "GOOD" if row["decision"] == "GOOD" else "WEAK / WAIT"
         print()
-        print("=" * 66)
+        print("=" * 74)
         print(f"Signal {number}: {row['side']} | {row['c3_uk']} | "
-              f"C3 price {row['c3_close']:.2f} | {outcome}")
-        print("=" * 66)
-        # Print the CURRENT confirmed buy-side and sell-side liquidity levels
-        # for ALL candidates, even GOOD, without repeating nine-stage checks.
-        for label, field, distance_field in (
-            ("BUY-SIDE liquidity (swing high)", "buy_side_liquidity",
+              f"C3 close {row['c3_close']:.2f} | {row['decision']}")
+        print(f"  C1 {row['c1_uk']} | C2 {row['c2_uk']} | C3 {row['c3_uk']}")
+        print("=" * 74)
+
+        # 1. At the decision time, show both nearby confirmed liquidity areas.
+        # The current level is a price-level hypothesis, NOT an order book.
+        print("  CURRENT LIQUIDITY AREAS (KNOWN AT C3):")
+        for name, price_key, distance_key in (
+            ("BUY-SIDE  / confirmed swing high", "buy_side_liquidity",
              "buy_side_distance_points"),
-            ("SELL-SIDE liquidity (swing low)", "sell_side_liquidity",
+            ("SELL-SIDE / confirmed swing low", "sell_side_liquidity",
              "sell_side_distance_points"),
         ):
-            level = row.get(field)
-            distance = row.get(distance_field)
-            if level is None:
-                print(f"  {label}: N/A (no confirmed nearby level)")
+            price = row.get(price_key)
+            distance = row.get(distance_key)
+            if price is None:
+                print(f"    {name}: N/A (no confirmed level)")
             else:
-                print(f"  {label}: {level:.2f} | {distance:.2f} pts from C3 close")
+                print(f"    {name}: {price:.2f} | {distance:.2f} pts away")
+        print(f"    C2 touched reference swing level = {row['sr_touch'] if 'sr_touch' in row else row['liquidity_area_ok']}")
+        print(f"    Liquidity_area_detect observation = {row['liquidity_area_ok']}")
+        print(f"    Liquidity hard filter enabled = {REQUIRE_LIQUIDITY_AREA}")
 
-        # GOOD means every ENABLED / REQUIRED quality check passed.
-        # Do not waste the review printout repeating nine method booleans
-        # for GOOD signals. Informational methods may still be false.
-        # All detailed metric values remain stored in the result/CSV.
-        if row["decision"] == "GOOD":
-            print(f"  C1: {row['c1_uk']} | C2: {row['c2_uk']}")
-            print(f"  Core=True | Mandatory filters=PASS")
-            print(f"  Market structure: {row['market_structure']} | "
-                  f"Sweep: {row['sweep_points']:.2f} pts | "
-                  f"Wick/body: {row['c2_wick_body']:.2f}x")
-            print(f"  EMA20: {row['EMA20']:.2f} | EMA200: {row['EMA200']:.2f}"
-                  if row.get("EMA20") is not None and row.get("EMA200") is not None
-                  else "  EMA20/EMA200: N/A (incomplete warm-up)")
-            print("  Full metrics remain available in result and CSV.")
-            continue
-
-        # For WEAK/WAIT candidates, print the nine method booleans,
-        # both required and informational, then EVERY existing metric.
-        # The first stage is always true for a stored candidate.
-        # Stage booleans use ACTUAL observations, never pass_* bypass flags.
-        # A disabled optional filter must NOT be shown as automatically true.
-        expected_direction = "BULLISH" if row["side"] == "BUY" else "BEARISH"
-        actual_alignment = row["market_structure"] == expected_direction
-        stages = [
+        # 2. Stage results are the RAW OBSERVATIONS, not gate-bypass flags.
+        # Required/optional describes whether each observation can reject.
+        expected = "BULLISH" if row["side"] == "BUY" else "BEARISH"
+        stage_checks = (
             ("candle_detect_core", row["core_confirmed"], True),
-            ("market_structure", actual_alignment, REQUIRE_MARKET_ALIGNMENT),
-            ("swing_sr_lines", row["sr_reference"] is not None,
+            ("market_structure", row["market_structure"] == expected,
+             REQUIRE_MARKET_ALIGNMENT),
+            ("swing_sr_lines", row["liquidity_area_ok"],
              REQUIRE_SWING_SR_TOUCH),
             ("volume_detect", row["volume_ok"], REQUIRE_VOLUME),
-            ("wicks_detect", row["wick_strong"] and row["wick_congestion_ok"], True),
+            ("wicks_detect", row["wick_strong"] and row["wick_congestion_ok"],
+             True),
             ("daily_range_check", row["daily_range_ok"], REQUIRE_DAILY_RANGE),
             ("display_other_metrics", True, False),
             ("higher_timeframe_support", row["htf_ok"], REQUIRE_HTF),
             ("Liquidity_area_detect", row["liquidity_area_ok"],
              REQUIRE_LIQUIDITY_AREA),
-        ]
-        print("  NINE METHOD CHECKS:")
-        for method, passed, mandatory in stages:
-            suffix = "REQUIRED" if mandatory else "INFO / OPTIONAL"
-            print(f"    {method:<29} = {str(bool(passed)).lower():<5} [{suffix}]")
+        )
+        print("  ALL 9 METHOD OBSERVATIONS:")
+        for method, observed, required in stage_checks:
+            requirement = "REQUIRED" if required else "INFORMATION ONLY"
+            print(f"    {method:<29} = {str(bool(observed)).lower():<5} [{requirement}]")
 
-        # Four individually adjustable candle-quality checks.
-        print("  CANDLE QUALITY SUBCHECKS:")
-        for key in ("pass_sweep2", "pass_wick2", "pass_c3_close",
-                    "pass_wick_congestion"):
-            print(f"    {key:<29} = {str(bool(row[key])).lower()}")
+        # 3. These are EXACTLY the conditions used to mark GOOD / WAIT.
+        # Do not mix an observed False with a disabled informational filter.
+        filters = (
+            ("sweep2", row["sweep_points"] >= MIN_SWEEP_POINTS, True,
+             f"sweep {row['sweep_points']:.2f} >= {MIN_SWEEP_POINTS:.2f} pts"),
+            ("wick2", row["wick_strong"], True,
+             f"wick/body {row['c2_wick_body']:.2f} >= {MIN_C2_REJECTION_WICK_X:.2f}x"),
+            ("c3_close", row["core_confirmed"], MIN_C3_CLOSE_CONFIRMATION,
+             "C3 directional close beyond C2 body"),
+            ("wick_congestion", row["wick_congestion_ok"], True,
+             f"last5 excessive={row['last5_long_wicks']} <= {MAX_LONG_WICKS_IN_5}"),
+            ("market_structure", row["market_structure"] == expected,
+             REQUIRE_MARKET_ALIGNMENT,
+             f"observed {row['market_structure']}; expected {expected}"),
+            ("swing_sr", row["liquidity_area_ok"], REQUIRE_SWING_SR_TOUCH,
+             "C2 touch vs confirmed swing level"),
+            ("volume", row["volume_ok"], REQUIRE_VOLUME,
+             f"C2 RVOL20={row['c2_rvol20']} (valid 20-bar history)"),
+            ("daily_range", row["daily_range_ok"], REQUIRE_DAILY_RANGE,
+             "UK calendar-day range; informational placeholder"),
+            ("higher_timeframe", row["htf_ok"], REQUIRE_HTF,
+             f"confirmed H1={row['h1_trend']}"),
+            ("liquidity", row["liquidity_area_ok"], REQUIRE_LIQUIDITY_AREA,
+             f"reference swing-touch={row['liquidity_area_ok']}"),
+        )
+        print("  TRADE FILTER AUDIT (OBSERVED vs ENABLED):")
+        failures = []
+        for name, observed, required, explanation in filters:
+            actual_pass = bool(row["pass_" + name])
+            if required and not actual_pass:
+                failures.append(name)
+            gate_result = "PASS" if actual_pass else "BLOCKS TRADE"
+            print(f"    {name:<18} observed={str(bool(observed)).lower():<5} "
+                  f"enabled={str(bool(required)).lower():<5} "
+                  f"result={gate_result}")
+            print(f"      {explanation}")
 
-        # Print EVERY public measurement currently returned by the pipeline.
-        # This intentionally adapts automatically as the research grows.
-        print("  ALL AVAILABLE METRICS / INDICATORS:")
-        excluded = {"side", "core_confirmed", "decision", "reason"}
+        # 4. Nothing is omitted: this includes C1/C2/C3 OHLCV, swing
+        # references, wick and sweep measurements, EMAs, RSI/ATR/VWAP,
+        # liquidity price/distance, each pass_* gate, and research fields.
+        print("  ALL STORED CANDIDATE / ENTRY METRICS:")
         for key, value in row.items():
-            if key.startswith("_") or key.startswith("pass_") or key in excluded:
-                continue
             if isinstance(value, float):
-                text = f"{value:.4f}"
+                shown = f"{value:.4f}"
             elif value is None:
-                text = "N/A (insufficient history)"
+                shown = "N/A"
             else:
-                text = str(value)
-            print(f"    {key:<29} = {text}")
-        print(f"  REJECTION REASONS = {row['reason'] or 'None'}")
+                shown = str(value)
+            print(f"    {key:<32} = {shown}")
+
+        print("  FINAL DECISION:")
+        print(f"    Status: {row['decision']}")
+        print(f"    Active filters that blocked: {', '.join(failures) if failures else 'NONE'}")
+        print(f"    Stored rejection reasons: {row['reason'] or 'NONE'}")
+        if set(failures) != set(filter(None, row["reason"].split(";"))):
+            print("    WARNING: printed filter audit disagrees with stored reasons!")
 
 
 
