@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""MES Relax v1: editable, structure-aware nine-method research pipeline.
+"""MES Relax v1: CSV-based nine-method research pipeline with simple public API.
 
 Stages: candle_detect_core -> market_structure -> swing_sr_lines ->
 volume_detect -> wicks_detect -> daily_range_check ->
@@ -13,6 +13,13 @@ Examples (run from repo root after pulling latest main):
     python3 three_candle/mes_relax_pipeline_v1.py --date 2026-10-29 --plot-both
     python3 three_candle/mes_relax_pipeline_v1.py --date 2026-10-30 --plot-both
     python3 three_candle/mes_relax_pipeline_v1.py --date 2026-10-30 --plot-both --show-wait
+Notebook calling convention (the three user-facing methods):
+    from mes_relax_pipeline_v1 import three_candle_signal, plot_candidates, plot_signal_passed
+    result = three_candle_signal("MES=F", "2026-10-29", "2026-10-30")
+    plot_candidates(result)       # one chart, purple dots on every core C2
+    plot_signal_passed(result)    # one chart per good C1/C2/C3 signal
+
+Input is IBKR September/October CSV: three_candle/data/MESZ2026_IBKR_5m_YYYY-MM.csv.
 Requires matplotlib only for plotting. CSV scanning uses standard library.
 
 User-owned tuning switches and thresholds below; each stage has a clear
@@ -310,7 +317,7 @@ def _swing_lines_on_chart(ax, bars, end_index, chart_start, chart_end):
                       color=colour, linewidth=1.0, alpha=0.7)
 
 
-def plot_candidates(bars, rows, outpath, title="ALL CORE CANDIDATES"):
+def _plot_candidates_chart(bars, rows, outpath, title="ALL CORE CANDIDATES"):
     """ONE full-range candle chart; PURPLE dots mark C2 of ALL core signals.
 
     Every candle_detect_core() == True signal is plotted, GOOD or WAIT.
@@ -468,12 +475,12 @@ class MESLearningResults(list):
         self.dateTo = dateTo
 
 
-def three_candle_signal_learning(tiker, datefrom, dateTo):
+def three_candle_signal(tiker, datefrom, dateTo):
     """MAIN PUBLIC METHOD — matches the first learning module's method name.
 
     Example:
-        result = three_candle_signal_learning("MES=F", "2026-10-29", "2026-10-30")
-        plot_signal_candidate(result)  # one overview with purple C2 dots
+        result = three_candle_signal("MES=F", "2026-10-29", "2026-10-30")
+        plot_candidates(result)       # one overview with purple C2 dots
         plot_signal_passed(result)     # one focused chart per GOOD setup
 
     Scans both directions using existing nine-stage MES pipeline. Retains all
@@ -500,14 +507,18 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
     return result
 
 
-def plot_signal_candidate(result):
-    """ORIGINAL LEARNING NAME: all CORE-TRUE C2 purple dots on ONE chart."""
+def plot_candidates(result):
+    """PUBLIC API: plot ALL core-true C2 signals as purple dots on ONE chart.
+
+    Accepts exactly the result returned by three_candle_signal().
+    Internal drawing implementation is _plot_candidates_chart().
+    """
     if not result:
         print("No core candidates to plot.")
         return
     outpath = (ROOT / "results" / "MES_relax_v1_review" /
                f"MES_{result.datefrom}_to_{result.dateTo}_ALL_CANDIDATES.png")
-    plot_candidates(result.bars, result, outpath)
+    _plot_candidates_chart(result.bars, result, outpath)
     return outpath
 
 
@@ -550,7 +561,7 @@ def main():
     label=args.date or "all_dates"
     write_csv(found,dest/f"MES_{label}_all_core_candidates.csv")
     if args.plot_all or args.plot_both:
-        plot_candidates(bars,found,dest/f"MES_{label}_ALL_CANDIDATES.png","ALL CORE-TRUE")
+        _plot_candidates_chart(bars,found,dest/f"MES_{label}_ALL_CANDIDATES.png","ALL CORE-TRUE")
     if args.plot_good or args.plot_both:
         plot_good_candidates(bars,good,dest/f"MES_{label}_GOOD_CANDIDATES.pdf")
     print("NOTE: This scanner classifies signals; plots are references, NOT backtested P/L.")
