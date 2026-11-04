@@ -222,3 +222,15 @@ python3 three_candle/mes_relax_pipeline_v1.py --date 2026-10-30 --plot-both --sh
 ```
 
 Dependencies: matplotlib for PDF charts, Python 3.9+ standard library for scanning (ZoneInfo). **Changes are committed but have not yet been executed against the VPS IBKR datasets.** Verify candidate results and chart rendering before accepting as a final backtest.
+
+
+## 11. Confirmed original-learning plotting layouts (2026-11-04)
+
+Updated `mes_relax_pipeline_v1.py` with **two separate implemented plotting functions**, preserving the original learning-style dark candlestick design:
+
+1. `plot_candidates(bars, rows, outpath, title)`: **ONE full-range chart per requested date/range**, every CORE-TRUE candidate marked by a **purple dot on C2** (below BUY C2 low, above SELL C2 high). Includes price candles and confirmed swing support/resistance. Prints all core candidates, GOOD and WAIT. Exports `MES_<date>_ALL_CANDIDATES.png`.
+2. `plot_good_candidates(bars, rows, outpath)`: **ONE GOOD SIGNAL PER PAGE**, preserving local candle context, explicitly labelled C1/C2/C3, highlighted C2, blue ENTRY reference, red SL reference, purple TP reference, price labels and swing S/R. Exports `MES_<date>_GOOD_CANDIDATES.pdf`.
+
+The old learning `plot_signal_candidate()` marked BUY C2 green and SELL C2 red; purple is the **user-requested MES colour override**. The old `plot_signal_passed()` and `plot_signal()` used individual full-history charts; new GOOD views use a **focused candle context around one signal** for legibility, matching the requested one-signal-per-chart rule.
+
+The **reference** ENTRY uses C3 closing price, and stops/targets use 5/10 points around it. It is not represented as a next-5-minute actual fill. No profitability result is claimed by these plots. Original V3/learning notebook unchanged.
