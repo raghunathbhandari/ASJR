@@ -462,3 +462,20 @@ Implemented as a new informational helper `liquidity_levels_at_signal(bars,c3_i)
 The main `three_candle_signal()` print includes both levels for all GOOD/WAIT candidates. WEAK/WAIT still print the nine boolean diagnostic checks; GOOD still print only their concise summary. On the all-candidates overview, label **the latest candidate's** two confirmed liquidity levels as dashed **amber buy-side** and dashed **teal sell-side** lines; one per GOOD chart uses the respective candidate's snapshot. Lines start no earlier than the swing confirmation (right-hand 2 candles) and do not use future pivots. EMA20/EMA200 and existing S/R chart lines remain.
 
 Change commit: `9dfde8d`. GitHub Actions real-run validation pending at this writing; use the latest workflow run if available.
+
+
+## 20. FINAL REVIEW MODE: `enableDiag` optional public argument (2026-11-04)
+
+**Authoritative printing contract for all Three-Candle variants:** `three_candle_signal(tiker, datefrom, dateTo, enableDiag=False)`. There is **no** global diagnosis variable and **no** automatic date-based toggle. A researcher may use `enableDiag=True` for a single date to minimize output, but it also works for any requested interval.
+
+In compact mode, print each candidate's C3 timestamp/price/BUY-SELL/GOOD-WAIT, current confirmed buy-side and sell-side liquidity line price and distance, structure/sweep/wick context, and active rejection reasons.
+
+In detailed mode, **GOOD and WAIT alike** print **all 9 named method observations** with true/false, enabled/optional flags, **all 10 underlying trade-gate variables with observed value, live threshold comparison, stored pass outcome, and actual BLOCKS TRADE/PASS**, PLUS every stored key/value field (including C1/C2/C3 OHLCV, EMA20/200, VWAP, RSI, ATR, RVOL, candle anatomy, market structure, swing lines and both current liquidity levels). Never suppress GOOD metrics in detailed mode: visually promising setups must be fully auditable. Disabled informational observations can be false while GOOD remains legitimate.
+
+Example:
+```python
+three_candle_signal("MES=F", "2026-10-29", "2026-10-30")
+three_candle_signal("MES=F", "2026-10-30", "2026-10-30", enableDiag=True)
+```
+
+This changes **printing only**. It never changes scanning, filters, thresholds, plot formats, labels, or underlying CSV. Code commit `e61e2cf`, on top of full-audit implementation `0425384`.
