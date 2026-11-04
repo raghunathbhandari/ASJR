@@ -34,6 +34,7 @@ from pathlib import Path
 import mes_relax_structure_first_v1 as base
 
 # ===== EASY-TO-EDIT SETTINGS ===============================================
+DETAIL_DIAGNOSIS = True             # True=ON: all checks/metrics; False=OFF: compact output
 LOOK_AHEAD_C3_BARS = 3             # Max C3 delay; C3 must CLOSE directionally
 MIN_SWEEP_POINTS = 2.0             # Filter 1: sufficient liquidity sweep
 MIN_C2_REJECTION_WICK_X = 2.0      # Filter 2: directional C2 wick/body ratio
@@ -776,6 +777,16 @@ def print_signal_details(rows):
         print(f"    C2 touched reference swing level = {row['sr_touch'] if 'sr_touch' in row else row['liquidity_area_ok']}")
         print(f"    Liquidity_area_detect observation = {row['liquidity_area_ok']}")
         print(f"    Liquidity hard filter enabled = {REQUIRE_LIQUIDITY_AREA}")
+
+        # One user-controlled switch determines the level of printed detail.
+        # OFF: retain useful core outcome, key metrics and liquidity levels.
+        # ON: include every stage, check, indicator and stored data field.
+        if not DETAIL_DIAGNOSIS:
+            print(f"  Direction context: {row['market_structure']} | "
+                  f"Sweep {row['sweep_points']:.2f} pts | "
+                  f"C2 rejection wick {row['c2_wick_body']:.2f}x")
+            print(f"  Active-filter failures: {row['reason'] or 'NONE'}")
+            continue
 
         # 2. Stage results are the RAW OBSERVATIONS, not gate-bypass flags.
         # Required/optional describes whether each observation can reject.
