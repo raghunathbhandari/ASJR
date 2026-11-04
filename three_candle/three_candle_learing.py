@@ -391,6 +391,46 @@ def plot_chart(df):
 
 
 # 6. MAIN NOTEBOOK CALL — keep this public method name/signature unchanged
+def six_point_research_metrics(history, c2_position, direction):
+    """Six comparison measurements through C3 close; no change to signal filters.
+
+    Previous price extreme is calculated from at most 20 bars before C2.
+    Approach and bounce are point distances; EMA distances and slope are %.
+    """
+    c2 = history.iloc[c2_position]
+    c3 = history.iloc[-1]
+    previous = history.iloc[max(0, c2_position - 20):c2_position]
+    if previous.empty:
+        approach = float("nan")
+    elif direction == "BUY":
+        approach = float(previous.High.max() - c2.Low)
+    else:
+        approach = float(c2.High - previous.Low)
+    bounce = float(c3.Close - c2.Low if direction == "BUY"
+                   else c2.High - c3.Close)
+    c2_body_edge = max(c2.Open, c2.Close) if direction == "BUY" else min(c2.Open, c2.Close)
+    body_break = float(c3.Close - c2_body_edge if direction == "BUY"
+                       else c2_body_edge - c3.Close)
+    closes = history.Close
+    ema5 = closes.ewm(span=5, adjust=False).mean()
+    ema20 = closes.ewm(span=20, adjust=False).mean()
+    ema200 = closes.ewm(span=200, adjust=False).mean()
+
+    def pct_from_ema(ema_value):
+        return float(100 * (c3.Close - ema_value) / ema_value) if ema_value else float("nan")
+
+    ema5_slope = (float(100 * (ema5.iloc[-1] - ema5.iloc[-2]) / ema5.iloc[-2])
+                  if len(ema5) >= 2 and ema5.iloc[-2] else float("nan"))
+    return {
+        "approach_distance_points": approach,
+        "bounce_distance_points": bounce,
+        "c3_body_break_points": body_break,
+        "ema200_distance_pct": pct_from_ema(ema200.iloc[-1]),
+        "ema20_distance_pct": pct_from_ema(ema20.iloc[-1]),
+        "ema5_slope_pct": ema5_slope,
+    }
+
+
 def three_candle_signal_learning(tiker, datefrom, dateTo):
     """Find BUY and SELL core patterns, then PRINT other filters only."""
     if tiker not in ("NQ=F", "GC=F", "MES=F"):
@@ -451,8 +491,7 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
                   f"C3 wait={wait_bars} bar(s)")
             for name, ok in v3_checks.items():
                 print(f"  {name} = {ok}")
-            for name, ok in checks.items():
-                print(f"  diagnostic_{name} = {ok} (not a V3 pass condition)")
+            # Legacy diagnostic values remain in result, but are not printed.
 
         # BUY/SL columns are retained for notebook compatibility only.
         # They represent the C2 close/open study references, NOT filled orders.
@@ -469,6 +508,8 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
                "V3withBodySize_C3_body_pct": abs(c3.Close - c3.Open) * 100 / c3.Close}
         row.update(checks)
         row.update(v3_checks)
+        row.update(six_point_research_metrics(history, c2_i, direction))
+        row["Signal"] = number
         for label, stamp, candle in zip(("C1", "C2", "C3"), times, (c1, c2, c3)):
             row[f"{label}_time"] = stamp
             for field in ("Open", "High", "Low", "Close", "Volume"):
@@ -486,19 +527,20 @@ def three_candle_signal_learning(tiker, datefrom, dateTo):
     print(f"V3withBodySize SELL C3 body 0.05%-<0.10%: {body_count} research candidates.")
     print(f"V3withBodySize_Wick4to10 quality candidates: {wick_count}")
     print(f"Ambiguous confirmation/invalidation candles: {len(result.attrs['ambiguous'])}")
-    print("\n========== PASSED CANDIDATES ==========")
-    if passed_count == 0:
-        print("None")
+    columns = [
+        "Signal", "Direction", "C3_time", "candidate_status",
+        "filter_3_location", "filter_4_v_shape", "filter_5_volume",
+        "filter_6_time", "filter_7_wick", "filter_8_daily_range",
+        "approach_distance_points", "bounce_distance_points",
+        "c3_body_break_points", "ema200_distance_pct",
+        "ema20_distance_pct", "ema5_slope_pct",
+    ]
+    print("\n========== SIGNAL COMPARISON (one row per signal) ==========")
+    if result.empty:
+        print("No signals to compare.")
     else:
-        for idx, row in result.loc[result["all_filters_pass"]].iterrows():
-            print(f"Candidate {idx+1} | {row['Direction']} | "
-                  f"C3 {row['C3_time']:%Y-%m-%d %H:%M %Z} | "
-                  f"C2 close reference {row['BUY']:.2f} | "
-                  f"C2 open reference {row['SL']:.2f}")
-            for name in ("filter_3_location", "filter_4_v_shape",
-                         "filter_5_volume", "filter_6_time",
-                         "filter_7_wick", "filter_8_daily_range"):
-                print(f"  {name} = {bool(row[name])}")
+        from IPython.display import display
+        display(result[columns])
     return result
 
 
