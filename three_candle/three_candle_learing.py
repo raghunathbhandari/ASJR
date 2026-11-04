@@ -214,62 +214,59 @@ def three_candle_core(c1, c2, c3, direction="BUY"):
 
 
 def scan_core_candidates(data):
-    """State machine: C1 -> exactly ONE C2 sweep -> wait for C3.
+    """Detect overlapping C2 setups independently, with multi-bar C3 waiting.
 
-    - C1 stays fixed while subsequent candles are inside its range.
-    - C2 is a single candle sweeping C1 low (BUY) or high (SELL).
-    - Any later candle can be C3 if it crosses C2's body boundary.
-    - If a waiting candle breaks C2's sweep extreme, reset with it as C1.
-    - If a candle both breaks the extreme and confirms, reset first:
-      15m OHLC cannot tell which event occurred first.
-    - Reset at missing 15m timestamps; never connect across gaps.
-    - On confirmation use that C3 as the next C1.
+    Each consecutive pair of 15m candles is a potential C1/C2 pair.
+    A sweep may open a BUY, SELL, or both independent pending setups.
+    Previously opened setups stay active while newer C2s are discovered.
+    Each setup is emitted once, at its first unambiguous body break.
+    Sweep-extreme invalidation takes priority on the confirming candle
+    because OHLC cannot establish intrabar event order.
+    Missing 15m candles invalidate pending setups; never bridge a gap.
     """
     step = pd.Timedelta(minutes=15)
-    c1_i = None
-    c2_i = None
-    side = None
+    pending = []  # (c1_index, c2_index, direction)
+    data.attrs["ambiguous"] = []
 
-    for i in range(len(data)):
-        if i and data.index[i] - data.index[i - 1] != step:
-            c1_i, c2_i, side = None, None, None
-        if c1_i is None:
-            c1_i = i
+    for i in range(1, len(data)):
+        if data.index[i] - data.index[i - 1] != step:
+            pending = []
             continue
 
         candle = data.iloc[i]
-        c1 = data.iloc[c1_i]
+        still_pending = []
 
-        if c2_i is None:
-            sweep_low = candle.Low < c1.Low
-            sweep_high = candle.High > c1.High
-            if sweep_low and sweep_high:
-                c1_i = i            # Ambiguous two-sided sweep
-            elif sweep_low or sweep_high:
-                c2_i = i
-                side = "BUY" if sweep_low else "SELL"
-            # Otherwise continue watching original C1.
-            continue
+        # Evaluate all earlier C2 candidates without blocking newer C2s.
+        for c1_i, c2_i, direction in pending:
+            c1 = data.iloc[c1_i]
+            c2 = data.iloc[c2_i]
+            invalid = (candle.Low < c2.Low if direction == "BUY"
+                       else candle.High > c2.High)
+            confirmed = three_candle_core(c1, c2, candle, direction)
 
-        c2 = data.iloc[c2_i]
-        invalid = (candle.Low < c2.Low if side == "BUY"
-                   else candle.High > c2.High)
-        confirmed = three_candle_core(c1, c2, candle, side)
-        if invalid and confirmed:
-            # Intrabar sequencing unknown: record, never count as confirmed.
-            data.attrs.setdefault("ambiguous", []).append({
-                "C1_time": data.index[c1_i],
-                "C2_time": data.index[c2_i],
-                "C3_time": data.index[i],
-                "Direction": side,
-            })
-        if invalid:
-            c1_i, c2_i, side = i, None, None
-            continue
+            if invalid and confirmed:
+                data.attrs["ambiguous"].append({
+                    "C1_time": data.index[c1_i],
+                    "C2_time": data.index[c2_i],
+                    "C3_time": data.index[i],
+                    "Direction": direction,
+                })
+            if invalid:
+                continue
+            if confirmed:
+                yield c1_i, c2_i, i, direction, i - c2_i
+            else:
+                still_pending.append((c1_i, c2_i, direction))
 
-        if confirmed:
-            yield c1_i, c2_i, i, side, i - c2_i
-            c1_i, c2_i, side = i, None, None
+        pending = still_pending
+
+        # Every candle can be a new C2 relative to the preceding C1,
+        # including candles that also confirmed another pending setup.
+        c1 = data.iloc[i - 1]
+        if candle.Low < c1.Low:
+            pending.append((i - 1, i, "BUY"))
+        if candle.High > c1.High:
+            pending.append((i - 1, i, "SELL"))
 
 
 # 4. PRINT ONE CANDLE: easy to compare C1, C2, C3
