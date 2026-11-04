@@ -740,17 +740,21 @@ def plot_signal(result, show_sr=False, show_metrics=False):
 
 # 8. CHART ONLY FULLY PASSED SIGNALS (one chart per signal)
 def plot_signal_passed(result):
-    """Draw one full-price-history chart for each candidate passing extra filters."""
+    """Draw exactly one chart per distinct Law of Motion passed signal."""
     if result is None or result.empty:
         print("No candidates to plot.")
         return
-    passed = result.loc[result["all_filters_pass"]].copy()
+    if "Filter_law_of_motion" not in result.columns:
+        raise ValueError("Law of Motion column missing; rerun three_candle_signal_learning.")
+    # Only the experimental Law of Motion A1/WEAK passes; not V3 passes.
+    passed = result.loc[result["Filter_law_of_motion"].fillna(False)].copy()
+    passed = passed.drop_duplicates(subset=["Direction", "C2_time", "C3_time"])
     passed.attrs["candles"] = result.attrs.get("candles")
     passed.attrs["requested_start"] = result.attrs.get("requested_start")
     if passed.empty:
-        print("No candidates passed all enabled extra filters.")
+        print("No Law of Motion signals passed.")
         return
-    # Preserve original candidate numbers in printed headings / chart titles.
+    print(f"Plotting {len(passed)} Law of Motion passed signals (A1 + WEAK).")
     plot_signal(passed, show_sr=True, show_metrics=True)
 
 
