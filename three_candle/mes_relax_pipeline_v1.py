@@ -366,6 +366,37 @@ def higher_timeframe_support(bars,c3_i,side):
             "htf_ok":trend==("BULLISH" if side=="BUY" else "BEARISH")}
 
 
+def liquidity_levels_at_signal(bars, c3_i):
+    """Find the nearest CONFIRMED liquidity levels at the C3 decision time.
+
+    Buy-side liquidity is represented by an earlier confirmed swing HIGH.
+    Sell-side liquidity is represented by an earlier confirmed swing LOW.
+    Only levels already confirmed when C3 closes may be selected.
+    A horizontal price level is a location to study, not proof of orders.
+    """
+    highs, lows = base.confirmed_pivots(bars, c3_i)
+    close = bars[c3_i].c
+
+    # Nearest confirmed resistance above C3: possible buy-side liquidity.
+    above = [(index, price) for index, price in highs if price >= close]
+    buy_side = min(above, key=lambda item: item[1]) if above else None
+
+    # Nearest confirmed support below C3: possible sell-side liquidity.
+    below = [(index, price) for index, price in lows if price <= close]
+    sell_side = max(below, key=lambda item: item[1]) if below else None
+
+    return {
+        "buy_side_liquidity": buy_side[1] if buy_side else None,
+        "sell_side_liquidity": sell_side[1] if sell_side else None,
+        "buy_side_distance_points": round(buy_side[1] - close, 2)
+                                    if buy_side else None,
+        "sell_side_distance_points": round(close - sell_side[1], 2)
+                                     if sell_side else None,
+        "_buy_side_pivot_i": buy_side[0] if buy_side else None,
+        "_sell_side_pivot_i": sell_side[0] if sell_side else None,
+    }
+
+
 def Liquidity_area_detect(bars,c2_i,side,sr):
     """STAGE 9: nearby liquidity sweep against confirmed swing S/R lines.
 
@@ -390,6 +421,7 @@ def evaluate_pipeline(bars,c1_i,c2_i,c3_i,core):
     metrics=display_other_metrics(bars,c1_i,c2_i,c3_i)
     htf=higher_timeframe_support(bars,c3_i,side)
     liquidity=Liquidity_area_detect(bars,c2_i,side,sr)
+    liquidity_lines=liquidity_levels_at_signal(bars,c3_i)
     aligned=structure["market_structure"]==("BULLISH" if side=="BUY" else "BEARISH")
     checks={
         "sweep2":core["sweep_points"]>=MIN_SWEEP_POINTS,
@@ -408,7 +440,7 @@ def evaluate_pipeline(bars,c1_i,c2_i,c3_i,core):
     return {**core,**metrics,**indicators,
             "market_structure":structure["market_structure"],
             "sr_reference":sr["sr_reference"],"sr_lines":str(sr["sr_lines"]),
-            **volume,**wicks,**day,**htf,**liquidity,
+            **volume,**wicks,**day,**htf,**liquidity,**liquidity_lines,
             **{"pass_"+k:v for k,v in checks.items()},
             "decision":"GOOD" if not failures else "WAIT",
             "reason":";".join(failures),
@@ -511,6 +543,35 @@ def _plot_ema_lines(ax, bars, start, end):
                 label=name.upper().replace("EMA", "EMA"), zorder=4)
 
 
+def _liquidity_lines_on_chart(ax, row, chart_start, chart_end):
+    """Draw current C3-known liquidity levels, including their exact prices.
+
+    Lines start no earlier than the pivot's confirmation (2 right bars).
+    In the overview only the MOST RECENT candidate's levels are displayed
+    to prevent dozens of overlapping lines and maintain legibility.
+    """
+    levels = (
+        ("BUY-SIDE", "buy_side_liquidity", "_buy_side_pivot_i", "#f59e0b"),
+        ("SELL-SIDE", "sell_side_liquidity", "_sell_side_pivot_i", "#2dd4bf"),
+    )
+    for label, price_key, pivot_key, colour in levels:
+        price = row.get(price_key)
+        pivot_index = row.get(pivot_key)
+        if price is None or pivot_index is None:
+            continue
+        known_at = pivot_index + base.SWING_RIGHT
+        if known_at > row["_c3_i"]:
+            continue  # Never draw a not-yet-confirmed level.
+
+        left = max(chart_start, known_at)
+        right = chart_end
+        if left >= right:
+            continue
+        ax.hlines(price, left-chart_start, right-chart_start,
+                  color=colour, linewidth=1.8, linestyle="--",
+                  label=f"{label} liquidity {price:.2f}", zorder=5)
+
+
 def _plot_candidates_chart(bars, rows, outpath, title="ALL CORE CANDIDATES"):
     """ONE full-range candle chart; PURPLE dots mark C2 of ALL core signals.
 
@@ -554,6 +615,9 @@ def _plot_candidates_chart(bars, rows, outpath, title="ALL CORE CANDIDATES"):
         ax.scatter(i-start, y, s=65, color="#c084fc",
                    edgecolors="white", linewidths=0.6, zorder=8)
     _swing_lines_on_chart(ax, bars, end, start, end)
+    # Show the CURRENT liquidity map of the last candidate on this overview.
+    latest_candidate = max(rows, key=lambda candidate: candidate["_c3_i"])
+    _liquidity_lines_on_chart(ax, latest_candidate, start, end)
     _plot_ema_lines(ax, bars, start, end)
 
     every = max(1, len(candles)//18)
@@ -621,6 +685,7 @@ def plot_good_candidates(bars, rows, outpath):
                       linestyle=":", linewidth=1.6,
                       label=f"TAKE PROFIT reference {tp:.2f}")
             _swing_lines_on_chart(ax, bars, c3_i, start, end - 1)
+            _liquidity_lines_on_chart(ax, row, start, end - 1)
             _plot_ema_lines(ax, bars, start, end - 1)
             every = max(1, len(candles)//14)
             ticks = list(range(0, len(candles), every))
@@ -691,6 +756,20 @@ def print_signal_details(rows):
         print(f"Signal {number}: {row['side']} | {row['c3_uk']} | "
               f"C3 price {row['c3_close']:.2f} | {outcome}")
         print("=" * 66)
+        # Print the CURRENT confirmed buy-side and sell-side liquidity levels
+        # for ALL candidates, even GOOD, without repeating nine-stage checks.
+        for label, field, distance_field in (
+            ("BUY-SIDE liquidity (swing high)", "buy_side_liquidity",
+             "buy_side_distance_points"),
+            ("SELL-SIDE liquidity (swing low)", "sell_side_liquidity",
+             "sell_side_distance_points"),
+        ):
+            level = row.get(field)
+            distance = row.get(distance_field)
+            if level is None:
+                print(f"  {label}: N/A (no confirmed nearby level)")
+            else:
+                print(f"  {label}: {level:.2f} | {distance:.2f} pts from C3 close")
 
         # GOOD means every ENABLED / REQUIRED quality check passed.
         # Do not waste the review printout repeating nine method booleans
