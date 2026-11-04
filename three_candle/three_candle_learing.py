@@ -771,6 +771,7 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
     for _, row in passed.iterrows():
         single = pd.DataFrame([row.to_dict()])
         single.attrs["candles"] = candles
+        single.attrs["ibkr_5m"] = result.attrs.get("ibkr_5m")
         trades = summarise_signal_result(single, stop_points=stop_points, verbose=False)
         trade = trades.iloc[0] if not trades.empty else None
 
@@ -798,6 +799,8 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
                   f"Highest step: {int(trade['Max_R_step'])}R")
             if status == "OPEN":
                 print("P/L shown is unrealised mark-to-market, not booked profit.")
+            elif status == "AMBIGUOUS":
+                print("P/L unavailable: C3 entry/stop order cannot be established.")
             if bool(trade.get("C3_intrabar_ambiguous", False)):
                 print("CAUTION: entry/stop sequence inside C3 unknown; conservative SL assumed.")
 
@@ -861,6 +864,11 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
                     (x_exit, exit_price), xytext=(10, -25),
                     textcoords="offset points", color="#bd91ff",
                     fontsize=10, weight="bold")
+            elif trade["Status"] == "AMBIGUOUS":
+                ax.annotate("AMBIGUOUS — C3 entry/SL order unresolved",
+                            (x_entry, entry_price), xytext=(10, -25),
+                            textcoords="offset points", color="#f7c65c",
+                            fontsize=9)
             else:
                 ax.annotate("OPEN — trailing stop not hit",
                             (x_entry, entry_price), xytext=(10, -25),
@@ -882,7 +890,9 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
             pct = float(trade["Return_pct"])
             roi_r = pnl / stop_points
             summary_line = (
-                f"{status} | P/L {pnl:+.2f} pts | {pct:+.4f}% | {roi_r:+.2f}R"
+                "AMBIGUOUS | C3 ordering unresolved | P/L excluded"
+                if status == "AMBIGUOUS" else
+                f"CLOSED | P/L {pnl:+.2f} pts | {pct:+.4f}% | {roi_r:+.2f}R"
                 if status == "CLOSED" else
                 f"OPEN (unrealised) | {pnl:+.2f} pts | {pct:+.4f}% | {roi_r:+.2f}R"
             )
