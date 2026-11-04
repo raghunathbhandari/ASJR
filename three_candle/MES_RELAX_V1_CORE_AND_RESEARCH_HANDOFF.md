@@ -399,3 +399,30 @@ These metrics should be ported as **human-readable, separately commented** calcu
 **Important data coverage:** the presently selected CSVs begin in September 2026 and end in October 2026. Early September does **not** necessarily have the 200 already-closed 15-minute bars needed for fully warmed EMA200. Earlier CSV months would be required to have a complete EMA200 from the very first September candle.
 
 **Runtime status:** GitHub code updated. Compilation and actual chart generation have **not yet been executed successfully** against the VPS/local data from this session; source-container networking prevented automated download for a runtime check. Run `python3 -m py_compile three_candle/mes_relax_pipeline_v1.py` and notebook calls after safe `git merge --ff-only`.
+
+
+## 17. VERIFIED FIRST REAL RUN — MES 29–30 OCTOBER 2026 (run 2026-11-04)
+
+**Source:** real IBKR MESZ2026 5-minute September/October 2026 CSVs from GitHub; resampled to 15-minute bars. The actual version `three_candle/mes_relax_pipeline_v1.py` was executed in GitHub Actions on Ubuntu/Python 3.11, not merely estimated. Both fixed public plot methods executed successfully. Run: https://github.com/raghunathbhandari/ASJR/actions/runs/41793966304 ; downloadable run artifact: https://github.com/raghunathbhandari/ASJR/actions/runs/41793966304/artifacts/13304478251
+
+### Real classification result
+
+| UK calendar day | CORE-TRUE | GOOD | WAIT |
+|---|---:|---:|---:|
+| 2026-10-29 | 27 | 0 | 27 |
+| 2026-10-30 | 24 | 2 | 22 |
+| **Total** | **51** | **2** | **49** |
+
+Two **GOOD SELL** signals:
+1. **2026-10-30 15:00 UK** C3, C1 14:30 / C2 14:45; C3 close 7641.75; C2 high sweep 2.75 MES points; C2 rejection wick 4.75× body; C2 RVOL20 2.25; C3/C2 vol ratio 0.8678; market structure BEARISH; previous 1H BEARISH; EMA20 7661.2284; EMA200 7713.2288; RSI14 36.3872; ATR14 11.6817; VWAP 7665.4167; last5 double-long-wick candles 1.
+2. **2026-10-30 16:45 UK** C3, C1 16:15 / C2 16:30; C3 close 7614.00; C2 high sweep 3.00 MES points; C2 rejection wick 2.571× body; C2 RVOL20 0.86; C3/C2 vol ratio 2.3467; market structure BEARISH; previous 1H BEARISH; EMA20 7644.6775; EMA200 7707.5672; RSI14 30.1293; ATR14 12.0079; VWAP 7656.2276; last5 double-long-wick candles 1.
+
+**Failure counts across all 51 candidates** (overlapping; a single WAIT can fail several): market_structure=30, wick2=29, wick_congestion=24, sweep2=20. These are the current mandatory check counts, not loss-trade counts.
+
+**Important caution from actual metrics:** Both GOOD signals have `liquidity_area_ok=False`, but that check was intentionally **informational / disabled** and not a mandatory GOOD condition. The corrected nine-method print now shows these as `false [INFO / OPTIONAL]` rather than misleadingly printing `true` from bypass flags; correction commit `3633185`. Also `daily_range_check` is presently an informational distance to the **UK calendar-day** extreme and `daily_range_ok=True` placeholder, not yet the original learning script's 18:00 ET futures trading session range or a validated room-to-target test. The second GOOD signal's current UK-day low distance is only 5.75 points while the illustrative target is 10 points. Do not claim full 9-filter strict validation.
+
+**Outputs in GitHub Actions downloadable artifact:** full per-signal 9-stage human-readable log, 51-row full diagnostic CSV, one all-candidates dark chart with purple C2 dots and EMA20/EMA200, and one two-page PDF of GOOD charts with C1/C2/C3 / entry / SL / TP / EMA20/EMA200. All compiled/rendered successfully.
+
+**This is classification validation only.** No next-5-minute fill, realized R, TP/SL hit, transaction fees, slippage, P&L, or success rate have been calculated for these 2 signals in this run.
+
+**Next idea-review priorities:** visually inspect the two GOOD charts; verify future-outcome TP/SL via 5-minute replay; consider whether the daily range and liquidity checks should become meaningful measurements/gates. Keep fixed public API and chart designs unchanged.
