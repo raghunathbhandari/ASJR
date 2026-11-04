@@ -140,3 +140,23 @@ User-approved implementation only: keep Method 9 informational. For each CORE-TR
 On `plot_candidates()`, draw **two dashed current liquidity lines** from the **latest candidate's** C3-known levels (buy-side amber, sell-side teal) to chart end, labelled with prices; selecting only the latest avoids clutter. On each `plot_signal_passed()` page draw those two dashed lines using the corresponding individual GOOD signal's C3-known levels. A line may begin only after its underlying swing is confirmed; no lookahead. Preserve existing short swing S/R lines and EMA20/EMA200. Source change `9dfde8d`.
 
 This change does not alter the core pattern, GOOD/WAIT classification, plotting API, or prior test assumptions. Compare printed levels with actual chart context before considering them as future filters.
+
+
+## 12. Latest approved diagnostic API (2026-11-04, supersedes earlier print conventions)
+
+**Final user decision:** `three_candle_signal(tiker, datefrom, dateTo, enableDiag=False)`. **Only one parameter controls verbosity:** `enableDiag`. It is **not** controlled by date-range length and there is no global `DETAIL_DIAGNOSIS` switch.
+
+```python
+# Typical long-range scan: compact outputs by default.
+result = three_candle_signal("MES=F", "2026-10-29", "2026-10-30")
+
+# Examine one chosen date (or any range) with COMPLETE diagnosis.
+result = three_candle_signal("MES=F", "2026-10-30", "2026-10-30", enableDiag=True)
+
+plot_candidates(result)
+plot_signal_passed(result)
+```
+
+**With `enableDiag=True`, print EVERY CORE-TRUE candidate including GOOD and WAIT**, each of the nine stage observations by its method name, each true/false measured condition, whether the gate is ENABLED, its ACTUAL stored `pass_*` outcome, the concrete threshold/comparison, active filter failure names, nearest confirmed current buy-side / sell-side liquidity **level and distance**, and **ALL stored data/metric field names and their numerical/boolean/string VALUES** (C1/C2/C3 OHLCV; indicators; structure; sweep; wicks; volume; session; every pass flag). This lets a researcher spot visually good candidates that fail a specific enabled filter. Disabled optional observations may be false without blocking GOOD.
+
+**With `enableDiag=False`, print compact signal header, price, status, liquidity area levels/distances, structure/sweep/wick and active rejection reasons.** Both modes leave candidate detection, mandatory thresholds, result objects, CSV values, and plots unchanged. These final instructions **supersede** previous statements that GOOD prints only short metrics or that one selected date automatically enables detailed mode. Implementation: `three_candle/mes_relax_pipeline_v1.py` commits `0425384`, `954852b`, `84c64e0`, `e61e2cf`. The final code is the authoritative reference. All future Three-Candle strategies should support this same optional argument.
