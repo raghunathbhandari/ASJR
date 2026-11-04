@@ -378,3 +378,24 @@ The earlier learning module's `build_signal_metrics()`, `v3_research_checks()` a
 These metrics should be ported as **human-readable, separately commented** calculations with data warm-up and no lookahead. The most informative first priority is trend EMA20/EMA200, RSI14, ATR14, session VWAP, C3/C2 volume ratio, confirmed support/resistance room, futures-session previous high/low, and C1/C2/C3 OHLC+volume. Review with the user before new filter thresholds or core changes.
 
 **Commit implementing prints:** `18c67ae`. Code is committed, **not runtime-validated** in a Python execution environment yet.
+
+
+## 16. EMA historical warm-up, chart overlays and first-learning diagnostic parity (2026-11-04)
+
+**User instruction:** use enough earlier CSV history for indicators to be valid from the beginning of the *requested display period*. Compute indicators across ALL available MES September/October IBKR 5-minute CSV, resampled to complete 15-minute candles, **before** filtering to `datefrom`–`dateTo`. For October requested periods, September provides prior history. If the earliest loaded history has fewer than 200 15m candles, EMA200 is **N/A**, not a fabricated complete EMA. Do not fetch hidden future bars.
+
+**Implemented in `mes_relax_pipeline_v1.py` (commit `c816147`):**
+- `calculate_indicators(bars)` calculates EMA20 / EMA200 seeded with the corresponding first 20 / 200 bars' simple average (warm-up-aware); also RSI14, ATR14, BB20 width and 18:00 New York futures-session VWAP. A single indicator set is computed once per full `scan(bars)`, not per candidate.
+- `indicator_metrics(...)` records from the original first learning version C1/C2/C3 OHLC and volumes; range/body/wick percentages, C2 sweep ticks, C3/C2 volume, EMA distances/slope, RSI14, ATR14, BB width, VWAP/distance, rolling 10/20 range, 10-bar approach and recovery, prior20 high/low, sweep/high distances. These are **display metrics**, not newly mandated filters.
+- Both `plot_candidates(result)` (one overview with purple C2 dots) and `plot_signal_passed(result)` (one detailed chart per GOOD candidate) draw **EMA20 gold** and **EMA200 lavender/violet**, using the SAME full-data precomputed history (not recalculated from the visible chart slice).
+- `three_candle_signal()` prints all nine method status lines, the four core quality checks, and all available metrics for each signal (GOOD and WAIT), following the original learning's detailed print style.
+- Existing locked public method names and plotting layouts stay unchanged:
+  ```python
+  result = three_candle_signal("MES=F", "2026-10-29", "2026-10-30")
+  plot_candidates(result)
+  plot_signal_passed(result)
+  ```
+
+**Important data coverage:** the presently selected CSVs begin in September 2026 and end in October 2026. Early September does **not** necessarily have the 200 already-closed 15-minute bars needed for fully warmed EMA200. Earlier CSV months would be required to have a complete EMA200 from the very first September candle.
+
+**Runtime status:** GitHub code updated. Compilation and actual chart generation have **not yet been executed successfully** against the VPS/local data from this session; source-container networking prevented automated download for a runtime check. Run `python3 -m py_compile three_candle/mes_relax_pipeline_v1.py` and notebook calls after safe `git merge --ff-only`.
