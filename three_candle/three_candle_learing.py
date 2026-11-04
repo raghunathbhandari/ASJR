@@ -769,6 +769,33 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
         trades = summarise_signal_result(single, stop_points=stop_points, verbose=False)
         trade = trades.iloc[0] if not trades.empty else None
 
+        # Print the individual trade result immediately before its chart.
+        number = row.get("Signal", "?")
+        grade = row.get("law_of_motion_grade", "PASS")
+        print(f"\n========== SIGNAL {number} | {row['Direction']} | {grade} ==========")
+        if trade is None:
+            print("No simulated fill: the entry trigger or future candle is unavailable.")
+        else:
+            status = str(trade["Status"])
+            points = float(trade["Points"])
+            return_pct = float(trade["Return_pct"])
+            risk_r = points / stop_points
+            exit_text = (f"{float(trade['Exit']):.2f}" if status == "CLOSED"
+                         else "OPEN")
+            exit_time = (str(trade["Exit_time"]) if status == "CLOSED"
+                         else "Not exited")
+            print(f"Entry (C3) : {trade['Entry_time']} @ {float(trade['Entry']):.2f}")
+            print(f"Initial SL : {float(trade['Entry']) - (stop_points if row['Direction'] == 'BUY' else -stop_points):.2f}")
+            print(f"Exit       : {exit_time} @ {exit_text}")
+            print(f"Status     : {status} | {trade['Exit_reason']}")
+            print(f"P/L        : {points:+.2f} points | {return_pct:+.4f}% | {risk_r:+.2f}R")
+            print(f"Final SL   : {float(trade['Final_SL']):.2f} | "
+                  f"Highest step: {int(trade['Max_R_step'])}R")
+            if status == "OPEN":
+                print("P/L shown is unrealised mark-to-market, not booked profit.")
+            if bool(trade.get("C3_intrabar_ambiguous", False)):
+                print("CAUTION: entry/stop sequence inside C3 unknown; conservative SL assumed.")
+
         c2_idx = int(candles.index.get_loc(row["C2_time"]))
         c3_idx = int(candles.index.get_loc(row["C3_time"]))
         entry_idx = (int(candles.index.get_loc(trade["Entry_time"]))
@@ -844,6 +871,18 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
         ax.set_title(f"{row['Ticker']} | Signal {number} | "
                      f"{row['Direction']} {grade} | UK time",
                      color="#f0f5fa")
+        if trade is not None:
+            status = str(trade["Status"])
+            pnl = float(trade["Points"])
+            pct = float(trade["Return_pct"])
+            roi_r = pnl / stop_points
+            summary_line = (
+                f"{status} | P/L {pnl:+.2f} pts | {pct:+.4f}% | {roi_r:+.2f}R"
+                if status == "CLOSED" else
+                f"OPEN (unrealised) | {pnl:+.2f} pts | {pct:+.4f}% | {roi_r:+.2f}R"
+            )
+            fig.text(0.5, 0.94, summary_line, ha="center", va="top",
+                     color="#dbe5f0", fontsize=10, weight="bold")
         ax.set_ylabel("Futures price", color="#dbe5f0")
         ax.tick_params(colors="#dbe5f0")
         ax.grid(color="#526174", alpha=0.25)
@@ -852,7 +891,7 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
                       edgecolor="#526174", labelcolor="white")
         for spine in ax.spines.values():
             spine.set_color("#526174")
-        fig.tight_layout()
+        fig.tight_layout(rect=(0, 0, 1, 0.92))
         plt.show()
         plt.close(fig)
 
