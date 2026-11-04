@@ -131,3 +131,12 @@ plot_signal_passed(result)
 
 ### Next session: ideas only
 Suggested discussion topics, not instructions to edit: understand why all 29 Oct candidates failed; study two 30 Oct SELL charts; analyse whether market-structure recognition and liquidity level placement match real price action; explore how much room-to-target and previous-session extremes matter; later request 5m execution replay with commissions/slippage when desired. Preserve the existing user notebook, original learning file, existing source CSV and old research master datasets.
+
+
+## 11. Liquidity area study lines and printing (2026-11-04)
+
+User-approved implementation only: keep Method 9 informational. For each CORE-TRUE candidate, `liquidity_levels_at_signal()` reads **confirmed** swing pivots available through C3 and records the **closest confirmed swing high at or above C3 close** as buy-side liquidity, and **closest confirmed swing low at or below C3 close** as sell-side liquidity. It records exact price and distance in points, or N/A if none; this is a *price-level hypothesis*, not observed resting order volume. `three_candle_signal()` prints these two current areas even for GOOD (but continues to print nine true/false method lines for WEAK/WAIT only). Existing `Liquidity_area_detect()` swing-touch boolean remains separately available and is NOT a new mandatory filter.
+
+On `plot_candidates()`, draw **two dashed current liquidity lines** from the **latest candidate's** C3-known levels (buy-side amber, sell-side teal) to chart end, labelled with prices; selecting only the latest avoids clutter. On each `plot_signal_passed()` page draw those two dashed lines using the corresponding individual GOOD signal's C3-known levels. A line may begin only after its underlying swing is confirmed; no lookahead. Preserve existing short swing S/R lines and EMA20/EMA200. Source change `9dfde8d`.
+
+This change does not alter the core pattern, GOOD/WAIT classification, plotting API, or prior test assumptions. Compare printed levels with actual chart context before considering them as future filters.
