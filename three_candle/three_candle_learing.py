@@ -1239,6 +1239,129 @@ def print_signal_metrics(result):
     return metrics
 
 
+def summarise_signal_result(result, stop_points=3.0, target_r=2.0,
+                            trail_start_r=1.0, max_hold_bars=16):
+    """Backtest Law of Motion PASS signals; print counts, returns and drawdown.
+
+    Assumptions (MES research, NOT executed trades):
+    - Enter at the OPEN of the bar AFTER C3 confirmation.
+    - Initial fixed stop is 3 points; target = 2R (6 points by default).
+    - When price reaches +1R, move stop to breakeven from the NEXT bar.
+    - If target and stop touch in one bar, assume STOP happens first.
+    - Close at last available bar or max_hold_bars (default 16 = 4 hours).
+    - One position at a time: ignore overlapping signals while in a trade.
+    - No commissions, spread or slippage. Results are price-based, not
+      account-equity returns; sequential points assume one contract.
+    - Drawdown uses cumulative CLOSED-trade P&L, not intratrade equity.
+    """
+    if result is None or not isinstance(result, pd.DataFrame):
+        raise ValueError("result must be a Pandas DataFrame")
+    if stop_points <= 0 or target_r <= 0 or trail_start_r <= 0 or max_hold_bars < 1:
+        raise ValueError("stop_points, target_r, trail_start_r and max_hold_bars must be positive")
+    needed = {"Filter_law_of_motion", "Direction", "C3_time"}
+    if not needed.issubset(result.columns):
+        raise ValueError(f"Missing result columns: {sorted(needed - set(result.columns))}")
+    candles = result.attrs.get("candles")
+    if candles is None or candles.empty:
+        raise ValueError("OHLC history missing: pass the original scanner result, not an exported JSON DataFrame")
+
+    passed = result.loc[result["Filter_law_of_motion"].fillna(False)].sort_values("C3_time")
+    trades = []
+    last_exit_idx = -1
+    for _, signal in passed.iterrows():
+        direction = signal["Direction"]
+        if direction not in ("BUY", "SELL"):
+            continue
+        confirmed_at = pd.Timestamp(signal["C3_time"])
+        if confirmed_at not in candles.index:
+            continue
+        c3_idx = int(candles.index.get_loc(confirmed_at))
+        entry_idx = c3_idx + 1
+        if entry_idx >= len(candles) or entry_idx <= last_exit_idx:
+            continue
+
+        entry = float(candles.iloc[entry_idx].Open)
+        sign = 1 if direction == "BUY" else -1
+        stop = entry - sign * stop_points
+        target = entry + sign * stop_points * target_r
+        active_stop = stop
+        exit_idx = min(entry_idx + max_hold_bars - 1, len(candles) - 1)
+        exit_price = float(candles.iloc[exit_idx].Close)
+        reason = "TIME_EXIT"
+        # Stop always takes precedence when both stop and target are touched.
+        for bar_idx in range(entry_idx, exit_idx + 1):
+            candle = candles.iloc[bar_idx]
+            low, high = float(candle.Low), float(candle.High)
+            stop_hit = low <= active_stop if sign == 1 else high >= active_stop
+            target_hit = high >= target if sign == 1 else low <= target
+            if stop_hit:
+                exit_price, exit_idx, reason = active_stop, bar_idx, "STOP"
+                break
+            if target_hit:
+                exit_price, exit_idx, reason = target, bar_idx, "TARGET"
+                break
+            # Change trailing stop only after checking current candle.
+            # The new stop first becomes effective on the following bar.
+            one_r_hit = (high >= entry + stop_points * trail_start_r if sign == 1
+                         else low <= entry - stop_points * trail_start_r)
+            if one_r_hit:
+                active_stop = max(active_stop, entry) if sign == 1 else min(active_stop, entry)
+
+        points = sign * (exit_price - entry)
+        trades.append({
+            "Signal": signal.get("Signal"),
+            "Grade": signal.get("law_of_motion_grade", "PASS"),
+            "Direction": direction,
+            "Entry_time": candles.index[entry_idx],
+            "Exit_time": candles.index[exit_idx],
+            "Entry": entry,
+            "Exit": exit_price,
+            "Exit_reason": reason,
+            "Points": points,
+            "Return_pct": 100.0 * points / entry,
+        })
+        last_exit_idx = exit_idx
+
+    trade_df = pd.DataFrame(trades)
+    wins = int((trade_df.Points > 0).sum()) if not trade_df.empty else 0
+    losses = int((trade_df.Points < 0).sum()) if not trade_df.empty else 0
+    n = len(trade_df)
+    # Breakeven counts in executed trades but not wins.
+    success_rate = 100.0 * wins / n if n else 0.0
+    net_points = float(trade_df.Points.sum()) if n else 0.0
+    net_pct = float(trade_df.Return_pct.sum()) if n else 0.0
+    if n:
+        equity = pd.concat([pd.Series([0.0]), trade_df.Points.cumsum().reset_index(drop=True)],
+                           ignore_index=True)
+        equity_pct = pd.concat([pd.Series([0.0]), trade_df.Return_pct.cumsum().reset_index(drop=True)],
+                               ignore_index=True)
+        dd_points = float((equity.cummax() - equity).max())
+        dd_pct = float((equity_pct.cummax() - equity_pct).max())
+    else:
+        dd_points, dd_pct = 0.0, 0.0
+
+    print("\n========== LAW OF MOTION — BACKTEST SUMMARY ==========")
+    print(f"Total signals         : {len(result)}")
+    print(f"Passed signals        : {len(passed)}")
+    print(f"Executed trades       : {n}")
+    print(f"Wins / Losses / BE    : {wins} / {losses} / {n-wins-losses}")
+    print(f"Success rate          : {success_rate:.2f}%")
+    print(f"Net return            : {net_pct:+.3f}% (sum of trade price returns)")
+    print(f"Net points            : {net_points:+.2f} points")
+    print(f"Max drawdown          : {dd_pct:.3f}% / {dd_points:.2f} points")
+    print(f"Rules                 : next-open entry, {stop_points:g}pt SL, "
+          f"{target_r:g}R TP, BE at {trail_start_r:g}R, "
+          f"{max_hold_bars} bars max, no costs")
+    print("Drawdown is closed-trade only; % is NOT account-equity drawdown.")
+    if len(passed) != n:
+        print(f"Note: {len(passed)-n} passed signal(s) not traded "
+              "(overlap, missing future bars, or invalid direction).")
+    if n:
+        from IPython.display import display
+        display(trade_df)
+    return trade_df
+
+
 # 12. RUN DIRECTLY IN VS CODE (or import from your notebook)
 if __name__ == "__main__":
     three_candle_signal_learning("NQ=F", "2026-10-29", "2026-10-30")
