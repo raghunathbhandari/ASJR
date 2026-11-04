@@ -313,3 +313,43 @@ This is the fixed API regardless of future research version; keep function names
 7. Future meetings can discuss method details, detection and new ideas. **Do not modify source code, public names, chart design, thresholds, or assumptions until requested.** Once changes are explicitly approved, change internal implementations without breaking this public contract.
 
 **Current implementation:** `three_candle/mes_relax_pipeline_v1.py`, public function-name correction commit `c2df9f2`. That GitHub code was committed but execution and chart rendering have not yet been verified in a Python runtime.
+
+
+## 14. CROSS-STRATEGY THREE-CANDLE DEVELOPMENT STANDARD (2026-11-04)
+
+This convention is **COMMON TO ALL THREE-CANDLE STRATEGIES**, not MES-only. Carry it as a design contract when researching NQ, MNQ, MES, GC, INTC, or other tickers.
+
+### Permanent user-facing functions
+
+```python
+result = three_candle_signal(tiker, datefrom, dateTo)
+plot_candidates(result)
+plot_signal_passed(result)
+```
+
+- Keep these names, parameter order and result-to-plot flow stable across all future variants.
+- `three_candle_signal()` loads local CSV data where the relevant dataset is available, processes candles, runs named core/filter methods and returns all candidates plus GOOD/WAIT classifications and data needed for plotting.
+- `plot_candidates()`: **one** dark, full-range candlestick chart with **purple dots on C2** for every CORE-TRUE candidate.
+- `plot_signal_passed()`: **one GOOD signal per detailed chart**, with C1/C2/C3, clearly visible blue ENTRY, red SL, purple TP, price values, contextual price action and UK-time labels.
+- Versions may change implementation, instrument-specific data adapters and research checks, but not this public API or visual contract without explicit approval.
+
+### Ideas are transferable; implementation changes are NOT automatic
+
+- Record new market-structure, liquidity, wick, volume, higher-timeframe and price-level ideas as **research proposals** that can be **imported/reused** between Three-Candle strategies.
+- In a later session, **discuss an idea first** and wait for explicit instruction before adapting another strategy's code, modifying thresholds or changing historical results.
+- Keep core detection, market-structure logic, filtering, plotting and data-source loading in separate small functions.
+- Preserve existing strategy code and files; add isolated, versioned experiments when needed.
+
+### Human-readable code and documentation standard
+
+1. Prefer **simple explicit Python** over clever abstractions or compressed single-line expressions.
+2. Add short comments at every **major logical step** explaining **why** the check exists, not only what Python does.
+3. Each method needs a brief docstring: **inputs, output, and rules**. Keep method names descriptive.
+4. Put tunable parameters together at the top with units and example values.
+5. Use clear variables such as `c2_sweep_points`, `directional_wick_ratio`, `market_direction`, `entry_price`; avoid cryptic names.
+6. Label completed vs unconfirmed bars carefully; do not use future candle information or repaint historical signals.
+7. Keep debugging/audit output for every candidate, its pass/fail checks and reasons.
+8. Make next-session handoffs easy to read, with paths, exact commands, version, tests and findings.
+9. Protect the user's notebook and downloaded CSVs unless explicitly asked to change them.
+
+This cross-strategy guideline is a **documentation agreement**: other strategy files are not modified by adding this section.
