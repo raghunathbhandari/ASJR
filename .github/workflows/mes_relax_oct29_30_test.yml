@@ -1,5 +1,5 @@
 name: MES Relax 29-30 October real-run check
-# Verification rerun: nearest confirmed buy-side/sell-side liquidity lines and printouts.
+# Verification rerun: DETAIL_DIAGNOSIS=True full checks + metrics for GOOD/WAIT.
 on:
   push:
     paths:
