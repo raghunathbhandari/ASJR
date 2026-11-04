@@ -192,3 +192,33 @@ python3 three_candle/mes_relax_structure_first_v1.py --date 2026-10-30 \
 ```
 
 **Validation status:** GitHub source commit completed; executable compilation and full 5m outcome backtest are still to be run on a Python environment holding the IBKR CSVs. Do not claim an improved win rate from code creation alone.
+
+
+## 10. Confirmed nine-method order and all/good visual plots (2026-11-04)
+
+**User-approved arrangement:** `candle_detect_core()` → `market_structure()` → `swing_sr_lines()` → `volume_detect()` → `wicks_detect()` → `daily_range_check()` → `display_other_metrics()` → `higher_timeframe_support()` → `Liquidity_area_detect()`.
+
+New commented research orchestrator: [mes_relax_pipeline_v1.py](./mes_relax_pipeline_v1.py). It imports the prior [mes_relax_structure_first_v1.py](./mes_relax_structure_first_v1.py) for IBKR loading, 15m resampling and pivot helpers. Neither source CSVs nor the original V3 core is touched.
+
+- `candle_detect_core()`: first valid C1/C2 sweep and C3 directional **close** confirmation. BUY/SELL analysed independently. Its TRUE output is a **raw candidate** (not a trade).
+- `market_structure()`: confirmed 2-left/2-right swing pivots; alignment required to be GOOD by default.
+- `swing_sr_lines()`: recent confirmed swing S/R levels and proximity; plot/context first, optional hard gate.
+- `volume_detect()`: historical 20-bar RVOL20; informational initially.
+- `wicks_detect()`: C2 directional wick/body >=2x plus last-five-candle excessive-wick rule (>=2 of 5 => WAIT); documented default requires both upper/lower shadow >= body; adjustable.
+- `daily_range_check()`: day-to-date high/low and remaining distance to extreme; informational, NOT forecast.
+- `display_other_metrics()`: C1/C2/C3 price/time/range labels.
+- `higher_timeframe_support()`: last fully completed H1 bar direction; informational until user enables gating.
+- `Liquidity_area_detect()`: confirmed swing liquidity touch; informational initially.
+
+**Two separate chart collections:** `--plot-all` creates a multipage PDF of **every CORE-TRUE candidate**, including later WAIT. `--plot-good` plots **only candidates passing all currently required filters**. `--plot-both` creates both. Each page keeps the prior dark candlestick styling: green/red candles, highlighted C2, C1/C2/C3 labels, blue dashed reference entry, red dashed reference stop, purple reference target; all labels in UK time. Entry/SL/TP are illustrative levels; charts DO NOT constitute a 5m fill backtest or prove profitability.
+
+```bash
+cd /root/trading/ASJR
+git fetch origin && git merge --ff-only origin/main
+python3 -m py_compile three_candle/mes_relax_pipeline_v1.py
+python3 three_candle/mes_relax_pipeline_v1.py --date 2026-10-29 --plot-both --show-wait
+python3 three_candle/mes_relax_pipeline_v1.py --date 2026-10-30 --plot-both --show-wait
+# PDFs and audit CSVs: three_candle/results/MES_relax_v1_review/
+```
+
+Dependencies: matplotlib for PDF charts, Python 3.9+ standard library for scanning (ZoneInfo). **Changes are committed but have not yet been executed against the VPS IBKR datasets.** Verify candidate results and chart rendering before accepting as a final backtest.
