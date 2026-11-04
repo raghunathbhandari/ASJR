@@ -1,0 +1,30 @@
+name: MES V2 September and October Hypothesis Validation
+on:
+  push:
+    paths:
+      - '.github/workflows/mes_v2_holdout_replay.yml'
+  workflow_dispatch:
+jobs:
+  historical-holdout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile and replay MES research periods
+        run: |
+          set -o pipefail
+          python -m py_compile three_candle/mes_v2_holdout_analysis.py
+          python three_candle/mes_v2_holdout_analysis.py | tee mes_v2_holdout.log
+      - name: Upload detailed research
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MES-v2-structure-hypotheses-heldout-Sep-Oct
+          path: |
+            mes_v2_holdout.log
+            three_candle/results/MES_v2_research/*heldout_outcomes.csv
+            three_candle/results/MES_v2_research/MES_Oct29_30_outcome_research.csv
+          if-no-files-found: warn
