@@ -426,3 +426,28 @@ Two **GOOD SELL** signals:
 **This is classification validation only.** No next-5-minute fill, realized R, TP/SL hit, transaction fees, slippage, P&L, or success rate have been calculated for these 2 signals in this run.
 
 **Next idea-review priorities:** visually inspect the two GOOD charts; verify future-outcome TP/SL via 5-minute replay; consider whether the daily range and liquidity checks should become meaningful measurements/gates. Keep fixed public API and chart designs unchanged.
+
+
+## 18. RUDRA THREE STRATEGY — CURRENT FINAL HANDOFF (2026-11-04 08:37 UK)
+
+**This is the latest agreed state.** The cross-instrument source of truth is `three_candle/NEXT_SESSION_IDEAS_HANDOFF.md` section 10. In later conversations, **discuss strategy ideas only until implementation is explicitly requested**.
+
+**All Three-Candle strategies share this locked notebook entry point:**
+```python
+result = three_candle_signal(tiker, datefrom, dateTo)
+plot_candidates(result)
+plot_signal_passed(result)
+```
+The nine stable internal stages, in order:
+`candle_detect_core()`, `market_structure()`, `swing_sr_lines()`, `volume_detect()`, `wicks_detect()`, `daily_range_check()`, `display_other_metrics()`, `higher_timeframe_support()`, `Liquidity_area_detect()`.
+Supporting code: `scan()`, `evaluate_pipeline()`, `calculate_indicators()`, `indicator_metrics()`, `print_signal_details()`.
+
+**Final print convention:** the main `three_candle_signal()` prints every signal header and status. For **WEAK/WAIT**, print all nine boolean observations, REQUIRED/OPTIONAL labels, candle subchecks, all available metrics and rejection reasons. For **GOOD**, print a short passed-mandatory-filters summary and key prices/metrics **without** repeating the nine booleans. Optional measurements can be false even for GOOD; the detail remains in `result` and the exported audit CSV. This formatting update is committed (`4303a4f`) but has not separately been runtime tested after the verified 29–30 Oct run.
+
+**Locked charts:** `plot_candidates()` = one dark full-period chart, purple dots on all C2 CORE-TRUE candidates, EMA20 gold, EMA200 lavender and swing S/R. `plot_signal_passed()` = one focused chart per GOOD with C1/C2/C3, entry blue, SL red, TP purple, numeric price labels, EMA20/EMA200, swing S/R and UK times. No chart redesign without approval.
+
+**Data:** pre-read all available historical IBKR 5m CSV history, resample to complete 15m candles, calculate EMA20/EMA200 and all indicators **before** limiting displayed dates. Return N/A until warm-up sufficient. Don't modify input data. Print diagnostic RSI14, ATR14, BB20 width, RVOL, VWAP, OHLCV, range/body/wick, price sweep and volume comparisons. Avoid changing filters based on indicators without permission.
+
+**Real-run baseline (GitHub Actions, successful Python 3.11 test):** 29 Oct 2026: 27 CORE/0 GOOD/27 WAIT; 30 Oct: 24 CORE/2 GOOD/22 WAIT; **combined 51 CORE, 2 GOOD, 49 WAIT**. The two GOOD were **SELL 30 Oct 15:00 UK @ 7641.75** and **SELL 30 Oct 16:45 UK @ 7614.00** (C3 closes). Main overlapping rejections: structure 30, wick2 29, wick congestion 24, sweep2 20. This was **classification only**, not measured profitability. Last verified detailed results and charts: https://github.com/raghunathbhandari/ASJR/actions/runs/41793966304/artifacts/13304478251 ; updated optional-observation verification: https://github.com/raghunathbhandari/ASJR/actions/runs/41793966304 .
+
+**Editing standard:** human-readable, short self-documenting methods, comments around every major area, descriptive names, thresholds with units at top, retain full diagnostic audit, never edit prior notebook/historical CSVs/master results. Follow Git safety (`git fetch origin && git merge --ff-only origin/main`). Future session should start by reviewing these notes and discussing **ideas only**.
