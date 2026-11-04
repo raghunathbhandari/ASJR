@@ -160,3 +160,32 @@ plot_signal_passed(result)
 **With `enableDiag=True`, print EVERY CORE-TRUE candidate including GOOD and WAIT**, each of the nine stage observations by its method name, each true/false measured condition, whether the gate is ENABLED, its ACTUAL stored `pass_*` outcome, the concrete threshold/comparison, active filter failure names, nearest confirmed current buy-side / sell-side liquidity **level and distance**, and **ALL stored data/metric field names and their numerical/boolean/string VALUES** (C1/C2/C3 OHLCV; indicators; structure; sweep; wicks; volume; session; every pass flag). This lets a researcher spot visually good candidates that fail a specific enabled filter. Disabled optional observations may be false without blocking GOOD.
 
 **With `enableDiag=False`, print compact signal header, price, status, liquidity area levels/distances, structure/sweep/wick and active rejection reasons.** Both modes leave candidate detection, mandatory thresholds, result objects, CSV values, and plots unchanged. These final instructions **supersede** previous statements that GOOD prints only short metrics or that one selected date automatically enables detailed mode. Implementation: `three_candle/mes_relax_pipeline_v1.py` commits `0425384`, `954852b`, `84c64e0`, `e61e2cf`. The final code is the authoritative reference. All future Three-Candle strategies should support this same optional argument.
+
+
+## VS Code / Jupyter calling script — LOCKED direct import + ALWAYS reload (2026-11-04)
+
+**Do not ask the user for local folder paths again.** The notebook and the `.py` module are in the **same directory** when used in VS Code. Use direct Python imports; **never add hard-coded `D:\\...` project paths, `Path(...)`, or `sys.path.insert(...)`** to the call script. Always do `importlib.reload(module)` so edits are picked up in an existing notebook kernel.
+
+MES v1 source Python file: **`three_candle/mes_relax_pipeline_v1.py`** (module `mes_relax_pipeline_v1`). **Copy/paste calling example:**
+
+```python
+import importlib
+import mes_relax_pipeline_v1 as mes_v1
+
+# REQUIRED in VS Code/Jupyter: reload latest local .py after editing.
+importlib.reload(mes_v1)
+
+# Short output by default; use enableDiag=True for ALL checks, metrics and values.
+result = mes_v1.three_candle_signal(
+    "MES=F",
+    "2026-10-30",
+    "2026-10-30",
+    enableDiag=True
+)
+
+# One full-range candidate overview and one detailed chart per GOOD signal.
+mes_v1.plot_candidates(result)
+mes_v1.plot_signal_passed(result)
+```
+
+**Usage rules:** `enableDiag=False` is the default (compact); `enableDiag=True` prints a full audit for all GOOD and WAIT candidates. For a long range omit it or pass False. Never edit the original `three_candle/test_three_candle.ipynb` just to demonstrate these calls. Future strategy versions should follow the **same-folder direct import + reload** convention; change only the module alias/name when a different `.py` file is created. MES v1 is locked and v2 research is separate. If module isn't importable, first confirm VS Code notebook's working directory is the directory that actually contains the module rather than hard-code an absolute path.
