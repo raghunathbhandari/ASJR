@@ -81,3 +81,12 @@ git merge --ff-only origin/main
 python3 -m py_compile three_candle/mes_relax_pipeline_v1.py
 python3 three_candle/mes_relax_pipeline_v1.py --date 2026-10-29 --plot-both --show-wait
 ```
+
+
+## 9. Confirmed printing split (2026-11-04)
+
+`three_candle_signal(tiker, datefrom, dateTo)` is responsible for printing the **nine named method check results** (True/False, Required/Optional) for every **CORE-TRUE candidate classified WEAK/WAIT**, along with its candle-quality checks, metrics, indicators and rejection reasons. For **GOOD** candidates, print only a concise signal summary: times, prices, direction, key metrics, and “Mandatory filters=PASS”; do not repeat the nine check lines for GOOD. All diagnostic values for GOOD remain available in result and output CSV.
+
+**Important:** GOOD means that all **currently mandatory** checks passed, not necessarily that every one of the nine informational/optional observations is True. In particular, `Liquidity_area_detect()` may be False yet GOOD if disabled as a mandatory check. Printing preference must not modify filtering rules or the two chart formats.
+
+Implemented in MES code commit `4303a4f`. This formatting standard applies across future Three-Candle strategies.
