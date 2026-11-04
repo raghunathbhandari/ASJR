@@ -739,23 +739,102 @@ def plot_signal(result, show_sr=False, show_metrics=False):
 
 
 # 8. CHART ONLY FULLY PASSED SIGNALS (one chart per signal)
-def plot_signal_passed(result):
-    """Draw exactly one chart per distinct Law of Motion passed signal."""
+def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
+    """Plot Law of Motion passes with actual simulated trailing-stop exits.
+
+    Only candle bars plus ENTRY and EXIT markers. Each setup is evaluated
+    separately; overlapping positions are permitted in these diagnostic
+    plots, unlike the sequential portfolio backtest summary.
+    """
     if result is None or result.empty:
         print("No candidates to plot.")
         return
     if "Filter_law_of_motion" not in result.columns:
-        raise ValueError("Law of Motion column missing; rerun three_candle_signal_learning.")
-    # Only the experimental Law of Motion A1/WEAK passes; not V3 passes.
+        raise ValueError("Law of Motion field missing; rerun scanner")
+    candles = result.attrs.get("candles")
+    if candles is None or candles.empty:
+        raise ValueError("Missing OHLC history in result.attrs['candles']")
+
     passed = result.loc[result["Filter_law_of_motion"].fillna(False)].copy()
     passed = passed.drop_duplicates(subset=["Direction", "C2_time", "C3_time"])
-    passed.attrs["candles"] = result.attrs.get("candles")
-    passed.attrs["requested_start"] = result.attrs.get("requested_start")
+    passed = passed.sort_values("C3_time")
     if passed.empty:
-        print("No Law of Motion signals passed.")
+        print("No Law of Motion passed signals.")
         return
-    print(f"Plotting {len(passed)} Law of Motion passed signals (A1 + WEAK).")
-    plot_signal(passed, show_sr=True, show_metrics=True)
+
+    print(f"Plotting {len(passed)} Law of Motion signals.")
+    for _, row in passed.iterrows():
+        single = pd.DataFrame([row.to_dict()])
+        single.attrs["candles"] = candles
+        trades = summarise_signal_result(single, stop_points=stop_points, verbose=False)
+        trade = trades.iloc[0] if not trades.empty else None
+
+        c2_idx = int(candles.index.get_loc(row["C2_time"]))
+        c3_idx = int(candles.index.get_loc(row["C3_time"]))
+        entry_idx = (int(candles.index.get_loc(trade["Entry_time"]))
+                     if trade is not None else None)
+        exit_idx = (int(candles.index.get_loc(trade["Exit_time"]))
+                    if trade is not None and trade["Status"] == "CLOSED" else None)
+
+        start_idx = max(0, c2_idx - before)
+        # Show the actual trailing-stop exit, or all remaining bars if OPEN.
+        last_trade_idx = (exit_idx if exit_idx is not None else
+                          len(candles)-1 if trade is not None else c3_idx)
+        end_idx = min(len(candles)-1, max(c3_idx, last_trade_idx)+after)
+        visible = candles.iloc[start_idx:end_idx+1]
+        fig, ax = plt.subplots(figsize=(14, 6), facecolor="#101722")
+        ax.set_facecolor("#101722")
+
+        for i, candle in enumerate(visible.itertuples()):
+            color = "#23c985" if candle.Close >= candle.Open else "#ff6471"
+            ax.vlines(i, candle.Low, candle.High, color=color, linewidth=1)
+            ax.add_patch(Rectangle(
+                (i-0.3, min(candle.Open, candle.Close)), 0.6,
+                max(abs(candle.Close-candle.Open), 0.01),
+                facecolor=color, edgecolor=color))
+
+        if trade is not None:
+            x_entry = entry_idx-start_idx
+            entry_price = float(trade["Entry"])
+            ax.scatter(x_entry, entry_price, marker="^", s=140,
+                       color="#35e89b", zorder=7)
+            ax.annotate(f"ENTRY {entry_price:.2f}",
+                        (x_entry, entry_price), xytext=(10, 15),
+                        textcoords="offset points", color="#35e89b",
+                        fontsize=10, weight="bold")
+            if exit_idx is not None:
+                x_exit = exit_idx-start_idx
+                exit_price = float(trade["Exit"])
+                ax.scatter(x_exit, exit_price, marker="v", s=140,
+                           color="#bd91ff", zorder=7)
+                ax.annotate(
+                    f"TRAIL EXIT {exit_price:.2f} | {trade['Points']:+.2f} pt",
+                    (x_exit, exit_price), xytext=(10, -25),
+                    textcoords="offset points", color="#bd91ff",
+                    fontsize=10, weight="bold")
+            else:
+                ax.annotate("OPEN — trailing stop not hit",
+                            (x_entry, entry_price), xytext=(10, -25),
+                            textcoords="offset points", color="#dbe5f0",
+                            fontsize=9)
+
+        step = max(1, len(visible)//12)
+        ticks = list(range(0, len(visible), step))
+        ax.set_xticks(ticks, [visible.index[i].strftime("%d %b %H:%M")
+                             for i in ticks], rotation=35, ha="right")
+        number = row.get("Signal", "?")
+        grade = row.get("law_of_motion_grade", "PASS")
+        ax.set_title(f"{row['Ticker']} | Signal {number} | "
+                     f"{row['Direction']} {grade} | UK time",
+                     color="#f0f5fa")
+        ax.set_ylabel("Futures price", color="#dbe5f0")
+        ax.tick_params(colors="#dbe5f0")
+        ax.grid(color="#526174", alpha=0.25)
+        for spine in ax.spines.values():
+            spine.set_color("#526174")
+        fig.tight_layout()
+        plt.show()
+        plt.close(fig)
 
 
 # 9. CHART ALL CORE CANDIDATES (one chart, direction-coloured C2 dots)
@@ -1245,7 +1324,7 @@ def print_signal_metrics(result):
     return metrics
 
 
-def summarise_signal_result(result, stop_points=6.0):
+def summarise_signal_result(result, stop_points=6.0, verbose=True):
     """Law of Motion backtest: 6-point R, stepped trailing stop, NO target.
 
     - Enter at the next 15m bar OPEN after C3 confirmation.
@@ -1366,27 +1445,28 @@ def summarise_signal_result(result, stop_points=6.0):
     else:
         dd_points, dd_pct = 0.0, 0.0
 
-    print("\n========== LAW OF MOTION — 1R STEPPED TRAILING ==========")
-    print(f"Total signals         : {len(result)}")
-    print(f"Passed signals        : {len(passed)}")
-    print(f"Executed trades       : {len(trade_df)}")
-    print(f"Closed / Open         : {n_closed} / {len(opened)}")
-    print(f"Wins / Losses / BE    : {wins} / {losses} / {breakeven}")
-    print(f"Success rate          : {success_rate:.2f}% (closed trades only)")
-    print(f"Realised return       : {net_pct:+.3f}% (sum of trade price returns)")
-    print(f"Realised points       : {net_points:+.2f} points")
-    print(f"Max drawdown          : {dd_pct:.3f}% / {dd_points:.2f} points (closed only)")
-    print(f"Rules                 : next-open entry, 1R={stop_points:g}pt, "
-          "SL=1R, trail SL +1R per favourable 1R, NO TP / time exit")
-    print("No fees/slippage; percentages are not account-equity returns.")
-    if len(opened):
-        print(f"OPEN unrealised       : {opened.Points.sum():+.2f} points; "
-              "excluded from realised P&L and win rate")
-    if skipped:
-        print(f"Skipped passed signals: {skipped} (overlap, no next bar or invalid data)")
-    if not trade_df.empty:
-        from IPython.display import display
-        display(trade_df)
+    if verbose:
+        print("\n========== LAW OF MOTION — 1R STEPPED TRAILING ==========")
+        print(f"Total signals         : {len(result)}")
+        print(f"Passed signals        : {len(passed)}")
+        print(f"Executed trades       : {len(trade_df)}")
+        print(f"Closed / Open         : {n_closed} / {len(opened)}")
+        print(f"Wins / Losses / BE    : {wins} / {losses} / {breakeven}")
+        print(f"Success rate          : {success_rate:.2f}% (closed trades only)")
+        print(f"Realised return       : {net_pct:+.3f}% (sum of trade price returns)")
+        print(f"Realised points       : {net_points:+.2f} points")
+        print(f"Max drawdown          : {dd_pct:.3f}% / {dd_points:.2f} points (closed only)")
+        print(f"Rules                 : next-open entry, 1R={stop_points:g}pt, "
+              "SL=1R, trail SL +1R per favourable 1R, NO TP / time exit")
+        print("No fees/slippage; percentages are not account-equity returns.")
+        if len(opened):
+            print(f"OPEN unrealised       : {opened.Points.sum():+.2f} points; "
+                  "excluded from realised P&L and win rate")
+        if skipped:
+            print(f"Skipped passed signals: {skipped} (overlap, no next bar or invalid data)")
+        if not trade_df.empty:
+            from IPython.display import display
+            display(trade_df)
     return trade_df
 
 
