@@ -1,0 +1,48 @@
+name: MES 29-30 Oct All Candidate 5m Outcomes
+on:
+  push:
+    paths:
+      - '.github/workflows/mes_v2_all_outcomes_test.yml'
+  workflow_dispatch:
+
+jobs:
+  all-candidate-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check and run every candidate replay
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m py_compile three_candle/mes_v2_validate_all_outcomes.py
+          python three_candle/mes_v2_validate_all_outcomes.py | tee mes_all_outcomes.log
+          python - <<'PY'
+          import sys
+          from collections import Counter
+          from pathlib import Path
+          sys.path.insert(0, str(Path("three_candle").resolve()))
+          from mes_v2_validate_all_outcomes import validate_all
+          rows=validate_all()
+          assert len(rows)==51, f"Expected 51, got {len(rows)}"
+          assert sum(r["v1_decision"]=="GOOD" for r in rows)==2
+          for r in rows:
+              if r["next_open_outcome"] in ("TP","SL"):
+                  assert r["next_open"] is not None
+              assert r["c3_end_uk"]>r["c3_uk"]
+          print("PASS: all 51 v1 candidates replayed, including 49 WAIT")
+          print("Next-open outcomes:", dict(Counter(r["next_open_outcome"] for r in rows)))
+          print("C3-close-ref outcomes:", dict(Counter(r["c3_close_outcome"] for r in rows)))
+          PY
+      - name: Upload replay outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MES-Oct29-30-all-51-outcomes
+          path: |
+            mes_all_outcomes.log
+            three_candle/results/MES_v2_research/MES_2026-10-29_30_ALL_candidates_5m_outcomes.csv
+          if-no-files-found: warn
