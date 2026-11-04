@@ -1,0 +1,37 @@
+name: MES Relax 29-30 October real-run check
+on:
+  push:
+    paths:
+      - '.github/workflows/mes_relax_oct29_30_test.yml'
+  workflow_dispatch:
+jobs:
+  mes-research-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install plotting dependency
+        run: python -m pip install matplotlib
+      - name: Compile and execute MES 29-30 October scanner
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m py_compile three_candle/mes_relax_pipeline_v1.py
+          python three_candle/mes_relax_pipeline_v1.py --date 2026-10-29 --plot-both --show-wait > mes_29_stdout.log 2>&1
+          python three_candle/mes_relax_pipeline_v1.py --date 2026-10-30 --plot-both --show-wait > mes_30_stdout.log 2>&1
+          echo '========== 29 OCTOBER =========='
+          cat mes_29_stdout.log
+          echo '========== 30 OCTOBER =========='
+          cat mes_30_stdout.log
+      - name: Upload MES test outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MES-29-30-Oct-2026-real-run
+          path: |
+            mes_*_stdout.log
+            three_candle/results/MES_relax_v1_review/
+          if-no-files-found: warn
