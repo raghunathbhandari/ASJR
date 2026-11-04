@@ -189,3 +189,30 @@ mes_v1.plot_signal_passed(result)
 ```
 
 **Usage rules:** `enableDiag=False` is the default (compact); `enableDiag=True` prints a full audit for all GOOD and WAIT candidates. For a long range omit it or pass False. Never edit the original `three_candle/test_three_candle.ipynb` just to demonstrate these calls. Future strategy versions should follow the **same-folder direct import + reload** convention; change only the module alias/name when a different `.py` file is created. MES v1 is locked and v2 research is separate. If module isn't importable, first confirm VS Code notebook's working directory is the directory that actually contains the module rather than hard-code an absolute path.
+
+
+## MES v2 structure prototype — first real IBKR comparison 29–30 Oct 2026
+
+**Files separate from locked v1:**
+- `three_candle/market_structure_v2.py`: independent exploratory `market_structure_v2(bars, current_index)`, `analyse_mes_29_30(datefrom,dateTo)`, report, CSV, two UK-day dark candlestick review charts.
+- `.github/workflows/mes_v2_structure_test.yml`: reproducible real-data GitHub Actions execution and future-candle mutation test.
+- `three_candle/results/MES_v2_research/` in downloaded GitHub Actions artifact: CSV + chart PNG files.
+
+**No change to v1 source, notebook, original CSV, thresholds, or GOOD/WAIT filters.** v2 imports the unchanged v1 scanner to align every C3 candidate with structure measured *as of its close*. September and October MESZ2026 IBKR 5m CSVs are used to make 15m candles with earlier-data warmup. Do not treat shape snapshots as filled trade results.
+
+**Method output:** trend=`BULLISH/BEARISH/RANGING/UNKNOWN` by 2-left/2-right confirmed HH/HL, LH/LL; `V_BOTTOM_DEVELOPING` / `V_TOP_DEVELOPING` via ATR14-scaled swing impulse, >=50% recovery within <=8 candles; event=`BULLISH_BOS/BEARISH_BOS/BULLISH_CHOCH/BEARISH_CHOCH/BREAK_UP/BREAK_DOWN/NONE` from first 15m-close crossover of an already confirmed swing level. Keeps last confirmed levels, broken price, ATR14, reversal depth and speed separately. **Important:** these are proposed minimal research definitions: V labels can repeat over consecutive candidates, pivot-scale is basic, and CHOCH/BOS requires review before labeling it institutional-grade structure. No false promise of confirmed reversals or actual liquidity orders.
+
+**Verified initial first run:** https://github.com/raghunathbhandari/ASJR/actions/runs/41814181392 — Python successful, 51 v1 core, 2 v1 GOOD, no-lookahead mutation assertion passed. C3 trend counts: 27 bearish, 14 bullish, 10 ranging. 15 candidate snapshots with developing V labels (9 bottom, 6 top). Event snapshot counts: 8 bearish BOS, 2 bullish BOS, 3 bearish CHOCH, 6 BREAK_DOWN, 2 BREAK_UP; 30 NONE. 29 Oct = 27 candidate / 0 GOOD, 30 Oct = 24 candidate / 2 GOOD. Both GOOD SELL on 30 Oct, 15:00 bearish + no structure event; 16:45 bearish + bearish BOS. **No P&L/win-rate tested and no evidence of improved edge yet.**
+
+**VS Code/Jupyter direct same-folder import + ALWAYS reload:**
+```python
+import importlib
+import market_structure_v2 as v2
+importlib.reload(v2)
+
+bars, records = v2.analyse_mes_29_30("2026-10-29", "2026-10-30")
+v2.print_report(records)
+v2.plot_structure_days(bars, records, v2.ROOT / "results" / "MES_v2_research")
+```
+
+**Next research ideas:** manually inspect 29/30 October charts against v2 classifications; determine if multiple V snapshot labels should be one *event* with a unique ID; distinguish major/external and minor/internal pivots; define proper BOS/CHOCH logic only after reviewing pivot recency/confirmation and sweeps; add liquidity context later, not new hard filters. v1 remains locked.
