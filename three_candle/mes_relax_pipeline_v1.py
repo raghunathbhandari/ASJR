@@ -260,68 +260,184 @@ def scan(bars):
     return result
 
 
-def plot_candidates(bars,rows,outpath,title):
-    """Maintain earlier dark candle design: C2 yellow, entry blue, SL red.
-
-    One chart for EACH requested candidate, collected into one multipage PDF.
-    Entry/SL/TP are reference drawings from next 5m/15m candidate context,
-    NOT a 5-minute execution backtest; no hypothetical P/L is claimed.
-    """
-    if not rows:
-        print("No "+title+" to plot.")
-        return
+def _plot_theme():
+    """Load plotting only when requested; keep the original learning dark style."""
     try:
         import matplotlib
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
         from matplotlib.backends.backend_pdf import PdfPages
         from matplotlib.patches import Rectangle
-    except ImportError as e:
-        raise SystemExit("Plotting needs matplotlib: pip install matplotlib") from e
-    outpath.parent.mkdir(parents=True,exist_ok=True)
+    except ImportError as exc:
+        raise SystemExit("Plotting requires matplotlib: pip install matplotlib") from exc
+    return plt, PdfPages, Rectangle
+
+
+def _draw_candle(ax, candle, x, Rectangle):
+    """The same colour/candle-body treatment as our first learning charts."""
+    colour = "#23c985" if candle.c >= candle.o else "#ff6471"
+    ax.vlines(x, candle.l, candle.h, color=colour, linewidth=0.8)
+    ax.add_patch(Rectangle(
+        (x - 0.3, min(candle.o, candle.c)),
+        0.6, max(abs(candle.c - candle.o), 0.01),
+        facecolor=colour, edgecolor=colour))
+
+
+def _style_chart(ax):
+    ax.set_facecolor("#101722")
+    ax.tick_params(colors="#dbe5f0")
+    for spine in ax.spines.values():
+        spine.set_color("#526174")
+    ax.grid(color="#526174", alpha=0.3)
+    ax.set_ylabel("MES futures price", color="#dbe5f0")
+
+
+def _swing_lines_on_chart(ax, bars, end_index, chart_start, chart_end):
+    """Show nearby confirmed swing S/R as short lines, not false future levels.
+
+    Confirmed-at index is pivot index + 2, so line starts no earlier than
+    the point when the swing actually became known.
+    """
+    highs, lows = base.confirmed_pivots(bars, end_index)
+    for pivots, colour in ((highs, "#ff7979"), (lows, "#56c4f5")):
+        for pivot_index, price in pivots:
+            confirmed_at = pivot_index + base.SWING_RIGHT
+            if confirmed_at > chart_end or confirmed_at < chart_start - 15:
+                continue
+            left = max(chart_start, confirmed_at)
+            right = min(chart_end, max(left + 1, confirmed_at + 5))
+            ax.hlines(price, left - chart_start, right - chart_start,
+                      color=colour, linewidth=1.0, alpha=0.7)
+
+
+def plot_candidates(bars, rows, outpath, title="ALL CORE CANDIDATES"):
+    """ONE full-range candle chart; PURPLE dots mark C2 of ALL core signals.
+
+    Every candle_detect_core() == True signal is plotted, GOOD or WAIT.
+    There is intentionally NO entry/SL line per signal on this overview
+    because dozens of overlapping lines would obscure the structure.
+    Use plot_good_candidates() for full per-trade annotations.
+    """
+    plt, _, Rectangle = _plot_theme()
+    if not rows:
+        print("No core candidates to display.")
+        return
+    outpath.parent.mkdir(parents=True, exist_ok=True)
+    indices = [r["_c3_i"] for r in rows]
+    # Use the selected signal date(s) and their entire 15m candle history
+    # for that UK calendar day, including warm-up bars before midnight.
+    dates = {bars[i].ts.astimezone(base.UK).date() for i in indices}
+    selected = [i for i,b in enumerate(bars)
+                if b.ts.astimezone(base.UK).date() in dates]
+    start, end = min(selected), max(selected)
+    candles = bars[start:end+1]
+    fig, ax = plt.subplots(figsize=(20, 9), facecolor="#101722")
+    _style_chart(ax)
+    for j, candle in enumerate(candles):
+        _draw_candle(ax, candle, j, Rectangle)
+
+    # One purple C2 dot per detected candidate, even if later filters WAIT.
+    # BUY dot BELOW its C2 low; SELL dot ABOVE its C2 high.
+    seen = set()
+    for row in rows:
+        i = row["_c2_i"]
+        if not start <= i <= end:
+            continue
+        direction = row["side"]
+        key = (i, direction)
+        if key in seen:
+            continue
+        seen.add(key)
+        c2 = bars[i]
+        y = c2.l - 0.75 if direction == "BUY" else c2.h + 0.75
+        ax.scatter(i-start, y, s=65, color="#c084fc",
+                   edgecolors="white", linewidths=0.6, zorder=8)
+    _swing_lines_on_chart(ax, bars, end, start, end)
+
+    every = max(1, len(candles)//18)
+    ticks = list(range(0, len(candles), every))
+    ax.set_xticks(ticks, [
+        candles[j].ts.astimezone(base.UK).strftime("%d %b %H:%M")
+        for j in ticks], rotation=35, ha="right")
+    ax.set_xlim(-1, len(candles))
+    ax.set_title(f"MES | {title} | {len(rows)} core signals | purple C2 markers | UK time",
+                 color="white", fontsize=13)
+    fig.tight_layout()
+    fig.savefig(outpath, dpi=160, facecolor=fig.get_facecolor())
+    plt.close(fig)
+    print(f"ALL core candidates: {len(rows)} dots -> {outpath}")
+
+
+def plot_good_candidates(bars, rows, outpath):
+    """ONE SIGNAL PER CHART, with C1/C2/C3 and clear ENTRY/SL/TP lines.
+
+    Includes several contextual candles before and after the 3-candle
+    sequence. These entry/stop/target prices are REFERENCE STUDY LEVELS,
+    not recorded fills or a completed 5-minute backtest.
+    """
+    if not rows:
+        print("No GOOD candidates to plot.")
+        return
+    plt, PdfPages, Rectangle = _plot_theme()
+    outpath.parent.mkdir(parents=True, exist_ok=True)
     with PdfPages(outpath) as pdf:
-        for row in rows:
-            i=row["_c3_i"]; c1=row["_c1_i"]; c2=row["_c2_i"]
-            start=max(0,i-CANDLE_LOOKBACK)
-            end=min(len(bars),i+CANDLE_LOOKFORWARD+1)
-            candles=bars[start:end]
-            # Never connect across a session break; one local chart only.
-            fig,ax=plt.subplots(figsize=(10,4),facecolor="#10151d")
-            ax.set_facecolor("#10151d")
-            for j,c in enumerate(candles):
-                col="#22c69d" if c.c>=c.o else "#e56d71"
-                ax.plot([j,j],[c.l,c.h],color=col,lw=1.35)
-                ax.add_patch(Rectangle((j-.28,min(c.o,c.c)),.56,max(.15,abs(c.c-c.o)),
-                                       facecolor=col,edgecolor=col))
-                global_i=start+j
-                if global_i==c2:
-                    ax.axvspan(j-.45,j+.45,color="#eab308",alpha=.15)
-                if global_i in (c1,c2,i):
-                    ax.text(j,c.h+.6,{c1:"C1",c2:"C2",i:"C3"}[global_i],
-                            fontsize=9,weight="bold",ha="center",color="#eab308")
-            # Entry is next 15m opening estimate; may differ from 5m next-open
-            # around gaps. This is deliberately NOT represented as an actual fill.
-            entry=bars[i].c
-            stop=entry+(-REFERENCE_STOP_POINTS if row["side"]=="BUY" else REFERENCE_STOP_POINTS)
-            tp=entry+(REFERENCE_TARGET_POINTS if row["side"]=="BUY" else -REFERENCE_TARGET_POINTS)
-            ax.axhline(entry,color="#60a5fa",ls="--",lw=1,label=f"Ref entry {entry:.2f}")
-            ax.axhline(stop,color="#f87171",ls="--",lw=1,label=f"Ref SL {stop:.2f}")
-            ax.axhline(tp,color="#c084fc",ls=":",lw=1,label=f"Ref TP {tp:.2f}")
-            ticks=list(range(0,len(candles),2))
-            ax.set_xticks(ticks,[candles[j].ts.astimezone(base.UK).strftime("%H:%M") for j in ticks])
-            ax.tick_params(colors="#b5c1d0",labelsize=9)
-            for sp in ax.spines.values():sp.set_color("#344153")
-            ax.grid(alpha=.12,color="#b5c1d0")
-            ax.set_title(f'MES | {row["side"]} | {row["c3_uk"]} | {row["decision"]} | '
-                         f'wick {row["c2_wick_body"]:.2f}x | sweep {row["sweep_points"]:.2f}pt',
-                         color="white",fontsize=11,loc="left")
-            ax.legend(loc="upper left",fontsize=8,facecolor="#1c2432",labelcolor="white")
-            fig.text(.11,.02,"Structure: "+row["market_structure"]+"   |   Reason: "+
-                     (row["reason"] or "all checks pass"),color="#c0cad8",fontsize=9)
-            fig.subplots_adjust(bottom=.18,top=.88)
-            pdf.savefig(fig,facecolor=fig.get_facecolor())
+        for number, row in enumerate(rows, 1):
+            c1_i, c2_i, c3_i = row["_c1_i"], row["_c2_i"], row["_c3_i"]
+            start = max(0, c1_i - CANDLE_LOOKBACK)
+            end = min(len(bars), c3_i + CANDLE_LOOKFORWARD + 1)
+            candles = bars[start:end]
+            fig, ax = plt.subplots(figsize=(14, 6), facecolor="#101722")
+            _style_chart(ax)
+            for j, c in enumerate(candles):
+                _draw_candle(ax, c, j, Rectangle)
+                global_index = start + j
+                if global_index == c2_i:
+                    ax.axvspan(j-0.45, j+0.45, color="#eab308", alpha=0.14)
+                if global_index in (c1_i, c2_i, c3_i):
+                    name = ("C1" if global_index == c1_i
+                            else "C2" if global_index == c2_i else "C3")
+                    ax.annotate(name, (j, c.h), xytext=(0, 10),
+                                textcoords="offset points",
+                                ha="center", color="#a4d1ff", weight="bold")
+
+            # These are clearly labelled *reference* entry/SL/TP levels.
+            # Do not imply a trade executed at the C3 close.
+            entry = bars[c3_i].c
+            sign = 1 if row["side"] == "BUY" else -1
+            sl = entry - sign * REFERENCE_STOP_POINTS
+            tp = entry + sign * REFERENCE_TARGET_POINTS
+            xleft = c3_i - start
+            xright = len(candles) - 0.5
+            ax.hlines(entry, xleft, xright, color="#60a5fa",
+                      linestyle="--", linewidth=1.6,
+                      label=f"ENTRY reference {entry:.2f}")
+            ax.hlines(sl, xleft, xright, color="#f87171",
+                      linestyle="--", linewidth=1.6,
+                      label=f"STOP LOSS reference {sl:.2f}")
+            ax.hlines(tp, xleft, xright, color="#c084fc",
+                      linestyle=":", linewidth=1.6,
+                      label=f"TAKE PROFIT reference {tp:.2f}")
+            _swing_lines_on_chart(ax, bars, c3_i, start, end - 1)
+            every = max(1, len(candles)//14)
+            ticks = list(range(0, len(candles), every))
+            ax.set_xticks(ticks, [
+                candles[j].ts.astimezone(base.UK).strftime("%H:%M")
+                for j in ticks], rotation=35, ha="right")
+            ax.set_title(
+                f"MES | GOOD {number}/{len(rows)} | {row['side']} | "
+                f"{row['c3_uk']} | C2 wick {row['c2_wick_body']:.2f}x",
+                color="white", fontsize=12, loc="left")
+            ax.legend(loc="best", facecolor="#1a2534",
+                      edgecolor="#526174", labelcolor="white")
+            fig.text(.1, .015,
+                f"C1 {row['c1_uk']} | C2 {row['c2_uk']} | C3 {row['c3_uk']}\n"
+                f"ENTRY {entry:.2f} | SL {sl:.2f} | TP {tp:.2f} | "
+                f"Structure {row['market_structure']}",
+                fontsize=9, color="#c0cad8")
+            fig.subplots_adjust(bottom=0.23, top=0.89)
+            pdf.savefig(fig, facecolor=fig.get_facecolor())
             plt.close(fig)
-    print(f"{title}: {len(rows)} panels -> {outpath}")
+    print(f"GOOD candidates: {len(rows)} separate charts -> {outpath}")
 
 
 def write_csv(rows,path):
@@ -363,9 +479,9 @@ def main():
     label=args.date or "all_dates"
     write_csv(found,dest/f"MES_{label}_all_core_candidates.csv")
     if args.plot_all or args.plot_both:
-        plot_candidates(bars,found,dest/f"MES_{label}_ALL_CANDIDATES.pdf","ALL CORE-TRUE")
+        plot_candidates(bars,found,dest/f"MES_{label}_ALL_CANDIDATES.png","ALL CORE-TRUE")
     if args.plot_good or args.plot_both:
-        plot_candidates(bars,good,dest/f"MES_{label}_GOOD_CANDIDATES.pdf","GOOD CANDIDATES")
+        plot_good_candidates(bars,good,dest/f"MES_{label}_GOOD_CANDIDATES.pdf")
     print("NOTE: This scanner classifies signals; plots are references, NOT backtested P/L.")
 
 
