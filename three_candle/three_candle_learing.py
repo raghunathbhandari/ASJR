@@ -405,7 +405,7 @@ def six_point_research_metrics(history, c2_position, direction):
     elif direction == "BUY":
         approach = float(previous.High.max() - c2.Low)
     else:
-        approach = float(c2.High - previous.Low)
+        approach = float(c2.High - previous.Low.min())
     bounce = float(c3.Close - c2.Low if direction == "BUY"
                    else c2.High - c3.Close)
     c2_body_edge = max(c2.Open, c2.Close) if direction == "BUY" else min(c2.Open, c2.Close)
