@@ -34,7 +34,6 @@ from pathlib import Path
 import mes_relax_structure_first_v1 as base
 
 # ===== EASY-TO-EDIT SETTINGS ===============================================
-DETAIL_DIAGNOSIS = True             # True: full diagnosis for single-day only; False: always compact
 LOOK_AHEAD_C3_BARS = 3             # Max C3 delay; C3 must CLOSE directionally
 MIN_SWEEP_POINTS = 2.0             # Filter 1: sufficient liquidity sweep
 MIN_C2_REJECTION_WICK_X = 2.0      # Filter 2: directional C2 wick/body ratio
@@ -870,13 +869,14 @@ def print_signal_details(rows, detailed=False):
 
 
 
-def three_candle_signal(tiker, datefrom, dateTo):
+def three_candle_signal(tiker, datefrom, dateTo, enableDiag=False):
     """MAIN PUBLIC METHOD — matches the first learning module's method name.
 
     Example:
         result = three_candle_signal("MES=F", "2026-10-29", "2026-10-30")
         plot_candidates(result)       # one overview with purple C2 dots
         plot_signal_passed(result)     # one focused chart per GOOD setup
+        result = three_candle_signal("MES=F", "2026-10-30", "2026-10-30", enableDiag=True)
 
     Scans both directions using existing nine-stage MES pipeline. Retains all
     CORE-TRUE candidates (GOOD + WAIT). Local UK dates are inclusive. The
@@ -899,11 +899,12 @@ def three_candle_signal(tiker, datefrom, dateTo):
     good = sum(x["decision"] == "GOOD" for x in result)
     print(f"MES | {begin} to {finish} | CORE-TRUE {len(result)} | "
           f"GOOD {good} | WAIT {len(result)-good}")
-    # Multi-day research stays concise; a single-day review shows every check.
-    detailed = DETAIL_DIAGNOSIS and begin == finish
-    print(f"Print mode: {'DETAILED' if detailed else 'COMPACT'} "
-          f"| DETAIL_DIAGNOSIS={DETAIL_DIAGNOSIS} | days={1 if begin == finish else 'multiple'}")
-    print_signal_details(result, detailed=detailed)
+    # Diagnosis is caller-controlled, independent of the signal date range.
+    # By default, long-range and single-day scans print short review lines.
+    # Passing enableDiag=True prints every filter and measurement.
+    print(f"Print mode: {'DETAILED' if enableDiag else 'COMPACT'} "
+          f"| enableDiag={enableDiag}")
+    print_signal_details(result, detailed=enableDiag)
     return result
 
 
