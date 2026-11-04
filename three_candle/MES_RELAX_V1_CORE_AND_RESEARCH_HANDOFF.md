@@ -451,3 +451,14 @@ Supporting code: `scan()`, `evaluate_pipeline()`, `calculate_indicators()`, `ind
 **Real-run baseline (GitHub Actions, successful Python 3.11 test):** 29 Oct 2026: 27 CORE/0 GOOD/27 WAIT; 30 Oct: 24 CORE/2 GOOD/22 WAIT; **combined 51 CORE, 2 GOOD, 49 WAIT**. The two GOOD were **SELL 30 Oct 15:00 UK @ 7641.75** and **SELL 30 Oct 16:45 UK @ 7614.00** (C3 closes). Main overlapping rejections: structure 30, wick2 29, wick congestion 24, sweep2 20. This was **classification only**, not measured profitability. Last verified detailed results and charts: https://github.com/raghunathbhandari/ASJR/actions/runs/41793966304/artifacts/13304478251 ; updated optional-observation verification: https://github.com/raghunathbhandari/ASJR/actions/runs/41793966304 .
 
 **Editing standard:** human-readable, short self-documenting methods, comments around every major area, descriptive names, thresholds with units at top, retain full diagnostic audit, never edit prior notebook/historical CSVs/master results. Follow Git safety (`git fetch origin && git merge --ff-only origin/main`). Future session should start by reviewing these notes and discussing **ideas only**.
+
+
+## 19. Confirmed liquidity area lines and printed levels (2026-11-04)
+
+**Explicit user request:** For now, make visible liquidity area lines and print the current areas only; **do not change entry filters**.
+
+Implemented as a new informational helper `liquidity_levels_at_signal(bars,c3_i)`, called from `evaluate_pipeline()`. Per candidate the nearest **already-confirmed swing high on/above C3 close** is labelled **BUY-SIDE liquidity**; the nearest already-confirmed swing low on/below C3 close is labelled **SELL-SIDE liquidity**. Both store level price and distance in MES points; absence is `N/A`. They approximate possible liquidity, **not actual order-book resting orders**. The existing Method 9 `Liquidity_area_detect()` remains the optional swing-touch check, untouched.
+
+The main `three_candle_signal()` print includes both levels for all GOOD/WAIT candidates. WEAK/WAIT still print the nine boolean diagnostic checks; GOOD still print only their concise summary. On the all-candidates overview, label **the latest candidate's** two confirmed liquidity levels as dashed **amber buy-side** and dashed **teal sell-side** lines; one per GOOD chart uses the respective candidate's snapshot. Lines start no earlier than the swing confirmation (right-hand 2 candles) and do not use future pivots. EMA20/EMA200 and existing S/R chart lines remain.
+
+Change commit: `9dfde8d`. GitHub Actions real-run validation pending at this writing; use the latest workflow run if available.
