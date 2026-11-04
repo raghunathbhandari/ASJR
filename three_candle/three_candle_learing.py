@@ -796,6 +796,23 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
         if trade is not None:
             x_entry = entry_idx-start_idx
             entry_price = float(trade["Entry"])
+            # Three clean price reference lines. Initial SL is distinct
+            # from the advancing trailing stop used by the simulator.
+            sign = 1 if row["Direction"] == "BUY" else -1
+            initial_sl = entry_price - sign * stop_points
+            x_line_end = (exit_idx - start_idx if exit_idx is not None
+                          else len(visible) - 1)
+            x_line_end = max(x_entry + 0.5, x_line_end)
+            ax.hlines(entry_price, x_entry, x_line_end,
+                      colors="#35e89b", linewidth=1.6,
+                      label=f"ENTRY {entry_price:.2f}", zorder=5)
+            ax.hlines(initial_sl, x_entry, x_line_end,
+                      colors="#ff6471", linewidth=1.6,
+                      label=f"INITIAL SL {initial_sl:.2f}", zorder=5)
+            if exit_idx is not None:
+                ax.hlines(float(trade["Exit"]), x_entry, x_line_end,
+                          colors="#bd91ff", linewidth=1.6,
+                          label=f"TRAIL EXIT {float(trade['Exit']):.2f}", zorder=5)
             ax.scatter(x_entry, entry_price, marker="^", s=140,
                        color="#35e89b", zorder=7)
             ax.annotate(f"ENTRY {entry_price:.2f}",
@@ -830,6 +847,9 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
         ax.set_ylabel("Futures price", color="#dbe5f0")
         ax.tick_params(colors="#dbe5f0")
         ax.grid(color="#526174", alpha=0.25)
+        if trade is not None:
+            ax.legend(loc="best", facecolor="#1a2534",
+                      edgecolor="#526174", labelcolor="white")
         for spine in ax.spines.values():
             spine.set_color("#526174")
         fig.tight_layout()
