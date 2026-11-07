@@ -1219,7 +1219,10 @@ def plot_signal_candidate(result, multiChart=True, SRLineTypes="swing",
                      color="#f0f5fa")
         ax.set_ylabel("Futures price", color="#dbe5f0")
         ax.tick_params(colors="#dbe5f0")
-        ax.grid(color="#526174", alpha=0.25)
+        if sr_type == "gann":
+            ax.grid(False)  # Keep Gann price levels visually distinct.
+        else:
+            ax.grid(color="#526174", alpha=0.25)
         ax.legend(loc="best", facecolor="#1a2534",
                   edgecolor="#526174", labelcolor="white")
         for spine in ax.spines.values():
