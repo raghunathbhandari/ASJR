@@ -1,0 +1,20 @@
+[Unit]
+Description=ASJR Isolated Yahoo Data Bridge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/trading/ASJR
+ExecStart=/root/trading/venv_new/bin/python -u /root/trading/ASJR/Rudra-DDB/DataBridge/data_bridge_worker.py --interval 60
+Restart=on-failure
+RestartSec=30
+Environment=PYTHONUNBUFFERED=1
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+# Legacy /root checkout currently requires elevated access.
+# Migrate to dedicated non-root service account in hardened deployment.
+
+[Install]
+WantedBy=multi-user.target
