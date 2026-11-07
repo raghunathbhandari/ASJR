@@ -854,7 +854,7 @@ def plot_signal(result, show_sr=False, show_metrics=False):
 def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
     """Plot Law of Motion passes with actual simulated trailing-stop exits.
 
-    Only candle bars plus ENTRY and EXIT markers. Each setup is evaluated
+    Full UK-day candles with EMA20/EMA200 and ENTRY/EXIT markers. Each setup is evaluated
     separately; overlapping positions are permitted in these diagnostic
     plots, unlike the sequential portfolio backtest summary.
     """
@@ -873,6 +873,10 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
     if passed.empty:
         print("No Law of Motion passed signals.")
         return
+
+    # Calculate both averages on all available candles, including warm-up.
+    ema20 = candles.Close.ewm(span=20, adjust=False).mean()
+    ema200 = candles.Close.ewm(span=200, adjust=False).mean()
 
     print(f"Plotting {len(passed)} Law of Motion signals.")
     for _, row in passed.iterrows():
@@ -918,13 +922,21 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
         exit_idx = (int(candles.index.get_loc(trade["Exit_time"]))
                     if trade is not None and trade["Status"] == "CLOSED" else None)
 
-        start_idx = max(0, c2_idx - before)
-        # Show the actual trailing-stop exit, or all remaining bars if OPEN.
-        last_trade_idx = (exit_idx if exit_idx is not None else
-                          len(candles)-1 if trade is not None else c3_idx)
-        end_idx = min(len(candles)-1, max(c3_idx, last_trade_idx)+after)
-        visible = candles.iloc[start_idx:end_idx+1]
-        fig, ax = plt.subplots(figsize=(14, 6), facecolor="#101722")
+        # Show every candle on the C3 UK calendar day, not a tiny
+        # before/after window. If the trade exits on a later day,
+        # include that entire exit day so the exit remains visible.
+        c3_day = candles.index[c3_idx].date()
+        final_day = (candles.index[exit_idx].date()
+                     if exit_idx is not None else c3_day)
+        day_mask = ((candles.index.date >= c3_day)
+                    & (candles.index.date <= max(c3_day, final_day)))
+        day_positions = [i for i, keep in enumerate(day_mask) if keep]
+        start_idx, end_idx = day_positions[0], day_positions[-1]
+        visible = candles.iloc[start_idx:end_idx + 1]
+
+        # Preserve 6-inch height; widen each 5m candle for horizontal scroll.
+        chart_width = min(120, max(20, len(visible) * 0.12))
+        fig, ax = plt.subplots(figsize=(chart_width, 6), facecolor="#101722")
         ax.set_facecolor("#101722")
 
         for i, candle in enumerate(visible.itertuples()):
@@ -934,6 +946,13 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
                 (i-0.3, min(candle.Open, candle.Close)), 0.6,
                 max(abs(candle.Close-candle.Open), 0.01),
                 facecolor=color, edgecolor=color))
+
+        # EMA lines use the full history so chart-day boundaries do
+        # not reset the averages.
+        ax.plot(range(len(visible)), ema20.reindex(visible.index),
+                color="#f7c65c", linewidth=1.5, label="EMA20", zorder=4)
+        ax.plot(range(len(visible)), ema200.reindex(visible.index),
+                color="#b58cff", linewidth=1.6, label="EMA200", zorder=4)
 
         if trade is not None:
             x_entry = entry_idx-start_idx
@@ -1014,8 +1033,24 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
         for spine in ax.spines.values():
             spine.set_color("#526174")
         fig.tight_layout(rect=(0, 0, 1, 0.92))
-        plt.show()
+
+        # Native-size image inside a notebook horizontal-scroll container.
+        from base64 import b64encode
+        from io import BytesIO
+        from IPython.display import HTML, display
+
+        output = BytesIO()
+        fig.savefig(output, format="png", dpi=100,
+                    facecolor=fig.get_facecolor())
+        image_data = b64encode(output.getvalue()).decode("ascii")
+        width_px = int(chart_width * 100)
         plt.close(fig)
+        display(HTML(
+            f'<div style="width:100%;overflow-x:auto;overflow-y:hidden;">'
+            f'<img src="data:image/png;base64,{image_data}" '
+            f'style="width:{width_px}px;max-width:none;height:auto;" />'
+            f'</div>'
+        ))
 
 
 # 9. CHART ALL CORE CANDIDATES (one chart, direction-coloured C2 dots)
