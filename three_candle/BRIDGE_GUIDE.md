@@ -1,5 +1,36 @@
 # Three-Candle VPS Bridge Guide
 
+## 7 Nov 2026 — Standard per-day futures CSV format (supersedes range-file output convention)
+
+**New standard:** one IBKR 5-minute CSV per **contract per UTC date**:
+
+```text
+three_candle/data/MESZ2026_IBKR_5m_2026-11-06.csv
+three_candle/data/MESZ2026_IBKR_5m_2026-11-05.csv
+three_candle/data/MNQZ2026_IBKR_5m_2026-11-06.csv
+```
+
+The revised `download_mes_mnq.py` still accepts the existing `--days` and `--start/--end` commands, but now requests/saves separate completed UTC days. Existing daily files are **skipped**, never overwritten; a request covering several days creates several CSVs. A day with no returned candles creates no file, and completeness still needs auditing. Its `--expiry 202612` forms contract symbol `Z2026` for MES/MNQ.
+
+The learning function loads **all required daily files** for a multi-day request, concatenates them, sorts by UTC time, and de-duplicates timestamps. For migration, it also reads old contract-month files and the older `*_YYYY-MM-DD_to_YYYY-MM-DD.csv` exports, including combinations of multiple date-range files. File selection is per day: **daily first, monthly second, covering legacy date-range third**. Saturday files are optional; missing trading dates raise a clear error for an explicitly dated contract rather than silently substituting Yahoo.
+
+```python
+import importlib
+import three_candle_learing as v4
+importlib.reload(v4)
+
+result = v4.three_candle_signal_learning(
+    "MESZ2026", "2026-11-01", "2026-11-06", timeframe="5min"
+)
+```
+
+**Important machine boundary:** Running the downloader on the VPS saves to `/root/trading/ASJR/three_candle/data` only; it does **not** sync/push to GitHub or the Windows checkout automatically. If Windows reports a missing CSV while VPS `ls` shows it, copy/sync the existing data files to Windows. Do not re-download or overwrite verified data solely to resolve a local missing-file error.
+
+All historical existing CSVs are preserved; no bulk split/rewrite has been performed.
+
+---
+
+
 ## 7 Nov 2026 — Rudra V4 MES/MNQ dated-contract workflow
 
 This section records the user's current, preferred research workflow. Use these examples in future sessions. **Do not change strategy logic, the notebook, or existing market-data CSVs merely to update documentation.**
