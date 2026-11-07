@@ -1,5 +1,23 @@
 # CURRENT NEXT-SESSION START HERE — 7 Nov 2026 (UK)
 
+## 7 Nov 2026 — Rudra V4 chart conventions (TradingView MES)
+
+The visual convention requested by Raghu is:
+
+- **Bullish/up candle (Close >= Open): WHITE** (`#d4d4d8`).
+- **Bearish/down candle (Close < Open): BLUE** (`#3b82f6`).
+- Orange EMA20; major swing chart levels in red.
+- BUY entry green, SELL entry red; initial stop-loss red; profitable exit purple, non-profitable exit red.
+- Entry and exit timing dots attach just below their actual candles.
+- `plot_signal_passed()`: normal-sized ~100 contiguous 5m candles around the trade; no artificial cross-gap candle connections.
+- `plot_signal_candidate()`: normal-sized consecutive 100-candle panels; core C2 candidate dots remain separate from V4 passes.
+- Major swing chart detector is `detect_major_swing_levels()` (wider pivots + ATR prominence); the minor `detect_swing_levels()` remains unchanged for existing research filters.
+
+These are **display-only conventions**. Do not alter core C1/C2/C3 detection, V3/V4 filters, Law of Motion, or P/L calculations when adjusting chart appearance.
+
+---
+
+
 ## 7 Nov 2026 — Rudra V4 MES/MNQ dated-contract workflow
 
 This section records the user's current, preferred research workflow. Use these examples in future sessions. **Do not change strategy logic, the notebook, or existing market-data CSVs merely to update documentation.**
