@@ -922,20 +922,19 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
         exit_idx = (int(candles.index.get_loc(trade["Exit_time"]))
                     if trade is not None and trade["Status"] == "CLOSED" else None)
 
-        # Show every candle on the C3 UK calendar day, not a tiny
-        # before/after window. If the trade exits on a later day,
-        # include that entire exit day so the exit remains visible.
-        c3_day = candles.index[c3_idx].date()
-        final_day = (candles.index[exit_idx].date()
-                     if exit_idx is not None else c3_day)
-        day_mask = ((candles.index.date >= c3_day)
-                    & (candles.index.date <= max(c3_day, final_day)))
-        day_positions = [i for i, keep in enumerate(day_mask) if keep]
-        start_idx, end_idx = day_positions[0], day_positions[-1]
-        visible = candles.iloc[start_idx:end_idx + 1]
+        # Around 100 candles, with BOTH entry and exit in view.
+        # If a trade lasts over 100 candles, expand only as needed.
+        focus_start = min(c2_idx, entry_idx if entry_idx is not None else c3_idx)
+        focus_end = exit_idx if exit_idx is not None else c3_idx
+        span = max(100, focus_end - focus_start + 25)
+        centre = (focus_start + focus_end) // 2
+        start_idx = max(0, centre - span // 2)
+        end_idx = min(len(candles), start_idx + span)
+        start_idx = max(0, end_idx - span)
+        visible = candles.iloc[start_idx:end_idx]
 
-        # Preserve 6-inch height; widen each 5m candle for horizontal scroll.
-        chart_width = min(120, max(20, len(visible) * 0.12))
+        # Keep the familiar chart height and readable candle spacing.
+        chart_width = min(70, max(18, len(visible) * 0.16))
         fig, ax = plt.subplots(figsize=(chart_width, 6), facecolor="#101722")
         ax.set_facecolor("#101722")
 
@@ -943,64 +942,66 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
             color = "#23c985" if candle.Close >= candle.Open else "#ff6471"
             ax.vlines(i, candle.Low, candle.High, color=color, linewidth=1)
             ax.add_patch(Rectangle(
-                (i-0.3, min(candle.Open, candle.Close)), 0.6,
-                max(abs(candle.Close-candle.Open), 0.01),
+                (i - 0.3, min(candle.Open, candle.Close)), 0.6,
+                max(abs(candle.Close - candle.Open), 0.01),
                 facecolor=color, edgecolor=color))
 
-        # EMA lines use the full history so chart-day boundaries do
-        # not reset the averages.
+        # MA history is continuous; do not restart it at the chart edge.
         ax.plot(range(len(visible)), ema20.reindex(visible.index),
-                color="#f7c65c", linewidth=1.5, label="EMA20", zorder=4)
+                color="#f7c65c", linewidth=1.4, label="EMA20", zorder=3)
         ax.plot(range(len(visible)), ema200.reindex(visible.index),
-                color="#b58cff", linewidth=1.6, label="EMA200", zorder=4)
+                color="#b58cff", linewidth=1.4, label="EMA200", zorder=3)
 
+        # Set vertical scale from LOCAL candles and trade levels, not a
+        # distant EMA200 that can make every candle appear tiny.
+        prices = [float(visible.Low.min()), float(visible.High.max())]
         if trade is not None:
-            x_entry = entry_idx-start_idx
             entry_price = float(trade["Entry"])
-            # Three clean price reference lines. Initial SL is distinct
-            # from the advancing trailing stop used by the simulator.
             sign = 1 if row["Direction"] == "BUY" else -1
             initial_sl = entry_price - sign * stop_points
-            x_line_end = (exit_idx - start_idx if exit_idx is not None
-                          else len(visible) - 1)
-            x_line_end = max(x_entry + 0.5, x_line_end)
-            ax.hlines(entry_price, x_entry, x_line_end,
-                      colors="#35e89b", linewidth=1.6,
-                      label=f"ENTRY {entry_price:.2f}", zorder=5)
-            ax.hlines(initial_sl, x_entry, x_line_end,
-                      colors="#ff6471", linewidth=1.6,
-                      label=f"INITIAL SL {initial_sl:.2f}", zorder=5)
+            prices.extend([entry_price, initial_sl])
             if exit_idx is not None:
-                ax.hlines(float(trade["Exit"]), x_entry, x_line_end,
-                          colors="#bd91ff", linewidth=1.6,
-                          label=f"TRAIL EXIT {float(trade['Exit']):.2f}", zorder=5)
-            ax.scatter(x_entry, entry_price, marker="^", s=140,
-                       color="#35e89b", zorder=7)
-            ax.annotate(f"ENTRY {entry_price:.2f}",
-                        (x_entry, entry_price), xytext=(10, 15),
-                        textcoords="offset points", color="#35e89b",
-                        fontsize=10, weight="bold")
-            if exit_idx is not None:
-                x_exit = exit_idx-start_idx
-                exit_price = float(trade["Exit"])
-                ax.scatter(x_exit, exit_price, marker="v", s=140,
-                           color="#bd91ff", zorder=7)
-                ax.annotate(
-                    f"TRAIL EXIT {exit_price:.2f} | {trade['Points']:+.2f} pt",
-                    (x_exit, exit_price), xytext=(10, -25),
-                    textcoords="offset points", color="#bd91ff",
-                    fontsize=10, weight="bold")
-            elif trade["Status"] == "AMBIGUOUS":
-                ax.annotate("AMBIGUOUS — C3 entry/SL order unresolved",
-                            (x_entry, entry_price), xytext=(10, -25),
-                            textcoords="offset points", color="#f7c65c",
-                            fontsize=9)
-            else:
-                ax.annotate("OPEN — trailing stop not hit",
-                            (x_entry, entry_price), xytext=(10, -25),
-                            textcoords="offset points", color="#dbe5f0",
-                            fontsize=9)
+                prices.append(float(trade["Exit"]))
+        low, high = min(prices), max(prices)
+        price_range = max(high - low, 10.0)
+        dot_y = low - 0.08 * price_range
+        ax.set_ylim(low - 0.22 * price_range, high + 0.12 * price_range)
 
+        if trade is not None:
+            x_entry = entry_idx - start_idx
+
+            # Clearly separated price-level references across chart width.
+            ax.axhline(entry_price, color="#35e89b", linewidth=1.6,
+                       linestyle="-", label=f"ENTRY {entry_price:.2f}", zorder=4)
+            ax.axhline(initial_sl, color="#ff6471", linewidth=1.6,
+                       linestyle="--", label=f"SL {initial_sl:.2f}", zorder=4)
+            if exit_idx is not None:
+                exit_price = float(trade["Exit"])
+                ax.axhline(exit_price, color="#bd91ff", linewidth=1.6,
+                           linestyle="-.", label=f"EXIT {exit_price:.2f}", zorder=4)
+
+            # Timing DOTS are BELOW the candle lows, not over candle bodies.
+            ax.scatter(x_entry, dot_y, marker="o", s=90,
+                       color="#35e89b", edgecolors="white", linewidth=0.6,
+                       label="Entry candle", zorder=8)
+            ax.annotate("ENTRY", (x_entry, dot_y), xytext=(0, -15),
+                        textcoords="offset points", ha="center",
+                        color="#35e89b", fontsize=9, weight="bold")
+            if exit_idx is not None:
+                x_exit = exit_idx - start_idx
+                if x_exit == x_entry:
+                    x_entry_dot, x_exit_dot = x_entry - 0.18, x_exit + 0.18
+                    # Shift both dots when entry and exit share a candle.
+                    ax.collections[-1].set_offsets([[x_entry_dot, dot_y]])
+                else:
+                    x_exit_dot = x_exit
+                ax.scatter(x_exit_dot, dot_y, marker="o", s=90,
+                           color="#bd91ff", edgecolors="white", linewidth=0.6,
+                           label="Exit candle", zorder=8)
+                ax.annotate("EXIT", (x_exit_dot, dot_y),
+                            xytext=(0, -30 if x_exit == x_entry else -15),
+                            textcoords="offset points", ha="center",
+                            color="#bd91ff", fontsize=9, weight="bold")
         step = max(1, len(visible)//12)
         ticks = list(range(0, len(visible), step))
         ax.set_xticks(ticks, [visible.index[i].strftime("%d %b %H:%M")
