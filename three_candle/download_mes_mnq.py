@@ -19,11 +19,6 @@ UK = ZoneInfo("Europe/London")
 
 
 def download(ib: IB, symbol: str, start: date, end: date, expiry: str, exchange: str) -> None:
-    filename = f"{symbol}_{expiry}_IBKR_5m_{start}_to_{end}.csv"
-    target = DEST / filename
-    if target.exists():
-        print(f"{symbol}: SKIPPED (file exists): {target}", flush=True)
-        return
 
     qualified = ib.qualifyContracts(
         Future(symbol=symbol, lastTradeDateOrContractMonth=expiry,
@@ -81,12 +76,20 @@ def download(ib: IB, symbol: str, start: date, end: date, expiry: str, exchange:
              .drop_duplicates(subset="Datetime_UTC")
              .sort_values("Datetime_UTC"))
     DEST.mkdir(parents=True, exist_ok=True)
-    # Exclusive-create: never clobber an existing historical file.
-    with target.open("x", encoding="utf-8", newline="") as output:
-        frame.to_csv(output, index=False)
-    print(f"{symbol} | SAVED {len(frame)} candles | {target}", flush=True)
-    print(f"UK first: {frame.iloc[0]['Datetime_UK']} | last: {frame.iloc[-1]['Datetime_UK']}", flush=True)
-    print("Coverage is not certified; inspect expected exchange-session gaps.", flush=True)
+    # Standard: one CSV per UTC date, with the explicit contract name.
+    codes = "FGHJKMNQUVXZ"
+    month_num = int(expiry[4:6])
+    contract_code = f"{symbol}{codes[month_num - 1]}{expiry[:4]}"
+    frame["UTC_Day"] = pd.to_datetime(frame["Datetime_UTC"], utc=True).dt.date
+    for day, daily in frame.groupby("UTC_Day", sort=True):
+        target = DEST / f"{contract_code}_IBKR_5m_{day}.csv"
+        if target.exists():
+            print(f"{symbol} | {day} | SKIPPED existing {target.name}", flush=True)
+            continue
+        with target.open("x", encoding="utf-8", newline="") as output:
+            daily.drop(columns="UTC_Day").to_csv(output, index=False)
+        print(f"{symbol} | {day} | SAVED {len(daily)} candles | {target.name}", flush=True)
+    print(f"{symbol} | total returned: {len(frame)}; coverage not certified.", flush=True)
 
 
 def main() -> None:
@@ -114,7 +117,7 @@ def main() -> None:
         parser.error("--start and --end must be supplied together")
     if args.days < 1 or args.days > 31:
         parser.error("--days must be 1 through 31")
-    if len(args.expiry) != 6 or not args.expiry.isdigit():
+    if len(args.expiry) != 6 or not args.expiry.isdigit() or not 1 <= int(args.expiry[4:6]) <= 12:
         parser.error("--expiry must be YYYYMM")
 
     yesterday = datetime.now(timezone.utc).date() - timedelta(days=1)
