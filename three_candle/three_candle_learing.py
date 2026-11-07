@@ -208,7 +208,7 @@ def load_learning_candles(ticker, datefrom, dateTo, timeframe="15m"):
                               or candidate.name.startswith(expiry_code + "_")):
                 continue
             parts = candidate.stem.split("_")
-            if len(parts) < 7:
+            if len(parts) < 6:
                 continue
             try:
                 file_start = date.fromisoformat(parts[-3])
