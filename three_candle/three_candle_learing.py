@@ -1059,8 +1059,8 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
 
 
 # Visual review: mark every core C2 candidate on the full chart.
-def plot_signal_candidate(result):
-    """TradingView-style 100-candle panels with C2 dots attached to candles."""
+def plot_signal_candidate(result, multiChart=True):
+    """TradingView-style C2 chart: 100-bar panels or one scrollable chart per UK day."""
     if result is None:
         print("No result supplied.")
         return
@@ -1076,9 +1076,18 @@ def plot_signal_candidate(result):
         panels.extend((i, min(i+100, end), start)
                       for i in range(start, end, 100))
 
+    if not multiChart:
+        # One full UK calendar date per chart, preserving 100-bar pixel scale.
+        panels = []
+        for day in dict.fromkeys(data.index.date):
+            positions = [i for i, stamp in enumerate(data.index)
+                         if stamp.date() == day]
+            panels.append((positions[0], positions[-1]+1, positions[0]))
+
     for panel_no, (left, right, segment_start) in enumerate(panels, 1):
         visible = data.iloc[left:right]
-        fig, ax = plt.subplots(figsize=(14, 6), facecolor="#101722")
+        chart_width = 14 if multiChart else max(14, 14 * len(visible)/100)
+        fig, ax = plt.subplots(figsize=(chart_width, 6), facecolor="#101722")
         ax.set_facecolor("#101722")
 
         for i, c in enumerate(visible.itertuples()):
@@ -1106,17 +1115,19 @@ def plot_signal_candidate(result):
                        color="#35e89b" if buy else "#ff6471",
                        edgecolors="white", linewidths=0.5, zorder=7)
 
-        # Show MAJOR structural levels rather than each minor 5-bar pivot.
-        # Evaluate the entire uninterrupted segment, including panel edges.
-        segment_end = next(end for end in boundaries if end >= right)
-        segment_data = data.iloc[segment_start:segment_end]
-        for kind, pivot, confirmed, price in detect_major_swing_levels(segment_data):
-            # Start the active S/R line only AFTER the confirming bar.
-            local_confirm = segment_start + confirmed - left
-            if 0 <= local_confirm < len(visible):
-                ax.hlines(price, local_confirm,
-                          min(len(visible)-0.5, local_confirm+20),
-                          colors="#ff4050", linewidth=2.0, alpha=0.95, zorder=5)
+        # Major levels become active at their CONFIRMATION candle.
+        # Extend them forward to the chart's right edge to watch retests.
+        for seg_start, seg_end in zip(boundaries[:-1], boundaries[1:]):
+            if seg_start >= right:
+                break
+            segment_data = data.iloc[seg_start:seg_end]
+            for kind, pivot, confirmed, price in detect_major_swing_levels(segment_data):
+                confirmation_idx = seg_start + confirmed
+                if confirmation_idx < right:
+                    start_x = max(0, confirmation_idx-left)
+                    ax.hlines(price, start_x, len(visible)-0.5,
+                              colors="#ff4050", linewidth=1.7,
+                              alpha=0.85, zorder=5)
 
         ax.set_ylim(low-0.13*price_range, high+0.13*price_range)
         every = max(1, len(visible)//12)
@@ -1135,8 +1146,27 @@ def plot_signal_candidate(result):
         for spine in ax.spines.values():
             spine.set_color("#526174")
         fig.tight_layout()
-        plt.show()
-        plt.close(fig)
+        if multiChart:
+            plt.show()
+            plt.close(fig)
+        else:
+            # Native-width PNG inside a horizontal scroll box; height
+            # stays 6 inches and candle proportions match the panel view.
+            from base64 import b64encode
+            from io import BytesIO
+            from IPython.display import HTML, display
+
+            output = BytesIO()
+            fig.savefig(output, format="png", dpi=100,
+                        facecolor=fig.get_facecolor())
+            image_data = b64encode(output.getvalue()).decode("ascii")
+            plt.close(fig)
+            display(HTML(
+                f'<div style="width:100%;overflow-x:auto;overflow-y:hidden;">'
+                f'<img src="data:image/png;base64,{image_data}" '
+                f'style="width:{int(chart_width*100)}px;max-width:none;height:auto;" />'
+                f'</div>'
+            ))
 
 
 # 10. SWING HIGH / LOW SUPPORT AND RESISTANCE RESEARCH
