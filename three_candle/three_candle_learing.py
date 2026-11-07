@@ -1059,10 +1059,54 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
 
 
 # Visual review: mark every core C2 candidate on the full chart.
+def get_gann_levels(history, daily_lookback=150):
+    """Return (main_levels, middle_levels) from known 5m/15m history.
+
+    Matches ASJR Gann Pine: odd n -> n²; even n -> n²+1;
+    three quarter levels between consecutive main levels. Only uses
+    candles present in history (never later candles).
+    """
+    if history.empty:
+        return [], []
+    daily = history.groupby(history.index.normalize()).agg(
+        {"High": "max", "Low": "min"}).tail(daily_lookback)
+    daily_high = float(daily.High.max())
+    daily_low = float(daily.Low.min())
+    mains, middles = [], []
+    previous = None
+    for number in range(1, 101):
+        level = float(number*number + (1 if number % 2 == 0 else 0))
+        if daily_low <= level <= daily_high:
+            mains.append(level)
+        if previous is not None:
+            for part in (1, 2, 3):
+                middle = previous + (level-previous)*part/4.0
+                if daily_low <= middle <= daily_high:
+                    middles.append(middle)
+        previous = level
+    return mains, middles
+
+
+def check_gann_level(c1, c2, gann_levels, tolerance=0.0):
+    """True if the HIGH-LOW range of C1 OR C2 touches a Gann S/R level.
+
+    Use confirmed historical levels available when C2 closes.
+    tolerance is price points (0.0 = exact wick/range touch).
+    """
+    if tolerance < 0:
+        raise ValueError("tolerance must be non-negative")
+    for candle in (c1, c2):
+        if any(float(candle.Low)-tolerance <= level <=
+               float(candle.High)+tolerance for level in gann_levels):
+            return True
+    return False
+
+
 def plot_signal_candidate(result, multiChart=True, SRLineTypes="swing",
                           gann_points_per_bar=1.0, gann_anchor_price=None,
                           gann_daily_lookback=150, gann_main_opacity=65,
-                          gann_middle_opacity=80):
+                          gann_middle_opacity=80,
+                          gann_touch_tolerance=0.0):
     """C2 chart; fib historical swing retracements, gann Pine-style square levels."""
     if result is None:
         print("No result supplied.")
@@ -1070,6 +1114,8 @@ def plot_signal_candidate(result, multiChart=True, SRLineTypes="swing",
     sr_type = str(SRLineTypes).strip().lower()
     if sr_type not in ("swing", "fib", "gann"):
         raise ValueError("SRLineTypes must be 'swing', 'fib', or 'gann'")
+    if gann_touch_tolerance < 0:
+        raise ValueError("gann_touch_tolerance must be non-negative")
     if not 20 <= gann_daily_lookback <= 500:
         raise ValueError("gann_daily_lookback must be between 20 and 500")
     if not all(0 <= opacity <= 100 for opacity in
@@ -1117,8 +1163,23 @@ def plot_signal_candidate(result, multiChart=True, SRLineTypes="swing",
         low, high = float(visible.Low.min()), float(visible.High.max())
         price_range = max(10.0, high-low)
         dot_gap = max(0.75, 0.025*price_range)
+        marked_count = 0
         for _, signal in result[result["C2_time"].isin(visible.index)].iterrows():
             pos = int(visible.index.get_loc(signal["C2_time"]))
+            if sr_type == "gann":
+                # Filter at the moment C2 closes, using only history up
+                # to C2. C1/C2 touching either red or green Gann level
+                # is required for a Gann candidate dot.
+                c1_time, c2_time = signal["C1_time"], signal["C2_time"]
+                if c1_time not in data.index:
+                    continue
+                c2_idx = int(data.index.get_loc(c2_time))
+                mains, middles = get_gann_levels(
+                    data.iloc[:c2_idx+1], gann_daily_lookback)
+                if not check_gann_level(data.loc[c1_time], data.loc[c2_time],
+                                        mains+middles, gann_touch_tolerance):
+                    continue
+            marked_count += 1
             buy = str(signal["Direction"]).upper() == "BUY"
             mark_y = (float(visible.Low.iloc[pos])-dot_gap if buy
                       else float(visible.High.iloc[pos])+dot_gap)
@@ -1177,36 +1238,18 @@ def plot_signal_candidate(result, multiChart=True, SRLineTypes="swing",
             # Add 3 evenly spaced quartile levels between adjacent mains.
             # Range is from up to 150 daily candles available AS OF the
             # panel's final bar; no future daily highs/lows are inspected.
-            known = data.iloc[:right]
-            daily = known.groupby(known.index.normalize()).agg(
-                {"High": "max", "Low": "min"}).tail(gann_daily_lookback)
-            daily_high = float(daily.High.max())
-            daily_low = float(daily.Low.min())
-            main_color = "#ff4050"
-            middle_color = "#35e89b"
-            prior_level = None
-            main_label_used = middle_label_used = False
-            for number in range(1, 101):
-                main_level = float(number*number + (1 if number % 2 == 0 else 0))
-                if daily_low <= main_level <= daily_high:
-                    ax.axhline(main_level, color=main_color, linewidth=1,
-                               alpha=1-gann_main_opacity/100,
-                               label="Gann main (odd n² / even n²+1)"
-                                     if not main_label_used else "_nolegend_",
-                               zorder=4)
-                    main_label_used = True
-                if prior_level is not None:
-                    for part in (1, 2, 3):
-                        middle_level = prior_level + (main_level-prior_level)*part/4
-                        if daily_low <= middle_level <= daily_high:
-                            ax.axhline(middle_level, color=middle_color,
-                                       linewidth=1,
-                                       alpha=1-gann_middle_opacity/100,
-                                       label="Gann intermediate (¼, ½, ¾)"
-                                             if not middle_label_used
-                                             else "_nolegend_", zorder=4)
-                            middle_label_used = True
-                prior_level = main_level
+            main_levels, middle_levels = get_gann_levels(
+                data.iloc[:right], gann_daily_lookback)
+            for index, level in enumerate(main_levels):
+                ax.axhline(level, color="#ff4050", linewidth=1,
+                           alpha=1-gann_main_opacity/100, zorder=4,
+                           label="Gann main (odd n² / even n²+1)"
+                                 if index == 0 else "_nolegend_")
+            for index, level in enumerate(middle_levels):
+                ax.axhline(level, color="#35e89b", linewidth=1,
+                           alpha=1-gann_middle_opacity/100, zorder=4,
+                           label="Gann intermediate (¼, ½, ¾)"
+                                 if index == 0 else "_nolegend_")
 
         ax.set_ylim(low-0.13*price_range, high+0.13*price_range)
         every = max(1, len(visible)//12)
@@ -1215,7 +1258,7 @@ def plot_signal_candidate(result, multiChart=True, SRLineTypes="swing",
                              for i in ticks], rotation=35, ha="right")
         ax.set_xlim(-1, len(visible))
         ax.set_title(f"{result.attrs.get('contract', 'Futures')} | {tf_label} | "
-                     f"{sr_type.upper()} S/R | C2 candidates {panel_no}/{len(panels)} | UK time",
+                     f"{sr_type.upper()} S/R | C2 candidates {marked_count} | {panel_no}/{len(panels)} | UK time",
                      color="#f0f5fa")
         ax.set_ylabel("Futures price", color="#dbe5f0")
         ax.tick_params(colors="#dbe5f0")
