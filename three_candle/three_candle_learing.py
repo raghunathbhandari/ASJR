@@ -1060,16 +1060,21 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
 
 # Visual review: mark every core C2 candidate on the full chart.
 def plot_signal_candidate(result, multiChart=True, SRLineTypes="swing",
-                          gann_points_per_bar=1.0, gann_anchor_price=None):
-    """C2 chart; fib draws historical swing retracements, gann sqrt-price S/R."""
+                          gann_points_per_bar=1.0, gann_anchor_price=None,
+                          gann_daily_lookback=150, gann_main_opacity=65,
+                          gann_middle_opacity=80):
+    """C2 chart; fib historical swing retracements, gann Pine-style square levels."""
     if result is None:
         print("No result supplied.")
         return
     sr_type = str(SRLineTypes).strip().lower()
     if sr_type not in ("swing", "fib", "gann"):
         raise ValueError("SRLineTypes must be 'swing', 'fib', or 'gann'")
-    if gann_anchor_price is not None and float(gann_anchor_price) <= 0:
-        raise ValueError("gann_anchor_price must be positive")
+    if not 20 <= gann_daily_lookback <= 500:
+        raise ValueError("gann_daily_lookback must be between 20 and 500")
+    if not all(0 <= opacity <= 100 for opacity in
+               (gann_main_opacity, gann_middle_opacity)):
+        raise ValueError("Gann opacity must be between 0 and 100")
     data, _, _ = chart_data_and_mas(result)
     tf_label = result.attrs.get("timeframe", "15m")
     step = pd.Timedelta(minutes=5 if tf_label == "5m" else 15)
@@ -1164,45 +1169,44 @@ def plot_signal_candidate(result, multiChart=True, SRLineTypes="swing",
                               label=f"Fib {ratio:.3f} {value:.2f}"
                                     if newest else "_nolegend_")
 
-        elif sr_type == "gann" and (gann_anchor_price is not None or any(
-                segment_start <= level[2] < right for level in confirmed_levels)):
-            # Square-of-Nine PRICE LEVELS (horizontal), not a time/price
-            # angle or fan. Formula: (sqrt(anchor) +/- angle/180)^2.
-            # Explicit gann_anchor_price (e.g. 7404) is fixed for all panels;
-            # otherwise lock to first confirmed major swing in the session.
-            # MES levels are displayed at 0.25-point tick increments.
-            session_levels = [level for level in confirmed_levels
-                              if segment_start <= level[2] < right]
-            if gann_anchor_price is not None:
-                anchor = float(gann_anchor_price)
-                x0 = 0
-            else:
-                kind, pivot_idx, confirmed_idx, anchor = session_levels[0]
-                x0 = max(0, confirmed_idx-left)
-            root = anchor ** 0.5
-            price_floor = low - 0.13*price_range
-            price_ceiling = high + 0.13*price_range
-            drawn = set()
-            for degrees, color in ((22.5, "#6fa8ff"),
-                                   (45, "#61c2be"),
-                                   (90, "#f0c36b"),
-                                   (180, "#be90ff"),
-                                   (360, "#ff8d73")):
-                for side in (-1, 1):
-                    shifted_root = root + side*degrees/180.0
-                    if shifted_root <= 0:
-                        continue
-                    level = round((shifted_root ** 2)*4)/4
-                    if not price_floor <= level <= price_ceiling or level in drawn:
-                        continue
-                    drawn.add(level)
-                    ax.hlines(level, x0, len(visible)-0.5,
-                              colors=color, linewidth=1.35,
-                              linestyle="--", alpha=0.85, zorder=5,
-                              label=f"Gann √ {degrees:g}° {level:.2f}")
-            ax.hlines(anchor, x0, len(visible)-0.5,
-                      colors="#ff4050", linewidth=1.6, alpha=0.9,
-                      label=f"Gann anchor {anchor:.2f}", zorder=5)
+        elif sr_type == "gann":
+            # gann_anchor_price/gann_points_per_bar are legacy options and
+            # intentionally NOT used by this exact Pine-style level mode.
+            # Match ASJR TradingView Pine's Adib levels exactly:
+            # odd n -> n*n; even n -> n*n+1, for n=1..100.
+            # Add 3 evenly spaced quartile levels between adjacent mains.
+            # Range is from up to 150 daily candles available AS OF the
+            # panel's final bar; no future daily highs/lows are inspected.
+            known = data.iloc[:right]
+            daily = known.groupby(known.index.normalize()).agg(
+                {"High": "max", "Low": "min"}).tail(gann_daily_lookback)
+            daily_high = float(daily.High.max())
+            daily_low = float(daily.Low.min())
+            main_color = "#ff4050"
+            middle_color = "#35e89b"
+            prior_level = None
+            main_label_used = middle_label_used = False
+            for number in range(1, 101):
+                main_level = float(number*number + (1 if number % 2 == 0 else 0))
+                if daily_low <= main_level <= daily_high:
+                    ax.axhline(main_level, color=main_color, linewidth=1,
+                               alpha=1-gann_main_opacity/100,
+                               label="Gann main (odd n² / even n²+1)"
+                                     if not main_label_used else "_nolegend_",
+                               zorder=4)
+                    main_label_used = True
+                if prior_level is not None:
+                    for part in (1, 2, 3):
+                        middle_level = prior_level + (main_level-prior_level)*part/4
+                        if daily_low <= middle_level <= daily_high:
+                            ax.axhline(middle_level, color=middle_color,
+                                       linewidth=1,
+                                       alpha=1-gann_middle_opacity/100,
+                                       label="Gann intermediate (¼, ½, ¾)"
+                                             if not middle_label_used
+                                             else "_nolegend_", zorder=4)
+                            middle_label_used = True
+                prior_level = main_level
 
         ax.set_ylim(low-0.13*price_range, high+0.13*price_range)
         every = max(1, len(visible)//12)
