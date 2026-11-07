@@ -583,7 +583,8 @@ def six_point_research_metrics(history, c2_position, direction):
 
 
 # Notebook entry point: scan candles and return candidate metrics without placing trades.
-def three_candle_signal_learning(ticker, dateFrom=None, dateTo=None, enableDig=False, timeframe="15min", **kwargs):
+def three_candle_signal_learning(ticker, dateFrom=None, dateTo=None, enableDig=False, timeframe="15min",
+                                 gann_filter=True, gann_daily_lookback=150, **kwargs):
     """Find BUY/SELL candidates on 5m or 15m candles from IBKR CSV first.
 
     Accepts ticker="MES" or "MES=F"; old positional calls still work.
@@ -609,6 +610,14 @@ def three_candle_signal_learning(ticker, dateFrom=None, dateTo=None, enableDig=F
         if times[2].date() < requested_start:
             continue   # Warm-up candles are not reported as new candidates.
         c1, c2, c3 = (data.iloc[c1_i], data.iloc[c2_i], data.iloc[c3_i])
+
+        # Gann is an ADDITIONAL candidate gate; the Three-Candle core
+        # and its C3 confirmation logic remain completely unchanged.
+        # Assess only prices available by the close of C2.
+        gann_ok = gann_candidate_pass(
+            c1, c2, data.iloc[:c2_i+1], gann_daily_lookback)
+        if gann_filter and not gann_ok:
+            continue
 
         # All checks are print-only; core detection never depends on them.
         # Additional direction-neutral measures mirror BUY and SELL.
@@ -662,7 +671,8 @@ def three_candle_signal_learning(ticker, dateFrom=None, dateTo=None, enableDig=F
                "BUY": float(c2.Close), "SL": float(c2.Open),
                "C3_wait_bars": wait_bars,
                "C2_sweep_ticks": float(sweep_ticks),
-               "core_match": True, "all_filters_pass": passed,
+               "core_match": True, "Filter_gann_level": gann_ok,
+               "all_filters_pass": passed,
                "pass_candidate": passed, "candidate_status": (
                    "PASS" if passed else "CORE_ONLY"),
                "V3withBodySize_pass": v3_with_body_size_pass(direction, c3),
@@ -688,6 +698,8 @@ def three_candle_signal_learning(ticker, dateFrom=None, dateTo=None, enableDig=F
     result.attrs["requested_start"] = str(dateFrom)
     result.attrs["contract"] = str(ticker).upper()
     result.attrs["timeframe"] = interval
+    result.attrs["gann_filter"] = bool(gann_filter)
+    result.attrs["gann_daily_lookback"] = gann_daily_lookback
     if enableDig:
         passed_count = int(result["all_filters_pass"].sum()) if not result.empty else 0
         body_count = int(result["V3withBodySize_pass"].sum()) if not result.empty else 0
@@ -698,6 +710,7 @@ def three_candle_signal_learning(ticker, dateFrom=None, dateTo=None, enableDig=F
         print(f"Ambiguous confirmation/invalidation candles: {len(result.attrs['ambiguous'])}")
         columns = [
             "Signal", "Direction", "C3_time", "candidate_status",
+            "Filter_gann_level",
             "Filter_law_of_motion", "law_of_motion_grade",
             "filter_3_location", "filter_4_v_shape", "filter_5_volume",
             "filter_6_time", "filter_7_wick", "filter_8_daily_range",
@@ -868,7 +881,8 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
     if candles is None or candles.empty:
         raise ValueError("Missing OHLC history in result.attrs['candles']")
 
-    passed = result.loc[result["Filter_law_of_motion"].fillna(False)].copy()
+    gann_result = filter_gann_candidates(result, result.attrs.get("gann_daily_lookback", 150))
+    passed = gann_result.loc[gann_result["Filter_law_of_motion"].fillna(False)].copy()
     passed = passed.drop_duplicates(subset=["Direction", "C2_time", "C3_time"])
     passed = passed.sort_values("C3_time")
     if passed.empty:
@@ -1102,6 +1116,41 @@ def check_gann_level(c1, c2, gann_levels, tolerance=0.0):
     return False
 
 
+def gann_candidate_pass(c1, c2, history, daily_lookback=150,
+                        tolerance=0.0):
+    """Additional C1/C2 Gann qualification, independent of Three-Candle core.
+
+    history must end at C2, so a backtest cannot see later daily ranges.
+    """
+    main, middle = get_gann_levels(history, daily_lookback)
+    return check_gann_level(c1, c2, main+middle, tolerance)
+
+
+def filter_gann_candidates(result, daily_lookback=150, tolerance=0.0):
+    """Keep only candidates touching a Gann level at C2; preserve attrs.
+
+    Works on existing notebook result objects as well as newly scanned data.
+    Does not alter three_candle_core() or scan_core_candidates().
+    """
+    candles = result.attrs.get("candles")
+    if candles is None or candles.empty:
+        raise ValueError("Missing original candles for Gann qualification")
+    qualified = []
+    for _, signal in result.iterrows():
+        c1_time, c2_time = signal["C1_time"], signal["C2_time"]
+        if c1_time not in candles.index or c2_time not in candles.index:
+            qualified.append(False)
+            continue
+        c2_idx = int(candles.index.get_loc(c2_time))
+        qualified.append(gann_candidate_pass(
+            candles.loc[c1_time], candles.loc[c2_time],
+            candles.iloc[:c2_idx+1], daily_lookback, tolerance))
+    filtered = result.loc[qualified].copy()
+    filtered.attrs = result.attrs.copy()
+    filtered["Filter_gann_level"] = True
+    return filtered
+
+
 def plot_signal_candidate(result, multiChart=True, SRLineTypes="swing",
                           gann_points_per_bar=1.0, gann_anchor_price=None,
                           gann_daily_lookback=150, gann_main_opacity=65,
@@ -1166,19 +1215,18 @@ def plot_signal_candidate(result, multiChart=True, SRLineTypes="swing",
         marked_count = 0
         for _, signal in result[result["C2_time"].isin(visible.index)].iterrows():
             pos = int(visible.index.get_loc(signal["C2_time"]))
-            if sr_type == "gann":
-                # Filter at the moment C2 closes, using only history up
-                # to C2. C1/C2 touching either red or green Gann level
-                # is required for a Gann candidate dot.
-                c1_time, c2_time = signal["C1_time"], signal["C2_time"]
-                if c1_time not in data.index:
-                    continue
-                c2_idx = int(data.index.get_loc(c2_time))
-                mains, middles = get_gann_levels(
-                    data.iloc[:c2_idx+1], gann_daily_lookback)
-                if not check_gann_level(data.loc[c1_time], data.loc[c2_time],
-                                        mains+middles, gann_touch_tolerance):
-                    continue
+            # All SR chart modes display the SAME Gann-qualified C2 set.
+            # Use the original full candles, not the cropped chart viewport.
+            full_candles = result.attrs["candles"]
+            c1_time, c2_time = signal["C1_time"], signal["C2_time"]
+            if c1_time not in full_candles.index or c2_time not in full_candles.index:
+                continue
+            c2_idx = int(full_candles.index.get_loc(c2_time))
+            if not gann_candidate_pass(
+                    full_candles.loc[c1_time], full_candles.loc[c2_time],
+                    full_candles.iloc[:c2_idx+1], gann_daily_lookback,
+                    gann_touch_tolerance):
+                continue
             marked_count += 1
             buy = str(signal["Direction"]).upper() == "BUY"
             mark_y = (float(visible.Low.iloc[pos])-dot_gap if buy
@@ -1836,7 +1884,8 @@ def summarise_signal_result(result, stop_points=6.0, verbose=True):
     if ibkr_5m is None:
         ibkr_5m = candles.attrs.get("ibkr_5m")
 
-    passed = result.loc[result["Filter_law_of_motion"].fillna(False)].sort_values("C3_time")
+    gann_result = filter_gann_candidates(result, result.attrs.get("gann_daily_lookback", 150))
+    passed = gann_result.loc[gann_result["Filter_law_of_motion"].fillna(False)].sort_values("C3_time")
     trades = []
     last_exit_idx = -1
     busy_until_end = False
