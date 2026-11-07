@@ -1061,15 +1061,13 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
 # Visual review: mark every core C2 candidate on the full chart.
 def plot_signal_candidate(result, multiChart=True, SRLineTypes="swing",
                           gann_points_per_bar=1.0):
-    """TradingView-style C2 chart: 100-bar panels or one scrollable chart per UK day."""
+    """C2 chart; fib draws historical swing retracements, gann sqrt-price S/R."""
     if result is None:
         print("No result supplied.")
         return
     sr_type = str(SRLineTypes).strip().lower()
     if sr_type not in ("swing", "fib", "gann"):
         raise ValueError("SRLineTypes must be 'swing', 'fib', or 'gann'")
-    if gann_points_per_bar <= 0:
-        raise ValueError("gann_points_per_bar must be positive")
     data, _, _ = chart_data_and_mas(result)
     tf_label = result.attrs.get("timeframe", "15m")
     step = pd.Timedelta(minutes=5 if tf_label == "5m" else 15)
@@ -1141,35 +1139,60 @@ def plot_signal_candidate(result, multiChart=True, SRLineTypes="swing",
                           alpha=0.85, zorder=5)
 
         elif sr_type == "fib" and len(confirmed_levels) >= 2:
-            latest = confirmed_levels[-1]
-            earlier = next((level for level in reversed(confirmed_levels[:-1])
-                            if level[0] != latest[0]), None)
-            if earlier is not None:
-                lo, hi = sorted((earlier[3], latest[3]))
-                x0 = max(0, latest[2]-left)
+            # Each confirmed opposite swing pair gets its own full set of
+            # horizontal retracements, from its confirmation candle onward.
+            # Never project a level into candles before it was known live.
+            pairs = [(previous, current)
+                     for previous, current in zip(confirmed_levels[:-1],
+                                                  confirmed_levels[1:])
+                     if previous[0] != current[0]]
+            for pair_no, (earlier, later) in enumerate(pairs):
+                lo, hi = sorted((earlier[3], later[3]))
+                x0 = max(0, later[2] - left)
+                if x0 >= len(visible):
+                    continue
+                newest = pair_no == len(pairs)-1
                 for ratio, color in ((0.236, "#6fa8ff"), (0.382, "#61c2be"),
-                                     (0.5, "#f0c36b"), (0.618, "#be90ff"),
+                                     (0.500, "#f0c36b"), (0.618, "#be90ff"),
                                      (0.786, "#ff8d73")):
                     value = lo + (hi-lo)*ratio
                     ax.hlines(value, x0, len(visible)-0.5, colors=color,
-                              linewidth=1.2, linestyle="--", alpha=0.8,
-                              label=f"Fib {ratio:.3f} {value:.2f}")
+                              linewidth=1.25, linestyle="--",
+                              alpha=0.75 if newest else 0.38, zorder=4,
+                              label=f"Fib {ratio:.3f} {value:.2f}"
+                                    if newest else "_nolegend_")
 
         elif sr_type == "gann" and confirmed_levels:
-            # Study-scale Gann-style rays: 1x1 equals the supplied
-            # MES points per candle, not an automatic TradingView scale.
-            kind, pivot_idx, confirmed_idx, price = confirmed_levels[-1]
+            # Square-of-Nine PRICE LEVELS (horizontal), not a time/price
+            # angle or fan. A 45-degree step is 0.125 in sqrt(price).
+            # Only confirmed swing prices can act as anchors.
+            # MES is quoted in 0.25-point ticks.
+            kind, pivot_idx, confirmed_idx, anchor = confirmed_levels[-1]
             x0 = max(0, confirmed_idx-left)
-            xs = list(range(x0, len(visible)))
-            sign = 1 if kind == "SUPPORT" else -1
-            for factor, name, color in (
-                (0.5, "1x2", "#61c2be"), (1.0, "1x1", "#ff4050"),
-                (2.0, "2x1", "#be90ff")
-            ):
-                ys = [price + sign*gann_points_per_bar*factor*(x-x0)
-                      for x in xs]
-                ax.plot(xs, ys, color=color, linewidth=1.3,
-                        linestyle="--", label=f"Gann {name}", zorder=5)
+            root = anchor ** 0.5
+            price_floor = low - 0.13*price_range
+            price_ceiling = high + 0.13*price_range
+            drawn = set()
+            for degrees, color in ((22.5, "#6fa8ff"),
+                                   (45, "#61c2be"),
+                                   (90, "#f0c36b"),
+                                   (180, "#be90ff"),
+                                   (360, "#ff8d73")):
+                for side in (-1, 1):
+                    shifted_root = root + side*degrees/360.0
+                    if shifted_root <= 0:
+                        continue
+                    level = round((shifted_root ** 2)*4)/4
+                    if not price_floor <= level <= price_ceiling or level in drawn:
+                        continue
+                    drawn.add(level)
+                    ax.hlines(level, x0, len(visible)-0.5,
+                              colors=color, linewidth=1.35,
+                              linestyle="--", alpha=0.85, zorder=5,
+                              label=f"Gann √ {degrees:g}° {level:.2f}")
+            ax.hlines(anchor, x0, len(visible)-0.5,
+                      colors="#ff4050", linewidth=1.6, alpha=0.9,
+                      label=f"Gann anchor {anchor:.2f}", zorder=5)
 
         ax.set_ylim(low-0.13*price_range, high+0.13*price_range)
         every = max(1, len(visible)//12)
