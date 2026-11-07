@@ -191,51 +191,59 @@ def load_learning_candles(ticker, datefrom, dateTo, timeframe="15m"):
     expiry_code = (f"{prefix}_{dated.group(3)}{month_code[dated.group(2)]:02d}"
                    if dated else None)
     folder = Path(__file__).resolve().parent / "data"
+
+    # File standard: CONTRACT_IBKR_5m_YYYY-MM-DD.csv (one UTC day).
+    # Older monthly and date-range exports remain readable, without rewrite.
+    # Choose a source separately for each requested day, then read unique files.
+    range_exports = []
+    for candidate in folder.glob(f"{prefix}*_IBKR_5m_*_to_*.csv"):
+        if dated and not (candidate.name.startswith(contract_code + "_")
+                          or candidate.name.startswith(expiry_code + "_")):
+            continue
+        parts = candidate.stem.split("_")
+        try:
+            file_start = date.fromisoformat(parts[-3])
+            file_end = date.fromisoformat(parts[-1])
+        except (ValueError, IndexError):
+            continue
+        range_exports.append((file_start, file_end, candidate))
+
     files = []
-    year, month = start.year, start.month
-    while (year, month) <= (end.year, end.month):
-        files.append(folder / f"{contract_code}_IBKR_5m_{year}-{month:02d}.csv")
-        month += 1
-        if month == 13:
-            month, year = 1, year + 1
+    missing_days = []
+    for offset in range((end - start).days + 1):
+        day = start + timedelta(days=offset)
+        candidates = [
+            folder / f"{contract_code}_IBKR_5m_{day}.csv",
+            folder / f"{contract_code}_IBKR_5m_{day.year}-{day.month:02d}.csv",
+        ]
+        if expiry_code:
+            candidates.extend([
+                folder / f"{expiry_code}_IBKR_5m_{day}.csv",
+                folder / f"{expiry_code}_IBKR_5m_{day.year}-{day.month:02d}.csv",
+            ])
+        source = next((path for path in candidates if path.is_file()), None)
+        if source is None:
+            covering = [(end_date - start_date, path)
+                        for start_date, end_date, path in range_exports
+                        if start_date <= day <= end_date]
+            if covering:
+                source = min(covering, key=lambda item: item[0])[1]
 
-    # Standard daily layout: one immutable CSV per UTC calendar date.
-    # Preserve legacy monthly files; use daily only when each trading date exists.
-    daily_dates = [start + timedelta(days=n) for n in range((end - start).days + 1)
-                   if (start + timedelta(days=n)).weekday() != 5]  # Saturday closed
-    daily_files = [folder / f"{contract_code}_IBKR_5m_{day}.csv" for day in daily_dates]
-    if daily_files and all(path.is_file() for path in daily_files):
-        files = daily_files
+        if source is not None:
+            if source not in files:
+                files.append(source)
+        elif day.weekday() != 5:  # Saturday has no CME futures session.
+            missing_days.append(day)
 
-    # Accept a single IBKR date-range export covering the requested period.
-    # Keep the existing monthly-file preference unchanged.
-    if not all(path.is_file() for path in files):
-        range_matches = []
-        for candidate in folder.glob(f"{prefix}*_IBKR_5m_*_to_*.csv"):
-            if dated and not (candidate.name.startswith(contract_code + "_")
-                              or candidate.name.startswith(expiry_code + "_")):
-                continue
-            parts = candidate.stem.split("_")
-            if len(parts) < 6:
-                continue
-            try:
-                file_start = date.fromisoformat(parts[-3])
-                file_end = date.fromisoformat(parts[-1])
-            except ValueError:
-                continue
-            if file_start <= start and file_end >= end:
-                range_matches.append((file_start, file_end, candidate))
-        if range_matches:
-            # Prefer the narrowest matching export, then the newest start.
-            range_matches.sort(key=lambda item: ((item[1] - item[0]).days, -item[0].toordinal()))
-            files = [range_matches[0][2]]
-
-    if not all(path.is_file() for path in files):
+    if missing_days or not files:
         if dated:
-            raise FileNotFoundError(f"IBKR contract {contract_code} CSV not found for {start} to {end}; refusing Yahoo substitution")
-        print("IBKR CSV missing; using Yahoo instead:",
-              ", ".join(p.name for p in files if not p.is_file()))
-        # Yahoo also needs earlier candles to warm up EMA20 and EMA200.
+            missing_text = ", ".join(map(str, missing_days)) or f"{start} to {end}"
+            raise FileNotFoundError(
+                f"IBKR {contract_code} daily/monthly/range CSV coverage missing: "
+                f"{missing_text}. Sync the existing VPS data/ CSVs to this machine."
+            )
+        print("IBKR CSV coverage missing; using Yahoo instead:",
+              ", ".join(map(str, missing_days)))
         earlier = (start - timedelta(days=24)).isoformat()
         yahoo = Download_yfinalce(ticker, (earlier, dateTo), interval)
         requested = yahoo.index.date >= start
@@ -246,8 +254,7 @@ def load_learning_candles(ticker, datefrom, dateTo, timeframe="15m"):
         output.attrs["timeframe_minutes"] = minutes
         return output
 
-    # Optional previous-month CSV supplies EMA warmup when requested period
-    # starts at the beginning of a month.
+    # Warm up indicators with the previous month's data when available.
     previous = start.replace(day=1) - timedelta(days=1)
     previous_file = folder / f"{contract_code}_IBKR_5m_{previous.year}-{previous.month:02d}.csv"
     if previous_file.is_file() and previous_file not in files:
