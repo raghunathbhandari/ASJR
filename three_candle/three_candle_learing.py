@@ -1162,12 +1162,16 @@ def plot_signal_candidate(result, multiChart=True, SRLineTypes="swing",
                               label=f"Fib {ratio:.3f} {value:.2f}"
                                     if newest else "_nolegend_")
 
-        elif sr_type == "gann" and confirmed_levels:
+        elif sr_type == "gann" and any(segment_start <= level[2] < right
+                                         for level in confirmed_levels):
             # Square-of-Nine PRICE LEVELS (horizontal), not a time/price
             # angle or fan. A 45-degree step is 0.125 in sqrt(price).
-            # Only confirmed swing prices can act as anchors.
+            # Lock to the FIRST confirmed major swing in this session.
+            # Later swings never recalculate levels, even across panels.
             # MES is quoted in 0.25-point ticks.
-            kind, pivot_idx, confirmed_idx, anchor = confirmed_levels[-1]
+            session_levels = [level for level in confirmed_levels
+                              if segment_start <= level[2] < right]
+            kind, pivot_idx, confirmed_idx, anchor = session_levels[0]
             x0 = max(0, confirmed_idx-left)
             root = anchor ** 0.5
             price_floor = low - 0.13*price_range
