@@ -8,6 +8,7 @@ Install once in VS Code terminal:
 """
 
 from datetime import date, timedelta
+import re
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -115,10 +116,11 @@ def normalise_learning_timeframe(timeframe):
 
 
 def normalise_learning_ticker(ticker):
-    """MES/NQ/GC refer to the same contracts as their Yahoo aliases."""
+    """Map a futures root or dated code (MESZ2026) to its research alias."""
     aliases = {"MES": "MES=F", "NQ": "NQ=F", "GC": "GC=F"}
     value = str(ticker).upper().strip()
-    return aliases.get(value, value)
+    dated = re.fullmatch(r"(MES|NQ|GC)[FGHJKMNQUVXZ][0-9]{4}", value)
+    return aliases[dated.group(1)] if dated else aliases.get(value, value)
 
 
 # Yahoo fallback: request candles for a date or inclusive date range.
@@ -171,6 +173,7 @@ def Download_yfinalce(ticker, datetime, timeframe="15m"):
 # Primary data path: read validated IBKR 5-minute CSV bars, then resample if requested.
 def load_learning_candles(ticker, datefrom, dateTo, timeframe="15m"):
     """Load IBKR 5m CSVs as complete 5m/15m bars, or fall back to Yahoo."""
+    requested_contract = str(ticker).upper().strip()
     ticker = normalise_learning_ticker(ticker)
     interval = normalise_learning_timeframe(timeframe)
     minutes = 5 if interval == "5m" else 15
@@ -182,11 +185,16 @@ def load_learning_candles(ticker, datefrom, dateTo, timeframe="15m"):
         raise ValueError("Use NQ=F, GC=F, or MES=F")
 
     prefix = {"NQ=F": "NQ", "GC=F": "GC", "MES=F": "MES"}[ticker]
+    dated = re.fullmatch(r"(MES|NQ|GC)([FGHJKMNQUVXZ])([0-9]{4})", requested_contract)
+    contract_code = requested_contract if dated else f"{prefix}Z2026"
+    month_code = {v: k for k, v in enumerate("FGHJKMNQUVXZ", start=1)}
+    expiry_code = (f"{prefix}_{dated.group(3)}{month_code[dated.group(2)]:02d}"
+                   if dated else None)
     folder = Path(__file__).resolve().parent / "data"
     files = []
     year, month = start.year, start.month
     while (year, month) <= (end.year, end.month):
-        files.append(folder / f"{prefix}Z2026_IBKR_5m_{year}-{month:02d}.csv")
+        files.append(folder / f"{contract_code}_IBKR_5m_{year}-{month:02d}.csv")
         month += 1
         if month == 13:
             month, year = 1, year + 1
@@ -196,6 +204,9 @@ def load_learning_candles(ticker, datefrom, dateTo, timeframe="15m"):
     if not all(path.is_file() for path in files):
         range_matches = []
         for candidate in folder.glob(f"{prefix}*_IBKR_5m_*_to_*.csv"):
+            if dated and not (candidate.name.startswith(contract_code + "_")
+                              or candidate.name.startswith(expiry_code + "_")):
+                continue
             parts = candidate.stem.split("_")
             if len(parts) < 7:
                 continue
@@ -212,6 +223,8 @@ def load_learning_candles(ticker, datefrom, dateTo, timeframe="15m"):
             files = [range_matches[0][2]]
 
     if not all(path.is_file() for path in files):
+        if dated:
+            raise FileNotFoundError(f"IBKR contract {contract_code} CSV not found for {start} to {end}; refusing Yahoo substitution")
         print("IBKR CSV missing; using Yahoo instead:",
               ", ".join(p.name for p in files if not p.is_file()))
         # Yahoo also needs earlier candles to warm up EMA20 and EMA200.
@@ -228,7 +241,7 @@ def load_learning_candles(ticker, datefrom, dateTo, timeframe="15m"):
     # Optional previous-month CSV supplies EMA warmup when requested period
     # starts at the beginning of a month.
     previous = start.replace(day=1) - timedelta(days=1)
-    previous_file = folder / f"{prefix}Z2026_IBKR_5m_{previous.year}-{previous.month:02d}.csv"
+    previous_file = folder / f"{contract_code}_IBKR_5m_{previous.year}-{previous.month:02d}.csv"
     if previous_file.is_file() and previous_file not in files:
         files.insert(0, previous_file)
 
@@ -570,7 +583,7 @@ def three_candle_signal_learning(ticker, dateFrom=None, dateTo=None, enableDig=F
     if tiker not in ("NQ=F", "GC=F", "MES=F"):
         raise ValueError("Use MES, NQ, GC or their =F aliases")
     interval = normalise_learning_timeframe(timeframe)
-    data = load_learning_candles(tiker, dateFrom, dateTo, interval)
+    data = load_learning_candles(ticker, dateFrom, dateTo, interval)
     if enableDig:
         print(f"Loaded {len(data)} x {interval} candles for {ticker}")
     signals = []
