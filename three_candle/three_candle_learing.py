@@ -1059,11 +1059,17 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
 
 
 # Visual review: mark every core C2 candidate on the full chart.
-def plot_signal_candidate(result, multiChart=True):
+def plot_signal_candidate(result, multiChart=True, SRLineTypes="swing",
+                          gann_points_per_bar=1.0):
     """TradingView-style C2 chart: 100-bar panels or one scrollable chart per UK day."""
     if result is None:
         print("No result supplied.")
         return
+    sr_type = str(SRLineTypes).strip().lower()
+    if sr_type not in ("swing", "fib", "gann"):
+        raise ValueError("SRLineTypes must be 'swing', 'fib', or 'gann'")
+    if gann_points_per_bar <= 0:
+        raise ValueError("gann_points_per_bar must be positive")
     data, _, _ = chart_data_and_mas(result)
     tf_label = result.attrs.get("timeframe", "15m")
     step = pd.Timedelta(minutes=5 if tf_label == "5m" else 15)
@@ -1115,19 +1121,55 @@ def plot_signal_candidate(result, multiChart=True):
                        color="#35e89b" if buy else "#ff6471",
                        edgecolors="white", linewidths=0.5, zorder=7)
 
-        # Major levels become active at their CONFIRMATION candle.
-        # Extend them forward to the chart's right edge to watch retests.
+        # All overlays use CONFIRMED historical swing levels only.
+        confirmed_levels = []
         for seg_start, seg_end in zip(boundaries[:-1], boundaries[1:]):
             if seg_start >= right:
                 break
-            segment_data = data.iloc[seg_start:seg_end]
-            for kind, pivot, confirmed, price in detect_major_swing_levels(segment_data):
-                confirmation_idx = seg_start + confirmed
-                if confirmation_idx < right:
-                    start_x = max(0, confirmation_idx-left)
-                    ax.hlines(price, start_x, len(visible)-0.5,
-                              colors="#ff4050", linewidth=1.7,
-                              alpha=0.85, zorder=5)
+            for kind, pivot, confirmed, price in detect_major_swing_levels(
+                    data.iloc[seg_start:seg_end]):
+                confirmed_idx = seg_start + confirmed
+                if confirmed_idx < right:
+                    confirmed_levels.append(
+                        (kind, seg_start+pivot, confirmed_idx, price))
+        confirmed_levels.sort(key=lambda level: level[2])
+
+        if sr_type == "swing":
+            for kind, pivot_idx, confirmed_idx, price in confirmed_levels:
+                ax.hlines(price, max(0, confirmed_idx-left), len(visible)-0.5,
+                          colors="#ff4050", linewidth=1.7,
+                          alpha=0.85, zorder=5)
+
+        elif sr_type == "fib" and len(confirmed_levels) >= 2:
+            latest = confirmed_levels[-1]
+            earlier = next((level for level in reversed(confirmed_levels[:-1])
+                            if level[0] != latest[0]), None)
+            if earlier is not None:
+                lo, hi = sorted((earlier[3], latest[3]))
+                x0 = max(0, latest[2]-left)
+                for ratio, color in ((0.236, "#6fa8ff"), (0.382, "#61c2be"),
+                                     (0.5, "#f0c36b"), (0.618, "#be90ff"),
+                                     (0.786, "#ff8d73")):
+                    value = lo + (hi-lo)*ratio
+                    ax.hlines(value, x0, len(visible)-0.5, colors=color,
+                              linewidth=1.2, linestyle="--", alpha=0.8,
+                              label=f"Fib {ratio:.3f} {value:.2f}")
+
+        elif sr_type == "gann" and confirmed_levels:
+            # Study-scale Gann-style rays: 1x1 equals the supplied
+            # MES points per candle, not an automatic TradingView scale.
+            kind, pivot_idx, confirmed_idx, price = confirmed_levels[-1]
+            x0 = max(0, confirmed_idx-left)
+            xs = list(range(x0, len(visible)))
+            sign = 1 if kind == "SUPPORT" else -1
+            for factor, name, color in (
+                (0.5, "1x2", "#61c2be"), (1.0, "1x1", "#ff4050"),
+                (2.0, "2x1", "#be90ff")
+            ):
+                ys = [price + sign*gann_points_per_bar*factor*(x-x0)
+                      for x in xs]
+                ax.plot(xs, ys, color=color, linewidth=1.3,
+                        linestyle="--", label=f"Gann {name}", zorder=5)
 
         ax.set_ylim(low-0.13*price_range, high+0.13*price_range)
         every = max(1, len(visible)//12)
@@ -1136,7 +1178,7 @@ def plot_signal_candidate(result, multiChart=True):
                              for i in ticks], rotation=35, ha="right")
         ax.set_xlim(-1, len(visible))
         ax.set_title(f"{result.attrs.get('contract', 'Futures')} | {tf_label} | "
-                     f"C2 candidates {panel_no}/{len(panels)} | UK time",
+                     f"{sr_type.upper()} S/R | C2 candidates {panel_no}/{len(panels)} | UK time",
                      color="#f0f5fa")
         ax.set_ylabel("Futures price", color="#dbe5f0")
         ax.tick_params(colors="#dbe5f0")
