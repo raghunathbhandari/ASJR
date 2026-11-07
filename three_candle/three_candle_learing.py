@@ -199,6 +199,14 @@ def load_learning_candles(ticker, datefrom, dateTo, timeframe="15m"):
         if month == 13:
             month, year = 1, year + 1
 
+    # Standard daily layout: one immutable CSV per UTC calendar date.
+    # Preserve legacy monthly files; use daily only when each trading date exists.
+    daily_dates = [start + timedelta(days=n) for n in range((end - start).days + 1)
+                   if (start + timedelta(days=n)).weekday() != 5]  # Saturday closed
+    daily_files = [folder / f"{contract_code}_IBKR_5m_{day}.csv" for day in daily_dates]
+    if daily_files and all(path.is_file() for path in daily_files):
+        files = daily_files
+
     # Accept a single IBKR date-range export covering the requested period.
     # Keep the existing monthly-file preference unchanged.
     if not all(path.is_file() for path in files):
