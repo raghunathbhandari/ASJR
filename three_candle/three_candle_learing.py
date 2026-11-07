@@ -978,7 +978,7 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
                 prices.append(float(trade["Exit"]))
         low, high = min(prices), max(prices)
         price_range = max(high - low, 10.0)
-        dot_y = low - 0.08 * price_range
+        dot_gap = max(0.75, 0.025 * price_range)
         ax.set_ylim(low - 0.22 * price_range, high + 0.12 * price_range)
 
         if trade is not None:
@@ -995,28 +995,27 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
                 ax.axhline(exit_price, color="#bd91ff", linewidth=1.6,
                            linestyle="-.", label=f"EXIT {exit_price:.2f}", zorder=4)
 
-            # Timing DOTS are BELOW the candle lows, not over candle bodies.
-            ax.scatter(x_entry, dot_y, marker="o", s=90,
+            # Mark the ACTUAL entry/exit candle just below its low.
+            entry_y = float(visible.Low.iloc[x_entry]) - dot_gap
+            entry_x = x_entry - 0.18 if exit_visible and exit_idx == entry_idx else x_entry
+            ax.scatter(entry_x, entry_y, marker="o", s=75,
                        color="#35e89b", edgecolors="white", linewidth=0.6,
                        label="Entry candle", zorder=8)
-            ax.annotate("ENTRY", (x_entry, dot_y), xytext=(0, -15),
+            ax.annotate("ENTRY", (entry_x, entry_y), xytext=(0, -12),
                         textcoords="offset points", ha="center",
-                        color="#35e89b", fontsize=9, weight="bold")
+                        color="#35e89b", fontsize=8, weight="bold")
+
             if exit_visible:
                 x_exit = exit_idx - start_idx
-                if x_exit == x_entry:
-                    x_entry_dot, x_exit_dot = x_entry - 0.18, x_exit + 0.18
-                    # Shift both dots when entry and exit share a candle.
-                    ax.collections[-1].set_offsets([[x_entry_dot, dot_y]])
-                else:
-                    x_exit_dot = x_exit
-                ax.scatter(x_exit_dot, dot_y, marker="o", s=90,
+                exit_x = x_exit + 0.18 if x_exit == x_entry else x_exit
+                exit_y = float(visible.Low.iloc[x_exit]) - dot_gap
+                ax.scatter(exit_x, exit_y, marker="o", s=75,
                            color="#bd91ff", edgecolors="white", linewidth=0.6,
                            label="Exit candle", zorder=8)
-                ax.annotate("EXIT", (x_exit_dot, dot_y),
-                            xytext=(0, -30 if x_exit == x_entry else -15),
+                ax.annotate("EXIT", (exit_x, exit_y),
+                            xytext=(0, -24 if x_exit == x_entry else -12),
                             textcoords="offset points", ha="center",
-                            color="#bd91ff", fontsize=9, weight="bold")
+                            color="#bd91ff", fontsize=8, weight="bold")
         step = max(1, len(visible)//12)
         ticks = list(range(0, len(visible), step))
         ax.set_xticks(ticks, [visible.index[i].strftime("%d %b %H:%M")
@@ -1057,88 +1056,75 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
 
 # Visual review: mark every core C2 candidate on the full chart.
 def plot_signal_candidate(result):
-    """Show NQ once: green C2 dots for BUY, red C2 dots for SELL."""
+    """TradingView-style 100-candle panels with C2 dots attached to candles."""
     if result is None:
         print("No result supplied.")
         return
-    data, ma20, ma200 = chart_data_and_mas(result)
+    data, _, _ = chart_data_and_mas(result)
     tf_label = result.attrs.get("timeframe", "15m")
+    step = pd.Timedelta(minutes=5 if tf_label == "5m" else 15)
 
-    # Preserve the chart height; give each 5m candle more horizontal room.
-    is_scrollable = tf_label == "5m"
-    chart_width = min(120, max(20, len(data) * 0.12)) if is_scrollable else 20
-    fig, ax = plt.subplots(figsize=(chart_width, 9), facecolor="#101722")
-    ax.set_facecolor("#101722")
+    # Split missing-data gaps; display every candle in manageable panels.
+    boundaries = [0] + [i for i in range(1, len(data))
+                          if data.index[i] - data.index[i-1] != step] + [len(data)]
+    panels = []
+    for start, end in zip(boundaries[:-1], boundaries[1:]):
+        panels.extend((i, min(i+100, end), start)
+                      for i in range(start, end, 100))
 
-    # Full OHLC candles at the selected timeframe.
-    for i, candle in enumerate(data.itertuples()):
-        color = "#23c985" if candle.Close >= candle.Open else "#ff6471"
-        ax.vlines(i, candle.Low, candle.High, color=color, linewidth=0.8)
-        ax.add_patch(Rectangle(
-            (i - 0.3, min(candle.Open, candle.Close)),
-            0.6, max(abs(candle.Close - candle.Open), 0.00001),
-            facecolor=color, edgecolor=color,
-        ))
+    for panel_no, (left, right, segment_start) in enumerate(panels, 1):
+        visible = data.iloc[left:right]
+        fig, ax = plt.subplots(figsize=(14, 6), facecolor="#101722")
+        ax.set_facecolor("#101722")
 
-    # Direction-coloured markers identify C2 (the sweep candle), not C3.
-    for _, row in result.iterrows():
-        if row["C2_time"] not in data.index:
-            continue
-        pos = data.index.get_loc(row["C2_time"])
-        # BUY = green dot below C2; SELL = red dot above C2.
-        direction = str(row["Direction"]).upper()
-        dot_color = "#23c985" if direction == "BUY" else "#ff6471"
-        dot_price = row["C2_Low"] if direction == "BUY" else row["C2_High"]
-        ax.scatter(pos, dot_price, color=dot_color, s=65,
-                   edgecolors="#ffffff", linewidths=0.6, zorder=6)
+        for i, c in enumerate(visible.itertuples()):
+            color = "#3b82f6" if c.Close >= c.Open else "#d4d4d8"
+            ax.vlines(i, c.Low, c.High, color=color, linewidth=1)
+            ax.add_patch(Rectangle((i-0.33, min(c.Open, c.Close)),
+                                   0.66, max(abs(c.Close-c.Open), 0.01),
+                                   facecolor=color, edgecolor=color))
 
-    # Short local S/R segments at each confirmed swing (not full-width lines).
-    for kind, pivot, confirmed_at, price in detect_swing_levels(data, left=2, right=2):
-        level_color = "#56c4f5" if kind == "SUPPORT" else "#ff7979"
-        x1 = max(0, pivot - 2)
-        x2 = min(len(data) - 0.5, pivot + 2.5)
-        ax.hlines(price, x1, x2, color=level_color, linewidth=2.0,
-                  alpha=0.95, zorder=5)
+        # Orange EMA20, without connecting through missing-date gaps.
+        history = data.iloc[segment_start:right]
+        ema20 = history.Close.ewm(span=20, adjust=False).mean()
+        ax.plot(range(len(visible)), ema20.reindex(visible.index),
+                color="#ff9f0a", linewidth=1.8, label="EMA20")
 
-    every = max(1, len(data) // 15)
-    ticks = list(range(0, len(data), every))
-    ax.set_xticks(ticks, [data.index[j].strftime("%d %b %H:%M") for j in ticks],
-                  rotation=35, ha="right")
-    ax.plot(range(len(data)), ma20, color="#f7c65c", linewidth=1.5,
-            label=f"EMA20 ({tf_label} close)", zorder=4)
-    ax.plot(range(len(data)), ma200, color="#b58cff", linewidth=1.6,
-                label=f"EMA200 ({tf_label} close)", zorder=4)
-    ax.legend(loc="best", facecolor="#1a2534", edgecolor="#526174", labelcolor="white")
-    ax.set_xlim(-1, len(data))
-    ax.set_ylabel("Futures price", color="#dbe5f0")
-    ax.set_title(f"{tf_label} | {len(result)} core candidate C2 markers | UK time",
-                 color="#f0f5fa")
-    ax.tick_params(colors="#dbe5f0")
-    for spine in ax.spines.values():
-        spine.set_color("#526174")
-    ax.grid(color="#526174", alpha=0.35)
-    fig.tight_layout()
+        low, high = float(visible.Low.min()), float(visible.High.max())
+        price_range = max(10.0, high-low)
+        dot_gap = max(0.75, 0.025*price_range)
+        for _, signal in result[result["C2_time"].isin(visible.index)].iterrows():
+            pos = int(visible.index.get_loc(signal["C2_time"]))
+            buy = str(signal["Direction"]).upper() == "BUY"
+            mark_y = (float(visible.Low.iloc[pos])-dot_gap if buy
+                      else float(visible.High.iloc[pos])+dot_gap)
+            ax.scatter(pos, mark_y, s=50, marker="o",
+                       color="#35e89b" if buy else "#ff6471",
+                       edgecolors="white", linewidths=0.5, zorder=7)
 
-    if is_scrollable:
-        # Notebook inline output normally shrinks wide plots to fit the page.
-        # Render native-size PNG in a horizontal-scroll container instead.
-        from base64 import b64encode
-        from io import BytesIO
-        from IPython.display import HTML, display
+        # Keep the short swing S/R lines from the previous chart.
+        for kind, pivot, confirmed, price in detect_swing_levels(visible, left=2, right=2):
+            ax.hlines(price, max(0, pivot-2), min(len(visible)-0.5, pivot+2.5),
+                      colors="#56c4f5" if kind == "SUPPORT" else "#ff7979",
+                      linewidth=1.2, alpha=0.75)
 
-        output = BytesIO()
-        fig.savefig(output, format="png", dpi=100, facecolor=fig.get_facecolor())
-        image_data = b64encode(output.getvalue()).decode("ascii")
-        width_px = int(chart_width * 100)
-        plt.close(fig)
-
-        display(HTML(
-            f'<div style="width:100%;overflow-x:auto;overflow-y:hidden;">'
-            f'<img src="data:image/png;base64,{image_data}" '
-            f'style="width:{width_px}px;max-width:none;height:auto;" />'
-            f'</div>'
-        ))
-    else:
+        ax.set_ylim(low-0.13*price_range, high+0.13*price_range)
+        every = max(1, len(visible)//12)
+        ticks = list(range(0, len(visible), every))
+        ax.set_xticks(ticks, [visible.index[i].strftime("%d %b %H:%M")
+                             for i in ticks], rotation=35, ha="right")
+        ax.set_xlim(-1, len(visible))
+        ax.set_title(f"{result.attrs.get('contract', 'Futures')} | {tf_label} | "
+                     f"C2 candidates {panel_no}/{len(panels)} | UK time",
+                     color="#f0f5fa")
+        ax.set_ylabel("Futures price", color="#dbe5f0")
+        ax.tick_params(colors="#dbe5f0")
+        ax.grid(color="#526174", alpha=0.25)
+        ax.legend(loc="best", facecolor="#1a2534",
+                  edgecolor="#526174", labelcolor="white")
+        for spine in ax.spines.values():
+            spine.set_color("#526174")
+        fig.tight_layout()
         plt.show()
         plt.close(fig)
 
