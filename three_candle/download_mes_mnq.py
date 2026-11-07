@@ -5,6 +5,7 @@ Read-only IBKR Gateway port 4002. Saves new CSVs locally; does not git push.
 Existing files are never overwritten.
 """
 import argparse
+import re
 from datetime import date, datetime, time as daytime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -12,12 +13,12 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 from ib_insync import IB, Future
 
-SYMBOLS = ("MES", "MNQ")
+DEFAULT_TICKERS = ("MES", "MNQ")
 DEST = Path("/root/trading/ASJR/three_candle/data")
 UK = ZoneInfo("Europe/London")
 
 
-def download(ib: IB, symbol: str, start: date, end: date, expiry: str) -> None:
+def download(ib: IB, symbol: str, start: date, end: date, expiry: str, exchange: str) -> None:
     filename = f"{symbol}_{expiry}_IBKR_5m_{start}_to_{end}.csv"
     target = DEST / filename
     if target.exists():
@@ -26,7 +27,7 @@ def download(ib: IB, symbol: str, start: date, end: date, expiry: str) -> None:
 
     qualified = ib.qualifyContracts(
         Future(symbol=symbol, lastTradeDateOrContractMonth=expiry,
-               exchange="CME", currency="USD")
+               exchange=exchange, currency="USD")
     )
     if len(qualified) != 1:
         raise RuntimeError(f"{symbol}: contract qualification returned {len(qualified)} matches")
@@ -89,14 +90,25 @@ def download(ib: IB, symbol: str, start: date, end: date, expiry: str) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Read-only IBKR MES/MNQ 5-minute exporter")
+    parser = argparse.ArgumentParser(description="Read-only IBKR futures 5-minute exporter")
     parser.add_argument("--start", help="YYYY-MM-DD, inclusive; use with --end")
     parser.add_argument("--end", help="YYYY-MM-DD, inclusive; use with --start")
     parser.add_argument("--days", type=int, default=6,
                         help="Default: most recent N completed UTC days (default: 6)")
+    parser.add_argument("--tickers", default="MES,MNQ",
+                        help="Comma-separated futures symbols (default MES,MNQ)")
+    parser.add_argument("--exchange", default="CME",
+                        help="Exchange for all symbols (default CME; e.g. COMEX for GC)")
     parser.add_argument("--expiry", default="202612",
                         help="Explicit YYYYMM futures contract; default Dec 2026")
     args = parser.parse_args()
+
+    tickers = tuple(dict.fromkeys(s.strip().upper() for s in args.tickers.split(",")))
+    if not tickers or any(not re.fullmatch(r"[A-Z0-9]{1,10}", s) for s in tickers):
+        parser.error("--tickers must be comma-separated futures symbols such as MES,MNQ")
+    exchange = args.exchange.strip().upper()
+    if not re.fullmatch(r"[A-Z0-9]{2,12}", exchange):
+        parser.error("--exchange must be an exchange code such as CME or COMEX")
 
     if bool(args.start) != bool(args.end):
         parser.error("--start and --end must be supplied together")
@@ -120,13 +132,13 @@ def main() -> None:
     if end > yesterday:
         parser.error("End must be a completed UTC day (yesterday or earlier)")
 
-    print(f"IBKR MES/MNQ | {start} to {end} UTC | expiry {args.expiry}", flush=True)
+    print(f"IBKR {','.join(tickers)} | {start} to {end} UTC | expiry {args.expiry} | exchange {exchange}", flush=True)
     ib = IB()
     try:
         ib.connect("127.0.0.1", 4002, clientId=893, readonly=True, timeout=20)
-        for symbol in SYMBOLS:
+        for symbol in tickers:
             try:
-                download(ib, symbol, start, end, args.expiry)
+                download(ib, symbol, start, end, args.expiry, exchange)
             except Exception as exc:
                 print(f"{symbol} FAILED: {exc}", flush=True)
     finally:
