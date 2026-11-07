@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Download reusable 5-minute MES/MNQ IBKR history for a date range.
+"""Download reusable IBKR 5-minute MES/MNQ history, one CSV per UTC date.
 
 Read-only IBKR Gateway port 4002. Saves new CSVs locally; does not git push.
 Existing files are never overwritten.
@@ -19,6 +19,26 @@ UK = ZoneInfo("Europe/London")
 
 
 def download(ib: IB, symbol: str, start: date, end: date, expiry: str, exchange: str) -> None:
+    """Save one complete UTC day's IBKR 5m candles per contract CSV.
+
+    Repeated runs skip existing dates; no historical CSV is overwritten.
+    """
+    month_letters = "FGHJKMNQUVXZ"
+    contract_code = f"{symbol}{month_letters[int(expiry[4:6]) - 1]}{expiry[:4]}"
+    DEST.mkdir(parents=True, exist_ok=True)
+
+    missing_days = []
+    for offset in range((end - start).days + 1):
+        day = start + timedelta(days=offset)
+        target = DEST / f"{contract_code}_IBKR_5m_{day}.csv"
+        if target.exists():
+            print(f"{symbol} | {day} UTC | SKIPPED (file exists): {target}", flush=True)
+        else:
+            missing_days.append((day, target))
+
+    if not missing_days:
+        print(f"{symbol} | all requested dates already saved", flush=True)
+        return
 
     qualified = ib.qualifyContracts(
         Future(symbol=symbol, lastTradeDateOrContractMonth=expiry,
@@ -28,10 +48,8 @@ def download(ib: IB, symbol: str, start: date, end: date, expiry: str, exchange:
         raise RuntimeError(f"{symbol}: contract qualification returned {len(qualified)} matches")
     contract = qualified[0]
 
-    rows = []
-    errors = []
-    for offset in range((end - start).days + 1):
-        day = start + timedelta(days=offset)
+    failures = []
+    for day, target in missing_days:
         until = datetime.combine(day + timedelta(days=1), daytime.min, timezone.utc)
         try:
             bars = ib.reqHistoricalData(
@@ -45,7 +63,8 @@ def download(ib: IB, symbol: str, start: date, end: date, expiry: str, exchange:
                 keepUpToDate=False,
                 timeout=50,
             )
-            day_rows = 0
+
+            rows = []
             for bar in bars:
                 ts = pd.Timestamp(bar.date)
                 ts = ts.tz_localize("UTC") if ts.tzinfo is None else ts.tz_convert("UTC")
@@ -60,36 +79,33 @@ def download(ib: IB, symbol: str, start: date, end: date, expiry: str, exchange:
                     "Close": bar.close,
                     "Volume": bar.volume,
                 })
-                day_rows += 1
-            print(f"{symbol} | {day} UTC | {day_rows} candles", flush=True)
+
+            if not rows:
+                # Weekends and exchange holidays can legitimately have no bars.
+                print(f"{symbol} | {day} UTC | 0 candles (no file)", flush=True)
+                continue
+
+            frame = (pd.DataFrame(rows)
+                     .drop_duplicates(subset="Datetime_UTC")
+                     .sort_values("Datetime_UTC"))
+
+            # Exclusive-create: never clobber an existing historical file.
+            with target.open("x", encoding="utf-8", newline="") as output:
+                frame.to_csv(output, index=False)
+
+            print(f"{symbol} | {day} UTC | SAVED {len(frame)} candles | {target}", flush=True)
+            print(f"UK first: {frame.iloc[0]['Datetime_UK']} | "
+                  f"last: {frame.iloc[-1]['Datetime_UK']}", flush=True)
+        except FileExistsError:
+            print(f"{symbol} | {day} UTC | SKIPPED (created by another run)", flush=True)
         except Exception as exc:
-            errors.append(f"{day}: {exc}")
-            print(f"{symbol} | {day} | ERROR: {exc}", flush=True)
+            failures.append(f"{day}: {exc}")
+            print(f"{symbol} | {day} UTC | ERROR: {exc}", flush=True)
         ib.sleep(1.2)
 
-    if errors:
-        raise RuntimeError(f"{symbol}: {len(errors)} request failures; refusing partial CSV: {errors}")
-    if not rows:
-        raise RuntimeError(f"{symbol}: no history returned")
-
-    frame = (pd.DataFrame(rows)
-             .drop_duplicates(subset="Datetime_UTC")
-             .sort_values("Datetime_UTC"))
-    DEST.mkdir(parents=True, exist_ok=True)
-    # Standard: one CSV per UTC date, with the explicit contract name.
-    codes = "FGHJKMNQUVXZ"
-    month_num = int(expiry[4:6])
-    contract_code = f"{symbol}{codes[month_num - 1]}{expiry[:4]}"
-    frame["UTC_Day"] = pd.to_datetime(frame["Datetime_UTC"], utc=True).dt.date
-    for day, daily in frame.groupby("UTC_Day", sort=True):
-        target = DEST / f"{contract_code}_IBKR_5m_{day}.csv"
-        if target.exists():
-            print(f"{symbol} | {day} | SKIPPED existing {target.name}", flush=True)
-            continue
-        with target.open("x", encoding="utf-8", newline="") as output:
-            daily.drop(columns="UTC_Day").to_csv(output, index=False)
-        print(f"{symbol} | {day} | SAVED {len(daily)} candles | {target.name}", flush=True)
-    print(f"{symbol} | total returned: {len(frame)}; coverage not certified.", flush=True)
+    print("Coverage is not certified; inspect expected exchange-session gaps.", flush=True)
+    if failures:
+        raise RuntimeError(f"{symbol}: {len(failures)} daily failures: {failures}")
 
 
 def main() -> None:
