@@ -1060,7 +1060,7 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
 
 # Visual review: mark every core C2 candidate on the full chart.
 def plot_signal_candidate(result, multiChart=True, SRLineTypes="swing",
-                          gann_points_per_bar=1.0):
+                          gann_points_per_bar=1.0, gann_anchor_price=None):
     """C2 chart; fib draws historical swing retracements, gann sqrt-price S/R."""
     if result is None:
         print("No result supplied.")
@@ -1068,6 +1068,8 @@ def plot_signal_candidate(result, multiChart=True, SRLineTypes="swing",
     sr_type = str(SRLineTypes).strip().lower()
     if sr_type not in ("swing", "fib", "gann"):
         raise ValueError("SRLineTypes must be 'swing', 'fib', or 'gann'")
+    if gann_anchor_price is not None and float(gann_anchor_price) <= 0:
+        raise ValueError("gann_anchor_price must be positive")
     data, _, _ = chart_data_and_mas(result)
     tf_label = result.attrs.get("timeframe", "15m")
     step = pd.Timedelta(minutes=5 if tf_label == "5m" else 15)
@@ -1162,17 +1164,21 @@ def plot_signal_candidate(result, multiChart=True, SRLineTypes="swing",
                               label=f"Fib {ratio:.3f} {value:.2f}"
                                     if newest else "_nolegend_")
 
-        elif sr_type == "gann" and any(segment_start <= level[2] < right
-                                         for level in confirmed_levels):
+        elif sr_type == "gann" and (gann_anchor_price is not None or any(
+                segment_start <= level[2] < right for level in confirmed_levels)):
             # Square-of-Nine PRICE LEVELS (horizontal), not a time/price
-            # angle or fan. A 45-degree step is 0.125 in sqrt(price).
-            # Lock to the FIRST confirmed major swing in this session.
-            # Later swings never recalculate levels, even across panels.
-            # MES is quoted in 0.25-point ticks.
+            # angle or fan. Formula: (sqrt(anchor) +/- angle/180)^2.
+            # Explicit gann_anchor_price (e.g. 7404) is fixed for all panels;
+            # otherwise lock to first confirmed major swing in the session.
+            # MES levels are displayed at 0.25-point tick increments.
             session_levels = [level for level in confirmed_levels
                               if segment_start <= level[2] < right]
-            kind, pivot_idx, confirmed_idx, anchor = session_levels[0]
-            x0 = max(0, confirmed_idx-left)
+            if gann_anchor_price is not None:
+                anchor = float(gann_anchor_price)
+                x0 = 0
+            else:
+                kind, pivot_idx, confirmed_idx, anchor = session_levels[0]
+                x0 = max(0, confirmed_idx-left)
             root = anchor ** 0.5
             price_floor = low - 0.13*price_range
             price_ceiling = high + 0.13*price_range
@@ -1183,7 +1189,7 @@ def plot_signal_candidate(result, multiChart=True, SRLineTypes="swing",
                                    (180, "#be90ff"),
                                    (360, "#ff8d73")):
                 for side in (-1, 1):
-                    shifted_root = root + side*degrees/360.0
+                    shifted_root = root + side*degrees/180.0
                     if shifted_root <= 0:
                         continue
                     level = round((shifted_root ** 2)*4)/4
