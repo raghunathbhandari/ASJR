@@ -1,4 +1,4 @@
-"""Rudra ThreeCandl-V3 LEARNING file (15-minute charts only).
+"""Rudra ThreeCandl-V3 LEARNING file (5-minute or 15-minute charts).
 
 This is an NQ=F extended-futures teaching scanner: it prints C1/C2/C3\nand draws each matching setup.
 It does NOT place trades, calculate P&L, or simulate stops.
@@ -103,7 +103,24 @@ def Filter_law_of_motion_grade(signal, config=None):
     return "REJECT"
 
 
-# 2. DOWNLOAD: Yahoo's native 15-minute OHLCV candles
+# 2. DOWNLOAD: Yahoo OHLCV candles
+
+def normalise_learning_timeframe(timeframe):
+    """Accept 5min/5m and 15min/15m spellings."""
+    value = str(timeframe).lower().strip()
+    intervals = {"5min": "5m", "5m": "5m", "15min": "15m", "15m": "15m"}
+    if value not in intervals:
+        raise ValueError("timeframe must be 5min, 5m, 15min, or 15m")
+    return intervals[value]
+
+
+def normalise_learning_ticker(ticker):
+    """MES/NQ/GC refer to the same contracts as their Yahoo aliases."""
+    aliases = {"MES": "MES=F", "NQ": "NQ=F", "GC": "GC=F"}
+    value = str(ticker).upper().strip()
+    return aliases.get(value, value)
+
+
 def Download_yfinalce(ticker, datetime, timeframe="15m"):
     """Download ONE date (YYYY-MM-DD) or (start_date, end_date) tuple.
 
@@ -121,14 +138,13 @@ def Download_yfinalce(ticker, datetime, timeframe="15m"):
         raise ValueError("dateTo must be on or after datefrom")
     if ticker not in ("NQ=F", "GC=F", "MES=F"):
         raise ValueError("Use NQ=F, GC=F, or MES=F")
-    if timeframe not in ("15m", "15min"):
-        raise ValueError("Learning version supports 15m only")
+    interval = normalise_learning_timeframe(timeframe)
 
     raw = yf.download(
         ticker,
         start=start.isoformat(),
         end=(end + timedelta(days=1)).isoformat(),  # Yahoo end is exclusive
-        interval="15m",
+        interval=interval,
         prepost=True,  # include NQ overnight / extended futures session
         auto_adjust=False,
         progress=False,
@@ -149,8 +165,11 @@ def Download_yfinalce(ticker, datetime, timeframe="15m"):
 
 
 # 2B. READ IBKR CSV FIRST; FALL BACK TO YAHOO IF MONTHLY FILES ARE ABSENT
-def load_learning_candles(ticker, datefrom, dateTo):
-    """Build exact 15m bars from local IBKR 5m CSVs, or download Yahoo 15m."""
+def load_learning_candles(ticker, datefrom, dateTo, timeframe="15m"):
+    """Load IBKR 5m CSVs as complete 5m/15m bars, or fall back to Yahoo."""
+    ticker = normalise_learning_ticker(ticker)
+    interval = normalise_learning_timeframe(timeframe)
+    minutes = 5 if interval == "5m" else 15
     start = date.fromisoformat(str(datefrom))
     end = date.fromisoformat(str(dateTo))
     if end < start:
@@ -173,12 +192,14 @@ def load_learning_candles(ticker, datefrom, dateTo):
               ", ".join(p.name for p in files if not p.is_file()))
         # Yahoo also needs earlier candles to warm up EMA20 and EMA200.
         earlier = (start - timedelta(days=24)).isoformat()
-        yahoo = Download_yfinalce(ticker, (earlier, dateTo), "15m")
+        yahoo = Download_yfinalce(ticker, (earlier, dateTo), interval)
         requested = yahoo.index.date >= start
         if not requested.any():
             raise ValueError("No Yahoo candles within requested dates")
         first = int(requested.argmax())
-        return yahoo.iloc[max(0, first - 1000):]
+        output = yahoo.iloc[max(0, first - 1000):]
+        output.attrs["timeframe_minutes"] = minutes
+        return output
 
     # Optional previous-month CSV supplies EMA warmup when requested period
     # starts at the beginning of a month.
@@ -204,26 +225,27 @@ def load_learning_candles(ticker, datefrom, dateTo):
         print(f"WARNING: excluded {int(bad.sum())} suspicious 5m IBKR bars")
         raw = raw.loc[~bad]
 
-    # Each 15m candle MUST contain exactly 3 aligned 5m timestamps.
+    # Never construct a candle from incomplete or misaligned 5m bars.
     candles = []
-    for stamp, group in raw.groupby(raw.index.floor("15min")):
-        expected = [stamp + pd.Timedelta(minutes=n) for n in (0, 5, 10)]
+    for stamp, group in raw.groupby(raw.index.floor(f"{minutes}min")):
+        expected = [stamp + pd.Timedelta(minutes=n) for n in range(0, minutes, 5)]
         if list(group.index) != expected:
             continue
         candles.append((stamp, group.Open.iloc[0], group.High.max(),
                         group.Low.min(), group.Close.iloc[-1], group.Volume.sum()))
     if not candles:
-        raise ValueError("IBKR files exist but no complete 15m bars")
+        raise ValueError(f"IBKR files exist but no complete {interval} bars")
     data = pd.DataFrame(candles, columns=["Time", "Open", "High", "Low", "Close", "Volume"])
     data = data.set_index("Time")
     data.index = data.index.tz_convert("Europe/London")
     # Keep up to 1000 preceding bars for EMA20/EMA200, but do not count them as signals.
     requested = (data.index.date >= start) & (data.index.date <= end)
     if not requested.any():
-        raise ValueError("No complete IBKR 15m bars for requested dates")
+        raise ValueError(f"No complete IBKR {interval} bars for requested dates")
     first = int(requested.argmax())
     data = data.iloc[max(0, first - 200):]
     data = data.loc[data.index.date <= end]
+    data.attrs["timeframe_minutes"] = minutes
     # Retain the underlying IBKR 5m bars to resolve aggressive C3 fills.
     # The original 15m candles and their calculations remain unchanged.
     raw.index = raw.index.tz_convert("Europe/London")
@@ -231,8 +253,8 @@ def load_learning_candles(ticker, datefrom, dateTo):
     if first < 1000:
         print("EMA200 NOTICE: fewer than 1000 earlier bars; value may differ from TradingView")
     if data.empty:
-        raise ValueError("No complete IBKR 15m bars for requested dates")
-    print(f"Using IBKR CSV: {len(data)} complete 15m bars from {len(files)} file(s)")
+        raise ValueError(f"No complete IBKR {interval} bars for requested dates")
+    print(f"Using IBKR CSV: {len(data)} complete {interval} bars from {len(files)} file(s)")
     return data
 
 
@@ -292,7 +314,7 @@ def scan_core_candidates(data):
     because OHLC cannot establish intrabar event order.
     Missing 15m candles invalidate pending setups; never bridge a gap.
     """
-    step = pd.Timedelta(minutes=15)
+    step = pd.Timedelta(minutes=data.attrs.get("timeframe_minutes", 15))
     pending = []  # (c1_index, c2_index, direction)
     data.attrs["ambiguous"] = []
 
@@ -496,16 +518,26 @@ def six_point_research_metrics(history, c2_position, direction):
     }
 
 
-def three_candle_signal_learning(tiker, datefrom, dateTo, enableDig=False):
-    """Find BUY/SELL patterns; enableDig controls printing only (default off)."""
-    if tiker not in ("NQ=F", "GC=F", "MES=F"):
-        raise ValueError("Use NQ=F, GC=F, or MES=F")
+def three_candle_signal_learning(ticker, dateFrom=None, dateTo=None, enableDig=False, timeframe="15min", **kwargs):
+    """Find BUY/SELL candidates on 5m or 15m candles from IBKR CSV first.
 
-    data = load_learning_candles(tiker, datefrom, dateTo)
+    Accepts ticker="MES" or "MES=F"; old positional calls still work.
+    """
+    if dateFrom is None and "datefrom" in kwargs:
+        dateFrom = kwargs.pop("datefrom")
+    if kwargs:
+        raise TypeError(f"Unexpected arguments: {sorted(kwargs)}")
+    if dateFrom is None or dateTo is None:
+        raise TypeError("dateFrom and dateTo are required")
+    tiker = normalise_learning_ticker(ticker)
+    if tiker not in ("NQ=F", "GC=F", "MES=F"):
+        raise ValueError("Use MES, NQ, GC or their =F aliases")
+    interval = normalise_learning_timeframe(timeframe)
+    data = load_learning_candles(tiker, dateFrom, dateTo, interval)
     if enableDig:
-        print(f"Downloaded {len(data)} x 15m candles for {tiker}")
+        print(f"Loaded {len(data)} x {interval} candles for {ticker}")
     signals = []
-    requested_start = date.fromisoformat(str(datefrom))
+    requested_start = date.fromisoformat(str(dateFrom))
 
     for c1_i, c2_i, c3_i, direction, wait_bars in scan_core_candidates(data):
         times = [data.index[j] for j in (c1_i, c2_i, c3_i)]
@@ -588,7 +620,8 @@ def three_candle_signal_learning(tiker, datefrom, dateTo, enableDig=False):
     result.attrs["ambiguous"] = data.attrs.get("ambiguous", [])
     result.attrs["candles"] = data
     result.attrs["ibkr_5m"] = data.attrs.get("ibkr_5m")
-    result.attrs["requested_start"] = str(datefrom)
+    result.attrs["requested_start"] = str(dateFrom)
+    result.attrs["timeframe"] = interval
     if enableDig:
         passed_count = int(result["all_filters_pass"].sum()) if not result.empty else 0
         body_count = int(result["V3withBodySize_pass"].sum()) if not result.empty else 0
@@ -644,6 +677,7 @@ def plot_signal(result, show_sr=False, show_metrics=False):
         return
 
     data, ma20, ma200 = chart_data_and_mas(result)
+    tf_label = result.attrs.get("timeframe", "15m")
 
     metric_table = build_signal_metrics(result) if show_metrics else pd.DataFrame()
     for number, row in result.iterrows():
@@ -706,12 +740,12 @@ def plot_signal(result, show_sr=False, show_metrics=False):
         ax.set_xticks(ticks, [data.index[j].strftime("%d %b %H:%M") for j in ticks],
                       rotation=35, ha="right")
         ax.plot(range(len(data)), ma20, color="#f7c65c", linewidth=1.5,
-                label="EMA20 (15m close)", zorder=4)
+                label=f"EMA20 ({tf_label} close)", zorder=4)
         ax.plot(range(len(data)), ma200, color="#b58cff", linewidth=1.6,
-                label="EMA200 (15m close)", zorder=4)
+                label=f"EMA200 ({tf_label} close)", zorder=4)
         ax.set_xlim(-1, len(data))
         ax.set_ylabel("NQ futures price", color="#dbe5f0")
-        ax.set_title(f"{row['Ticker']} | 15m | {row['Direction']} Signal {number + 1}/{len(result)} | UK time",
+        ax.set_title(f"{row['Ticker']} | {tf_label} | {row['Direction']} Signal {number + 1}/{len(result)} | UK time",
                      color="#f0f5fa")
         ax.tick_params(colors="#dbe5f0")
         for spine in ax.spines.values():
@@ -918,6 +952,7 @@ def plot_signal_candidate(result):
         print("No result supplied.")
         return
     data, ma20, ma200 = chart_data_and_mas(result)
+    tf_label = result.attrs.get("timeframe", "15m")
 
     fig, ax = plt.subplots(figsize=(20, 9), facecolor="#101722")
     ax.set_facecolor("#101722")
@@ -957,13 +992,13 @@ def plot_signal_candidate(result):
     ax.set_xticks(ticks, [data.index[j].strftime("%d %b %H:%M") for j in ticks],
                   rotation=35, ha="right")
     ax.plot(range(len(data)), ma20, color="#f7c65c", linewidth=1.5,
-            label="EMA20 (15m close)", zorder=4)
+            label=f"EMA20 ({tf_label} close)", zorder=4)
     ax.plot(range(len(data)), ma200, color="#b58cff", linewidth=1.6,
-                label="EMA200 (15m close)", zorder=4)
+                label=f"EMA200 ({tf_label} close)", zorder=4)
     ax.legend(loc="best", facecolor="#1a2534", edgecolor="#526174", labelcolor="white")
     ax.set_xlim(-1, len(data))
     ax.set_ylabel("NQ futures price", color="#dbe5f0")
-    ax.set_title(f"15m | {len(result)} core candidate C2 markers | UK time",
+    ax.set_title(f"{tf_label} | {len(result)} core candidate C2 markers | UK time",
                  color="#f0f5fa")
     ax.tick_params(colors="#dbe5f0")
     for spine in ax.spines.values():
@@ -1005,6 +1040,7 @@ def plot_swing_levels(result, left=2, right=2):
         print("No scan result supplied.")
         return
     data, ma20, ma200 = chart_data_and_mas(result)
+    tf_label = result.attrs.get("timeframe", "15m")
     levels = detect_swing_levels(data, left=left, right=right)
 
     fig, ax = plt.subplots(figsize=(20, 9), facecolor="#101722")
@@ -1018,9 +1054,9 @@ def plot_swing_levels(result, left=2, right=2):
             facecolor=color, edgecolor=color,
         ))
     ax.plot(range(len(data)), ma20, color="#f7c65c",
-            linewidth=1.5, label="EMA20 (15m close)")
+            linewidth=1.5, label=f"EMA20 ({tf_label} close)")
     ax.plot(range(len(data)), ma200, color="#b58cff",
-            linewidth=1.6, label="EMA200 (15m close)")
+            linewidth=1.6, label=f"EMA200 ({tf_label} close)")
 
     support_count = 0
     resistance_count = 0
@@ -1041,7 +1077,7 @@ def plot_swing_levels(result, left=2, right=2):
                   rotation=35, ha="right")
     ax.set_xlim(-1, len(data))
     ax.set_ylabel("Futures price", color="#dbe5f0")
-    ax.set_title(f"15m swing S/R | Support {support_count} | Resistance {resistance_count} | UK time",
+    ax.set_title(f"{tf_label} swing S/R | Support {support_count} | Resistance {resistance_count} | UK time",
                  color="#f0f5fa")
     ax.tick_params(colors="#dbe5f0")
     for spine in ax.spines.values():
@@ -1465,9 +1501,10 @@ def summarise_signal_result(result, stop_points=6.0, verbose=True):
 
         if isinstance(ibkr_5m, pd.DataFrame) and not ibkr_5m.empty:
             start = stamp
-            end = stamp + pd.Timedelta(minutes=15)
+            bar_minutes = int(candles.attrs.get("timeframe_minutes", 15))
+            end = stamp + pd.Timedelta(minutes=bar_minutes)
             sub = ibkr_5m.loc[(ibkr_5m.index >= start) & (ibkr_5m.index < end)]
-            expected = [start + pd.Timedelta(minutes=n) for n in (0, 5, 10)]
+            expected = [start + pd.Timedelta(minutes=n) for n in range(0, bar_minutes, 5)]
             if list(sub.index) == expected:
                 initial_5m = True
                 c3_subbars = sub
