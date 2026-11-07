@@ -191,6 +191,26 @@ def load_learning_candles(ticker, datefrom, dateTo, timeframe="15m"):
         if month == 13:
             month, year = 1, year + 1
 
+    # Accept a single IBKR date-range export covering the requested period.
+    # Keep the existing monthly-file preference unchanged.
+    if not all(path.is_file() for path in files):
+        range_matches = []
+        for candidate in folder.glob(f"{prefix}_*_IBKR_5m_*_to_*.csv"):
+            parts = candidate.stem.split("_")
+            if len(parts) < 7:
+                continue
+            try:
+                file_start = date.fromisoformat(parts[-3])
+                file_end = date.fromisoformat(parts[-1])
+            except ValueError:
+                continue
+            if file_start <= start and file_end >= end:
+                range_matches.append((file_start, file_end, candidate))
+        if range_matches:
+            # Prefer the narrowest matching export, then the newest start.
+            range_matches.sort(key=lambda item: ((item[1] - item[0]).days, -item[0].toordinal()))
+            files = [range_matches[0][2]]
+
     if not all(path.is_file() for path in files):
         print("IBKR CSV missing; using Yahoo instead:",
               ", ".join(p.name for p in files if not p.is_file()))
