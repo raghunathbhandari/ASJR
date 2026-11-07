@@ -195,7 +195,7 @@ def load_learning_candles(ticker, datefrom, dateTo, timeframe="15m"):
     # Keep the existing monthly-file preference unchanged.
     if not all(path.is_file() for path in files):
         range_matches = []
-        for candidate in folder.glob(f"{prefix}_*_IBKR_5m_*_to_*.csv"):
+        for candidate in folder.glob(f"{prefix}*_IBKR_5m_*_to_*.csv"):
             parts = candidate.stem.split("_")
             if len(parts) < 7:
                 continue
