@@ -1106,11 +1106,15 @@ def plot_signal_candidate(result):
                        color="#35e89b" if buy else "#ff6471",
                        edgecolors="white", linewidths=0.5, zorder=7)
 
-        # Keep the short swing S/R lines from the previous chart.
-        for kind, pivot, confirmed, price in detect_swing_levels(visible, left=2, right=2):
-            ax.hlines(price, max(0, pivot-2), min(len(visible)-0.5, pivot+2.5),
-                      colors="#56c4f5" if kind == "SUPPORT" else "#ff7979",
-                      linewidth=1.2, alpha=0.75)
+        # Show MAJOR structural levels rather than each minor 5-bar pivot.
+        # Evaluate the entire uninterrupted segment, including panel edges.
+        segment_end = next(end for end in boundaries if end >= right)
+        segment_data = data.iloc[segment_start:segment_end]
+        for kind, pivot, confirmed, price in detect_major_swing_levels(segment_data):
+            local_pivot = segment_start + pivot - left
+            if 0 <= local_pivot < len(visible):
+                ax.hlines(price, local_pivot, min(len(visible)-0.5, local_pivot+20),
+                          colors="#ff4050", linewidth=2.0, alpha=0.95, zorder=5)
 
         ax.set_ylim(low-0.13*price_range, high+0.13*price_range)
         every = max(1, len(visible)//12)
@@ -1156,6 +1160,60 @@ def detect_swing_levels(data, left=2, right=2):
     return levels
 
 
+def detect_major_swing_levels(data, left=5, right=5, atr_multiple=2.5,
+                              lookaround=12, min_separation=10):
+    """Find meaningful confirmed price pivots for chart display only.
+
+    A pivot must be locally extreme, show a move of at least 2.5 ATR
+    on BOTH sides, and be separated from other major swings.
+    Confirmation occurs after the right-side evidence is available.
+    This does not change V4 signal detection or research filters.
+    """
+    if len(data) < left + right + 2:
+        return []
+
+    previous_close = data.Close.shift(1)
+    true_range = pd.concat([
+        data.High - data.Low,
+        (data.High - previous_close).abs(),
+        (data.Low - previous_close).abs()
+    ], axis=1).max(axis=1)
+    atr = true_range.rolling(14, min_periods=5).mean()
+
+    candidates = []
+    for kind, pivot, _, price in detect_swing_levels(data, left, right):
+        if pivot < lookaround or pivot + lookaround >= len(data):
+            continue
+        prior = data.iloc[pivot-lookaround:pivot]
+        following = data.iloc[pivot+1:pivot+lookaround+1]
+        if kind == "RESISTANCE":
+            approach = price - float(prior.Low.min())
+            rejection = price - float(following.Low.min())
+        else:
+            approach = float(prior.High.max()) - price
+            rejection = float(following.High.max()) - price
+        threshold = max(float(atr.iloc[pivot]) * atr_multiple, 0.25)
+        if approach >= threshold and rejection >= threshold:
+            candidates.append((kind, pivot, pivot + lookaround, price,
+                               min(approach, rejection)))
+
+    # Keep stronger nearby same-side pivots; require alternation between
+    # swing highs and lows as in a structural zigzag.
+    major = []
+    for kind, pivot, confirmed, price, strength in candidates:
+        if major and major[-1][0] == kind:
+            old = major[-1]
+            better = price > old[3] if kind == "RESISTANCE" else price < old[3]
+            if better:
+                major[-1] = (kind, pivot, confirmed, price, strength)
+            continue
+        if major and pivot - major[-1][1] < min_separation:
+            continue
+        major.append((kind, pivot, confirmed, price, strength))
+    return [(kind, pivot, confirmed, price)
+            for kind, pivot, confirmed, price, _ in major]
+
+
 def plot_swing_levels(result, left=2, right=2):
     """One full 15m chart with MA20 and horizontal swing S/R levels.
 
@@ -1167,7 +1225,7 @@ def plot_swing_levels(result, left=2, right=2):
         return
     data, ma20, ma200 = chart_data_and_mas(result)
     tf_label = result.attrs.get("timeframe", "15m")
-    levels = detect_swing_levels(data, left=left, right=right)
+    levels = detect_major_swing_levels(data, left=max(5, left), right=max(5, right))
 
     fig, ax = plt.subplots(figsize=(20, 9), facecolor="#101722")
     ax.set_facecolor("#101722")
@@ -1188,7 +1246,7 @@ def plot_swing_levels(result, left=2, right=2):
     resistance_count = 0
     for kind, pivot, confirmed_at, price in levels:
         # Plot only AFTER confirmation to avoid visual lookahead.
-        color = "#56c4f5" if kind == "SUPPORT" else "#ff7979"
+        color = "#ff4050"
         ax.hlines(price, confirmed_at, len(data)-0.5, color=color,
                   linewidth=1.1, alpha=0.78, linestyle="--")
         ax.scatter(pivot, price, s=34, color=color, zorder=6)
