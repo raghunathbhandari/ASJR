@@ -686,6 +686,7 @@ def three_candle_signal_learning(ticker, dateFrom=None, dateTo=None, enableDig=F
     result.attrs["candles"] = data
     result.attrs["ibkr_5m"] = data.attrs.get("ibkr_5m")
     result.attrs["requested_start"] = str(dateFrom)
+    result.attrs["contract"] = str(ticker).upper()
     result.attrs["timeframe"] = interval
     if enableDig:
         passed_count = int(result["all_filters_pass"].sum()) if not result.empty else 0
@@ -874,10 +875,10 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
         print("No Law of Motion passed signals.")
         return
 
-    # Calculate both averages on all available candles, including warm-up.
-    ema20 = candles.Close.ewm(span=20, adjust=False).mean()
-    ema200 = candles.Close.ewm(span=200, adjust=False).mean()
+    # Plot EMAs only on a contiguous data segment. Never connect a
+    # multi-day missing-data gap as though it were one 5m candle.
 
+    tf_label = result.attrs.get("timeframe", "15m")
     print(f"Plotting {len(passed)} Law of Motion signals.")
     for _, row in passed.iterrows():
         single = pd.DataFrame([row.to_dict()])
@@ -922,35 +923,48 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
         exit_idx = (int(candles.index.get_loc(trade["Exit_time"]))
                     if trade is not None and trade["Status"] == "CLOSED" else None)
 
-        # Around 100 candles, with BOTH entry and exit in view.
-        # If a trade lasts over 100 candles, expand only as needed.
-        focus_start = min(c2_idx, entry_idx if entry_idx is not None else c3_idx)
-        focus_end = exit_idx if exit_idx is not None else c3_idx
-        span = max(100, focus_end - focus_start + 25)
-        centre = (focus_start + focus_end) // 2
-        start_idx = max(0, centre - span // 2)
-        end_idx = min(len(candles), start_idx + span)
-        start_idx = max(0, end_idx - span)
+        # TradingView-like viewport: 100 consecutive 5-minute candles.
+        # Find the uninterrupted data segment containing the signal.
+        bar_step = pd.Timedelta(minutes=candles.attrs.get("timeframe_minutes", 5))
+        segment_start = c3_idx
+        while (segment_start > 0 and
+               candles.index[segment_start] - candles.index[segment_start - 1] == bar_step):
+            segment_start -= 1
+
+        segment_end = c3_idx + 1
+        while (segment_end < len(candles) and
+               candles.index[segment_end] - candles.index[segment_end - 1] == bar_step):
+            segment_end += 1
+
+        # Centre near C3, while keeping entry/exit in view if possible.
+        focus_end = exit_idx if exit_idx is not None and exit_idx < segment_end else c3_idx
+        start_idx = max(segment_start, min(c3_idx - 35, focus_end - 85))
+        end_idx = min(segment_end, start_idx + 100)
+        start_idx = max(segment_start, end_idx - 100)
         visible = candles.iloc[start_idx:end_idx]
 
-        # Keep the familiar chart height and readable candle spacing.
-        chart_width = min(70, max(18, len(visible) * 0.16))
-        fig, ax = plt.subplots(figsize=(chart_width, 6), facecolor="#101722")
+        # Fixed notebook-sized chart, not an oversized scrolling image.
+        fig, ax = plt.subplots(figsize=(14, 6), facecolor="#101722")
         ax.set_facecolor("#101722")
 
         for i, candle in enumerate(visible.itertuples()):
-            color = "#23c985" if candle.Close >= candle.Open else "#ff6471"
+            color = "#3b82f6" if candle.Close >= candle.Open else "#d4d4d8"
             ax.vlines(i, candle.Low, candle.High, color=color, linewidth=1)
             ax.add_patch(Rectangle(
-                (i - 0.3, min(candle.Open, candle.Close)), 0.6,
+                (i - 0.33, min(candle.Open, candle.Close)), 0.66,
                 max(abs(candle.Close - candle.Open), 0.01),
                 facecolor=color, edgecolor=color))
 
-        # MA history is continuous; do not restart it at the chart edge.
-        ax.plot(range(len(visible)), ema20.reindex(visible.index),
-                color="#f7c65c", linewidth=1.4, label="EMA20", zorder=3)
-        ax.plot(range(len(visible)), ema200.reindex(visible.index),
-                color="#b58cff", linewidth=1.4, label="EMA200", zorder=3)
+        # Orange EMA20 similar to TradingView. The 200 EMA is shown only
+        # when enough uninterrupted history exists to calculate it.
+        segment_close = candles.Close.iloc[segment_start:segment_end]
+        segment_ema20 = segment_close.ewm(span=20, adjust=False).mean()
+        ax.plot(range(len(visible)), segment_ema20.reindex(visible.index),
+                color="#ff9f0a", linewidth=1.8, label="EMA20", zorder=3)
+        if len(segment_close.iloc[:start_idx-segment_start]) >= 200:
+            segment_ema200 = segment_close.ewm(span=200, adjust=False).mean()
+            ax.plot(range(len(visible)), segment_ema200.reindex(visible.index),
+                    color="#b58cff", linewidth=1.3, label="EMA200", zorder=3)
 
         # Set vertical scale from LOCAL candles and trade levels, not a
         # distant EMA200 that can make every candle appear tiny.
@@ -968,6 +982,7 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
         ax.set_ylim(low - 0.22 * price_range, high + 0.12 * price_range)
 
         if trade is not None:
+            exit_visible = exit_idx is not None and start_idx <= exit_idx < end_idx
             x_entry = entry_idx - start_idx
 
             # Clearly separated price-level references across chart width.
@@ -987,7 +1002,7 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
             ax.annotate("ENTRY", (x_entry, dot_y), xytext=(0, -15),
                         textcoords="offset points", ha="center",
                         color="#35e89b", fontsize=9, weight="bold")
-            if exit_idx is not None:
+            if exit_visible:
                 x_exit = exit_idx - start_idx
                 if x_exit == x_entry:
                     x_entry_dot, x_exit_dot = x_entry - 0.18, x_exit + 0.18
@@ -1008,7 +1023,7 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
                              for i in ticks], rotation=35, ha="right")
         number = row.get("Signal", "?")
         grade = row.get("law_of_motion_grade", "PASS")
-        ax.set_title(f"{row['Ticker']} | Signal {number} | "
+        ax.set_title(f"{result.attrs.get('contract', row['Ticker'])} | {tf_label} | Signal {number} | "
                      f"{row['Direction']} {grade} | UK time",
                      color="#f0f5fa")
         if trade is not None:
@@ -1035,25 +1050,8 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
             spine.set_color("#526174")
         fig.tight_layout(rect=(0, 0, 1, 0.92))
 
-        # Native-size image inside a notebook horizontal-scroll container.
-        from base64 import b64encode
-        from io import BytesIO
-        from IPython.display import HTML, display
-
-        output = BytesIO()
-        fig.savefig(output, format="png", dpi=100,
-                    facecolor=fig.get_facecolor())
-        image_data = b64encode(output.getvalue()).decode("ascii")
-        width_px = int(chart_width * 100)
+        plt.show()
         plt.close(fig)
-        display(HTML(
-            f'<div style="width:100%;overflow-x:auto;overflow-y:hidden;">'
-            f'<img src="data:image/png;base64,{image_data}" '
-            f'style="width:{width_px}px;max-width:none;height:auto;" />'
-            f'</div>'
-        ))
-
-
 # 9. CHART ALL CORE CANDIDATES (one chart, direction-coloured C2 dots)
 
 
