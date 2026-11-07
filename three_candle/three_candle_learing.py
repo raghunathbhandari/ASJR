@@ -948,7 +948,7 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
         ax.set_facecolor("#101722")
 
         for i, candle in enumerate(visible.itertuples()):
-            color = "#3b82f6" if candle.Close >= candle.Open else "#d4d4d8"
+            color = "#d4d4d8" if candle.Close >= candle.Open else "#3b82f6"
             ax.vlines(i, candle.Low, candle.High, color=color, linewidth=1)
             ax.add_patch(Rectangle(
                 (i - 0.33, min(candle.Open, candle.Close)), 0.66,
@@ -1082,7 +1082,7 @@ def plot_signal_candidate(result):
         ax.set_facecolor("#101722")
 
         for i, c in enumerate(visible.itertuples()):
-            color = "#3b82f6" if c.Close >= c.Open else "#d4d4d8"
+            color = "#d4d4d8" if c.Close >= c.Open else "#3b82f6"
             ax.vlines(i, c.Low, c.High, color=color, linewidth=1)
             ax.add_patch(Rectangle((i-0.33, min(c.Open, c.Close)),
                                    0.66, max(abs(c.Close-c.Open), 0.01),
