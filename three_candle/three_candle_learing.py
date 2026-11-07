@@ -1030,10 +1030,13 @@ def plot_signal_candidate(result):
     data, ma20, ma200 = chart_data_and_mas(result)
     tf_label = result.attrs.get("timeframe", "15m")
 
-    fig, ax = plt.subplots(figsize=(20, 9), facecolor="#101722")
+    # Preserve the chart height; give each 5m candle more horizontal room.
+    is_scrollable = tf_label == "5m"
+    chart_width = min(120, max(20, len(data) * 0.12)) if is_scrollable else 20
+    fig, ax = plt.subplots(figsize=(chart_width, 9), facecolor="#101722")
     ax.set_facecolor("#101722")
 
-    # Full 15m OHLC candles.
+    # Full OHLC candles at the selected timeframe.
     for i, candle in enumerate(data.itertuples()):
         color = "#23c985" if candle.Close >= candle.Open else "#ff6471"
         ax.vlines(i, candle.Low, candle.High, color=color, linewidth=0.8)
@@ -1073,7 +1076,7 @@ def plot_signal_candidate(result):
                 label=f"EMA200 ({tf_label} close)", zorder=4)
     ax.legend(loc="best", facecolor="#1a2534", edgecolor="#526174", labelcolor="white")
     ax.set_xlim(-1, len(data))
-    ax.set_ylabel("NQ futures price", color="#dbe5f0")
+    ax.set_ylabel("Futures price", color="#dbe5f0")
     ax.set_title(f"{tf_label} | {len(result)} core candidate C2 markers | UK time",
                  color="#f0f5fa")
     ax.tick_params(colors="#dbe5f0")
@@ -1081,8 +1084,29 @@ def plot_signal_candidate(result):
         spine.set_color("#526174")
     ax.grid(color="#526174", alpha=0.35)
     fig.tight_layout()
-    plt.show()
-    plt.close(fig)
+
+    if is_scrollable:
+        # Notebook inline output normally shrinks wide plots to fit the page.
+        # Render native-size PNG in a horizontal-scroll container instead.
+        from base64 import b64encode
+        from io import BytesIO
+        from IPython.display import HTML, display
+
+        output = BytesIO()
+        fig.savefig(output, format="png", dpi=100, facecolor=fig.get_facecolor())
+        image_data = b64encode(output.getvalue()).decode("ascii")
+        width_px = int(chart_width * 100)
+        plt.close(fig)
+
+        display(HTML(
+            f'<div style="width:100%;overflow-x:auto;overflow-y:hidden;">'
+            f'<img src="data:image/png;base64,{image_data}" '
+            f'style="width:{width_px}px;max-width:none;height:auto;" />'
+            f'</div>'
+        ))
+    else:
+        plt.show()
+        plt.close(fig)
 
 
 # 10. SWING HIGH / LOW SUPPORT AND RESISTANCE RESEARCH
