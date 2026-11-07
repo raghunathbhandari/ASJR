@@ -1,5 +1,59 @@
 # Three-Candle VPS Bridge Guide
 
+## 7 Nov 2026 — Rudra V4 MES/MNQ dated-contract workflow
+
+This section records the user's current, preferred research workflow. Use these examples in future sessions. **Do not change strategy logic, the notebook, or existing market-data CSVs merely to update documentation.**
+
+### Jupyter: scan IBKR MES December 2026 futures, 5-minute candles
+
+Keep the short alias and reload after code changes:
+
+```python
+%matplotlib inline
+import importlib
+import three_candle_learing as v4
+
+importlib.reload(v4)
+
+# September and October 2026
+result = v4.three_candle_signal_learning(
+    "MESZ2026",
+    "2026-09-01",
+    "2026-10-31",
+    timeframe="5min",
+)
+
+# One completed day, 6 November 2026
+result = v4.three_candle_signal_learning(
+    "MESZ2026",
+    "2026-11-06",
+    "2026-11-06",
+    timeframe="5min",
+)
+```
+
+The second assignment replaces the first `result`; use distinct names when comparing both periods. `MESZ2026` specifies the December 2026 MES contract (Z = December). Do not silently replace dated futures contracts with continuous `MES=F` or a different expiry. The scanner normalises dated codes for indicator/tick conventions but passes the original contract symbol to the IBKR CSV loader.
+
+### VPS: download more IBKR 5-minute MES and MNQ history
+
+```bash
+/root/trading/venv_new/bin/python three_candle/download_mes_mnq.py --tickers MES,MNQ --days 3
+
+/root/trading/venv_new/bin/python three_candle/download_mes_mnq.py --start 2026-11-01 --end 2026-11-06
+```
+
+- The downloader defaults to **both MES and MNQ**, **expiry 202612**, and **CME**. The second command consequently downloads both symbols unless `--tickers` is specified.
+- `--days 3` means the last 3 completed **UTC** dates, not the past 72 hours. Explicit `--start`/`--end` dates are inclusive. The script caps requests at 31 calendar days and refuses future/incomplete UTC days.
+- The downloader uses read-only IBKR Gateway on port **4002**, requests 5-minute TRADES with `useRTH=False`, writes to `three_candle/data`, **never overwrites an existing output file**, and **does not automatically git push**.
+- Its range-output naming is `MES_202612_IBKR_5m_<start>_to_<end>.csv` or `MNQ_202612_IBKR_5m_<start>_to_<end>.csv`. The learning loader also looks for existing dated monthly CSVs.
+- A request completing or a file being present does not guarantee complete candle/session coverage; inspect the reported row counts and dates before backtesting. Preserve existing verified September/October files.
+- Use a different `--expiry YYYYMM` when switching contract month, and pass the matching dated ticker (for example, `MESZ2026` for 202612) into the learning function. Verify the dataset actually covers the desired requested dates.
+
+**Version vocabulary:** Rudra V4 = V3 research checks plus the existing Law of Motion A1/WEAK/REJECT classification; this is a research label, not a new file or a modified signal rule. Preserve the existing `three_candle_learing.py` filename (including its spelling), and use `as v4` in notebooks.
+
+---
+
+
 Updated: 2026-11-01 (UK time)
 Repository: `raghunathbhandari/ASJR`
 Bridge worker: `RudraScanner/research_bridge_worker.py`
