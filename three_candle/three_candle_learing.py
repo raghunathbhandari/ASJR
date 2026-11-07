@@ -38,7 +38,6 @@ V3_MIN_WICK_BODY = 0.50
 V3_DAILY_MIN_ROOM_R = 1.0
 
 
-
 # Law of Motion: experimental thresholds from the 2026-10-30 MES labels.
 # Research only; does not change the existing core or six V3 checks.
 config_law_of_motion = {
@@ -105,6 +104,7 @@ def Filter_law_of_motion_grade(signal, config=None):
 
 # 2. DOWNLOAD: Yahoo OHLCV candles
 
+
 def normalise_learning_timeframe(timeframe):
     """Accept 5min/5m and 15min/15m spellings."""
     value = str(timeframe).lower().strip()
@@ -121,6 +121,7 @@ def normalise_learning_ticker(ticker):
     return aliases.get(value, value)
 
 
+# Yahoo fallback: request candles for a date or inclusive date range.
 def Download_yfinalce(ticker, datetime, timeframe="15m"):
     """Download ONE date (YYYY-MM-DD) or (start_date, end_date) tuple.
 
@@ -165,6 +166,9 @@ def Download_yfinalce(ticker, datetime, timeframe="15m"):
 
 
 # 2B. READ IBKR CSV FIRST; FALL BACK TO YAHOO IF MONTHLY FILES ARE ABSENT
+
+
+# Primary data path: read validated IBKR 5-minute CSV bars, then resample if requested.
 def load_learning_candles(ticker, datefrom, dateTo, timeframe="15m"):
     """Load IBKR 5m CSVs as complete 5m/15m bars, or fall back to Yahoo."""
     ticker = normalise_learning_ticker(ticker)
@@ -259,6 +263,8 @@ def load_learning_candles(ticker, datefrom, dateTo, timeframe="15m"):
 
 
 # 3. SMALL FILTERS: each is independent so you can change it
+
+
 def candle_range_pct(candle):
     return (candle.High - candle.Low) / candle.Close * 100
 
@@ -294,6 +300,8 @@ def passes_three_candle_filters(c1, c2, c3):
 
 
 # 3B. CORE DETECTION — only candle geometry; NO extra filters
+
+
 def three_candle_core(c1, c2, c3, direction="BUY"):
     """C2 sweeps C1; a later C3 breaks C2's BODY boundary (not wick)."""
     if direction == "BUY":
@@ -303,6 +311,7 @@ def three_candle_core(c1, c2, c3, direction="BUY"):
     raise ValueError("direction must be BUY or SELL")
 
 
+# Core detection: maintain pending C2 sweeps until confirmation or invalidation.
 def scan_core_candidates(data):
     """Detect overlapping C2 setups independently, with multi-bar C3 waiting.
 
@@ -360,6 +369,8 @@ def scan_core_candidates(data):
 
 
 # 4. PRINT ONE CANDLE: easy to compare C1, C2, C3
+
+
 def print_single_candle(name, time, candle):
     print(
         f"{name} | {time:%Y-%m-%d %H:%M %Z} | "
@@ -370,6 +381,8 @@ def print_single_candle(name, time, candle):
 
 
 # 5. CHART: exactly 3 candles, with C1/C2/C3 and price references
+
+
 def show_three_candle_chart(ticker, times, candles):
     fig, ax = plt.subplots(figsize=(7, 4), facecolor="#101722")
     ax.set_facecolor("#101722")
@@ -409,8 +422,9 @@ def show_three_candle_chart(ticker, times, candles):
     plt.close(fig)
 
 
-
 # 5B. EASY NOTEBOOK CHART: pass only your downloaded DataFrame
+
+
 def plot_chart(df):
     """Draw all candles in df and highlight the most recent qualifying C1/C2/C3.
 
@@ -478,6 +492,8 @@ def plot_chart(df):
 
 
 # 6. MAIN NOTEBOOK CALL — keep this public method name/signature unchanged
+
+
 def six_point_research_metrics(history, c2_position, direction):
     """Six comparison measurements through C3 close; no change to signal filters.
 
@@ -518,6 +534,7 @@ def six_point_research_metrics(history, c2_position, direction):
     }
 
 
+# Notebook entry point: scan candles and return candidate metrics without placing trades.
 def three_candle_signal_learning(ticker, dateFrom=None, dateTo=None, enableDig=False, timeframe="15min", **kwargs):
     """Find BUY/SELL candidates on 5m or 15m candles from IBKR CSV first.
 
@@ -653,6 +670,8 @@ def three_candle_signal_learning(ticker, dateFrom=None, dateTo=None, enableDig=F
 
 
 # Build MA20 on the complete dataset; display only requested dates.
+
+
 def chart_data_and_mas(result):
     """Compute EMA20 and EMA200 with hidden historical candles before chart start."""
     full_data = result.attrs.get("candles")
@@ -670,6 +689,9 @@ def chart_data_and_mas(result):
 
 
 # 7. PLOT SIGNALS: plot only when called separately
+
+
+# Visual review: show individual confirmed patterns and their price references.
 def plot_signal(result, show_sr=False, show_metrics=False):
     """Show the FULL downloaded NQ candle chart for EACH matching signal."""
     if result is None or result.empty:
@@ -778,6 +800,9 @@ def plot_signal(result, show_sr=False, show_metrics=False):
 
 
 # 8. CHART ONLY FULLY PASSED SIGNALS (one chart per signal)
+
+
+# Visual review: examine Law of Motion passes and simulated exit paths.
 def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
     """Plot Law of Motion passes with actual simulated trailing-stop exits.
 
@@ -946,6 +971,9 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
 
 
 # 9. CHART ALL CORE CANDIDATES (one chart, direction-coloured C2 dots)
+
+
+# Visual review: mark every core C2 candidate on the full chart.
 def plot_signal_candidate(result):
     """Show NQ once: green C2 dots for BUY, red C2 dots for SELL."""
     if result is None:
@@ -1010,6 +1038,8 @@ def plot_signal_candidate(result):
 
 
 # 10. SWING HIGH / LOW SUPPORT AND RESISTANCE RESEARCH
+
+
 def detect_swing_levels(data, left=2, right=2):
     """Return confirmed swing highs/lows using neighbouring candles.
 
@@ -1088,7 +1118,6 @@ def plot_swing_levels(result, left=2, right=2):
     plt.show()
     plt.close(fig)
     print(f"Swing S/R: {support_count} support and {resistance_count} resistance levels")
-
 
 
 # V3 POINTS 3-8: SIX INDEPENDENT RESEARCH METHODS.
@@ -1223,6 +1252,7 @@ def daily_range_filter(history, direction, entry, risk_points):
     }
 
 
+# Measure six research filters without changing the core signal detector.
 def v3_research_checks(history, c2_time, direction, ticker):
     """Run #3-#8 once per core signal. No entry filters, ranking, or lookahead."""
     if c2_time not in history.index:
@@ -1323,6 +1353,8 @@ def v3_with_body_size_pass(direction, c3):
 
 
 # 11. RESEARCH METRICS: observational values (NO signal filters)
+
+
 def build_signal_metrics(result):
     """One row per core candidate, computed using bars available through C3.
 
@@ -1434,6 +1466,7 @@ def print_signal_metrics(result):
     return metrics
 
 
+# Research backtest summary: calculate realised points and risk outcomes.
 def summarise_signal_result(result, stop_points=6.0, verbose=True):
     """Law of Motion: aggressive C3 entry, 6-point R, stepped SL, no TP.
 
