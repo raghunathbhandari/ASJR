@@ -1111,9 +1111,11 @@ def plot_signal_candidate(result):
         segment_end = next(end for end in boundaries if end >= right)
         segment_data = data.iloc[segment_start:segment_end]
         for kind, pivot, confirmed, price in detect_major_swing_levels(segment_data):
-            local_pivot = segment_start + pivot - left
-            if 0 <= local_pivot < len(visible):
-                ax.hlines(price, local_pivot, min(len(visible)-0.5, local_pivot+20),
+            # Start the active S/R line only AFTER the confirming bar.
+            local_confirm = segment_start + confirmed - left
+            if 0 <= local_confirm < len(visible):
+                ax.hlines(price, local_confirm,
+                          min(len(visible)-0.5, local_confirm+20),
                           colors="#ff4050", linewidth=2.0, alpha=0.95, zorder=5)
 
         ax.set_ylim(low-0.13*price_range, high+0.13*price_range)
@@ -1162,56 +1164,84 @@ def detect_swing_levels(data, left=2, right=2):
 
 def detect_major_swing_levels(data, left=5, right=5, atr_multiple=2.5,
                               lookaround=12, min_separation=10):
-    """Find meaningful confirmed price pivots for chart display only.
+    """Confirm major swing levels using PAST/CURRENT candles only.
 
-    A pivot must be locally extreme, show a move of at least 2.5 ATR
-    on BOTH sides, and be separated from other major swings.
-    Confirmation occurs after the right-side evidence is available.
-    This does not change V4 signal detection or research filters.
+    Track the highest/lowest unconfirmed extreme. A level becomes usable
+    after price CLOSES at least atr_multiple * ATR(14) away from it.
+    Return (kind, pivot_index, confirmation_index, price). The pivot is
+    historical; the level must NOT be used before confirmation_index.
+
+    left/right/lookaround are retained for notebook compatibility; this
+    causal reversal detector does not inspect right-side future candles.
+    Chart-only: it does not alter C1/C2/C3 or Law of Motion filters.
     """
-    if len(data) < left + right + 2:
+    if len(data) < max(14, min_separation + 2):
         return []
 
     previous_close = data.Close.shift(1)
     true_range = pd.concat([
         data.High - data.Low,
         (data.High - previous_close).abs(),
-        (data.Low - previous_close).abs()
+        (data.Low - previous_close).abs(),
     ], axis=1).max(axis=1)
-    atr = true_range.rolling(14, min_periods=5).mean()
+    atr = true_range.rolling(14, min_periods=14).mean()
 
-    candidates = []
-    for kind, pivot, _, price in detect_swing_levels(data, left, right):
-        if pivot < lookaround or pivot + lookaround >= len(data):
-            continue
-        prior = data.iloc[pivot-lookaround:pivot]
-        following = data.iloc[pivot+1:pivot+lookaround+1]
-        if kind == "RESISTANCE":
-            approach = price - float(prior.Low.min())
-            rejection = price - float(following.Low.min())
-        else:
-            approach = float(prior.High.max()) - price
-            rejection = float(following.High.max()) - price
-        threshold = max(float(atr.iloc[pivot]) * atr_multiple, 0.25)
-        if approach >= threshold and rejection >= threshold:
-            candidates.append((kind, pivot, pivot + lookaround, price,
-                               min(approach, rejection)))
+    levels = []
+    direction = None          # None, SEEK_LOW, SEEK_HIGH
+    high_price = float(data.High.iloc[0])
+    low_price = float(data.Low.iloc[0])
+    high_idx = low_idx = 0
 
-    # Keep stronger nearby same-side pivots; require alternation between
-    # swing highs and lows as in a structural zigzag.
-    major = []
-    for kind, pivot, confirmed, price, strength in candidates:
-        if major and major[-1][0] == kind:
-            old = major[-1]
-            better = price > old[3] if kind == "RESISTANCE" else price < old[3]
-            if better:
-                major[-1] = (kind, pivot, confirmed, price, strength)
+    for i in range(1, len(data)):
+        high = float(data.High.iloc[i])
+        low = float(data.Low.iloc[i])
+        close = float(data.Close.iloc[i])
+        if pd.isna(atr.iloc[i]):
+            if high > high_price:
+                high_price, high_idx = high, i
+            if low < low_price:
+                low_price, low_idx = low, i
             continue
-        if major and pivot - major[-1][1] < min_separation:
-            continue
-        major.append((kind, pivot, confirmed, price, strength))
-    return [(kind, pivot, confirmed, price)
-            for kind, pivot, confirmed, price, _ in major]
+
+        threshold = max(0.25, float(atr.iloc[i]) * atr_multiple)
+
+        if direction is None:
+            if high > high_price:
+                high_price, high_idx = high, i
+            if low < low_price:
+                low_price, low_idx = low, i
+            down_move = high_price - close
+            up_move = close - low_price
+            high_ready = down_move >= threshold and i > high_idx
+            low_ready = up_move >= threshold and i > low_idx
+            if high_ready and (not low_ready or down_move >= up_move):
+                levels.append(("RESISTANCE", high_idx, i, high_price))
+                direction = "SEEK_LOW"
+                low_price, low_idx = low, i
+            elif low_ready:
+                levels.append(("SUPPORT", low_idx, i, low_price))
+                direction = "SEEK_HIGH"
+                high_price, high_idx = high, i
+
+        elif direction == "SEEK_LOW":
+            if low < low_price:
+                low_price, low_idx = low, i
+            if (close - low_price >= threshold and i > low_idx
+                    and low_idx - levels[-1][1] >= min_separation):
+                levels.append(("SUPPORT", low_idx, i, low_price))
+                direction = "SEEK_HIGH"
+                high_price, high_idx = high, i
+
+        else:  # SEEK_HIGH
+            if high > high_price:
+                high_price, high_idx = high, i
+            if (high_price - close >= threshold and i > high_idx
+                    and high_idx - levels[-1][1] >= min_separation):
+                levels.append(("RESISTANCE", high_idx, i, high_price))
+                direction = "SEEK_LOW"
+                low_price, low_idx = low, i
+
+    return levels
 
 
 def plot_swing_levels(result, left=2, right=2):
