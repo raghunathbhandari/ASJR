@@ -980,6 +980,20 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
             ax.plot(range(len(visible)), segment_ema200.reindex(visible.index),
                     color="#b58cff", linewidth=1.3, label="EMA200", zorder=3)
 
+        # The SAME ASJR Gann main/intermediate levels used on candidate
+        # charts. Freeze the levels at C2 close (no future price data).
+        main_levels, middle_levels = get_gann_levels(
+            candles.iloc[:c2_idx+1],
+            result.attrs.get("gann_daily_lookback", 150))
+        for index, level in enumerate(main_levels):
+            ax.axhline(level, color="#ff4050", linewidth=1, alpha=0.35,
+                       label="Gann main (odd n² / even n²+1)"
+                             if index == 0 else "_nolegend_", zorder=2)
+        for index, level in enumerate(middle_levels):
+            ax.axhline(level, color="#35e89b", linewidth=1, alpha=0.20,
+                       label="Gann intermediate (¼, ½, ¾)"
+                             if index == 0 else "_nolegend_", zorder=2)
+
         # Set vertical scale from LOCAL candles and trade levels, not a
         # distant EMA200 that can make every candle appear tiny.
         prices = [float(visible.Low.min()), float(visible.High.max())]
@@ -1059,7 +1073,7 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
                      color="#dbe5f0", fontsize=10, weight="bold")
         ax.set_ylabel("Futures price", color="#dbe5f0")
         ax.tick_params(colors="#dbe5f0")
-        ax.grid(color="#526174", alpha=0.25)
+        ax.grid(False)  # No grid: keep Gann support/resistance visible.
         if trade is not None:
             ax.legend(loc="best", facecolor="#1a2534",
                       edgecolor="#526174", labelcolor="white")
