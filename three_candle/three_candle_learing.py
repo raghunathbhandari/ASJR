@@ -984,38 +984,42 @@ def plot_signal_passed(result, stop_points=6.0, before=12, after=6):
         if trade is not None:
             exit_visible = exit_idx is not None and start_idx <= exit_idx < end_idx
             x_entry = entry_idx - start_idx
+            entry_color = "#35e89b" if row["Direction"] == "BUY" else "#ff6471"
+            profitable_exit = exit_idx is not None and float(trade["Points"]) > 0
+            exit_color = "#bd91ff" if profitable_exit else "#ff6471"
+            exit_label = "PROFIT EXIT" if profitable_exit else "SL/EXIT"
 
             # Clearly separated price-level references across chart width.
-            ax.axhline(entry_price, color="#35e89b", linewidth=1.6,
-                       linestyle="-", label=f"ENTRY {entry_price:.2f}", zorder=4)
+            ax.axhline(entry_price, color=entry_color, linewidth=1.6,
+                       linestyle="-", label=f"{row['Direction']} ENTRY {entry_price:.2f}", zorder=4)
             ax.axhline(initial_sl, color="#ff6471", linewidth=1.6,
                        linestyle="--", label=f"SL {initial_sl:.2f}", zorder=4)
             if exit_idx is not None:
                 exit_price = float(trade["Exit"])
-                ax.axhline(exit_price, color="#bd91ff", linewidth=1.6,
-                           linestyle="-.", label=f"EXIT {exit_price:.2f}", zorder=4)
+                ax.axhline(exit_price, color=exit_color, linewidth=1.6,
+                           linestyle="-.", label=f"{exit_label} {exit_price:.2f}", zorder=4)
 
             # Mark the ACTUAL entry/exit candle just below its low.
             entry_y = float(visible.Low.iloc[x_entry]) - dot_gap
             entry_x = x_entry - 0.18 if exit_visible and exit_idx == entry_idx else x_entry
             ax.scatter(entry_x, entry_y, marker="o", s=75,
-                       color="#35e89b", edgecolors="white", linewidth=0.6,
+                       color=entry_color, edgecolors="white", linewidth=0.6,
                        label="Entry candle", zorder=8)
-            ax.annotate("ENTRY", (entry_x, entry_y), xytext=(0, -12),
+            ax.annotate(f"{row['Direction']} ENTRY", (entry_x, entry_y), xytext=(0, -12),
                         textcoords="offset points", ha="center",
-                        color="#35e89b", fontsize=8, weight="bold")
+                        color=entry_color, fontsize=8, weight="bold")
 
             if exit_visible:
                 x_exit = exit_idx - start_idx
                 exit_x = x_exit + 0.18 if x_exit == x_entry else x_exit
                 exit_y = float(visible.Low.iloc[x_exit]) - dot_gap
                 ax.scatter(exit_x, exit_y, marker="o", s=75,
-                           color="#bd91ff", edgecolors="white", linewidth=0.6,
+                           color=exit_color, edgecolors="white", linewidth=0.6,
                            label="Exit candle", zorder=8)
-                ax.annotate("EXIT", (exit_x, exit_y),
+                ax.annotate(exit_label, (exit_x, exit_y),
                             xytext=(0, -24 if x_exit == x_entry else -12),
                             textcoords="offset points", ha="center",
-                            color="#bd91ff", fontsize=8, weight="bold")
+                            color=exit_color, fontsize=8, weight="bold")
         step = max(1, len(visible)//12)
         ticks = list(range(0, len(visible), step))
         ax.set_xticks(ticks, [visible.index[i].strftime("%d %b %H:%M")
