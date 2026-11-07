@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Download 5-minute MESZ2026 and MNQZ2026 IBKR history, 1–6 Nov 2026.
+"""Download reusable 5-minute MES/MNQ IBKR history for a date range.
 
 Read-only IBKR Gateway port 4002. Saves new CSVs locally; does not git push.
 Existing files are never overwritten.
 """
+import argparse
 from datetime import date, datetime, time as daytime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -11,23 +12,20 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 from ib_insync import IB, Future
 
-START = date(2026, 11, 1)
-END = date(2026, 11, 6)
-EXPIRY = "202612"
 SYMBOLS = ("MES", "MNQ")
 DEST = Path("/root/trading/ASJR/three_candle/data")
 UK = ZoneInfo("Europe/London")
 
 
-def download(ib: IB, symbol: str) -> None:
-    filename = f"{symbol}Z2026_IBKR_5m_{START}_to_{END}.csv"
+def download(ib: IB, symbol: str, start: date, end: date, expiry: str) -> None:
+    filename = f"{symbol}_{expiry}_IBKR_5m_{start}_to_{end}.csv"
     target = DEST / filename
     if target.exists():
         print(f"{symbol}: SKIPPED (file exists): {target}", flush=True)
         return
 
     qualified = ib.qualifyContracts(
-        Future(symbol=symbol, lastTradeDateOrContractMonth=EXPIRY,
+        Future(symbol=symbol, lastTradeDateOrContractMonth=expiry,
                exchange="CME", currency="USD")
     )
     if len(qualified) != 1:
@@ -36,8 +34,8 @@ def download(ib: IB, symbol: str) -> None:
 
     rows = []
     errors = []
-    for offset in range((END - START).days + 1):
-        day = START + timedelta(days=offset)
+    for offset in range((end - start).days + 1):
+        day = start + timedelta(days=offset)
         until = datetime.combine(day + timedelta(days=1), daytime.min, timezone.utc)
         try:
             bars = ib.reqHistoricalData(
@@ -91,12 +89,44 @@ def download(ib: IB, symbol: str) -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Read-only IBKR MES/MNQ 5-minute exporter")
+    parser.add_argument("--start", help="YYYY-MM-DD, inclusive; use with --end")
+    parser.add_argument("--end", help="YYYY-MM-DD, inclusive; use with --start")
+    parser.add_argument("--days", type=int, default=6,
+                        help="Default: most recent N completed UTC days (default: 6)")
+    parser.add_argument("--expiry", default="202612",
+                        help="Explicit YYYYMM futures contract; default Dec 2026")
+    args = parser.parse_args()
+
+    if bool(args.start) != bool(args.end):
+        parser.error("--start and --end must be supplied together")
+    if args.days < 1 or args.days > 31:
+        parser.error("--days must be 1 through 31")
+    if len(args.expiry) != 6 or not args.expiry.isdigit():
+        parser.error("--expiry must be YYYYMM")
+
+    yesterday = datetime.now(timezone.utc).date() - timedelta(days=1)
+    if args.start:
+        try:
+            start, end = date.fromisoformat(args.start), date.fromisoformat(args.end)
+        except ValueError:
+            parser.error("Dates must use YYYY-MM-DD")
+    else:
+        end = yesterday
+        start = end - timedelta(days=args.days - 1)
+
+    if end < start or (end - start).days > 30:
+        parser.error("Range must be 1–31 calendar days inclusive")
+    if end > yesterday:
+        parser.error("End must be a completed UTC day (yesterday or earlier)")
+
+    print(f"IBKR MES/MNQ | {start} to {end} UTC | expiry {args.expiry}", flush=True)
     ib = IB()
     try:
         ib.connect("127.0.0.1", 4002, clientId=893, readonly=True, timeout=20)
         for symbol in SYMBOLS:
             try:
-                download(ib, symbol)
+                download(ib, symbol, start, end, args.expiry)
             except Exception as exc:
                 print(f"{symbol} FAILED: {exc}", flush=True)
     finally:
