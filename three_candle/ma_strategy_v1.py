@@ -4,7 +4,7 @@ Place this file beside three_candle_learing.py and import it directly
 from the existing three_candle notebook directory.
 """
 
-from datetime import date
+from datetime import date, timedelta
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -13,6 +13,36 @@ from matplotlib.patches import Rectangle
 # Only share the existing IBKR/Yahoo data reader and timeframe normalizer.
 # This module does not call any Three-Candle signal/filter/backtest method.
 from three_candle_learing import load_learning_candles, normalise_learning_timeframe
+
+
+def load_MA_history(ticker, dateFrom, dateTo, timeframe="5min",
+                    min_warmup_bars=600):
+    """Load enough historical bars for EMA9/21/200 before chart begins.
+
+    Reuse the IBKR-first source reader, asking it for earlier daily files.
+    Never patch a missing day with Yahoo or plot a cold EMA200.
+    With 600 warm-up bars, initial EMA200 seed bias is small.
+    """
+    first_day = date.fromisoformat(str(dateFrom))
+    errors = []
+    for days_back in (21, 14, 10, 7, 5, 3):
+        earlier = (first_day - timedelta(days=days_back)).isoformat()
+        try:
+            candles = load_learning_candles(ticker, earlier, dateTo, timeframe)
+        except (FileNotFoundError, ValueError) as exc:
+            errors.append(f"{days_back}-day lookback: {exc}")
+            continue
+        before = int((candles.index.date < first_day).sum())
+        if before >= min_warmup_bars:
+            candles.attrs["ma_warmup_bars"] = before
+            return candles
+        errors.append(f"{days_back}-day lookback: only {before} warm-up bars")
+    raise ValueError(
+        f"EMA history insufficient for {ticker} at {dateFrom}: "
+        f"need {min_warmup_bars} preceding candles. "
+        "Download/sync prior daily IBKR CSVs. "
+        + " | ".join(errors[-3:])
+    )
 
 
 # 13. MA STRATEGY V1 — independent of Three-Candle and Gann
@@ -26,7 +56,7 @@ def MA_strategy_v1(ticker, dateFrom, dateTo, timeframe="5min", verbose=True,
     qualifying candle's close (which was not known beforehand).
     Slopes are percent change of each EMA over the previous 3 bars.
     """
-    data = load_learning_candles(ticker, dateFrom, dateTo, timeframe)
+    data = load_MA_history(ticker, dateFrom, dateTo, timeframe)
     frame = data.copy()
     for span in (9, 21, 200):
         key = f"EMA{span}"
@@ -34,8 +64,8 @@ def MA_strategy_v1(ticker, dateFrom, dateTo, timeframe="5min", verbose=True,
         frame[f"{key}_slope_pct"] = 100 * (
             frame[key] / frame[key].shift(3) - 1)
         frame[f"{key}_slope_pts"] = frame[key] - frame[key].shift(3)
-    # Only EMA21 warm-up is required by default. The optional EMA200
-    # filter reproduces the stronger three-EMA alignment on request.
+    # All three EMA lines have at least 600 preceding bars at the first
+    # requested candle, even though EMA200 is not an entry requirement.
     bar_count = pd.Series(range(len(frame)), index=frame.index)
     frame["MA_pass"] = ((frame.Close > frame.EMA9) &
                         (frame.EMA9 > frame.EMA21) & (bar_count >= 20))
@@ -84,11 +114,13 @@ def MA_strategy_v1(ticker, dateFrom, dateTo, timeframe="5min", verbose=True,
         "contract": str(ticker).upper(),
         "strategy": "MA_strategy_v1",
         "require_ema200": bool(require_ema200),
+        "ma_warmup_bars": data.attrs.get("ma_warmup_bars", 0),
     }
     if verbose:
         print(f"MA_strategy_v1 | {ticker} | {dateFrom} to {dateTo} | "
               f"{len(result)} aligned BUY candles")
         print("Rule: Close > EMA9 > EMA21; EMA200 optional; entry next bar OPEN.")
+        print(f"EMA warm-up bars before chart: {data.attrs.get('ma_warmup_bars', 0)}")
         print("EMA slopes: 3-candle change in points and percent.")
         if not result.empty:
             from IPython.display import display
