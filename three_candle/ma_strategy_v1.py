@@ -16,28 +16,31 @@ from three_candle_learing import load_learning_candles, normalise_learning_timef
 
 
 # 13. MA STRATEGY V1 — independent of Three-Candle and Gann
-def MA_strategy_v1(ticker, dateFrom, dateTo, timeframe="5min", verbose=True):
+def MA_strategy_v1(ticker, dateFrom, dateTo, timeframe="5min", verbose=True,
+                   require_ema200=False):
     """BUY-only EMA alignment study; no Three-Candle or Gann checks.
 
-    Candidate: completed candle CLOSE > EMA9 > EMA20 > EMA200.
+    Candidate: completed candle CLOSE > EMA9 > EMA21.
+    EMA200 is measured for research, but optional as an entry filter.
     The simulated order is placed at the NEXT candle OPEN, never the
     qualifying candle's close (which was not known beforehand).
     Slopes are percent change of each EMA over the previous 3 bars.
     """
     data = load_learning_candles(ticker, dateFrom, dateTo, timeframe)
     frame = data.copy()
-    for span in (9, 20, 200):
+    for span in (9, 21, 200):
         key = f"EMA{span}"
         frame[key] = frame.Close.ewm(span=span, adjust=False).mean()
         frame[f"{key}_slope_pct"] = 100 * (
             frame[key] / frame[key].shift(3) - 1)
         frame[f"{key}_slope_pts"] = frame[key] - frame[key].shift(3)
-    # Require 200 completed bars for a meaningful initial EMA200.
-    frame["MA_pass"] = (
-        (frame.Close > frame.EMA9) & (frame.EMA9 > frame.EMA20)
-        & (frame.EMA20 > frame.EMA200)
-        & (pd.Series(range(len(frame)), index=frame.index) >= 199)
-    )
+    # Only EMA21 warm-up is required by default. The optional EMA200
+    # filter reproduces the stronger three-EMA alignment on request.
+    bar_count = pd.Series(range(len(frame)), index=frame.index)
+    frame["MA_pass"] = ((frame.Close > frame.EMA9) &
+                        (frame.EMA9 > frame.EMA21) & (bar_count >= 20))
+    if require_ema200:
+        frame["MA_pass"] &= ((frame.EMA21 > frame.EMA200) & (bar_count >= 199))
     start, end = date.fromisoformat(str(dateFrom)), date.fromisoformat(str(dateTo))
     in_dates = (frame.index.date >= start) & (frame.index.date <= end)
     selected = frame.loc[in_dates & frame.MA_pass].copy()
@@ -55,17 +58,17 @@ def MA_strategy_v1(ticker, dateFrom, dateTo, timeframe="5min", verbose=True):
             "Signal_Close": float(candle.Close),
             "Entry_open": float(next_bar.Open),
             "EMA9": float(candle.EMA9),
-            "EMA20": float(candle.EMA20),
+            "EMA21": float(candle.EMA21),
             "EMA200": float(candle.EMA200),
             "EMA9_slope_pct": float(candle.EMA9_slope_pct),
-            "EMA20_slope_pct": float(candle.EMA20_slope_pct),
+            "EMA21_slope_pct": float(candle.EMA21_slope_pct),
             "EMA200_slope_pct": float(candle.EMA200_slope_pct),
             "EMA9_slope_pts": float(candle.EMA9_slope_pts),
-            "EMA20_slope_pts": float(candle.EMA20_slope_pts),
+            "EMA21_slope_pts": float(candle.EMA21_slope_pts),
             "EMA200_slope_pts": float(candle.EMA200_slope_pts),
             "Close_minus_EMA9": float(candle.Close-candle.EMA9),
-            "EMA9_minus_EMA20": float(candle.EMA9-candle.EMA20),
-            "EMA20_minus_EMA200": float(candle.EMA20-candle.EMA200),
+            "EMA9_minus_EMA21": float(candle.EMA9-candle.EMA21),
+            "EMA21_minus_EMA200": float(candle.EMA21-candle.EMA200),
             "Candle_range_points": float(candle.High-candle.Low),
             "Candle_body_points": float(abs(candle.Close-candle.Open)),
             "Volume": float(candle.Volume),
@@ -80,11 +83,12 @@ def MA_strategy_v1(ticker, dateFrom, dateTo, timeframe="5min", verbose=True):
         "timeframe": normalise_learning_timeframe(timeframe),
         "contract": str(ticker).upper(),
         "strategy": "MA_strategy_v1",
+        "require_ema200": bool(require_ema200),
     }
     if verbose:
         print(f"MA_strategy_v1 | {ticker} | {dateFrom} to {dateTo} | "
               f"{len(result)} aligned BUY candles")
-        print("Rule: Close > EMA9 > EMA20 > EMA200; entry next bar OPEN.")
+        print("Rule: Close > EMA9 > EMA21; EMA200 optional; entry next bar OPEN.")
         print("EMA slopes: 3-candle change in points and percent.")
         if not result.empty:
             from IPython.display import display
@@ -211,7 +215,7 @@ def _plot_MA_v1(result, trades=None, multiChart=False, show_entries=False):
                                        .66, max(.01, abs(c.Close-c.Open)),
                                        facecolor=colour, edgecolor=colour))
             for span, colour, lw in ((9, "#33c8ff", 1.4),
-                                     (20, "#ff9f0a", 1.8),
+                                     (21, "#ff9f0a", 1.8),
                                      (200, "#b58cff", 1.4)):
                 ax.plot(range(len(visible)), visible[f"EMA{span}"],
                         color=colour, linewidth=lw, label=f"EMA{span}")
