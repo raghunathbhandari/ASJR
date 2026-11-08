@@ -1169,7 +1169,8 @@ def plot_signal_candidate(result, multiChart=True, SRLineTypes="swing",
                           gann_points_per_bar=1.0, gann_anchor_price=None,
                           gann_daily_lookback=150, gann_main_opacity=65,
                           gann_middle_opacity=80,
-                          gann_touch_tolerance=0.0):
+                          gann_touch_tolerance=0.0,
+                          gann_fan=True):
     """C2 chart; fib historical swing retracements, gann Pine-style square levels."""
     if result is None:
         print("No result supplied.")
@@ -1177,6 +1178,8 @@ def plot_signal_candidate(result, multiChart=True, SRLineTypes="swing",
     sr_type = str(SRLineTypes).strip().lower()
     if sr_type not in ("swing", "fib", "gann"):
         raise ValueError("SRLineTypes must be 'swing', 'fib', or 'gann'")
+    if gann_points_per_bar <= 0:
+        raise ValueError('gann_points_per_bar must be positive')
     if gann_touch_tolerance < 0:
         raise ValueError("gann_touch_tolerance must be non-negative")
     if not 20 <= gann_daily_lookback <= 500:
@@ -1312,6 +1315,35 @@ def plot_signal_candidate(result, multiChart=True, SRLineTypes="swing",
                            alpha=1-gann_middle_opacity/100, zorder=4,
                            label="Gann intermediate (¼, ½, ¾)"
                                  if index == 0 else "_nolegend_")
+
+            if gann_fan:
+                # Study-only rays: first historically confirmed SUPPORT pivot.
+                # No changes to candidate checks or trade calculations.
+                first_low = next(
+                    (level for level in confirmed_levels
+                     if level[0] == "SUPPORT"
+                     and left <= level[1] < right and level[2] < right),
+                    None)
+                if first_low is not None:
+                    _, pivot_idx, confirmation_idx, anchor_price = first_low
+                    x0 = pivot_idx - left
+                else:
+                    x0 = 0
+                    anchor_price = float(visible.Low.iloc[0])
+                ray_x = list(range(x0, len(visible)))
+                for slope, title, color in (
+                    (0.25, "1x4", "#5977cc"),
+                    (0.50, "1x2", "#3eb9bd"),
+                    (1.00, "1x1", "#ffd166"),
+                    (2.00, "2x1", "#ae85ff"),
+                ):
+                    ray_y = [anchor_price + gann_points_per_bar*slope*(x-x0)
+                             for x in ray_x]
+                    ax.plot(ray_x, ray_y, color=color, linewidth=1.25,
+                            linestyle="--", alpha=0.8, label=f"Fan {title}",
+                            zorder=3)
+                ax.scatter(x0, anchor_price, s=48, color="#ffd166",
+                           edgecolors="white", linewidths=0.6, zorder=8)
 
         ax.set_ylim(low-0.13*price_range, high+0.13*price_range)
         every = max(1, len(visible)//12)
