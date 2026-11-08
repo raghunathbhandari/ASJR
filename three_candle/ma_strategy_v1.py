@@ -103,12 +103,19 @@ def _MA_strategy_v1_impl(ticker, dateFrom, dateTo, timeframe="5min", verbose=Tru
     Slopes are percent change of each EMA over the previous 3 bars.
     """
     config = {} if config is None else dict(config)
-    accepted = {"ma1_slop", "ma2_slop"}
+    accepted = {"ma1_slop", "ma2_slop", "exit_style", "fix_target"}
     unknown = set(config) - accepted
     if unknown:
         raise ValueError(f"Unknown MA config option(s): {sorted(unknown)}")
     ma1_slop = config.get("ma1_slop")
     ma2_slop = config.get("ma2_slop")
+    exit_style = str(config.get("exit_style", "trail_1R")).lower()
+    if exit_style not in {"trail_1r", "ma9_exit", "fix_target"}:
+        raise ValueError("exit_style must be trail_1R, ma9_exit, or fix_target")
+    config["exit_style"] = exit_style
+    config["fix_target"] = float(config.get("fix_target", 1.2))
+    if not (config["fix_target"] > 0):
+        raise ValueError("fix_target must be a positive R multiple")
     for name, threshold in (("ma1_slop", ma1_slop), ("ma2_slop", ma2_slop)):
         if threshold is not None:
             try:
@@ -213,8 +220,8 @@ def MA_strategy_v1(*args, config=None, **kwargs):
     return _MA_strategy_v1_impl(*args, config=config, **kwargs)
 
 
-def summarise_MA_strategy_v1(result, stop_points=6.0, verbose=True):
-    """Non-overlapping long trades; 1R=6pt, 1R stepped trail, no TP.
+def summarise_MA_strategy_v1(result, stop_points=6.0, verbose=True, config=None):
+    """Non-overlapping long trades with configurable exit style.
 
     Stops are active immediately; trailing increases only after a bar
     CLOSES, for application on the NEXT bar. If the same bar touches
@@ -228,6 +235,15 @@ def summarise_MA_strategy_v1(result, stop_points=6.0, verbose=True):
         raise ValueError("MA_strategy_v1 result with candles required")
     if result.attrs.get("strategy") != "MA_strategy_v1":
         raise ValueError("Pass a MA_strategy_v1 result, not Three-Candle signals")
+    settings = dict(result.attrs.get("MA_config", {}))
+    if config is not None:
+        settings.update(config)
+    exit_style = str(settings.get("exit_style", "trail_1R")).lower()
+    if exit_style not in {"trail_1r", "ma9_exit", "fix_target"}:
+        raise ValueError("exit_style must be trail_1R, ma9_exit, or fix_target")
+    target_r = float(settings.get("fix_target", 1.2))
+    if target_r <= 0:
+        raise ValueError("fix_target must be positive")
     rows, blocked_until = [], -1
     for _, signal in result.sort_values("Entry_time").iterrows():
         stamp = signal.Entry_time
@@ -239,18 +255,38 @@ def summarise_MA_strategy_v1(result, stop_points=6.0, verbose=True):
         entry = float(candles.Open.iloc[entry_idx])
         stop = entry-stop_points
         max_step, exit_idx, exit_price = 0, None, None
+        exit_reason = "OPEN"
+        target_price = entry + target_r * stop_points
         for j in range(entry_idx, len(candles)):
             bar = candles.iloc[j]
+            # The protective 1R stop is checked before profit targets.
             if float(bar.Low) <= stop:
                 exit_idx = j
-                exit_price = min(float(bar.Open), stop)  # gap-aware
+                exit_price = min(float(bar.Open), stop)
+                exit_reason = "STOP"
                 break
-            # At the close, record favourable R; apply its new stop next bar.
-            favourable = float(bar.High)-entry
-            next_step = max(0, int(math.floor((favourable+1e-9)/stop_points)))
-            if next_step > max_step:
-                max_step = next_step
-                stop = max(stop, entry+(max_step-1)*stop_points)
+            if exit_style == "fix_target" and float(bar.High) >= target_price:
+                exit_idx = j
+                exit_price = max(float(bar.Open), target_price)
+                exit_reason = "FIX_TARGET"
+                break
+            if exit_style == "ma9_exit":
+                # Close-below-EMA9 is known only when this bar completes.
+                # Execute at the following candle OPEN, if available.
+                if float(bar.Close) < float(bar.EMA9) and j+1 < len(candles):
+                    exit_idx = j+1
+                    next_open = float(candles.Open.iloc[j+1])
+                    # Initial protective stop stays active through next open.
+                    exit_price = min(next_open, stop) if next_open <= stop else next_open
+                    exit_reason = "MA9_EXIT" if next_open > stop else "STOP"
+                    break
+            elif exit_style == "trail_1r":
+                # Update stepped trail after the bar; effective next candle.
+                favourable = float(bar.High)-entry
+                next_step = max(0, int(math.floor((favourable+1e-9)/stop_points)))
+                if next_step > max_step:
+                    max_step = next_step
+                    stop = max(stop, entry+(max_step-1)*stop_points)
         closed = exit_idx is not None
         if closed:
             blocked_until = exit_idx
@@ -270,7 +306,7 @@ def summarise_MA_strategy_v1(result, stop_points=6.0, verbose=True):
             "Exit_time": candles.index[exit_idx] if closed else pd.NaT,
             "Exit": exit_price if closed else float("nan"),
             "Status": "CLOSED" if closed else "OPEN",
-            "Max_R_step": max_step,
+            "Max_R_step": max_step, "Exit_reason": exit_reason,
             "R": points/stop_points,
         })
     trades = pd.DataFrame(rows)
@@ -285,7 +321,7 @@ def summarise_MA_strategy_v1(result, stop_points=6.0, verbose=True):
     if not trades.empty:
         trades = trades.sort_values("EMA9_slope_pts", ascending=False).reset_index(drop=True)
     if verbose:
-        print("\n========== MA STRATEGY V1 — 1R STEPPED TRAILING ==========")
+        print(f"\n========== MA STRATEGY V1 — {exit_style.upper()} ==========")
         print(f"Candidates            : {len(result)}")
         print(f"Executed / Closed     : {len(trades)} / {len(closed)}")
         print(f"Wins / Losses / BE    : {wins} / {losses} / {be}")
@@ -294,12 +330,15 @@ def summarise_MA_strategy_v1(result, stop_points=6.0, verbose=True):
         print(f"Realised return       : {closed.Return_pct.sum() if not closed.empty else 0.0:+.3f}%")
         print(f"Max drawdown          : {drawdown:.2f} points")
         print(f"Rules                 : BUY, close above aligned EMAs; next open entry; "
-              f"1R={stop_points:g} points; 1R step trail; no TP")
+              f"1R={stop_points:g} points; exit={exit_style}" +
+              (f"; target={target_r:g}R" if exit_style == "fix_target" else ""))
         print("OPEN positions excluded from realised statistics; fees/slippage excluded.")
         if not trades.empty:
             from IPython.display import display
             display(trades)
     trades.attrs = result.attrs.copy()
+    trades.attrs["exit_style"] = exit_style
+    trades.attrs["fix_target"] = target_r
     return trades
 
 
@@ -344,26 +383,23 @@ def _plot_MA_v1(result, trades=None, multiChart=False, show_entries=False):
             if show_entries:
                 plotted = trades if trades is not None else pd.DataFrame()
                 if not plotted.empty:
+                    entry_label, exit_label = False, False
                     for _, t in plotted.iterrows():
-                        if t.Entry_time not in visible.index:
-                            continue
-                        x = int(visible.index.get_loc(t.Entry_time))
-                        ax.scatter(x, float(visible.Low.iloc[x])-2,
-                                   s=55, color="#35e89b", edgecolors="white",
-                                   linewidths=.5, zorder=8)
-                        ax.axhline(float(t.Entry), color="#35e89b",
-                                   linewidth=1, alpha=.9)
-                        ax.axhline(float(t.Initial_SL), color="#ff6471",
-                                   linewidth=1, linestyle="--")
-                        if t.Status == "CLOSED":
-                            colour = "#bd91ff" if t.Points > 0 else "#ff6471"
-                            ax.axhline(float(t.Exit), color=colour,
-                                       linewidth=1, linestyle="-.")
-                            if t.Exit_time in visible.index:
-                                x2 = int(visible.index.get_loc(t.Exit_time))
-                                ax.scatter(x2, float(visible.Low.iloc[x2])-2,
-                                           s=55, color=colour, edgecolors="white",
-                                           linewidths=.5, zorder=8)
+                        if t.Entry_time in visible.index:
+                            x = int(visible.index.get_loc(t.Entry_time))
+                            ax.scatter(x, float(t.Entry), marker="^", s=88,
+                                       color="#35e89b", edgecolors="white",
+                                       linewidths=.7, zorder=9,
+                                       label="BUY entry" if not entry_label else None)
+                            entry_label = True
+                        if t.Status == "CLOSED" and t.Exit_time in visible.index:
+                            x2 = int(visible.index.get_loc(t.Exit_time))
+                            colour = "#b58cff" if t.Points >= 0 else "#ff6471"
+                            ax.scatter(x2, float(t.Exit), marker="v", s=88,
+                                       color=colour, edgecolors="white",
+                                       linewidths=.7, zorder=9,
+                                       label="EXIT" if not exit_label else None)
+                            exit_label = True
             else:
                 matched = (result[result.Signal_time.isin(visible.index)]
                            if not result.empty else result)
@@ -410,9 +446,9 @@ def plot_signal_candidate_MAs(result, multiChart=False):
     return _plot_MA_v1(result, multiChart=multiChart)
 
 
-def plot_signal_passed_MAs(result, stop_points=6.0, multiChart=False):
-    """Plot executed MA trades, including entry, 6pt SL and trail exit."""
-    trades = summarise_MA_strategy_v1(result, stop_points, verbose=False)
+def plot_signal_passed_MAs(result, stop_points=6.0, multiChart=False, config=None):
+    """Plot executed MA trades with clear entry and exit markers, no trade lines."""
+    trades = summarise_MA_strategy_v1(result, stop_points, verbose=False, config=config)
     return _plot_MA_v1(result, trades=trades, multiChart=multiChart,
                        show_entries=True)
 
