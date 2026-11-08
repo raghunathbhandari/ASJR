@@ -93,7 +93,7 @@ def load_MA_history(ticker, dateFrom, dateTo, timeframe="5min",
 
 # 13. MA STRATEGY V1 — independent of Three-Candle and Gann
 def _MA_strategy_v1_impl(ticker, dateFrom, dateTo, timeframe="5min", verbose=True,
-                         require_ema200=False, config=None):
+                         require_ema200=False, config=None, show_maslop=False):
     """BUY-only EMA alignment study; no Three-Candle or Gann checks.
 
     Candidate: completed candle CLOSE > EMA9 > EMA21.
@@ -199,9 +199,20 @@ def _MA_strategy_v1_impl(ticker, dateFrom, dateTo, timeframe="5min", verbose=Tru
               f"EMA21 >= {ma2_slop}")
         print(f"Base aligned candidates: {result.attrs['MA_base_candidates']} | "
               f"After slope filter: {len(result)}")
-        if not result.empty:
+        if not result.empty and not show_maslop:
             from IPython.display import display
             display(result)
+    if show_maslop:
+        from IPython.display import display
+        slope_table = (
+            result[["Signal_time", "EMA9_slope_pts", "EMA21_slope_pts"]]
+            .rename(columns={"Signal_time": "Candle",
+                             "EMA9_slope_pts": "ma1_slop",
+                             "EMA21_slope_pts": "ma2_slop"})
+            .sort_values("Candle")
+            .reset_index(drop=True)
+        )
+        display(slope_table)
     return result
 
 
