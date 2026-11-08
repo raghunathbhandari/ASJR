@@ -5,6 +5,8 @@ from the existing three_candle notebook directory.
 """
 
 from datetime import date, timedelta
+from pathlib import Path
+import re
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -17,32 +19,76 @@ from three_candle_learing import load_learning_candles, normalise_learning_timef
 
 def load_MA_history(ticker, dateFrom, dateTo, timeframe="5min",
                     min_warmup_bars=600):
-    """Load enough historical bars for EMA9/21/200 before chart begins.
+    """Read exact-contract IBKR daily/monthly CSVs ONCE, vectorially.
 
-    Reuse the IBKR-first source reader, asking it for earlier daily files.
-    Never patch a missing day with Yahoo or plot a cold EMA200.
-    With 600 warm-up bars, initial EMA200 seed bias is small.
+    Prefer CONTRACT_5m_YYYY-MM-DD.csv, then CONTRACT_5m_YYYY-MM.csv.
+    No historical retries or per-candle processing loops.
+    Preserve the Three-Candle loader untouched.
     """
-    first_day = date.fromisoformat(str(dateFrom))
-    errors = []
-    for days_back in (21, 14, 10, 7, 5, 3):
-        earlier = (first_day - timedelta(days=days_back)).isoformat()
-        try:
-            candles = load_learning_candles(ticker, earlier, dateTo, timeframe)
-        except (FileNotFoundError, ValueError) as exc:
-            errors.append(f"{days_back}-day lookback: {exc}")
-            continue
-        before = int((candles.index.date < first_day).sum())
-        if before >= min_warmup_bars:
-            candles.attrs["ma_warmup_bars"] = before
-            return candles
-        errors.append(f"{days_back}-day lookback: only {before} warm-up bars")
-    raise ValueError(
-        f"EMA history insufficient for {ticker} at {dateFrom}: "
-        f"need {min_warmup_bars} preceding candles. "
-        "Download/sync prior daily IBKR CSVs. "
-        + " | ".join(errors[-3:])
-    )
+    requested = str(ticker).upper().strip()
+    match = re.fullmatch(r"(MES|NQ|GC)([FGHJKMNQUVXZ])([0-9]{4})", requested)
+    if match is None:
+        raise ValueError("MA V1 direct IBKR reader needs dated contract, e.g. MESZ2026")
+    from_day, to_day = date.fromisoformat(str(dateFrom)), date.fromisoformat(str(dateTo))
+    if from_day > to_day:
+        raise ValueError("dateFrom must be <= dateTo")
+    interval = normalise_learning_timeframe(timeframe)
+    minutes = 5 if interval == "5m" else 15
+    folder = Path(__file__).resolve().parent / "data"
+    files = []
+    # Read at most 14 historical calendar days, prioritising daily files.
+    history_start = from_day - timedelta(days=14)
+    for offset in range((to_day-history_start).days+1):
+        day = history_start+timedelta(days=offset)
+        daily = folder / f"{requested}_IBKR_5m_{day}.csv"
+        monthly = folder / f"{requested}_IBKR_5m_{day.year}-{day.month:02d}.csv"
+        path = daily if daily.is_file() else monthly if monthly.is_file() else None
+        if path is not None and path not in files:
+            files.append(path)
+    if not files:
+        raise FileNotFoundError(f"No local IBKR CSVs for {requested} near {dateFrom}")
+
+    fields = ["Datetime_UTC", "Open", "High", "Low", "Close", "Volume"]
+    raw = pd.concat((pd.read_csv(path, usecols=fields) for path in files),
+                    ignore_index=True)
+    raw["Datetime_UTC"] = pd.to_datetime(raw["Datetime_UTC"], utc=True,
+                                          errors="coerce")
+    for field in fields[1:]:
+        raw[field] = pd.to_numeric(raw[field], errors="coerce")
+    raw = raw.dropna(subset=fields).sort_values("Datetime_UTC")
+    raw = raw.drop_duplicates("Datetime_UTC").set_index("Datetime_UTC")
+    raw = raw.loc[(raw.index.date >= history_start) &
+                  (raw.index.date <= to_day)]
+    bad = ((raw.High < raw[["Open", "Close", "Low"]].max(axis=1))
+           | (raw.Low > raw[["Open", "Close", "High"]].min(axis=1))
+           | ((raw.High-raw.Low)/raw.Close > 0.02))
+    raw = raw.loc[~bad]
+    if minutes == 15:
+        grouped = raw.groupby(raw.index.floor("15min"))
+        candles = grouped.agg({"Open": "first", "High": "max",
+                               "Low": "min", "Close": "last", "Volume": "sum"})
+        count = grouped.size()
+        # 3 complete contiguous five-minute timestamps per 15m bar.
+        expected = grouped.apply(
+            lambda g: len(g) == 3 and
+            (g.index[1]-g.index[0] == pd.Timedelta(minutes=5)) and
+            (g.index[2]-g.index[1] == pd.Timedelta(minutes=5)))
+        candles = candles.loc[(count == 3) & expected]
+    else:
+        candles = raw.copy()
+    candles.index = candles.index.tz_convert("Europe/London")
+    start_mask = candles.index.date >= from_day
+    if not start_mask.any():
+        raise ValueError(f"No IBKR candles for {requested} on {dateFrom}")
+    first_idx = int(start_mask.argmax())
+    if first_idx < min_warmup_bars:
+        raise ValueError(
+            f"Only {first_idx} warm-up candles; need {min_warmup_bars}. "
+            f"Sync earlier IBKR CSVs for {requested}.")
+    candles = candles.iloc[first_idx-min_warmup_bars:].copy()
+    candles.attrs["timeframe_minutes"] = minutes
+    candles.attrs["ma_warmup_bars"] = min_warmup_bars
+    return candles
 
 
 # 13. MA STRATEGY V1 — independent of Three-Candle and Gann
@@ -94,40 +140,35 @@ def _MA_strategy_v1_impl(ticker, dateFrom, dateTo, timeframe="5min", verbose=Tru
         frame["MA_pass"] &= frame.EMA21_slope_pts >= config["ma2_slop"]
     start, end = date.fromisoformat(str(dateFrom)), date.fromisoformat(str(dateTo))
     in_dates = (frame.index.date >= start) & (frame.index.date <= end)
-    selected = frame.loc[in_dates & frame.MA_pass].copy()
-    rows = []
+    # Vectorised candidates and next-open entries: no iterrows() loop.
     minutes = data.attrs.get("timeframe_minutes", 5)
-    bar_step = pd.Timedelta(minutes=minutes)
-    for stamp, candle in selected.iterrows():
-        idx = int(frame.index.get_loc(stamp))
-        if idx+1 >= len(frame) or frame.index[idx+1]-stamp != bar_step:
-            continue
-        next_bar = frame.iloc[idx+1]
-        rows.append({
-            "Signal": len(rows)+1, "Direction": "BUY", "MA_pass": True,
-            "Signal_time": stamp, "Entry_time": frame.index[idx+1],
-            "Signal_Close": float(candle.Close),
-            "Entry_open": float(next_bar.Open),
-            "EMA9": float(candle.EMA9),
-            "EMA21": float(candle.EMA21),
-            "EMA200": float(candle.EMA200),
-            "EMA9_slope_pct": float(candle.EMA9_slope_pct),
-            "EMA21_slope_pct": float(candle.EMA21_slope_pct),
-            "EMA200_slope_pct": float(candle.EMA200_slope_pct),
-            "EMA9_slope_pts": float(candle.EMA9_slope_pts),
-            "EMA21_slope_pts": float(candle.EMA21_slope_pts),
-            "EMA200_slope_pts": float(candle.EMA200_slope_pts),
-            "Close_minus_EMA9": float(candle.Close-candle.EMA9),
-            "EMA9_minus_EMA21": float(candle.EMA9-candle.EMA21),
-            "EMA21_minus_EMA200": float(candle.EMA21-candle.EMA200),
-            "Candle_range_points": float(candle.High-candle.Low),
-            "Candle_body_points": float(abs(candle.Close-candle.Open)),
-            "Volume": float(candle.Volume),
-            "Volume_ratio_20": float(candle.Volume / frame.Volume.iloc[
-                max(0, idx-19):idx+1].mean())
-                if frame.Volume.iloc[max(0, idx-19):idx+1].mean() > 0 else float("nan"),
-        })
-    result = pd.DataFrame(rows)
+    next_time = frame.index.to_series().shift(-1)
+    contiguous = (next_time-frame.index.to_series() ==
+                  pd.Timedelta(minutes=minutes))
+    selected = frame.loc[in_dates & frame.MA_pass & contiguous].copy()
+    next_open = frame.Open.shift(-1).reindex(selected.index)
+    mean_vol20 = frame.Volume.rolling(20, min_periods=1).mean()
+    result = pd.DataFrame(index=selected.index)
+    result["Signal"] = range(1, len(selected)+1)
+    result["Direction"] = "BUY"
+    result["MA_pass"] = True
+    result["Signal_time"] = selected.index
+    result["Entry_time"] = next_time.reindex(selected.index)
+    result["Signal_Close"] = selected.Close
+    result["Entry_open"] = next_open
+    for name in ("EMA9", "EMA21", "EMA200",
+                 "EMA9_slope_pct", "EMA21_slope_pct", "EMA200_slope_pct",
+                 "EMA9_slope_pts", "EMA21_slope_pts", "EMA200_slope_pts"):
+        result[name] = selected[name]
+    result["Close_minus_EMA9"] = selected.Close-selected.EMA9
+    result["EMA9_minus_EMA21"] = selected.EMA9-selected.EMA21
+    result["EMA21_minus_EMA200"] = selected.EMA21-selected.EMA200
+    result["Candle_range_points"] = selected.High-selected.Low
+    result["Candle_body_points"] = (selected.Close-selected.Open).abs()
+    result["Volume"] = selected.Volume
+    result["Volume_ratio_20"] = (selected.Volume /
+                                  mean_vol20.reindex(selected.index).replace(0, float("nan")))
+    result = result.reset_index(drop=True)
     result.attrs = {
         "candles": frame,
         "requested_start": str(dateFrom),
