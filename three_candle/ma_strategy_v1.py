@@ -262,6 +262,8 @@ def summarise_MA_strategy_v1(result, stop_points=6.0, verbose=True):
         rows.append({
             "Signal": signal.Signal, "Direction": "BUY",
             "Signal_time": signal.Signal_time,
+            "EMA9_slope_pts": float(signal.EMA9_slope_pts),
+            "EMA21_slope_pts": float(signal.EMA21_slope_pts),
             "Entry_time": stamp, "Entry": entry,
             "Initial_SL": entry-stop_points, "Final_SL": stop,
             "Exit_time": candles.index[exit_idx] if closed else pd.NaT,
@@ -279,6 +281,9 @@ def summarise_MA_strategy_v1(result, stop_points=6.0, verbose=True):
     equity = pd.concat([pd.Series([0.0]), closed.Points.cumsum().reset_index(drop=True)],
                        ignore_index=True) if not closed.empty else pd.Series([0.0])
     drawdown = float((equity.cummax()-equity).max())
+    # Keep P/L and drawdown calculated in execution order, then sort the report.
+    if not trades.empty:
+        trades = trades.sort_values("EMA9_slope_pts", ascending=False).reset_index(drop=True)
     if verbose:
         print("\n========== MA STRATEGY V1 — 1R STEPPED TRAILING ==========")
         print(f"Candidates            : {len(result)}")
