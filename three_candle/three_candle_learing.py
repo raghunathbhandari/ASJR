@@ -1317,33 +1317,45 @@ def plot_signal_candidate(result, multiChart=True, SRLineTypes="swing",
                                  if index == 0 else "_nolegend_")
 
             if gann_fan:
-                # Study-only rays: first historically confirmed SUPPORT pivot.
-                # No changes to candidate checks or trade calculations.
-                first_low = next(
-                    (level for level in confirmed_levels
-                     if level[0] == "SUPPORT"
-                     and left <= level[1] < right and level[2] < right),
-                    None)
-                if first_low is not None:
-                    _, pivot_idx, confirmation_idx, anchor_price = first_low
-                    x0 = pivot_idx - left
-                else:
-                    x0 = 0
-                    anchor_price = float(visible.Low.iloc[0])
-                ray_x = list(range(x0, len(visible)))
-                for slope, title, color in (
-                    (0.25, "1x4", "#5977cc"),
-                    (0.50, "1x2", "#3eb9bd"),
-                    (1.00, "1x1", "#ffd166"),
-                    (2.00, "2x1", "#ae85ff"),
-                ):
-                    ray_y = [anchor_price + gann_points_per_bar*slope*(x-x0)
-                             for x in ray_x]
-                    ax.plot(ray_x, ray_y, color=color, linewidth=1.25,
-                            linestyle="--", alpha=0.8, label=f"Fan {title}",
-                            zorder=3)
-                ax.scatter(x0, anchor_price, s=48, color="#ffd166",
-                           edgecolors="white", linewidths=0.6, zorder=8)
+                # Independent fan from each historically CONFIRMED major LOW.
+                # Stop a fan once a later candle breaks below its anchor.
+                # A subsequent confirmed low starts a new fan.
+                # Chart-only: no changes to candidate or trade calculations.
+                lows = [(left, left, float(visible.Low.iloc[0]))]
+                lows.extend((pivot_idx, confirmed_idx, float(pivot_price))
+                            for kind, pivot_idx, confirmed_idx, pivot_price
+                            in confirmed_levels
+                            if kind == "SUPPORT" and
+                            left < pivot_idx < right and confirmed_idx < right)
+                used_labels = set()
+                for fan_number, (pivot_idx, confirmed_idx, anchor_price) in enumerate(lows, 1):
+                    # Do not present a level as known before confirmation.
+                    x_start = max(left, confirmed_idx)
+                    broken_at = next(
+                        (idx for idx in range(x_start+1, right)
+                         if float(data.Low.iloc[idx]) < anchor_price), right)
+                    if x_start >= broken_at:
+                        continue
+                    ray_x = list(range(x_start-left, broken_at-left))
+                    if not ray_x:
+                        continue
+                    for slope, title, color in (
+                        (0.25, "1x4", "#5977cc"),
+                        (0.50, "1x2", "#3eb9bd"),
+                        (1.00, "1x1", "#ffd166"),
+                        (2.00, "2x1", "#ae85ff"),
+                    ):
+                        ray_y = [
+                            anchor_price + gann_points_per_bar*slope*
+                            (x+left-pivot_idx) for x in ray_x]
+                        label = f"Fan {title}" if title not in used_labels else "_nolegend_"
+                        ax.plot(ray_x, ray_y, color=color, linewidth=1.25,
+                                linestyle="--", alpha=0.65,
+                                label=label, zorder=3)
+                        used_labels.add(title)
+                    ax.scatter(pivot_idx-left, anchor_price, s=48,
+                               color="#ffd166", edgecolors="white",
+                               linewidths=0.6, zorder=8)
 
         ax.set_ylim(low-0.13*price_range, high+0.13*price_range)
         every = max(1, len(visible)//12)
