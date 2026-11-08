@@ -204,13 +204,14 @@ def _MA_strategy_v1_impl(ticker, dateFrom, dateTo, timeframe="5min", verbose=Tru
             display(result)
     if show_maslop:
         from IPython.display import display
+        # Display ALL requested candles, regardless of MA signal pass/fail.
         slope_table = (
-            result[["Signal_time", "EMA9_slope_pts", "EMA21_slope_pts"]]
-            .rename(columns={"Signal_time": "Candle",
-                             "EMA9_slope_pts": "ma1_slop",
+            frame.loc[in_dates, ["EMA9_slope_pts", "EMA21_slope_pts"]]
+            .rename(columns={"EMA9_slope_pts": "ma1_slop",
                              "EMA21_slope_pts": "ma2_slop"})
-            .sort_values("Candle")
-            .reset_index(drop=True)
+            .sort_index()
+            .rename_axis("Candle")
+            .reset_index()
         )
         display(slope_table)
     return result
