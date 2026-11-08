@@ -264,13 +264,13 @@ def summarise_MA_strategy_v1(result, stop_points=6.0, verbose=True):
             "Signal_time": signal.Signal_time,
             "EMA9_slope_pts": float(signal.EMA9_slope_pts),
             "EMA21_slope_pts": float(signal.EMA21_slope_pts),
+            "Points": points, "Return_pct": 100*points/entry,
             "Entry_time": stamp, "Entry": entry,
             "Initial_SL": entry-stop_points, "Final_SL": stop,
             "Exit_time": candles.index[exit_idx] if closed else pd.NaT,
             "Exit": exit_price if closed else float("nan"),
             "Status": "CLOSED" if closed else "OPEN",
             "Max_R_step": max_step,
-            "Points": points, "Return_pct": 100*points/entry,
             "R": points/stop_points,
         })
     trades = pd.DataFrame(rows)
