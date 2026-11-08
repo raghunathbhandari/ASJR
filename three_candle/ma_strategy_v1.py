@@ -392,6 +392,15 @@ def _plot_MA_v1(result, trades=None, multiChart=False, show_entries=False):
                                        linewidths=.7, zorder=9,
                                        label="BUY entry" if not entry_label else None)
                             entry_label = True
+                            ax.annotate(
+                                f"9:{float(t.EMA9_slope_pts):+.2f}  "
+                                f"21:{float(t.EMA21_slope_pts):+.2f}",
+                                xy=(x, float(t.Entry)),
+                                xytext=(0, -21), textcoords="offset points",
+                                fontsize=7, ha="center", va="top",
+                                color="#35e89b", zorder=10,
+                                bbox=dict(facecolor="#101722", alpha=.80,
+                                          edgecolor="none", pad=1))
                         if t.Status == "CLOSED" and t.Exit_time in visible.index:
                             x2 = int(visible.index.get_loc(t.Exit_time))
                             colour = "#b58cff" if t.Points >= 0 else "#ff6471"
@@ -400,6 +409,14 @@ def _plot_MA_v1(result, trades=None, multiChart=False, show_entries=False):
                                        linewidths=.7, zorder=9,
                                        label="EXIT" if not exit_label else None)
                             exit_label = True
+                            ax.annotate(
+                                f"{float(t.Points):+.2f} pt",
+                                xy=(x2, float(t.Exit)),
+                                xytext=(0, 12), textcoords="offset points",
+                                fontsize=8, ha="center", va="bottom",
+                                fontweight="bold", color=colour, zorder=10,
+                                bbox=dict(facecolor="#101722", alpha=.80,
+                                          edgecolor="none", pad=1))
             else:
                 matched = (result[result.Signal_time.isin(visible.index)]
                            if not result.empty else result)
