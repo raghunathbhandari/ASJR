@@ -93,7 +93,8 @@ def load_MA_history(ticker, dateFrom, dateTo, timeframe="5min",
 
 # 13. MA STRATEGY V1 — independent of Three-Candle and Gann
 def _MA_strategy_v1_impl(ticker, dateFrom, dateTo, timeframe="5min", verbose=True,
-                         require_ema200=False, config=None, show_maslop=False):
+                         require_ema200=False, config=None, show_maslop=False,
+                         return_df_slop=False):
     """BUY-only EMA alignment study; no Three-Candle or Gann checks.
 
     Candidate: completed candle CLOSE > EMA9 > EMA21.
@@ -202,10 +203,9 @@ def _MA_strategy_v1_impl(ticker, dateFrom, dateTo, timeframe="5min", verbose=Tru
         if not result.empty and not show_maslop:
             from IPython.display import display
             display(result)
-    if show_maslop:
-        from IPython.display import display
-        # Display ALL requested candles, regardless of MA signal pass/fail.
-        slope_table = (
+    if show_maslop or return_df_slop:
+        # All candles in the requested dates; no entry/signal filtering.
+        df_slop = (
             frame.loc[in_dates, ["EMA9_slope_pts", "EMA21_slope_pts"]]
             .rename(columns={"EMA9_slope_pts": "ma1_slop",
                              "EMA21_slope_pts": "ma2_slop"})
@@ -213,7 +213,12 @@ def _MA_strategy_v1_impl(ticker, dateFrom, dateTo, timeframe="5min", verbose=Tru
             .rename_axis("Candle")
             .reset_index()
         )
-        display(slope_table)
+        result.attrs["df_slop"] = df_slop
+        if show_maslop:
+            from IPython.display import display
+            display(df_slop)
+        if return_df_slop:
+            return result, df_slop
     return result
 
 
