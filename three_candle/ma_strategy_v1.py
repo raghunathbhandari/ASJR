@@ -46,8 +46,8 @@ def load_MA_history(ticker, dateFrom, dateTo, timeframe="5min",
 
 
 # 13. MA STRATEGY V1 — independent of Three-Candle and Gann
-def MA_strategy_v1(ticker, dateFrom, dateTo, timeframe="5min", verbose=True,
-                   require_ema200=False):
+def _MA_strategy_v1_impl(ticker, dateFrom, dateTo, timeframe="5min", verbose=True,
+                         require_ema200=False, config=None):
     """BUY-only EMA alignment study; no Three-Candle or Gann checks.
 
     Candidate: completed candle CLOSE > EMA9 > EMA21.
@@ -56,6 +56,20 @@ def MA_strategy_v1(ticker, dateFrom, dateTo, timeframe="5min", verbose=True,
     qualifying candle's close (which was not known beforehand).
     Slopes are percent change of each EMA over the previous 3 bars.
     """
+    config = {} if config is None else dict(config)
+    accepted = {"ma1_slop", "ma2_slop"}
+    unknown = set(config) - accepted
+    if unknown:
+        raise ValueError(f"Unknown MA config option(s): {sorted(unknown)}")
+    ma1_slop = config.get("ma1_slop")
+    ma2_slop = config.get("ma2_slop")
+    for name, threshold in (("ma1_slop", ma1_slop), ("ma2_slop", ma2_slop)):
+        if threshold is not None:
+            try:
+                config[name] = float(threshold)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"{name} must be a number or None") from exc
+
     data = load_MA_history(ticker, dateFrom, dateTo, timeframe)
     frame = data.copy()
     for span in (9, 21, 200):
@@ -71,6 +85,13 @@ def MA_strategy_v1(ticker, dateFrom, dateTo, timeframe="5min", verbose=True,
                         (frame.EMA9 > frame.EMA21) & (bar_count >= 20))
     if require_ema200:
         frame["MA_pass"] &= ((frame.EMA21 > frame.EMA200) & (bar_count >= 199))
+    # Optional slope thresholds are in POINTS over the previous 3 bars.
+    # ma1 = EMA9; ma2 = EMA21. No threshold means no slope filter.
+    frame["MA_base_pass"] = frame["MA_pass"].copy()
+    if ma1_slop is not None:
+        frame["MA_pass"] &= frame.EMA9_slope_pts >= config["ma1_slop"]
+    if ma2_slop is not None:
+        frame["MA_pass"] &= frame.EMA21_slope_pts >= config["ma2_slop"]
     start, end = date.fromisoformat(str(dateFrom)), date.fromisoformat(str(dateTo))
     in_dates = (frame.index.date >= start) & (frame.index.date <= end)
     selected = frame.loc[in_dates & frame.MA_pass].copy()
@@ -115,6 +136,10 @@ def MA_strategy_v1(ticker, dateFrom, dateTo, timeframe="5min", verbose=True,
         "strategy": "MA_strategy_v1",
         "require_ema200": bool(require_ema200),
         "ma_warmup_bars": data.attrs.get("ma_warmup_bars", 0),
+        "MA_config": config,
+        "MA_base_candidates": int((frame.loc[(frame.index.date >= start) &
+                                               (frame.index.date <= end),
+                                               "MA_base_pass"]).sum()),
     }
     if verbose:
         print(f"MA_strategy_v1 | {ticker} | {dateFrom} to {dateTo} | "
@@ -122,10 +147,29 @@ def MA_strategy_v1(ticker, dateFrom, dateTo, timeframe="5min", verbose=True,
         print("Rule: Close > EMA9 > EMA21; EMA200 optional; entry next bar OPEN.")
         print(f"EMA warm-up bars before chart: {data.attrs.get('ma_warmup_bars', 0)}")
         print("EMA slopes: 3-candle change in points and percent.")
+        print(f"Slope filters (points/3 bars): EMA9 >= {ma1_slop}, "
+              f"EMA21 >= {ma2_slop}")
+        print(f"Base aligned candidates: {result.attrs['MA_base_candidates']} | "
+              f"After slope filter: {len(result)}")
         if not result.empty:
             from IPython.display import display
             display(result)
     return result
+
+
+def MA_strategy_v1(*args, config=None, **kwargs):
+    """Run MA V1. Both old calls and config-first calls are supported.
+
+    Example:
+        MA_strategy_v1({"ma1_slop": 2.0, "ma2_slop": 1.0},
+                       "MESZ2026", "2026-11-06", "2026-11-06",
+                       timeframe="5min")
+    """
+    if args and isinstance(args[0], dict):
+        if config is not None:
+            raise ValueError("Provide config once, either first or by keyword")
+        config, args = args[0], args[1:]
+    return _MA_strategy_v1_impl(*args, config=config, **kwargs)
 
 
 def summarise_MA_strategy_v1(result, stop_points=6.0, verbose=True):
