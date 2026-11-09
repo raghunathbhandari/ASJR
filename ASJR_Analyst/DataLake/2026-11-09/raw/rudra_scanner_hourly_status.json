@@ -1,131 +1,66 @@
 {
-  "state": "COMPLETE",
+  "state": "PARTIAL",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-09T13:58:13.254434+00:00",
+  "generated_at_utc": "2026-11-09T14:19:59.531009+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
-    "AMD",
-    "BMNR",
     "CRDO",
-    "GFR",
-    "HIMS",
-    "IBRX",
     "INTC",
-    "IONS",
-    "IREN",
-    "LUNR",
     "MSFT",
-    "NVDA",
     "ORCL",
     "QCOM",
     "SMCI",
-    "TTD",
     "WDC",
     "WTTR"
   ],
   "per_ticker": {
     "AKAM": {
-      "state": "OK",
-      "rows": 548
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "AMAT": {
-      "state": "OK",
-      "rows": 549
-    },
-    "AMD": {
-      "state": "OK",
-      "rows": 549
-    },
-    "BMNR": {
-      "state": "OK",
-      "rows": 549
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "CRDO": {
-      "state": "OK",
-      "rows": 549
-    },
-    "GFR": {
-      "state": "OK",
-      "rows": 417
-    },
-    "HIMS": {
-      "state": "OK",
-      "rows": 549
-    },
-    "IBRX": {
-      "state": "OK",
-      "rows": 547
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "INTC": {
-      "state": "OK",
-      "rows": 549
-    },
-    "IONS": {
-      "state": "OK",
-      "rows": 504
-    },
-    "IREN": {
-      "state": "OK",
-      "rows": 549
-    },
-    "LUNR": {
-      "state": "OK",
-      "rows": 549
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "MSFT": {
-      "state": "OK",
-      "rows": 549
-    },
-    "NVDA": {
-      "state": "OK",
-      "rows": 549
+      "state": "TIMEOUT",
+      "rows": 0
     },
     "ORCL": {
       "state": "OK",
-      "rows": 549
+      "rows": 550
     },
     "QCOM": {
       "state": "OK",
-      "rows": 549
+      "rows": 550
     },
     "SMCI": {
       "state": "OK",
-      "rows": 549
-    },
-    "TTD": {
-      "state": "OK",
-      "rows": 549
+      "rows": 550
     },
     "WDC": {
       "state": "OK",
-      "rows": 549
+      "rows": 550
     },
     "WTTR": {
       "state": "OK",
-      "rows": 423
+      "rows": 424
     }
   },
-  "rows": 10674,
+  "rows": 2624,
   "usable_150bars": [
-    "AKAM",
-    "AMAT",
-    "AMD",
-    "BMNR",
-    "CRDO",
-    "GFR",
-    "HIMS",
-    "IBRX",
-    "INTC",
-    "IONS",
-    "IREN",
-    "LUNR",
-    "MSFT",
-    "NVDA",
     "ORCL",
     "QCOM",
     "SMCI",
-    "TTD",
     "WDC",
     "WTTR"
   ]
