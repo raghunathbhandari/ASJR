@@ -1,13 +1,13 @@
 {
-  "state": "INDICATORS_ONLY",
+  "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
-    "state": "MISSING",
-    "input_rows": 0,
-    "completed_rows": 0,
+    "state": "OK",
+    "input_rows": 10207,
+    "completed_rows": 10207,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
-    "tickers": 0,
+    "tickers": 24,
     "min_periods": 9,
     "session_reset": false,
     "extended_hours_included": true,
@@ -16,17 +16,17 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 0,
+    "no_wap_rows": 10207,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
   "detector_status": {
-    "state": "DISABLED",
-    "tickers": 0,
+    "state": "OK",
+    "tickers": 20,
     "emitted": 0,
     "blocked_context": 0,
     "blocked_data": 0,
-    "blocked_session": 0,
+    "blocked_session": 20,
     "mode": "RESEARCH_ONLY"
   },
   "events": [],
@@ -34,7 +34,7 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 96954,
+    "stored_rows": 97266,
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-09/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
@@ -42,7 +42,7 @@
   },
   "context": {
     "state": "WAIT",
-    "reason": "NO_COMPLETED_BARS",
+    "reason": "MISSING_BENCHMARK_OR_PREV_RTH_CLOSE",
     "timestamp": null,
     "index_pct": {},
     "sector_etf": {
@@ -60,16 +60,23 @@
   },
   "collection": {
     "requested": [
-      "AKAM",
       "AMAT",
+      "AMD",
+      "BMNR",
       "CRDO",
-      "INTC",
+      "CRWV",
+      "GFR",
+      "HIMS",
+      "IBRX",
+      "IONS",
+      "IREN",
       "MSFT",
+      "NVDA",
       "ORCL",
       "QCOM",
       "SMCI",
+      "VIR",
       "WDC",
-      "WTTR",
       "SPY",
       "QQQ",
       "SMH",
@@ -79,12 +86,22 @@
     "symbols": [
       "AKAM",
       "AMAT",
+      "AMD",
+      "BMNR",
       "CRDO",
+      "CRWV",
+      "GFR",
+      "HIMS",
+      "IBRX",
       "INTC",
+      "IONS",
+      "IREN",
       "MSFT",
+      "NVDA",
       "ORCL",
       "QCOM",
       "SMCI",
+      "VIR",
       "WDC",
       "WTTR",
       "SPY",
@@ -103,6 +120,8 @@
       "QCOM": "SMH",
       "WTTR": "XLE"
     },
-    "state": "DATA_NOT_READY"
+    "state": "COLLECTED",
+    "count": 10207,
+    "source": "SAME_IBKR_APP"
   }
 }
