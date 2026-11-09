@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 10741,
-    "completed_rows": 10741,
+    "input_rows": 10853,
+    "completed_rows": 10853,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 10741,
+    "no_wap_rows": 10853,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -34,7 +34,7 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 97578,
+    "stored_rows": 97890,
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-09/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
@@ -60,6 +60,7 @@
   },
   "collection": {
     "requested": [
+      "AVGO",
       "IREN",
       "SPY",
       "QQQ",
@@ -71,13 +72,13 @@
       "AKAM",
       "AMAT",
       "AMD",
-      "BMNR",
+      "AMZN",
+      "AVGO",
       "CRDO",
       "GFR",
       "HIMS",
       "IBRX",
       "INTC",
-      "IONS",
       "IREN",
       "MSFT",
       "NVDA",
@@ -105,7 +106,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 10741,
+    "count": 10853,
     "source": "SAME_IBKR_APP"
   }
 }

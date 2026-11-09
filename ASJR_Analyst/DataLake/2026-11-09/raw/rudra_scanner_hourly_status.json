@@ -1,18 +1,18 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-09T14:26:34.553821+00:00",
+  "generated_at_utc": "2026-11-09T14:34:07.868322+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
     "AMD",
-    "BMNR",
+    "AMZN",
+    "AVGO",
     "CRDO",
     "GFR",
     "HIMS",
     "IBRX",
     "INTC",
-    "IONS",
     "IREN",
     "MSFT",
     "NVDA",
@@ -37,7 +37,11 @@
       "state": "OK",
       "rows": 550
     },
-    "BMNR": {
+    "AMZN": {
+      "state": "OK",
+      "rows": 550
+    },
+    "AVGO": {
       "state": "OK",
       "rows": 550
     },
@@ -60,10 +64,6 @@
     "INTC": {
       "state": "OK",
       "rows": 550
-    },
-    "IONS": {
-      "state": "OK",
-      "rows": 505
     },
     "IREN": {
       "state": "OK",
@@ -106,18 +106,18 @@
       "rows": 424
     }
   },
-  "rows": 10576,
+  "rows": 10621,
   "usable_150bars": [
     "AKAM",
     "AMAT",
     "AMD",
-    "BMNR",
+    "AMZN",
+    "AVGO",
     "CRDO",
     "GFR",
     "HIMS",
     "IBRX",
     "INTC",
-    "IONS",
     "IREN",
     "MSFT",
     "NVDA",
