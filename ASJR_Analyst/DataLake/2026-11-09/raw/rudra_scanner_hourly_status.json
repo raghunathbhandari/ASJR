@@ -1,16 +1,16 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-09T01:07:36.783794+00:00",
+  "generated_at_utc": "2026-11-09T01:13:30.464390+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
-    "AXTI",
     "BMNR",
-    "COIN",
     "CRDO",
     "INTC",
+    "IONQ",
     "IREN",
+    "JHX",
     "MSFT",
     "MSTR",
     "NVDA",
@@ -33,15 +33,7 @@
       "state": "OK",
       "rows": 560
     },
-    "AXTI": {
-      "state": "OK",
-      "rows": 560
-    },
     "BMNR": {
-      "state": "OK",
-      "rows": 560
-    },
-    "COIN": {
       "state": "OK",
       "rows": 560
     },
@@ -53,9 +45,17 @@
       "state": "OK",
       "rows": 560
     },
+    "IONQ": {
+      "state": "OK",
+      "rows": 560
+    },
     "IREN": {
       "state": "OK",
       "rows": 560
+    },
+    "JHX": {
+      "state": "OK",
+      "rows": 482
     },
     "MSFT": {
       "state": "OK",
@@ -106,16 +106,16 @@
       "rows": 560
     }
   },
-  "rows": 11073,
+  "rows": 10995,
   "usable_150bars": [
     "AKAM",
     "AMAT",
-    "AXTI",
     "BMNR",
-    "COIN",
     "CRDO",
     "INTC",
+    "IONQ",
     "IREN",
+    "JHX",
     "MSFT",
     "MSTR",
     "NVDA",
