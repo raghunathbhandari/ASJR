@@ -1,14 +1,13 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-09T11:52:52.636620+00:00",
+  "generated_at_utc": "2026-11-09T12:05:08.121967+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
     "AMD",
     "ASTS",
     "BMNR",
-    "COIN",
     "CRDO",
     "CRWV",
     "GFR",
@@ -21,6 +20,7 @@
     "QCOM",
     "SMCI",
     "SNDK",
+    "VIR",
     "WDC",
     "WTTR"
   ],
@@ -42,10 +42,6 @@
       "rows": 547
     },
     "BMNR": {
-      "state": "OK",
-      "rows": 547
-    },
-    "COIN": {
       "state": "OK",
       "rows": 547
     },
@@ -97,6 +93,10 @@
       "state": "OK",
       "rows": 547
     },
+    "VIR": {
+      "state": "OK",
+      "rows": 501
+    },
     "WDC": {
       "state": "OK",
       "rows": 547
@@ -106,14 +106,13 @@
       "rows": 421
     }
   },
-  "rows": 10681,
+  "rows": 10635,
   "usable_150bars": [
     "AKAM",
     "AMAT",
     "AMD",
     "ASTS",
     "BMNR",
-    "COIN",
     "CRDO",
     "CRWV",
     "GFR",
@@ -126,6 +125,7 @@
     "QCOM",
     "SMCI",
     "SNDK",
+    "VIR",
     "WDC",
     "WTTR"
   ]
