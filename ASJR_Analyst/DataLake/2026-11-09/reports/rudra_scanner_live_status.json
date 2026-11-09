@@ -1,13 +1,13 @@
 {
-  "state": "INDICATORS_ONLY",
+  "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
-    "state": "MISSING",
-    "input_rows": 0,
-    "completed_rows": 0,
+    "state": "OK",
+    "input_rows": 2880,
+    "completed_rows": 2880,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
-    "tickers": 0,
+    "tickers": 5,
     "min_periods": 9,
     "session_reset": false,
     "extended_hours_included": true,
@@ -16,12 +16,12 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 0,
+    "no_wap_rows": 2880,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
   "detector_status": {
-    "state": "DISABLED",
+    "state": "DATA_NOT_READY",
     "tickers": 0,
     "emitted": 0,
     "blocked_context": 0,
@@ -42,7 +42,7 @@
   },
   "context": {
     "state": "WAIT",
-    "reason": "NO_COMPLETED_BARS",
+    "reason": "MISSING_BENCHMARK_OR_PREV_RTH_CLOSE",
     "timestamp": null,
     "index_pct": {},
     "sector_etf": {
@@ -103,6 +103,8 @@
       "QCOM": "SMH",
       "WTTR": "XLE"
     },
-    "state": "DATA_NOT_READY"
+    "state": "COLLECTED",
+    "count": 2880,
+    "source": "SAME_IBKR_APP"
   }
 }
