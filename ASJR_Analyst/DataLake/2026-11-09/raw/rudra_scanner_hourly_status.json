@@ -1,39 +1,81 @@
 {
-  "state": "PARTIAL",
+  "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-09T14:19:59.531009+00:00",
+  "generated_at_utc": "2026-11-09T14:26:34.553821+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
+    "AMD",
+    "BMNR",
     "CRDO",
+    "GFR",
+    "HIMS",
+    "IBRX",
     "INTC",
+    "IONS",
+    "IREN",
     "MSFT",
+    "NVDA",
     "ORCL",
     "QCOM",
+    "SGRY",
     "SMCI",
+    "TTD",
     "WDC",
     "WTTR"
   ],
   "per_ticker": {
     "AKAM": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 549
     },
     "AMAT": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 550
+    },
+    "AMD": {
+      "state": "OK",
+      "rows": 550
+    },
+    "BMNR": {
+      "state": "OK",
+      "rows": 550
     },
     "CRDO": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 550
+    },
+    "GFR": {
+      "state": "OK",
+      "rows": 418
+    },
+    "HIMS": {
+      "state": "OK",
+      "rows": 550
+    },
+    "IBRX": {
+      "state": "OK",
+      "rows": 548
     },
     "INTC": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 550
+    },
+    "IONS": {
+      "state": "OK",
+      "rows": 505
+    },
+    "IREN": {
+      "state": "OK",
+      "rows": 550
     },
     "MSFT": {
-      "state": "TIMEOUT",
-      "rows": 0
+      "state": "OK",
+      "rows": 550
+    },
+    "NVDA": {
+      "state": "OK",
+      "rows": 550
     },
     "ORCL": {
       "state": "OK",
@@ -43,7 +85,15 @@
       "state": "OK",
       "rows": 550
     },
+    "SGRY": {
+      "state": "OK",
+      "rows": 432
+    },
     "SMCI": {
+      "state": "OK",
+      "rows": 550
+    },
+    "TTD": {
       "state": "OK",
       "rows": 550
     },
@@ -56,11 +106,26 @@
       "rows": 424
     }
   },
-  "rows": 2624,
+  "rows": 10576,
   "usable_150bars": [
+    "AKAM",
+    "AMAT",
+    "AMD",
+    "BMNR",
+    "CRDO",
+    "GFR",
+    "HIMS",
+    "IBRX",
+    "INTC",
+    "IONS",
+    "IREN",
+    "MSFT",
+    "NVDA",
     "ORCL",
     "QCOM",
+    "SGRY",
     "SMCI",
+    "TTD",
     "WDC",
     "WTTR"
   ]
