@@ -1,0 +1,34 @@
+2026-11-09 21:08:04 GMT | INFO | RUN | VERSION | 2026.10.11.7
+2026-11-09 21:08:04 GMT | INFO | RUN | START | trade_date=2026-11-09
+2026-11-09 21:08:04 GMT | INFO | WATCHLIST | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-09/config/fixed_watchlist.csv | source=prepared
+2026-11-09 21:08:04 GMT | INFO | RUN | OPTIONS | include_sector=True | git_submit=True | fetch_gapup_from_app=True
+2026-11-09 21:08:04 GMT | INFO | FOREX | One-time downloader | ok=True | started=True | FOREX_DOWNLOAD | started | tmux=forex_download | log=/root/trading/ASJR/Backtesting/BacktestData/IBKR/Forex/logs/EURUSD_1y_download.log
+2026-11-09 21:08:04 GMT | INFO | NQ | One-time downloader | ok=True | started=True | NQ_DOWNLOAD | started | tmux=nq_download | log=/root/trading/ASJR/Backtesting/BacktestData/OpenSource/NQ/logs/NQ_yfinance_download.log
+2026-11-09 21:08:04 GMT | INFO | MOVERS | Fetch started
+2026-11-09 21:08:04 GMT | INFO | MOVERS | Fetch completed | rows=0
+2026-11-09 21:08:04 GMT | INFO | MOVERS | Tickers | None
+2026-11-09 21:08:04 GMT | INFO | UNIVERSE | Built | tickers=20
+2026-11-09 21:08:04 GMT | INFO | YFINANCE | Daily 30D fetch started | tickers=20
+2026-11-09 21:08:05 GMT | INFO | YFINANCE | Daily 30D fetch completed | rows=600
+2026-11-09 21:08:05 GMT | INFO | FILE | Saved daily_30d | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-09/raw/daily_30d.csv
+2026-11-09 21:08:05 GMT | INFO | FEATURES | Daily summary built | rows=20
+2026-11-09 21:08:05 GMT | INFO | RUDRA SCANNER | pre-5M WAP tap installed | mode=shadow
+2026-11-09 21:08:05 GMT | INFO | IBKR | 5m fetch started | tickers=20 | duration=3 D | batch_size=5
+2026-11-09 21:08:32 GMT | INFO | IBKR | 5m fetch completed | rows=10191
+2026-11-09 21:08:32 GMT | INFO | FILE | Saved intraday_5m | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-09/raw/intraday_5m.csv
+2026-11-09 21:08:40 GMT | INFO | RUDRA-PREMARKET | RVOL5 history | ready=2728 | stored=471384
+2026-11-09 21:08:45 GMT | INFO | RUDRA-PREMARKET | PRIMARY 5M | {'state': 'NO_FRESH_COMPLETED_BAR', 'count': 0, 'asof_utc': '2026-11-09T21:08:45.900555+00:00', 'latest_seen': 20, 'newest_bar_et': '2026-11-09T15:50:00-05:00', 'latest_completed': 0, 'rejected_stale_or_not_closed': 20, 'latest_rvol_ready': 0, 'latest_vwap_ready': 0, 'latest_ema9_ready': 0, 'latest_positive_volume': 0} | candidates=0
+2026-11-09 21:08:49 GMT | INFO | RUDRA SCANNER | shadow=shadow | state=SHADOW_SAVED | selected=20 | sources={'FIXED': 10, 'AI': 0, 'IBKR': 10} | scans={'TOP_PERC_GAIN': 'SUCCESS', 'TOP_PERC_LOSE': 'SUCCESS', 'HOT_BY_VOLUME': 'SUCCESS', 'MOST_ACTIVE': 'SUCCESS'}
+2026-11-09 21:08:55 GMT | INFO | RUDRA SCANNER | shadow 5M=EXPERIMENTAL_RESEARCH | selected=20 | wap=WAP_MISSING_OR_INCOMPLETE_RTH | report=/root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-09/reports/scalp_radar.txt
+2026-11-09 21:09:00 GMT | INFO | RUDRA-PREMARKET | ALL SOURCES | extended={'state': 'NO_FRESH_COMPLETED_BAR', 'count': 0, 'asof_utc': '2026-11-09T21:09:00.974053+00:00', 'latest_seen': 35, 'newest_bar_et': '2026-11-09T15:50:00-05:00', 'latest_completed': 0, 'rejected_stale_or_not_closed': 35, 'latest_rvol_ready': 0, 'latest_vwap_ready': 0, 'latest_ema9_ready': 0, 'latest_positive_volume': 0} | combined_candidates=0 | primary_kept=0
+2026-11-09 21:09:03 GMT | INFO | RUDRA SCANNER | 1H history | state=COMPLETE | rows=10741
+2026-11-09 21:09:12 GMT | INFO | RUDRA-PREMARKET | auto history | {'state': 'FINISHED', 'selected': ['ACAD'], 'results': {'ACAD': {'ticker': 'ACAD', 'status': 'SAVED', 'complete_days': 9, 'saved': True}}, 'previously_eligible': 374}
+2026-11-09 21:09:12 GMT | INFO | FEATURES | Intraday summary built | rows=20
+2026-11-09 21:09:12 GMT | INFO | YFINANCE | Sector/market fetch started
+2026-11-09 21:09:12 GMT | INFO | YFINANCE | Sector/market fetch completed | rows=15
+2026-11-09 21:09:12 GMT | INFO | FILE | Saved sector_market_daily | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-09/raw/sector_market_daily.csv
+2026-11-09 21:09:12 GMT | INFO | RUDRA SCANNER | 5M research=EXPERIMENTAL_RESEARCH | candidates=0 | Discord GATED OFF
+2026-11-09 21:09:12 GMT | INFO | FILE | Saved ticker_summary | rows=20 | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-09/processed/ticker_summary.csv
+2026-11-09 21:09:12 GMT | INFO | FILE | Saved asjr_snapshot | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-09/processed/asjr_snapshot.json
+2026-11-09 21:09:12 GMT | INFO | RUN | DATA COMPLETE | universe=20 | intraday_rows=10191 | ticker_summary=20
+2026-11-09 21:09:12 GMT | INFO | GIT | File verification started | count=6
