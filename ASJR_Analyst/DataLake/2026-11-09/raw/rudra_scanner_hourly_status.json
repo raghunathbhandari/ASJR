@@ -1,13 +1,14 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-09T02:47:43.694847+00:00",
+  "generated_at_utc": "2026-11-09T02:53:39.007913+00:00",
   "selected_tickers": [
-    "AAOI",
     "AKAM",
     "AMAT",
+    "AMD",
     "BE",
     "BMNR",
+    "CRCL",
     "CRDO",
     "FLY",
     "INTC",
@@ -18,17 +19,12 @@
     "ORCL",
     "PURR",
     "QCOM",
-    "SBET",
     "SMCI",
     "SPCX",
     "WDC",
     "WTTR"
   ],
   "per_ticker": {
-    "AAOI": {
-      "state": "OK",
-      "rows": 560
-    },
     "AKAM": {
       "state": "OK",
       "rows": 556
@@ -37,11 +33,19 @@
       "state": "OK",
       "rows": 560
     },
+    "AMD": {
+      "state": "OK",
+      "rows": 560
+    },
     "BE": {
       "state": "OK",
       "rows": 560
     },
     "BMNR": {
+      "state": "OK",
+      "rows": 560
+    },
+    "CRCL": {
       "state": "OK",
       "rows": 560
     },
@@ -85,10 +89,6 @@
       "state": "OK",
       "rows": 560
     },
-    "SBET": {
-      "state": "OK",
-      "rows": 560
-    },
     "SMCI": {
       "state": "OK",
       "rows": 560
@@ -108,11 +108,12 @@
   },
   "rows": 11073,
   "usable_150bars": [
-    "AAOI",
     "AKAM",
     "AMAT",
+    "AMD",
     "BE",
     "BMNR",
+    "CRCL",
     "CRDO",
     "FLY",
     "INTC",
@@ -123,7 +124,6 @@
     "ORCL",
     "PURR",
     "QCOM",
-    "SBET",
     "SMCI",
     "SPCX",
     "WDC",
