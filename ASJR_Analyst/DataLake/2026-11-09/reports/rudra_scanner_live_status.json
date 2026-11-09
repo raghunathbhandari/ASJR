@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 9490,
-    "completed_rows": 9490,
+    "input_rows": 9447,
+    "completed_rows": 9447,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 9490,
+    "no_wap_rows": 9447,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -34,7 +34,7 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 96174,
+    "stored_rows": 96330,
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-09/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
@@ -62,11 +62,9 @@
   "collection": {
     "requested": [
       "AXTI",
-      "CRCL",
       "CRWV",
       "IONQ",
       "IREN",
-      "MSTR",
       "SNDK",
       "SPY",
       "QQQ",
@@ -79,9 +77,9 @@
       "AMAT",
       "AXTI",
       "BMNR",
-      "CRCL",
       "CRDO",
       "CRWV",
+      "GFR",
       "INTC",
       "IONQ",
       "IREN",
@@ -113,7 +111,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 9490,
+    "count": 9447,
     "source": "SAME_IBKR_APP"
   }
 }
