@@ -1,15 +1,14 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-09T04:45:28.099923+00:00",
+  "generated_at_utc": "2026-11-09T04:51:21.905873+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
+    "ASST",
     "AXTI",
     "BMNR",
-    "CRCL",
     "CRDO",
-    "CRWV",
     "INTC",
     "IONQ",
     "IREN",
@@ -22,7 +21,8 @@
     "SMCI",
     "SPCX",
     "WDC",
-    "WTTR"
+    "WTTR",
+    "ZETA"
   ],
   "per_ticker": {
     "AKAM": {
@@ -30,6 +30,10 @@
       "rows": 556
     },
     "AMAT": {
+      "state": "OK",
+      "rows": 560
+    },
+    "ASST": {
       "state": "OK",
       "rows": 560
     },
@@ -41,15 +45,7 @@
       "state": "OK",
       "rows": 560
     },
-    "CRCL": {
-      "state": "OK",
-      "rows": 560
-    },
     "CRDO": {
-      "state": "OK",
-      "rows": 560
-    },
-    "CRWV": {
       "state": "OK",
       "rows": 560
     },
@@ -104,17 +100,20 @@
     "WTTR": {
       "state": "OK",
       "rows": 437
+    },
+    "ZETA": {
+      "state": "OK",
+      "rows": 560
     }
   },
   "rows": 11073,
   "usable_150bars": [
     "AKAM",
     "AMAT",
+    "ASST",
     "AXTI",
     "BMNR",
-    "CRCL",
     "CRDO",
-    "CRWV",
     "INTC",
     "IONQ",
     "IREN",
@@ -127,6 +126,7 @@
     "SMCI",
     "SPCX",
     "WDC",
-    "WTTR"
+    "WTTR",
+    "ZETA"
   ]
 }
