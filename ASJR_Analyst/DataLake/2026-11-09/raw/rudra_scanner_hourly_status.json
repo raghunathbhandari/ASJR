@@ -1,16 +1,15 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-09T04:39:33.235181+00:00",
+  "generated_at_utc": "2026-11-09T04:45:28.099923+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
-    "AMD",
-    "ASST",
-    "BE",
+    "AXTI",
     "BMNR",
     "CRCL",
     "CRDO",
+    "CRWV",
     "INTC",
     "IONQ",
     "IREN",
@@ -18,6 +17,7 @@
     "MSTR",
     "NVDA",
     "ORCL",
+    "PURR",
     "QCOM",
     "SMCI",
     "SPCX",
@@ -33,15 +33,7 @@
       "state": "OK",
       "rows": 560
     },
-    "AMD": {
-      "state": "OK",
-      "rows": 560
-    },
-    "ASST": {
-      "state": "OK",
-      "rows": 560
-    },
-    "BE": {
+    "AXTI": {
       "state": "OK",
       "rows": 560
     },
@@ -54,6 +46,10 @@
       "rows": 560
     },
     "CRDO": {
+      "state": "OK",
+      "rows": 560
+    },
+    "CRWV": {
       "state": "OK",
       "rows": 560
     },
@@ -85,6 +81,10 @@
       "state": "OK",
       "rows": 560
     },
+    "PURR": {
+      "state": "OK",
+      "rows": 560
+    },
     "QCOM": {
       "state": "OK",
       "rows": 560
@@ -110,12 +110,11 @@
   "usable_150bars": [
     "AKAM",
     "AMAT",
-    "AMD",
-    "ASST",
-    "BE",
+    "AXTI",
     "BMNR",
     "CRCL",
     "CRDO",
+    "CRWV",
     "INTC",
     "IONQ",
     "IREN",
@@ -123,6 +122,7 @@
     "MSTR",
     "NVDA",
     "ORCL",
+    "PURR",
     "QCOM",
     "SMCI",
     "SPCX",
