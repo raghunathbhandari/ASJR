@@ -1,10 +1,11 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-09T02:18:15.015754+00:00",
+  "generated_at_utc": "2026-11-09T02:24:08.223147+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
+    "BE",
     "BMNR",
     "CRDO",
     "INTC",
@@ -12,17 +13,16 @@
     "JHX",
     "MSFT",
     "MSTR",
-    "NBIS",
     "NVDA",
     "ORCL",
     "PURR",
     "QCOM",
     "SBET",
     "SMCI",
+    "SNDK",
     "SPCX",
     "WDC",
-    "WTTR",
-    "ZETA"
+    "WTTR"
   ],
   "per_ticker": {
     "AKAM": {
@@ -30,6 +30,10 @@
       "rows": 556
     },
     "AMAT": {
+      "state": "OK",
+      "rows": 560
+    },
+    "BE": {
       "state": "OK",
       "rows": 560
     },
@@ -61,10 +65,6 @@
       "state": "OK",
       "rows": 560
     },
-    "NBIS": {
-      "state": "OK",
-      "rows": 560
-    },
     "NVDA": {
       "state": "OK",
       "rows": 560
@@ -89,6 +89,10 @@
       "state": "OK",
       "rows": 560
     },
+    "SNDK": {
+      "state": "OK",
+      "rows": 560
+    },
     "SPCX": {
       "state": "OK",
       "rows": 560
@@ -100,16 +104,13 @@
     "WTTR": {
       "state": "OK",
       "rows": 437
-    },
-    "ZETA": {
-      "state": "OK",
-      "rows": 560
     }
   },
   "rows": 10995,
   "usable_150bars": [
     "AKAM",
     "AMAT",
+    "BE",
     "BMNR",
     "CRDO",
     "INTC",
@@ -117,16 +118,15 @@
     "JHX",
     "MSFT",
     "MSTR",
-    "NBIS",
     "NVDA",
     "ORCL",
     "PURR",
     "QCOM",
     "SBET",
     "SMCI",
+    "SNDK",
     "SPCX",
     "WDC",
-    "WTTR",
-    "ZETA"
+    "WTTR"
   ]
 }
