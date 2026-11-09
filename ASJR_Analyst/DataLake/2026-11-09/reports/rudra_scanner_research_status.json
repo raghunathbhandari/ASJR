@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 10191,
-    "completed_rows": 10191,
+    "input_rows": 10215,
+    "completed_rows": 10215,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 10191,
+    "no_wap_rows": 10215,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -61,10 +61,10 @@
   "collection": {
     "requested": [
       "AMD",
+      "ASTS",
       "COIN",
       "CRWV",
       "IONQ",
-      "MSTR",
       "SNDK",
       "SPY",
       "QQQ",
@@ -76,6 +76,7 @@
       "AKAM",
       "AMAT",
       "AMD",
+      "ASTS",
       "BMNR",
       "COIN",
       "CRDO",
@@ -85,7 +86,6 @@
       "IONQ",
       "IREN",
       "MSFT",
-      "MSTR",
       "NVDA",
       "ORCL",
       "QCOM",
@@ -110,7 +110,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 10191,
+    "count": 10215,
     "source": "SAME_IBKR_APP"
   }
 }
