@@ -1,6 +1,6 @@
 {
   "day": "2026-11-09",
-  "generated_at_uk": "2026-11-09T04:10:08.647681+00:00",
+  "generated_at_uk": "2026-11-09T04:16:00.564844+00:00",
   "counts": {
     "TOP_IN_PLAY": 14,
     "STRONG_MOMENTUM": 0,
@@ -29,13 +29,13 @@
       "selection_reason": "scanner=TOP_PERC_LOSE,HOT_BY_VOLUME,MOST_ACTIVE"
     },
     {
-      "ticker": "BE",
+      "ticker": "AXTI",
       "categories": [
         "TOP_IN_PLAY"
       ],
       "discovery_priority": 7,
       "source": "IBKR",
-      "scanner_codes": "TOP_PERC_GAIN+HOT_BY_VOLUME+MOST_ACTIVE",
+      "scanner_codes": "TOP_PERC_LOSE+HOT_BY_VOLUME+MOST_ACTIVE",
       "ai_bias": "N/A",
       "price": null,
       "bar_time_uk": null,
@@ -44,7 +44,7 @@
       "vol_12bar": null,
       "rvol20": null,
       "data_state": "NO_FRESH_5M",
-      "selection_reason": "scanner=TOP_PERC_GAIN,HOT_BY_VOLUME,MOST_ACTIVE"
+      "selection_reason": "scanner=TOP_PERC_LOSE,HOT_BY_VOLUME,MOST_ACTIVE"
     },
     {
       "ticker": "BMNR",
@@ -66,6 +66,24 @@
     },
     {
       "ticker": "CRCL",
+      "categories": [
+        "TOP_IN_PLAY"
+      ],
+      "discovery_priority": 7,
+      "source": "IBKR",
+      "scanner_codes": "TOP_PERC_LOSE+HOT_BY_VOLUME+MOST_ACTIVE",
+      "ai_bias": "N/A",
+      "price": null,
+      "bar_time_uk": null,
+      "change_5m_pct": null,
+      "volume": null,
+      "vol_12bar": null,
+      "rvol20": null,
+      "data_state": "NO_FRESH_5M",
+      "selection_reason": "scanner=TOP_PERC_LOSE,HOT_BY_VOLUME,MOST_ACTIVE"
+    },
+    {
+      "ticker": "CRWV",
       "categories": [
         "TOP_IN_PLAY"
       ],
@@ -138,24 +156,6 @@
     },
     {
       "ticker": "NVDA",
-      "categories": [
-        "TOP_IN_PLAY"
-      ],
-      "discovery_priority": 7,
-      "source": "IBKR",
-      "scanner_codes": "TOP_PERC_LOSE+HOT_BY_VOLUME+MOST_ACTIVE",
-      "ai_bias": "N/A",
-      "price": null,
-      "bar_time_uk": null,
-      "change_5m_pct": null,
-      "volume": null,
-      "vol_12bar": null,
-      "rvol20": null,
-      "data_state": "NO_FRESH_5M",
-      "selection_reason": "scanner=TOP_PERC_LOSE,HOT_BY_VOLUME,MOST_ACTIVE"
-    },
-    {
-      "ticker": "SBET",
       "categories": [
         "TOP_IN_PLAY"
       ],
