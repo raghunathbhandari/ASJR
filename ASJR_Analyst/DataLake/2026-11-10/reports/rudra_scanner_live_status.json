@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 10441,
-    "completed_rows": 10441,
+    "input_rows": 10465,
+    "completed_rows": 10465,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 10441,
+    "no_wap_rows": 10465,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -34,7 +34,7 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 105690,
+    "stored_rows": 105768,
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-10/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
@@ -60,9 +60,8 @@
   },
   "collection": {
     "requested": [
+      "ASTS",
       "IONQ",
-      "QBTS",
-      "TTD",
       "VG",
       "SPY",
       "QQQ",
@@ -75,6 +74,7 @@
       "AKAM",
       "AMAT",
       "APPS",
+      "ASTS",
       "CRDO",
       "GFL",
       "INTC",
@@ -82,7 +82,6 @@
       "MSFT",
       "ONON",
       "ORCL",
-      "QBTS",
       "QCOM",
       "RKLB",
       "SECZ",
@@ -108,7 +107,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 10441,
+    "count": 10465,
     "source": "SAME_IBKR_APP"
   }
 }
