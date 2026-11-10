@@ -1,15 +1,17 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-10T09:05:05.378374+00:00",
+  "generated_at_utc": "2026-11-10T09:11:06.581355+00:00",
   "selected_tickers": [
     "AAOI",
     "AKAM",
     "AMAT",
+    "APPS",
+    "BMNR",
     "CRDO",
+    "FLY",
     "HIMS",
     "INTC",
-    "IONQ",
     "MSFT",
     "NVDA",
     "ORCL",
@@ -18,8 +20,6 @@
     "RKLB",
     "SDGR",
     "SMCI",
-    "STM",
-    "TTD",
     "USAR",
     "WDC",
     "WTTR"
@@ -37,7 +37,19 @@
       "state": "OK",
       "rows": 544
     },
+    "APPS": {
+      "state": "OK",
+      "rows": 516
+    },
+    "BMNR": {
+      "state": "OK",
+      "rows": 544
+    },
     "CRDO": {
+      "state": "OK",
+      "rows": 544
+    },
+    "FLY": {
       "state": "OK",
       "rows": 544
     },
@@ -46,10 +58,6 @@
       "rows": 544
     },
     "INTC": {
-      "state": "OK",
-      "rows": 544
-    },
-    "IONQ": {
       "state": "OK",
       "rows": 544
     },
@@ -85,14 +93,6 @@
       "state": "OK",
       "rows": 544
     },
-    "STM": {
-      "state": "OK",
-      "rows": 544
-    },
-    "TTD": {
-      "state": "OK",
-      "rows": 544
-    },
     "USAR": {
       "state": "OK",
       "rows": 544
@@ -106,15 +106,17 @@
       "rows": 421
     }
   },
-  "rows": 10756,
+  "rows": 10728,
   "usable_150bars": [
     "AAOI",
     "AKAM",
     "AMAT",
+    "APPS",
+    "BMNR",
     "CRDO",
+    "FLY",
     "HIMS",
     "INTC",
-    "IONQ",
     "MSFT",
     "NVDA",
     "ORCL",
@@ -123,8 +125,6 @@
     "RKLB",
     "SDGR",
     "SMCI",
-    "STM",
-    "TTD",
     "USAR",
     "WDC",
     "WTTR"
