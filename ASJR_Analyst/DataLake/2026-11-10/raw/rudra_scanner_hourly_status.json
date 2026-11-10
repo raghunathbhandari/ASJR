@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-10T13:18:54.046236+00:00",
+  "generated_at_utc": "2026-11-10T13:25:11.953959+00:00",
   "selected_tickers": [
     "AAOI",
     "AKAM",
@@ -9,10 +9,10 @@
     "APPS",
     "AXTI",
     "CRDO",
+    "DBX",
     "GFL",
     "INTC",
     "MSFT",
-    "ONON",
     "ORCL",
     "QBTS",
     "QCOM",
@@ -49,6 +49,10 @@
       "state": "OK",
       "rows": 549
     },
+    "DBX": {
+      "state": "OK",
+      "rows": 454
+    },
     "GFL": {
       "state": "OK",
       "rows": 428
@@ -60,10 +64,6 @@
     "MSFT": {
       "state": "OK",
       "rows": 549
-    },
-    "ONON": {
-      "state": "OK",
-      "rows": 547
     },
     "ORCL": {
       "state": "OK",
@@ -106,7 +106,7 @@
       "rows": 421
     }
   },
-  "rows": 10700,
+  "rows": 10607,
   "usable_150bars": [
     "AAOI",
     "AKAM",
@@ -114,10 +114,10 @@
     "APPS",
     "AXTI",
     "CRDO",
+    "DBX",
     "GFL",
     "INTC",
     "MSFT",
-    "ONON",
     "ORCL",
     "QBTS",
     "QCOM",
