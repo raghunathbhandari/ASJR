@@ -1,9 +1,8 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-10T10:52:49.035022+00:00",
+  "generated_at_utc": "2026-11-10T10:58:52.387394+00:00",
   "selected_tickers": [
-    "AAOI",
     "AKAM",
     "AMAT",
     "APPS",
@@ -11,24 +10,21 @@
     "CRDO",
     "HIMS",
     "INTC",
-    "IONQ",
     "MSFT",
     "ONON",
     "ORCL",
     "QBTS",
     "QCOM",
+    "QMCO",
     "RKLB",
     "SMCI",
+    "STM",
     "USAR",
     "VG",
     "WDC",
     "WTTR"
   ],
   "per_ticker": {
-    "AAOI": {
-      "state": "OK",
-      "rows": 546
-    },
     "AKAM": {
       "state": "OK",
       "rows": 545
@@ -57,10 +53,6 @@
       "state": "OK",
       "rows": 546
     },
-    "IONQ": {
-      "state": "OK",
-      "rows": 546
-    },
     "MSFT": {
       "state": "OK",
       "rows": 546
@@ -81,11 +73,19 @@
       "state": "OK",
       "rows": 546
     },
+    "QMCO": {
+      "state": "OK",
+      "rows": 542
+    },
     "RKLB": {
       "state": "OK",
       "rows": 546
     },
     "SMCI": {
+      "state": "OK",
+      "rows": 546
+    },
+    "STM": {
       "state": "OK",
       "rows": 546
     },
@@ -106,9 +106,8 @@
       "rows": 421
     }
   },
-  "rows": 10764,
+  "rows": 10760,
   "usable_150bars": [
-    "AAOI",
     "AKAM",
     "AMAT",
     "APPS",
@@ -116,14 +115,15 @@
     "CRDO",
     "HIMS",
     "INTC",
-    "IONQ",
     "MSFT",
     "ONON",
     "ORCL",
     "QBTS",
     "QCOM",
+    "QMCO",
     "RKLB",
     "SMCI",
+    "STM",
     "USAR",
     "VG",
     "WDC",
