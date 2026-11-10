@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 10417,
-    "completed_rows": 10417,
+    "input_rows": 10441,
+    "completed_rows": 10441,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 10417,
+    "no_wap_rows": 10441,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -60,8 +60,9 @@
   },
   "collection": {
     "requested": [
-      "AXTI",
       "IONQ",
+      "QBTS",
+      "TTD",
       "VG",
       "SPY",
       "QQQ",
@@ -74,7 +75,6 @@
       "AKAM",
       "AMAT",
       "APPS",
-      "AXTI",
       "CRDO",
       "GFL",
       "INTC",
@@ -82,6 +82,7 @@
       "MSFT",
       "ONON",
       "ORCL",
+      "QBTS",
       "QCOM",
       "RKLB",
       "SECZ",
@@ -107,7 +108,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 10417,
+    "count": 10441,
     "source": "SAME_IBKR_APP"
   }
 }
