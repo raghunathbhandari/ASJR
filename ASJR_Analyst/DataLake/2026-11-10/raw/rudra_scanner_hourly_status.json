@@ -1,14 +1,14 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-10T01:10:39.252964+00:00",
+  "generated_at_utc": "2026-11-10T01:16:45.960424+00:00",
   "selected_tickers": [
     "ABCL",
     "AKAM",
     "AMAT",
+    "AXTI",
     "CRDO",
     "GRPN",
-    "HIMS",
     "INTC",
     "IONQ",
     "MSFT",
@@ -17,10 +17,10 @@
     "QCOM",
     "QUBT",
     "RKLB",
-    "SECZ",
     "SMCI",
     "SNDK",
-    "TTD",
+    "SPCX",
+    "USAR",
     "WDC",
     "WTTR"
   ],
@@ -37,6 +37,10 @@
       "state": "OK",
       "rows": 560
     },
+    "AXTI": {
+      "state": "OK",
+      "rows": 560
+    },
     "CRDO": {
       "state": "OK",
       "rows": 560
@@ -44,10 +48,6 @@
     "GRPN": {
       "state": "OK",
       "rows": 495
-    },
-    "HIMS": {
-      "state": "OK",
-      "rows": 560
     },
     "INTC": {
       "state": "OK",
@@ -81,10 +81,6 @@
       "state": "OK",
       "rows": 560
     },
-    "SECZ": {
-      "state": "OK",
-      "rows": 560
-    },
     "SMCI": {
       "state": "OK",
       "rows": 560
@@ -93,7 +89,11 @@
       "state": "OK",
       "rows": 560
     },
-    "TTD": {
+    "SPCX": {
+      "state": "OK",
+      "rows": 560
+    },
+    "USAR": {
       "state": "OK",
       "rows": 560
     },
@@ -111,9 +111,9 @@
     "ABCL",
     "AKAM",
     "AMAT",
+    "AXTI",
     "CRDO",
     "GRPN",
-    "HIMS",
     "INTC",
     "IONQ",
     "MSFT",
@@ -122,10 +122,10 @@
     "QCOM",
     "QUBT",
     "RKLB",
-    "SECZ",
     "SMCI",
     "SNDK",
-    "TTD",
+    "SPCX",
+    "USAR",
     "WDC",
     "WTTR"
   ]
