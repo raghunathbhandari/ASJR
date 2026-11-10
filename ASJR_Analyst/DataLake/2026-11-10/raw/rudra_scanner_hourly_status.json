@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-10T14:51:24.656014+00:00",
+  "generated_at_utc": "2026-11-10T14:58:00.602383+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
@@ -11,6 +11,7 @@
     "GFL",
     "HIMS",
     "INTC",
+    "MARA",
     "MSFT",
     "ONON",
     "ORCL",
@@ -20,7 +21,6 @@
     "SECZ",
     "SMCI",
     "USAR",
-    "VG",
     "WDC",
     "WTTR"
   ],
@@ -54,6 +54,10 @@
       "rows": 550
     },
     "INTC": {
+      "state": "OK",
+      "rows": 550
+    },
+    "MARA": {
       "state": "OK",
       "rows": 550
     },
@@ -93,10 +97,6 @@
       "state": "OK",
       "rows": 550
     },
-    "VG": {
-      "state": "OK",
-      "rows": 550
-    },
     "WDC": {
       "state": "OK",
       "rows": 550
@@ -116,6 +116,7 @@
     "GFL",
     "HIMS",
     "INTC",
+    "MARA",
     "MSFT",
     "ONON",
     "ORCL",
@@ -125,7 +126,6 @@
     "SECZ",
     "SMCI",
     "USAR",
-    "VG",
     "WDC",
     "WTTR"
   ]
