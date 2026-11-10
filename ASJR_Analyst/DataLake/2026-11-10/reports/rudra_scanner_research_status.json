@@ -2,8 +2,8 @@
   "state": "EXPERIMENTAL_RESEARCH",
   "feature_status": {
     "state": "OK",
-    "input_rows": 14142,
-    "completed_rows": 14142,
+    "input_rows": 14053,
+    "completed_rows": 14053,
     "invalid_rows": 0,
     "duplicate_rows": 0,
     "unfinished_rows": 0,
@@ -16,7 +16,7 @@
     "vwap_ready_rows": 0,
     "rvol20_ready_rows": 0,
     "exact_wap_rows": 0,
-    "no_wap_rows": 14142,
+    "no_wap_rows": 14053,
     "wap_state": "WAP_MISSING_OR_INCOMPLETE_RTH",
     "rvol_state": "INSUFFICIENT_20_FULL_RTH_SESSIONS"
   },
@@ -34,7 +34,7 @@
   "volume_history": {
     "state": "INSUFFICIENT_20_FULL_RTH_SESSIONS",
     "ready_rows": 0,
-    "stored_rows": 102648,
+    "stored_rows": 103116,
     "reference_file": "/root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-10/processed/rudra_scanner_rvol20_baseline.csv",
     "saved": true,
     "preserved_within_common_datalake": true,
@@ -60,13 +60,12 @@
   },
   "collection": {
     "requested": [
-      "AXTI",
-      "IONQ",
+      "AGLT",
       "NVDA",
       "QBTS",
       "SNDK",
-      "SPCX",
       "TTD",
+      "USAR",
       "ZETA",
       "SPY",
       "QQQ",
@@ -75,13 +74,13 @@
       "XLK"
     ],
     "symbols": [
+      "AGLT",
       "AKAM",
       "AMAT",
-      "AXTI",
       "CRDO",
+      "GFL",
       "GRPN",
       "INTC",
-      "IONQ",
       "MSFT",
       "NVDA",
       "ORCL",
@@ -90,8 +89,8 @@
       "RKLB",
       "SMCI",
       "SNDK",
-      "SPCX",
       "TTD",
+      "USAR",
       "WDC",
       "WTTR",
       "ZETA",
@@ -112,7 +111,7 @@
       "WTTR": "XLE"
     },
     "state": "COLLECTED",
-    "count": 14142,
+    "count": 14053,
     "source": "SAME_IBKR_APP"
   }
 }

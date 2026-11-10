@@ -1,15 +1,15 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-10T02:41:05.044213+00:00",
+  "generated_at_utc": "2026-11-10T02:47:03.890730+00:00",
   "selected_tickers": [
+    "AGLT",
     "AKAM",
     "AMAT",
-    "AXTI",
     "CRDO",
+    "GFL",
     "GRPN",
     "INTC",
-    "IONQ",
     "MSFT",
     "NVDA",
     "ORCL",
@@ -18,13 +18,17 @@
     "RKLB",
     "SMCI",
     "SNDK",
-    "SPCX",
     "TTD",
+    "USAR",
     "WDC",
     "WTTR",
     "ZETA"
   ],
   "per_ticker": {
+    "AGLT": {
+      "state": "OK",
+      "rows": 575
+    },
     "AKAM": {
       "state": "OK",
       "rows": 559
@@ -33,23 +37,19 @@
       "state": "OK",
       "rows": 560
     },
-    "AXTI": {
-      "state": "OK",
-      "rows": 560
-    },
     "CRDO": {
       "state": "OK",
       "rows": 560
+    },
+    "GFL": {
+      "state": "OK",
+      "rows": 436
     },
     "GRPN": {
       "state": "OK",
       "rows": 495
     },
     "INTC": {
-      "state": "OK",
-      "rows": 560
-    },
-    "IONQ": {
       "state": "OK",
       "rows": 560
     },
@@ -85,11 +85,11 @@
       "state": "OK",
       "rows": 560
     },
-    "SPCX": {
+    "TTD": {
       "state": "OK",
       "rows": 560
     },
-    "TTD": {
+    "USAR": {
       "state": "OK",
       "rows": 560
     },
@@ -106,15 +106,15 @@
       "rows": 560
     }
   },
-  "rows": 11008,
+  "rows": 10899,
   "usable_150bars": [
+    "AGLT",
     "AKAM",
     "AMAT",
-    "AXTI",
     "CRDO",
+    "GFL",
     "GRPN",
     "INTC",
-    "IONQ",
     "MSFT",
     "NVDA",
     "ORCL",
@@ -123,8 +123,8 @@
     "RKLB",
     "SMCI",
     "SNDK",
-    "SPCX",
     "TTD",
+    "USAR",
     "WDC",
     "WTTR",
     "ZETA"
