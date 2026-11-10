@@ -1,10 +1,11 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-10T01:59:12.931280+00:00",
+  "generated_at_utc": "2026-11-10T02:17:07.512376+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
+    "AXTI",
     "CRDO",
     "GRPN",
     "HIMS",
@@ -16,7 +17,6 @@
     "QBTS",
     "QCOM",
     "RKLB",
-    "SECZ",
     "SMCI",
     "SNDK",
     "TTD",
@@ -30,6 +30,10 @@
       "rows": 559
     },
     "AMAT": {
+      "state": "OK",
+      "rows": 560
+    },
+    "AXTI": {
       "state": "OK",
       "rows": 560
     },
@@ -77,10 +81,6 @@
       "state": "OK",
       "rows": 560
     },
-    "SECZ": {
-      "state": "OK",
-      "rows": 560
-    },
     "SMCI": {
       "state": "OK",
       "rows": 560
@@ -110,6 +110,7 @@
   "usable_150bars": [
     "AKAM",
     "AMAT",
+    "AXTI",
     "CRDO",
     "GRPN",
     "HIMS",
@@ -121,7 +122,6 @@
     "QBTS",
     "QCOM",
     "RKLB",
-    "SECZ",
     "SMCI",
     "SNDK",
     "TTD",
