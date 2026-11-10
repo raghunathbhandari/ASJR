@@ -1,33 +1,33 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-10T02:47:03.890730+00:00",
+  "generated_at_utc": "2026-11-10T08:11:01.810793+00:00",
   "selected_tickers": [
-    "AGLT",
+    "AAOI",
     "AKAM",
     "AMAT",
     "CRDO",
     "GFL",
-    "GRPN",
+    "HIMS",
     "INTC",
+    "IONQ",
     "MSFT",
     "NVDA",
     "ORCL",
     "QBTS",
     "QCOM",
     "RKLB",
+    "SECZ",
     "SMCI",
-    "SNDK",
+    "STM",
     "TTD",
-    "USAR",
     "WDC",
-    "WTTR",
-    "ZETA"
+    "WTTR"
   ],
   "per_ticker": {
-    "AGLT": {
+    "AAOI": {
       "state": "OK",
-      "rows": 575
+      "rows": 560
     },
     "AKAM": {
       "state": "OK",
@@ -45,11 +45,15 @@
       "state": "OK",
       "rows": 436
     },
-    "GRPN": {
+    "HIMS": {
       "state": "OK",
-      "rows": 495
+      "rows": 560
     },
     "INTC": {
+      "state": "OK",
+      "rows": 560
+    },
+    "IONQ": {
       "state": "OK",
       "rows": 560
     },
@@ -77,19 +81,19 @@
       "state": "OK",
       "rows": 560
     },
+    "SECZ": {
+      "state": "OK",
+      "rows": 560
+    },
     "SMCI": {
       "state": "OK",
       "rows": 560
     },
-    "SNDK": {
+    "STM": {
       "state": "OK",
       "rows": 560
     },
     "TTD": {
-      "state": "OK",
-      "rows": 560
-    },
-    "USAR": {
       "state": "OK",
       "rows": 560
     },
@@ -100,33 +104,29 @@
     "WTTR": {
       "state": "OK",
       "rows": 434
-    },
-    "ZETA": {
-      "state": "OK",
-      "rows": 560
     }
   },
-  "rows": 10899,
+  "rows": 10949,
   "usable_150bars": [
-    "AGLT",
+    "AAOI",
     "AKAM",
     "AMAT",
     "CRDO",
     "GFL",
-    "GRPN",
+    "HIMS",
     "INTC",
+    "IONQ",
     "MSFT",
     "NVDA",
     "ORCL",
     "QBTS",
     "QCOM",
     "RKLB",
+    "SECZ",
     "SMCI",
-    "SNDK",
+    "STM",
     "TTD",
-    "USAR",
     "WDC",
-    "WTTR",
-    "ZETA"
+    "WTTR"
   ]
 }
