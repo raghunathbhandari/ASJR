@@ -1,12 +1,13 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-10T08:47:08.950932+00:00",
+  "generated_at_utc": "2026-11-10T08:53:09.562794+00:00",
   "selected_tickers": [
     "AAOI",
     "AKAM",
     "AMAT",
     "CRDO",
+    "GOOGL",
     "HIMS",
     "INTC",
     "IONQ",
@@ -15,7 +16,6 @@
     "ORCL",
     "QBTS",
     "QCOM",
-    "RGTI",
     "RKLB",
     "SECZ",
     "SMCI",
@@ -38,6 +38,10 @@
       "rows": 560
     },
     "CRDO": {
+      "state": "OK",
+      "rows": 560
+    },
+    "GOOGL": {
       "state": "OK",
       "rows": 560
     },
@@ -70,10 +74,6 @@
       "rows": 560
     },
     "QCOM": {
-      "state": "OK",
-      "rows": 560
-    },
-    "RGTI": {
       "state": "OK",
       "rows": 560
     },
@@ -112,6 +112,7 @@
     "AKAM",
     "AMAT",
     "CRDO",
+    "GOOGL",
     "HIMS",
     "INTC",
     "IONQ",
@@ -120,7 +121,6 @@
     "ORCL",
     "QBTS",
     "QCOM",
-    "RGTI",
     "RKLB",
     "SECZ",
     "SMCI",
