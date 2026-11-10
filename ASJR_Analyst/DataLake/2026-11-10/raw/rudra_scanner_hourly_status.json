@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-10T02:17:07.512376+00:00",
+  "generated_at_utc": "2026-11-10T02:29:01.853210+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
@@ -10,7 +10,6 @@
     "GRPN",
     "HIMS",
     "INTC",
-    "IREN",
     "MSFT",
     "NVDA",
     "ORCL",
@@ -22,7 +21,8 @@
     "TTD",
     "WDC",
     "WTTR",
-    "XE"
+    "XE",
+    "ZETA"
   ],
   "per_ticker": {
     "AKAM": {
@@ -50,10 +50,6 @@
       "rows": 560
     },
     "INTC": {
-      "state": "OK",
-      "rows": 560
-    },
-    "IREN": {
       "state": "OK",
       "rows": 560
     },
@@ -104,6 +100,10 @@
     "XE": {
       "state": "OK",
       "rows": 560
+    },
+    "ZETA": {
+      "state": "OK",
+      "rows": 560
     }
   },
   "rows": 11008,
@@ -115,7 +115,6 @@
     "GRPN",
     "HIMS",
     "INTC",
-    "IREN",
     "MSFT",
     "NVDA",
     "ORCL",
@@ -127,6 +126,7 @@
     "TTD",
     "WDC",
     "WTTR",
-    "XE"
+    "XE",
+    "ZETA"
   ]
 }
