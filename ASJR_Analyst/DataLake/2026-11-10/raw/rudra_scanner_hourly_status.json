@@ -1,11 +1,10 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-10T01:41:02.462938+00:00",
+  "generated_at_utc": "2026-11-10T01:59:12.931280+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
-    "AXTI",
     "CRDO",
     "GRPN",
     "HIMS",
@@ -22,7 +21,8 @@
     "SNDK",
     "TTD",
     "WDC",
-    "WTTR"
+    "WTTR",
+    "XE"
   ],
   "per_ticker": {
     "AKAM": {
@@ -30,10 +30,6 @@
       "rows": 559
     },
     "AMAT": {
-      "state": "OK",
-      "rows": 560
-    },
-    "AXTI": {
       "state": "OK",
       "rows": 560
     },
@@ -104,13 +100,16 @@
     "WTTR": {
       "state": "OK",
       "rows": 434
+    },
+    "XE": {
+      "state": "OK",
+      "rows": 560
     }
   },
   "rows": 11008,
   "usable_150bars": [
     "AKAM",
     "AMAT",
-    "AXTI",
     "CRDO",
     "GRPN",
     "HIMS",
@@ -127,6 +126,7 @@
     "SNDK",
     "TTD",
     "WDC",
-    "WTTR"
+    "WTTR",
+    "XE"
   ]
 }
