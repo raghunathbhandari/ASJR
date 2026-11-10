@@ -1,34 +1,30 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-10T14:31:37.938848+00:00",
+  "generated_at_utc": "2026-11-10T14:38:13.313778+00:00",
   "selected_tickers": [
-    "AAOI",
     "AKAM",
     "AMAT",
     "APPS",
-    "ASTS",
     "CRDO",
     "DBX",
+    "FA",
     "GFL",
     "HIMS",
     "INTC",
     "MSFT",
-    "NVDA",
     "ONON",
     "ORCL",
+    "QBTS",
     "QCOM",
-    "QMCO",
+    "RIOT",
     "SECZ",
     "SMCI",
+    "USAR",
     "WDC",
     "WTTR"
   ],
   "per_ticker": {
-    "AAOI": {
-      "state": "OK",
-      "rows": 550
-    },
     "AKAM": {
       "state": "OK",
       "rows": 549
@@ -41,10 +37,6 @@
       "state": "OK",
       "rows": 522
     },
-    "ASTS": {
-      "state": "OK",
-      "rows": 550
-    },
     "CRDO": {
       "state": "OK",
       "rows": 550
@@ -52,6 +44,10 @@
     "DBX": {
       "state": "OK",
       "rows": 456
+    },
+    "FA": {
+      "state": "OK",
+      "rows": 414
     },
     "GFL": {
       "state": "OK",
@@ -69,10 +65,6 @@
       "state": "OK",
       "rows": 550
     },
-    "NVDA": {
-      "state": "OK",
-      "rows": 550
-    },
     "ONON": {
       "state": "OK",
       "rows": 548
@@ -81,19 +73,27 @@
       "state": "OK",
       "rows": 550
     },
+    "QBTS": {
+      "state": "OK",
+      "rows": 550
+    },
     "QCOM": {
       "state": "OK",
       "rows": 550
     },
-    "QMCO": {
+    "RIOT": {
       "state": "OK",
-      "rows": 546
+      "rows": 550
     },
     "SECZ": {
       "state": "OK",
       "rows": 550
     },
     "SMCI": {
+      "state": "OK",
+      "rows": 550
+    },
+    "USAR": {
       "state": "OK",
       "rows": 550
     },
@@ -106,26 +106,26 @@
       "rows": 423
     }
   },
-  "rows": 10623,
+  "rows": 10491,
   "usable_150bars": [
-    "AAOI",
     "AKAM",
     "AMAT",
     "APPS",
-    "ASTS",
     "CRDO",
     "DBX",
+    "FA",
     "GFL",
     "HIMS",
     "INTC",
     "MSFT",
-    "NVDA",
     "ONON",
     "ORCL",
+    "QBTS",
     "QCOM",
-    "QMCO",
+    "RIOT",
     "SECZ",
     "SMCI",
+    "USAR",
     "WDC",
     "WTTR"
   ]
