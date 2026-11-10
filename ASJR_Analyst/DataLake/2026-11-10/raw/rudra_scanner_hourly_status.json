@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-10T11:49:46.468890+00:00",
+  "generated_at_utc": "2026-11-10T11:55:49.774343+00:00",
   "selected_tickers": [
     "AAOI",
     "AKAM",
@@ -9,6 +9,7 @@
     "APPS",
     "AXTI",
     "CRDO",
+    "GFL",
     "INTC",
     "IONQ",
     "MSFT",
@@ -18,7 +19,6 @@
     "QCOM",
     "RKLB",
     "SMCI",
-    "STM",
     "TTD",
     "VG",
     "WDC",
@@ -48,6 +48,10 @@
     "CRDO": {
       "state": "OK",
       "rows": 547
+    },
+    "GFL": {
+      "state": "OK",
+      "rows": 426
     },
     "INTC": {
       "state": "OK",
@@ -85,10 +89,6 @@
       "state": "OK",
       "rows": 547
     },
-    "STM": {
-      "state": "OK",
-      "rows": 547
-    },
     "TTD": {
       "state": "OK",
       "rows": 547
@@ -106,7 +106,7 @@
       "rows": 421
     }
   },
-  "rows": 10783,
+  "rows": 10662,
   "usable_150bars": [
     "AAOI",
     "AKAM",
@@ -114,6 +114,7 @@
     "APPS",
     "AXTI",
     "CRDO",
+    "GFL",
     "INTC",
     "IONQ",
     "MSFT",
@@ -123,7 +124,6 @@
     "QCOM",
     "RKLB",
     "SMCI",
-    "STM",
     "TTD",
     "VG",
     "WDC",
