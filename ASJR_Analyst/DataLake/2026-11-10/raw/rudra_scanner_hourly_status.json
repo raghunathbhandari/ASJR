@@ -1,8 +1,9 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-10T10:04:37.190647+00:00",
+  "generated_at_utc": "2026-11-10T10:10:37.528864+00:00",
   "selected_tickers": [
+    "AAON",
     "AKAM",
     "AMAT",
     "APPS",
@@ -11,20 +12,23 @@
     "HIMS",
     "INTC",
     "MSFT",
-    "NBIS",
     "NVDA",
     "ORCL",
     "POET",
     "QBTS",
     "QCOM",
+    "QMCO",
     "RKLB",
     "SMCI",
     "STM",
-    "USAR",
     "WDC",
     "WTTR"
   ],
   "per_ticker": {
+    "AAON": {
+      "state": "OK",
+      "rows": 495
+    },
     "AKAM": {
       "state": "OK",
       "rows": 544
@@ -57,10 +61,6 @@
       "state": "OK",
       "rows": 545
     },
-    "NBIS": {
-      "state": "OK",
-      "rows": 545
-    },
     "NVDA": {
       "state": "OK",
       "rows": 545
@@ -81,6 +81,10 @@
       "state": "OK",
       "rows": 545
     },
+    "QMCO": {
+      "state": "OK",
+      "rows": 541
+    },
     "RKLB": {
       "state": "OK",
       "rows": 545
@@ -93,10 +97,6 @@
       "state": "OK",
       "rows": 545
     },
-    "USAR": {
-      "state": "OK",
-      "rows": 545
-    },
     "WDC": {
       "state": "OK",
       "rows": 545
@@ -106,8 +106,9 @@
       "rows": 421
     }
   },
-  "rows": 10747,
+  "rows": 10693,
   "usable_150bars": [
+    "AAON",
     "AKAM",
     "AMAT",
     "APPS",
@@ -116,16 +117,15 @@
     "HIMS",
     "INTC",
     "MSFT",
-    "NBIS",
     "NVDA",
     "ORCL",
     "POET",
     "QBTS",
     "QCOM",
+    "QMCO",
     "RKLB",
     "SMCI",
     "STM",
-    "USAR",
     "WDC",
     "WTTR"
   ]
