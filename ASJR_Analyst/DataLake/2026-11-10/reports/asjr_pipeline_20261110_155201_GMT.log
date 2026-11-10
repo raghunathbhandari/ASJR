@@ -1,0 +1,35 @@
+2026-11-10 15:52:01 GMT | INFO | RUN | VERSION | 2026.10.11.7
+2026-11-10 15:52:01 GMT | INFO | RUN | START | trade_date=2026-11-10
+2026-11-10 15:52:01 GMT | INFO | WATCHLIST | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-10/config/fixed_watchlist.csv | source=prepared
+2026-11-10 15:52:01 GMT | INFO | RUN | OPTIONS | include_sector=True | git_submit=True | fetch_gapup_from_app=True
+2026-11-10 15:52:01 GMT | INFO | FOREX | One-time downloader | ok=True | started=True | FOREX_DOWNLOAD | started | tmux=forex_download | log=/root/trading/ASJR/Backtesting/BacktestData/IBKR/Forex/logs/EURUSD_1y_download.log
+2026-11-10 15:52:01 GMT | INFO | NQ | One-time downloader | ok=True | started=True | NQ_DOWNLOAD | started | tmux=nq_download | log=/root/trading/ASJR/Backtesting/BacktestData/OpenSource/NQ/logs/NQ_yfinance_download.log
+2026-11-10 15:52:01 GMT | INFO | MOVERS | Fetch started
+2026-11-10 15:52:03 GMT | INFO | MOVERS | Fetch completed | rows=66
+2026-11-10 15:52:03 GMT | INFO | MOVERS | Tickers | SECZ, AAON, CSQR, MARA, TTWO, QNT, ZETA, CLYM, CXW, UTI, GPN, TWLO, ACAD, DOCN, LILAK, CLF, APPS, EQPT, MUX, HIMS, HYMC, USAR, SGML, FA, UPST, ACCV, SKYD, GFL, BEAM, QBTS, NG, UUUU, AXTI, ALM, PPTA, ONON, NTLA, AAOI, ETOR, ASTS, NAVI, TREX, CRML, CSIQ, IONS, ZG, GEV, Z, HL, IE, DPC, CAPR, CRSP, PGY, MBC, EWTX, CDE, AYA, EXK, INIO, UMAC, IAG, WHR, NNE, ONDS, UAA
+2026-11-10 15:52:03 GMT | INFO | UNIVERSE | Built | tickers=85
+2026-11-10 15:52:03 GMT | INFO | FILE | Saved ibkr_gapup (movers) | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-10/raw/ibkr_gapup.csv
+2026-11-10 15:52:03 GMT | INFO | YFINANCE | Daily 30D fetch started | tickers=85
+2026-11-10 15:52:05 GMT | INFO | YFINANCE | Daily 30D fetch completed | rows=2546
+2026-11-10 15:52:05 GMT | INFO | FILE | Saved daily_30d | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-10/raw/daily_30d.csv
+2026-11-10 15:52:05 GMT | INFO | FEATURES | Daily summary built | rows=85
+2026-11-10 15:52:05 GMT | INFO | RUDRA SCANNER | pre-5M WAP tap installed | mode=shadow
+2026-11-10 15:52:05 GMT | INFO | IBKR | 5m fetch started | tickers=85 | duration=3 D | batch_size=5
+2026-11-10 15:52:25 GMT | INFO | IBKR | 5m fetch completed | rows=36387
+2026-11-10 15:52:26 GMT | INFO | FILE | Saved intraday_5m | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-10/raw/intraday_5m.csv
+2026-11-10 15:52:39 GMT | INFO | RUDRA-PREMARKET | RVOL5 history | ready=3804 | stored=499302
+2026-11-10 15:52:49 GMT | INFO | RUDRA-PREMARKET | PRIMARY 5M | {'state': 'NO_FRESH_COMPLETED_BAR', 'count': 0, 'asof_utc': '2026-11-10T15:52:49.191124+00:00', 'latest_seen': 85, 'newest_bar_et': '2026-11-10T10:35:00-05:00', 'latest_completed': 0, 'rejected_stale_or_not_closed': 85, 'latest_rvol_ready': 0, 'latest_vwap_ready': 0, 'latest_ema9_ready': 0, 'latest_positive_volume': 0} | candidates=0
+2026-11-10 15:52:52 GMT | INFO | RUDRA SCANNER | shadow=shadow | state=SHADOW_SAVED | selected=20 | sources={'FIXED': 10, 'AI': 0, 'IBKR': 10} | scans={'TOP_PERC_GAIN': 'SUCCESS', 'TOP_PERC_LOSE': 'SUCCESS', 'HOT_BY_VOLUME': 'SUCCESS', 'MOST_ACTIVE': 'SUCCESS'}
+2026-11-10 15:52:56 GMT | INFO | RUDRA SCANNER | shadow 5M=EXPERIMENTAL_RESEARCH | selected=20 | wap=WAP_MISSING_OR_INCOMPLETE_RTH | report=/root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-10/reports/scalp_radar.txt
+2026-11-10 15:53:06 GMT | INFO | RUDRA-PREMARKET | ALL SOURCES | extended={'state': 'NO_FRESH_COMPLETED_BAR', 'count': 0, 'asof_utc': '2026-11-10T15:53:06.454265+00:00', 'latest_seen': 92, 'newest_bar_et': '2026-11-10T10:35:00-05:00', 'latest_completed': 0, 'rejected_stale_or_not_closed': 92, 'latest_rvol_ready': 0, 'latest_vwap_ready': 0, 'latest_ema9_ready': 0, 'latest_positive_volume': 0} | combined_candidates=0 | primary_kept=0
+2026-11-10 15:53:06 GMT | INFO | RUDRA SCANNER | 1H history | state=CACHE_FRESH | rows=None
+2026-11-10 15:53:10 GMT | INFO | RUDRA-PREMARKET | auto history | {'state': 'UP_TO_DATE_OR_ATTEMPTED', 'eligible_tickers': 407, 'skipped_attempted': 6, 'selected': []}
+2026-11-10 15:53:10 GMT | INFO | FEATURES | Intraday summary built | rows=85
+2026-11-10 15:53:10 GMT | INFO | YFINANCE | Sector/market fetch started
+2026-11-10 15:53:10 GMT | INFO | YFINANCE | Sector/market fetch completed | rows=15
+2026-11-10 15:53:10 GMT | INFO | FILE | Saved sector_market_daily | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-10/raw/sector_market_daily.csv
+2026-11-10 15:53:10 GMT | INFO | RUDRA SCANNER | 5M research=EXPERIMENTAL_RESEARCH | candidates=0 | Discord GATED OFF
+2026-11-10 15:53:10 GMT | INFO | FILE | Saved ticker_summary | rows=85 | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-10/processed/ticker_summary.csv
+2026-11-10 15:53:10 GMT | INFO | FILE | Saved asjr_snapshot | /root/trading/ASJR/ASJR_Analyst/DataLake/2026-11-10/processed/asjr_snapshot.json
+2026-11-10 15:53:10 GMT | INFO | RUN | DATA COMPLETE | universe=85 | intraday_rows=36387 | ticker_summary=85
+2026-11-10 15:53:10 GMT | INFO | GIT | File verification started | count=7
