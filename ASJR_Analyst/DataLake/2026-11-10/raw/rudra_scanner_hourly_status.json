@@ -1,16 +1,15 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-10T02:35:02.649435+00:00",
+  "generated_at_utc": "2026-11-10T02:41:05.044213+00:00",
   "selected_tickers": [
     "AKAM",
     "AMAT",
     "AXTI",
     "CRDO",
     "GRPN",
-    "HIMS",
     "INTC",
-    "IREN",
+    "IONQ",
     "MSFT",
     "NVDA",
     "ORCL",
@@ -18,10 +17,11 @@
     "QCOM",
     "RKLB",
     "SMCI",
+    "SNDK",
+    "SPCX",
     "TTD",
     "WDC",
     "WTTR",
-    "XE",
     "ZETA"
   ],
   "per_ticker": {
@@ -45,15 +45,11 @@
       "state": "OK",
       "rows": 495
     },
-    "HIMS": {
-      "state": "OK",
-      "rows": 560
-    },
     "INTC": {
       "state": "OK",
       "rows": 560
     },
-    "IREN": {
+    "IONQ": {
       "state": "OK",
       "rows": 560
     },
@@ -85,6 +81,14 @@
       "state": "OK",
       "rows": 560
     },
+    "SNDK": {
+      "state": "OK",
+      "rows": 560
+    },
+    "SPCX": {
+      "state": "OK",
+      "rows": 560
+    },
     "TTD": {
       "state": "OK",
       "rows": 560
@@ -96,10 +100,6 @@
     "WTTR": {
       "state": "OK",
       "rows": 434
-    },
-    "XE": {
-      "state": "OK",
-      "rows": 560
     },
     "ZETA": {
       "state": "OK",
@@ -113,9 +113,8 @@
     "AXTI",
     "CRDO",
     "GRPN",
-    "HIMS",
     "INTC",
-    "IREN",
+    "IONQ",
     "MSFT",
     "NVDA",
     "ORCL",
@@ -123,10 +122,11 @@
     "QCOM",
     "RKLB",
     "SMCI",
+    "SNDK",
+    "SPCX",
     "TTD",
     "WDC",
     "WTTR",
-    "XE",
     "ZETA"
   ]
 }
