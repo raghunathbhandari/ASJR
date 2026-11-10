@@ -1,7 +1,7 @@
 {
   "state": "COMPLETE",
   "source": "IBKR_TRADES_1H",
-  "generated_at_utc": "2026-11-10T12:39:24.742993+00:00",
+  "generated_at_utc": "2026-11-10T12:45:34.364857+00:00",
   "selected_tickers": [
     "AAOI",
     "AKAM",
@@ -13,13 +13,13 @@
     "INTC",
     "IONQ",
     "MSFT",
-    "ONON",
     "ORCL",
     "QCOM",
     "RKLB",
     "SECZ",
     "SMCI",
     "TTD",
+    "USAR",
     "VG",
     "WDC",
     "WTTR"
@@ -65,10 +65,6 @@
       "state": "OK",
       "rows": 548
     },
-    "ONON": {
-      "state": "OK",
-      "rows": 546
-    },
     "ORCL": {
       "state": "OK",
       "rows": 548
@@ -93,6 +89,10 @@
       "state": "OK",
       "rows": 548
     },
+    "USAR": {
+      "state": "OK",
+      "rows": 548
+    },
     "VG": {
       "state": "OK",
       "rows": 548
@@ -106,7 +106,7 @@
       "rows": 421
     }
   },
-  "rows": 10681,
+  "rows": 10683,
   "usable_150bars": [
     "AAOI",
     "AKAM",
@@ -118,13 +118,13 @@
     "INTC",
     "IONQ",
     "MSFT",
-    "ONON",
     "ORCL",
     "QCOM",
     "RKLB",
     "SECZ",
     "SMCI",
     "TTD",
+    "USAR",
     "VG",
     "WDC",
     "WTTR"
