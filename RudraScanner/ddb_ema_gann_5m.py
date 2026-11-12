@@ -6,9 +6,9 @@ No orders, independent broker connection, new scheduler, or legacy alerts.
 from __future__ import annotations
 
 import json
-import math
 import os
-from datetime import datetime, timezone
+import time
+from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -133,7 +133,8 @@ def _daily_gann_ranges(tickers, *, now=None):
     now = datetime.now(UK) if now is None else now
     cache = _load(GANN_CACHE, {})
     today = now.strftime("%Y-%m-%d")
-    if cache.get("day") == today:
+    if cache.get("day") == today and all(
+            ticker in cache.get("ranges", {}) for ticker in tickers):
         return cache.get("ranges", {})
     import yfinance as yf
     ranges = {}
@@ -181,10 +182,16 @@ def run_cycle(app, *, now=None):
     cfg, items = config()
     from ASJR_Analyst.Utils import asjr_ibkr as ibkr
     names = [sym for sym, _ in items]
-    now = pd.Timestamp.now(tz="UTC") if now is None else pd.Timestamp(now)
-    print("RUDRA DDB 5M | START | A/B/C=22/17/10 |", now.isoformat(), flush=True)
+    started = time.monotonic()
+    print("RUDRA DDB 5M | START | A/B/C=22/17/10 |",
+          pd.Timestamp.now(tz="UTC").isoformat(), flush=True)
     batches = ibkr.get_ibkr_5m_batch(
         app, names, duration="3 D", wait_time=16, batch_size=5)
+    # Use the actual post-fetch time. A 49-symbol fetch may take minutes;
+    # never compare completed candles against the start-of-round clock.
+    now = pd.Timestamp.now(tz="UTC") if now is None else pd.Timestamp(now)
+    received = sum(batches.get(sym) is not None and not batches[sym].empty
+                   for sym in names)
     detected = []
     for sym, group in items:
         event = signal_on_closed_bars(batches.get(sym), sym, group, now=now)
@@ -197,10 +204,14 @@ def run_cycle(app, *, now=None):
             item["gann"] = (
                 gann_levels(item["close"], *lowhigh) if lowhigh else [])
         _queue(detected)
-    print("RUDRA DDB 5M | checked=%d | matches=%d" %
-          (len(names), len(detected)), flush=True)
+    seconds = time.monotonic() - started
+    print("RUDRA DDB 5M | requested=%d | received=%d | matches=%d | "
+          "duration=%.1fs" % (len(names), received, len(detected), seconds),
+          flush=True)
     return {
         "alert_mode": "ddb_ema_gann_5m", "ddb_alerts": detected,
+        "ddb_requested": len(names), "ddb_received": received,
+        "ddb_elapsed_seconds": round(seconds, 2),
         "alert_data": [], "rudra_reversal_alerts": [],
         "rudra_premarket_events": [], "alerts_dispatched": False,
         "snapshot": {"trade_date": now.tz_convert(ET).strftime("%Y-%m-%d")},
