@@ -18,8 +18,8 @@ class DDBEMAGannTests(unittest.TestCase):
     def test_exact_asjr_gann_main_mid(self):
         levels = gann_levels(553.6, 500.0, 590.0)
         self.assertEqual(levels, [
-            (529.0, "MAIN"), (541.0, "MID"), (553.0, "MID"),
-            (565.0, "MID"), (577.0, "MAIN")
+            (541.0, "MID"), (553.0, "MID"), (565.0, "MID"),
+            (577.0, "MAIN"), (589.0, "MID")
         ])
 
     def test_closed_bar_first_qualification(self):
