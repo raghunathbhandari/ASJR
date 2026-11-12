@@ -1,7 +1,7 @@
 # Rudra DDB 5M EMA9/EMA20 + ASJR Gann — deployment
 As of 2026-11-12, target universe A=22, B=17, C=10 (49 unique stocks).
 Group C is provisional research (BKNG RCL MAR DAL WM CTAS LMT URI DE VLO).
-Only BUY WATCH: newest COMPLETED 5-minute candle LOW > EMA9 > EMA20,
+Only BUY WATCH: newest COMPLETED 5-minute candle FULL BODY above EMA9 > EMA20.\nStrict rule: min(Open, Close) > EMA9 > EMA20, not Close alone.\nThe candle wick may cross EMA9, but a forming/unclosed bar never qualifies;
 with the previous completed candle not already satisfying the same condition.
 Thus a bullish false-to-true transition generates one alert, not one per every
 trending candle. PRE/RTH/POST included, UK times used.
