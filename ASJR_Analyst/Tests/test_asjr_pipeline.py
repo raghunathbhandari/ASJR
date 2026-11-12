@@ -688,6 +688,16 @@ def _run_asjr_manual_pipeline_unlocked(
 
 
 
+def _ddb_mode_enabled():
+    """Switch Chakra 5M pipeline exclusively to user-approved DDB A/B/C."""
+    import json
+    path = REPO_ROOT / "ASJR_Analyst" / "config" / "alert_mode.json"
+    try:
+        return json.loads(path.read_text(encoding="utf-8")).get("mode") == "ddb_ema_gann_5m"
+    except (OSError, ValueError):
+        return False
+
+
 def run_asjr_manual_pipeline(*args, **kwargs):
     """Shared process-level lock around the canonical Chakra pipeline.
 
@@ -705,6 +715,12 @@ def run_asjr_manual_pipeline(*args, **kwargs):
     import fcntl
     lock_path = REPO_ROOT / ".chakra_run_now.lock"
     if os.environ.get("ASJR_MANUAL_RUN_LOCK_HELD") == "1":
+        if _ddb_mode_enabled():
+            from RudraScanner.ddb_ema_gann_5m import run_cycle
+            return run_cycle(app)
+        if _ddb_mode_enabled():
+            from RudraScanner.ddb_ema_gann_5m import run_cycle
+            return run_cycle(app)
         return _run_asjr_manual_pipeline_unlocked(*args, **kwargs)
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     with lock_path.open("a+") as guard:
@@ -725,7 +741,10 @@ _premarket_prepared_events = []
 
 
 def prepare_alert(result):
-    """Reuse canonical Chakra Discord sender; BUY WATCH is independently gated."""
+    """Reuse canonical Chakra Discord sender; DDB-only mode bypasses ALL old alert jobs."""
+    if result and result.get("alert_mode") == "ddb_ema_gann_5m":
+        from RudraScanner.ddb_ema_gann_5m import prepare_alert as ddb_prepare
+        return ddb_prepare(result)
     global _premarket_prepared_events
     _premarket_prepared_events = []
     original = alerts.prepare_alert(result)
@@ -749,7 +768,10 @@ def prepare_alert(result):
 
 
 def mark_alert_sent():
-    """Only acknowledge BUY WATCH after existing Chakra reports send success."""
+    """ACK DDB-only signals only after confirmed existing Discord send."""
+    if _ddb_mode_enabled():
+        from RudraScanner.ddb_ema_gann_5m import mark_alert_sent as ddb_mark
+        return ddb_mark()
     global _premarket_prepared_events
     existing = alerts.mark_alert_sent()
     if _premarket_prepared_events:
@@ -761,5 +783,15 @@ def mark_alert_sent():
 
 
 def send_alerts(result, sender):
-    """Send WICKS first, then Rudra-Reversal 1H."""
+    """Send DDB events instead of WICKS/Reversal when DDB-only mode is active."""
+    if result and result.get("alert_mode") == "ddb_ema_gann_5m":
+        from RudraScanner.ddb_ema_gann_5m import prepare_alert as ddb_prepare
+        from RudraScanner.ddb_ema_gann_5m import mark_alert_sent as ddb_mark
+        message = ddb_prepare(result)
+        if not message:
+            return 0
+        if sender(message) is False:
+            raise RuntimeError("DDB Discord sender failed; pending events retained")
+        ddb_mark()
+        return 1
     return alerts.send_alerts(result, sender)
