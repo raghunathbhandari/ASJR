@@ -23,12 +23,13 @@ integration documented in ASJR handoff; **VERIFY** on the actual VPS.
    `git fetch origin && git merge --ff-only origin/main`.
    Do NOT force reset/stash, or wipe any DataLake state.
    Alternatively use the existing `!gitpull` only when checkout clean.
-3. Syntax-check new code before restart:
+3. Syntax-check and run pure offline tests before restart:
    `/root/trading/venv_new/bin/python -m py_compile RudraScanner/ddb_ema_gann_5m.py ASJR_Analyst/Tests/test_asjr_pipeline.py`
+   `/root/trading/venv_new/bin/python -m unittest RudraScanner.tests.test_ddb_ema_gann_5m -v`
 4. Inspect Chakra's real entry point/formatter wiring and Python environment.
 5. In Discord: `!mbdstart`; check `!runSCommand bot` then
    `!runSCommand logs all 20`.
-6. Confirm `RUDRA DDB 5M | checked=49` and an actual qualifying
+6. Confirm `RUDRA DDB 5M | requested=49 | received=...` and an actual qualifying
    completed-candle test delivered to Discord with ACK. A git commit alone
    does not prove VPS deployment or Discord delivery.
 7. For emergency rollback, stop bot, set
