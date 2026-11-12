@@ -718,9 +718,6 @@ def run_asjr_manual_pipeline(*args, **kwargs):
         if _ddb_mode_enabled():
             from RudraScanner.ddb_ema_gann_5m import run_cycle
             return run_cycle(app)
-        if _ddb_mode_enabled():
-            from RudraScanner.ddb_ema_gann_5m import run_cycle
-            return run_cycle(app)
         return _run_asjr_manual_pipeline_unlocked(*args, **kwargs)
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     with lock_path.open("a+") as guard:
@@ -734,6 +731,9 @@ def run_asjr_manual_pipeline(*args, **kwargs):
                 "git": {"status": "SKIPPED_BUSY"},
                 "alerts_dispatched": False,
             }
+        if _ddb_mode_enabled():
+            from RudraScanner.ddb_ema_gann_5m import run_cycle
+            return run_cycle(app)
         return _run_asjr_manual_pipeline_unlocked(*args, **kwargs)
 
 
