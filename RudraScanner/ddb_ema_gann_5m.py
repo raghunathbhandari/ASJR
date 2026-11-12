@@ -243,7 +243,6 @@ def prepare_alert(result=None):
         if (now - stamp).total_seconds() > 1800:
             continue
         section = [
-            f'[{event["group"]}]',
             f'{event["ticker"]} | {event["bar_uk"]} UK (5min, EMA Crossed)',
             'GANN LEVEL:',
         ]
