@@ -1,4 +1,4 @@
-"""Rudra DDB A/B/C: five-minute EMA9/EMA20 BUY WATCH and ASJR Gann levels.
+"""Rudra DDB A/B/C: fifteen-minute EMA9/EMA20 BUY WATCH and ASJR Gann levels.
 
 Runs exclusively through the existing Chakra IBKR app and Discord hook.
 No orders, independent broker connection, new scheduler, or legacy alerts.
@@ -85,37 +85,72 @@ def gann_levels(price, daily_low, daily_high):
     return sorted(selected)
 
 
+def build_complete_15m_bars(df, *, now):
+    """Aggregate exactly three contiguous completed IBKR 5m candles per 15m bar.
+
+    IBKR timestamp denotes the 5-minute bar OPEN. This rejects missing bars,
+    unfinished 15-minute buckets, and duplicate timestamps. EMA is computed
+    on 15-minute closes, never on the original five-minute closes.
+    """
+    if df is None or df.empty:
+        return pd.DataFrame()
+    bars = df.copy().sort_index()
+    if bars.index.tz is None:
+        raise ValueError("IBKR bar index must be timezone-aware")
+    bars.index = bars.index.tz_convert("UTC")
+    bars = bars[~bars.index.duplicated(keep="last")]
+    now = pd.Timestamp(now).tz_convert("UTC")
+    # Exclude any 5m candle that is still forming.
+    bars = bars[(bars.index + pd.Timedelta(minutes=5)) <= now]
+    if bars.empty:
+        return pd.DataFrame()
+    for col in ("Open", "High", "Low", "Close"):
+        bars[col] = pd.to_numeric(bars[col], errors="coerce")
+    bars = bars.dropna(subset=["Open", "High", "Low", "Close"])
+    if bars.empty:
+        return pd.DataFrame()
+    # Wall-clock :00/:15/:30/:45 boundaries align in UTC and America/New_York.
+    quarter = bars.index.floor("15min")
+    offset = (bars.index - quarter).total_seconds() / 60.0
+    bars = bars[offset.isin([0.0, 5.0, 10.0])]
+    if bars.empty:
+        return pd.DataFrame()
+    quarter = bars.index.floor("15min")
+    grouped = bars.groupby(quarter, sort=True)
+    complete = grouped.filter(
+        lambda group: len(group) == 3
+        and (group.index - group.index[0]).total_seconds().tolist()
+        == [0.0, 300.0, 600.0]
+    )
+    if complete.empty:
+        return pd.DataFrame()
+    grouped = complete.groupby(complete.index.floor("15min"), sort=True)
+    result = grouped.agg({"Open": "first", "High": "max",
+                          "Low": "min", "Close": "last"})
+    # Independently enforce the 15m closing timestamp.
+    return result[(result.index + pd.Timedelta(minutes=15)) <= now]
+
+
 def signal_on_closed_bars(df, ticker, group, *, now=None):
-    """Use completed, current ET-session 5m candles; alert once at transition."""
+    """Check full 15m candle body above 15m EMA9 > EMA20 on a new transition."""
     now = pd.Timestamp.now(tz="UTC") if now is None else pd.Timestamp(now)
     if now.tzinfo is None:
         raise ValueError("now must have timezone")
     now = now.tz_convert("UTC")
-    if df is None or len(df) < 26:
-        return None
-    bars = df.copy().sort_index()
-    if bars.index.tz is None:
-        raise ValueError("IBKR bars must be timezone-aware")
-    bars.index = bars.index.tz_convert("UTC")
-    bars = bars[~bars.index.duplicated(keep="last")]
-    bars = bars[(bars.index + pd.Timedelta(minutes=5)) <= now]
+    bars = build_complete_15m_bars(df, now=now)
     if len(bars) < 26:
         return None
-    opens = pd.to_numeric(bars["Open"], errors="coerce")
-    closes = pd.to_numeric(bars["Close"], errors="coerce")
-    lows = pd.to_numeric(bars["Low"], errors="coerce")
-    if opens.isna().any() or closes.isna().any() or lows.isna().any():
-        return None
+    opens = bars["Open"]
+    closes = bars["Close"]
+    lows = bars["Low"]
     ema9 = closes.ewm(span=9, adjust=False).mean()
     ema20 = closes.ewm(span=20, adjust=False).mean()
     curr_time = bars.index[-1]
-    age = (now - (curr_time + pd.Timedelta(minutes=5))).total_seconds()
-    if age < 0 or age > 900:  # skip incomplete/stale cached responses
+    age = (now - (curr_time + pd.Timedelta(minutes=15))).total_seconds()
+    if age < 0 or age > 900:
         return None
     if curr_time.tz_convert(ET).date() != now.tz_convert(ET).date():
         return None
-    # Body fully above EMA9 = BOTH open and close above it, even when
-    # the lower wick touches/crosses EMA9. The 5m close is confirmed above.
     curr = (min(float(opens.iloc[-1]), float(closes.iloc[-1])) >
             float(ema9.iloc[-1]) > float(ema20.iloc[-1]))
     prev = (min(float(opens.iloc[-2]), float(closes.iloc[-2])) >
@@ -124,9 +159,12 @@ def signal_on_closed_bars(df, ticker, group, *, now=None):
         return None
     stamp = curr_time.tz_convert(UK)
     return {
-        "key": f"{ticker}|{curr_time.isoformat()}|DDB_EMA9_20",
-        "ticker": ticker, "group": group, "bar_uk": stamp.strftime("%Y-%m-%d %H:%M"),
-        "bar_utc": curr_time.isoformat(), "open": round(float(opens.iloc[-1]), 4),
+        "key": f"{ticker}|{curr_time.isoformat()}|DDB_EMA9_20_15M",
+        "timeframe": "15min",
+        "ticker": ticker, "group": group,
+        "bar_uk": stamp.strftime("%Y-%m-%d %H:%M"),
+        "bar_utc": curr_time.isoformat(),
+        "open": round(float(opens.iloc[-1]), 4),
         "low": round(float(lows.iloc[-1]), 4),
         "close": round(float(closes.iloc[-1]), 4),
         "ema9": round(float(ema9.iloc[-1]), 4),
@@ -189,7 +227,7 @@ def run_cycle(app, *, now=None):
     from ASJR_Analyst.Utils import asjr_ibkr as ibkr
     names = [sym for sym, _ in items]
     started = time.monotonic()
-    print("RUDRA DDB 5M | START | A/B/C=22/17/10 |",
+    print("RUDRA DDB 15M | START | A/B/C=22/17/10 |",
           pd.Timestamp.now(tz="UTC").isoformat(), flush=True)
     batches = ibkr.get_ibkr_5m_batch(
         app, names, duration="3 D", wait_time=16, batch_size=5)
@@ -211,7 +249,7 @@ def run_cycle(app, *, now=None):
                 gann_levels(item["close"], *lowhigh) if lowhigh else [])
         _queue(detected)
     seconds = time.monotonic() - started
-    print("RUDRA DDB 5M | requested=%d | received=%d | matches=%d | "
+    print("RUDRA DDB 15M | requested=%d | received=%d | matches=%d | "
           "duration=%.1fs" % (len(names), received, len(detected), seconds),
           flush=True)
     return {
@@ -240,10 +278,10 @@ def prepare_alert(result=None):
     lines = []
     for event in pending:
         stamp = pd.Timestamp(event["bar_utc"])
-        if (now - stamp).total_seconds() > 1800:
+        if event.get("timeframe") != "15min" or (now - stamp).total_seconds() > 1800:
             continue
         section = [
-            f'{event["ticker"]} | {event["bar_uk"]} UK (5min, EMA Crossed)',
+            f'{event["ticker"]} | {event["bar_uk"]} UK (15min, EMA Crossed)',
             'GANN LEVEL:',
         ]
         if event.get("gann"):
