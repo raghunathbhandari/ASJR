@@ -101,9 +101,10 @@ def signal_on_closed_bars(df, ticker, group, *, now=None):
     bars = bars[(bars.index + pd.Timedelta(minutes=5)) <= now]
     if len(bars) < 26:
         return None
+    opens = pd.to_numeric(bars["Open"], errors="coerce")
     closes = pd.to_numeric(bars["Close"], errors="coerce")
     lows = pd.to_numeric(bars["Low"], errors="coerce")
-    if closes.isna().any() or lows.isna().any():
+    if opens.isna().any() or closes.isna().any() or lows.isna().any():
         return None
     ema9 = closes.ewm(span=9, adjust=False).mean()
     ema20 = closes.ewm(span=20, adjust=False).mean()
@@ -113,15 +114,20 @@ def signal_on_closed_bars(df, ticker, group, *, now=None):
         return None
     if curr_time.tz_convert(ET).date() != now.tz_convert(ET).date():
         return None
-    curr = float(lows.iloc[-1]) > float(ema9.iloc[-1]) > float(ema20.iloc[-1])
-    prev = float(lows.iloc[-2]) > float(ema9.iloc[-2]) > float(ema20.iloc[-2])
+    # Body fully above EMA9 = BOTH open and close above it, even when
+    # the lower wick touches/crosses EMA9. The 5m close is confirmed above.
+    curr = (min(float(opens.iloc[-1]), float(closes.iloc[-1])) >
+            float(ema9.iloc[-1]) > float(ema20.iloc[-1]))
+    prev = (min(float(opens.iloc[-2]), float(closes.iloc[-2])) >
+            float(ema9.iloc[-2]) > float(ema20.iloc[-2]))
     if not curr or prev:
         return None
     stamp = curr_time.tz_convert(UK)
     return {
         "key": f"{ticker}|{curr_time.isoformat()}|DDB_EMA9_20",
         "ticker": ticker, "group": group, "bar_uk": stamp.strftime("%Y-%m-%d %H:%M"),
-        "bar_utc": curr_time.isoformat(), "low": round(float(lows.iloc[-1]), 4),
+        "bar_utc": curr_time.isoformat(), "open": round(float(opens.iloc[-1]), 4),
+        "low": round(float(lows.iloc[-1]), 4),
         "close": round(float(closes.iloc[-1]), 4),
         "ema9": round(float(ema9.iloc[-1]), 4),
         "ema20": round(float(ema20.iloc[-1]), 4),
@@ -238,7 +244,8 @@ def prepare_alert(result=None):
             continue
         section = [
             f'[{event["group"]}] {event["ticker"]} | {event["bar_uk"]} UK',
-            f'LOW {event["low"]:.2f} > EMA9 {event["ema9"]:.2f} > EMA20 {event["ema20"]:.2f}',
+            f'BODY OPEN {event["open"]:.2f} / CLOSE {event["close"]:.2f}',
+            f'BODY LOW {min(event["open"], event["close"]):.2f} > EMA9 {event["ema9"]:.2f} > EMA20 {event["ema20"]:.2f}',
             f'CLOSE {event["close"]:.2f} | ASJR GANN (150D):',
         ]
         if event.get("gann"):
