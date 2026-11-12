@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "enabled": true,
+  "timeframe": "5m",
+  "rule": "completed candle low > EMA9 > EMA20, once on false-to-true",
+  "sessions": "US PRE/RTH/POST",
+  "gann": {
+    "daily_lookback": 150,
+    "main": "odd n^2, even n^2+1",
+    "mid": "25%, 50%, 75%"
+  },
+  "groups": {
+    "A": [
+      "INTC",
+      "AKAM",
+      "WDC",
+      "STX",
+      "KLAC",
+      "CIEN",
+      "TER",
+      "LRCX",
+      "VRT",
+      "PANW",
+      "AMD",
+      "QCOM",
+      "TSM",
+      "SWKS",
+      "CRWD",
+      "ETN",
+      "KEYS",
+      "FLEX",
+      "GLW",
+      "COHR",
+      "ASML",
+      "AMAT"
+    ],
+    "B": [
+      "CBOE",
+      "ZTS",
+      "V",
+      "CME",
+      "CDW",
+      "PGR",
+      "AJG",
+      "JKHY",
+      "O",
+      "YUM",
+      "VRSK",
+      "MRSH",
+      "NSC",
+      "PEP",
+      "PAYX",
+      "NEE",
+      "MCK"
+    ],
+    "C": [
+      "BKNG",
+      "RCL",
+      "MAR",
+      "DAL",
+      "WM",
+      "CTAS",
+      "LMT",
+      "URI",
+      "DE",
+      "VLO"
+    ]
+  }
+}
