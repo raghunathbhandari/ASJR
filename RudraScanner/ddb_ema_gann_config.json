@@ -1,8 +1,8 @@
 {
   "version": 1,
   "enabled": true,
-  "timeframe": "5m",
-  "rule": "completed candle body min(Open, Close) > EMA9 > EMA20, once on false-to-true",
+  "timeframe": "15m",
+  "rule": "completed 15m candle min(Open, Close) > EMA9(15m) > EMA20(15m), once on false-to-true",
   "sessions": "US PRE/RTH/POST",
   "gann": {
     "daily_lookback": 150,
@@ -65,5 +65,7 @@
       "DE",
       "VLO"
     ]
-  }
+  },
+  "source_timeframe": "5m",
+  "aggregation": "3 consecutive completed 5m OHLC bars per 15m bar; reject incomplete buckets"
 }
