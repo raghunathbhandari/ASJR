@@ -111,7 +111,8 @@ def main(argv=None):
         # the project" on Python 3.10.
         for filename in ("test_wap_capture.py", "test_premarket_live.py",
                          "test_ibkr_seven_scanner.py",
-                         "test_lead_mover_backtest.py"):
+                         "test_lead_mover_backtest.py",
+                         "test_ddb_ema_gann_5m.py"):
             suite.addTests(unittest.TestLoader().discover(
                 str(folder), pattern=filename, top_level_dir=str(root)))
         suite.addTests(unittest.TestLoader().discover(
