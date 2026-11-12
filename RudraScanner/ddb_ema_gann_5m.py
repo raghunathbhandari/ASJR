@@ -237,30 +237,30 @@ def prepare_alert(result=None):
     if not pending:
         return ""
     now = pd.Timestamp.now(tz="UTC")
-    lines = ["🔱 RUDRA DDB | 5M BUY WATCH | UK TIME"]
+    lines = []
     for event in pending:
         stamp = pd.Timestamp(event["bar_utc"])
         if (now - stamp).total_seconds() > 1800:
             continue
         section = [
-            f'[{event["group"]}] {event["ticker"]} | {event["bar_uk"]} UK',
-            f'BODY OPEN {event["open"]:.2f} / CLOSE {event["close"]:.2f}',
-            f'BODY LOW {min(event["open"], event["close"]):.2f} > EMA9 {event["ema9"]:.2f} > EMA20 {event["ema20"]:.2f}',
-            f'CLOSE {event["close"]:.2f} | ASJR GANN (150D):',
+            f'[{event["group"]}]',
+            f'{event["ticker"]} | {event["bar_uk"]} UK (5min, EMA Crossed)',
+            'GANN LEVEL:',
         ]
         if event.get("gann"):
             section.extend(("🔴 MAIN " if typ == "MAIN" else "🟢 MID  ") +
                            f'{value:.2f}' for value, typ in event["gann"])
         else:
             section.append("GANN UNAVAILABLE (150 daily bars needed)")
-        candidate = "\n".join(lines + section) + "\n"
+        section.append("----")
+        candidate = "\\n".join(lines + section) + "\\n"
         if len(candidate) > 1750:
             break
         lines.extend(section)
         _PREPARED.append(event["key"])
     if not _PREPARED:
         return ""
-    return "```\n" + "\n".join(lines) + "\n```"
+    return "\n".join(lines)
 
 
 def mark_alert_sent():
