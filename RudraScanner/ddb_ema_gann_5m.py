@@ -253,7 +253,7 @@ def prepare_alert(result=None):
         else:
             section.append("GANN UNAVAILABLE (150 daily bars needed)")
         section.append("----")
-        candidate = "\\n".join(lines + section) + "\\n"
+        candidate = "\n".join(lines + section) + "\n"
         if len(candidate) > 1750:
             break
         lines.extend(section)
