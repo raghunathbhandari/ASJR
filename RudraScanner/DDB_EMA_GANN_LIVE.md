@@ -1,10 +1,18 @@
-# Rudra DDB 5M EMA9/EMA20 + ASJR Gann — deployment
+# Rudra DDB 15M EMA9/EMA20 + ASJR Gann — deployment
 As of 2026-11-12, target universe A=22, B=17, C=10 (49 unique stocks).
 Group C is provisional research (BKNG RCL MAR DAL WM CTAS LMT URI DE VLO).
-Only BUY WATCH: newest COMPLETED 5-minute candle FULL BODY above EMA9 > EMA20.\nStrict rule: min(Open, Close) > EMA9 > EMA20, not Close alone.\nThe candle wick may cross EMA9, but a forming/unclosed bar never qualifies;
-with the previous completed candle not already satisfying the same condition.
-Thus a bullish false-to-true transition generates one alert, not one per every
-trending candle. PRE/RTH/POST included, UK times used.
+Only BUY WATCH: newest COMPLETED 15-minute candle FULL BODY above
+EMA9(15m), with EMA9(15m) > EMA20(15m).
+Strict rule: min(Open, Close) > EMA9(15m) > EMA20(15m), not Close alone.
+The lower wick may cross EMA9; an incomplete 15-minute bar never qualifies.
+Use exactly three contiguous confirmed 5-minute IBKR candles per 15-minute
+bar with timestamp labels :00, :15, :30, :45 UK/ET. Reject incomplete buckets
+and missing intermediate 5-minute bars. Compute EMA on the 15-minute CLOSE
+series (not on 5-minute close series).
+Alert on false->true relative to the preceding completed 15-minute candle.
+The 49-stock bot can poll every 5 minutes but a new alert is considered only
+after a 15-minute candle has closed. UK timestamps, PRE/RTH/POST data.
+Existing 5-minute queued signals are ignored after deployment (distinct 15m keys).
 Levels follow ASJR Pine n=1..100: odd MAIN n*n; even MAIN n*n+1;
 MID three quarter-spaced levels between neighboring MAIN levels;
 restrict to 150 latest Yahoo daily bars' low/high, show 5 nearest.
@@ -29,7 +37,7 @@ integration documented in ASJR handoff; **VERIFY** on the actual VPS.
 4. Inspect Chakra's real entry point/formatter wiring and Python environment.
 5. In Discord: `!mbdstart`; check `!runSCommand bot` then
    `!runSCommand logs all 20`.
-6. Confirm `RUDRA DDB 5M | requested=49 | received=...` and an actual qualifying
+6. Confirm `RUDRA DDB 15M | requested=49 | received=...` and an actual qualifying
    completed-candle test delivered to Discord with ACK. A git commit alone
    does not prove VPS deployment or Discord delivery.
 7. For emergency rollback, stop bot, set
