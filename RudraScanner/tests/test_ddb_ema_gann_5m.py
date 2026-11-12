@@ -11,7 +11,10 @@ class DDBEMAGannTests(unittest.TestCase):
         ix = pd.date_range(end=end - pd.Timedelta(minutes=5), periods=40, freq="5min", tz="UTC")
         close = [100.0] * 39 + [102.0]
         low = [100.0] * 39 + [101.5]
-        df = pd.DataFrame({"Open": close, "High": [c + 0.5 for c in close],
+        opens = close.copy()
+        opens[-1] = 101.2  # whole candle BODY above EMA9; not only the close
+        low[-1] = 99.8  # wick below EMA9 is allowed: we test the body
+        df = pd.DataFrame({"Open": opens, "High": [c + 0.5 for c in close],
                            "Low": low, "Close": close}, index=ix)
         return df, end
 
@@ -27,8 +30,14 @@ class DDBEMAGannTests(unittest.TestCase):
         result = signal_on_closed_bars(bars, "AMD", "A", now=now)
         self.assertIsNotNone(result)
         self.assertEqual(result["ticker"], "AMD")
-        self.assertGreater(result["low"], result["ema9"])
+        self.assertGreater(min(result["open"], result["close"]), result["ema9"])
+        self.assertLess(result["low"], result["ema9"])
         self.assertGreater(result["ema9"], result["ema20"])
+
+    def test_close_only_above_ema9_is_rejected(self):
+        bars, now = self.sample()
+        bars.loc[bars.index[-1], "Open"] = 99.0
+        self.assertIsNone(signal_on_closed_bars(bars, "AMD", "A", now=now))
 
     def test_partial_last_candle_never_alerts(self):
         bars, now = self.sample()
