@@ -125,41 +125,124 @@ def build_complete_15m_bars(df, *, now):
     if complete.empty:
         return pd.DataFrame()
     grouped = complete.groupby(complete.index.floor("15min"), sort=True)
-    result = grouped.agg({"Open": "first", "High": "max",
-                          "Low": "min", "Close": "last"})
+    agg = {"Open": "first", "High": "max", "Low": "min", "Close": "last"}
+    if "Volume" in complete.columns:
+        complete = complete.copy()
+        complete["Volume"] = pd.to_numeric(
+            complete["Volume"], errors="coerce").fillna(0).clip(lower=0)
+        agg["Volume"] = "sum"
+    result = complete.groupby(
+        complete.index.floor("15min"), sort=True).agg(agg)
     # Independently enforce the 15m closing timestamp.
     return result[(result.index + pd.Timedelta(minutes=15)) <= now]
 
 
-def signal_on_closed_bars(df, ticker, group, *, now=None):
-    """Check full 15m candle body above 15m EMA9 > EMA20 on a new transition."""
+def _is_rth(ts):
+    """New York 09:30-16:00, DST safe; only completed 15m RTH bars."""
+    t = ts.tz_convert(ET)
+    minute = t.hour * 60 + t.minute
+    return 570 <= minute < 960
+
+
+def _benchmark_bullish(benchmark_df, curr_time, now):
+    """Fail closed if Group A semiconductor benchmark is missing or weak."""
+    b = build_complete_15m_bars(benchmark_df, now=now)
+    if len(b) < 28 or b.index[-1] != curr_time:
+        return False
+    close = b["Close"]
+    fast = close.ewm(span=9, adjust=False).mean()
+    slow = close.ewm(span=20, adjust=False).mean()
+    return bool(
+        close.iloc[-1] > fast.iloc[-1] > slow.iloc[-1]
+        and fast.iloc[-1] > fast.iloc[-2]
+        and slow.iloc[-1] > slow.iloc[-2]
+    )
+
+
+def signal_on_closed_bars(df, ticker, group, *, now=None,
+                          benchmark_df=None, filters=None):
+    """V2 selective BUY: actual bullish 15m cross + one confirming candle.
+
+    Unlike V1, a change to 'full candle above already-aligned EMAs'
+    is NOT called a crossover. Only complete IBKR 5m => 15m bars.
+    Filters are deliberately selective; performance is not yet backtested.
+    """
     now = pd.Timestamp.now(tz="UTC") if now is None else pd.Timestamp(now)
     if now.tzinfo is None:
         raise ValueError("now must have timezone")
     now = now.tz_convert("UTC")
     bars = build_complete_15m_bars(df, now=now)
-    if len(bars) < 26:
+    if len(bars) < 28 or "Volume" not in bars:
         return None
-    opens = bars["Open"]
-    closes = bars["Close"]
-    lows = bars["Low"]
-    ema9 = closes.ewm(span=9, adjust=False).mean()
-    ema20 = closes.ewm(span=20, adjust=False).mean()
+    cfg = filters or {}
+    min_fast_slope = float(cfg.get("ema9_min_slope_pct", 0.05))
+    min_slow_slope = float(cfg.get("ema20_min_slope_pct", 0.01))
+    min_volume_ratio = float(cfg.get("min_volume_ratio", 1.25))
+    max_extension = float(cfg.get("max_ema9_extension_pct", 2.5))
+
     curr_time = bars.index[-1]
     age = (now - (curr_time + pd.Timedelta(minutes=15))).total_seconds()
     if age < 0 or age > 900:
         return None
     if curr_time.tz_convert(ET).date() != now.tz_convert(ET).date():
         return None
-    curr = (min(float(opens.iloc[-1]), float(closes.iloc[-1])) >
-            float(ema9.iloc[-1]) > float(ema20.iloc[-1]))
-    prev = (min(float(opens.iloc[-2]), float(closes.iloc[-2])) >
-            float(ema9.iloc[-2]) > float(ema20.iloc[-2]))
-    if not curr or prev:
+    # The crossover bar and follow-through bar must BOTH be inside RTH.
+    if not _is_rth(curr_time) or not _is_rth(bars.index[-2]):
         return None
+
+    opens, closes = bars["Open"], bars["Close"]
+    lows = bars["Low"]
+    ema9 = closes.ewm(span=9, adjust=False).mean()
+    ema20 = closes.ewm(span=20, adjust=False).mean()
+
+    # ACTUAL EMA9-up-through-EMA20 cross in previous completed 15m bar.
+    cross = (
+        ema9.iloc[-3] <= ema20.iloc[-3]
+        and ema9.iloc[-2] > ema20.iloc[-2]
+        and ema9.iloc[-1] > ema20.iloc[-1]
+    )
+    if not cross:
+        return None
+
+    slope9 = (ema9.iloc[-1] / ema9.iloc[-2] - 1.0) * 100.0
+    slope20 = (ema20.iloc[-1] / ema20.iloc[-2] - 1.0) * 100.0
+    if not (slope9 >= min_fast_slope
+            and slope20 >= min_slow_slope and slope9 > slope20):
+        return None
+
+    # Confirm bullish follow-through, entire candle body ABOVE both MAs.
+    if not (float(closes.iloc[-2]) > float(ema9.iloc[-2])
+            and float(closes.iloc[-1]) > float(opens.iloc[-1])
+            > float(ema9.iloc[-1]) > float(ema20.iloc[-1])):
+        return None
+    extension = (closes.iloc[-1] / ema9.iloc[-1] - 1.0) * 100.0
+    if extension > max_extension:
+        return None
+
+    # Only RTH volume is compared, never misleading overnight volume.
+    history = bars.iloc[:-1]
+    rth_history = history.loc[[_is_rth(t) for t in history.index]]
+    if len(rth_history) < 12:
+        return None
+    past_vol = pd.to_numeric(
+        rth_history["Volume"].iloc[-12:], errors="coerce")
+    baseline = float(past_vol.median())
+    current_vol = float(bars["Volume"].iloc[-1])
+    if baseline <= 0 or current_vol <= 0:
+        return None
+    volume_ratio = current_vol / baseline
+    if volume_ratio < min_volume_ratio:
+        return None
+
+    # Group A moves together: do not BUY against a bearish SMH regime.
+    if group == "A" and not _benchmark_bullish(
+            benchmark_df, curr_time, now):
+        return None
+
     stamp = curr_time.tz_convert(UK)
     return {
-        "key": f"{ticker}|{curr_time.isoformat()}|DDB_EMA9_20_15M",
+        "version": "V2",
+        "key": f"{ticker}|{curr_time.isoformat()}|DDB_EMA9_20_15M_V2",
         "timeframe": "15min",
         "ticker": ticker, "group": group,
         "bar_uk": stamp.strftime("%Y-%m-%d %H:%M"),
@@ -169,6 +252,12 @@ def signal_on_closed_bars(df, ticker, group, *, now=None):
         "close": round(float(closes.iloc[-1]), 4),
         "ema9": round(float(ema9.iloc[-1]), 4),
         "ema20": round(float(ema20.iloc[-1]), 4),
+        "ema9_slope_pct": round(float(slope9), 3),
+        "ema20_slope_pct": round(float(slope20), 3),
+        "volume_ratio": round(float(volume_ratio), 2),
+        "ema9_extension_pct": round(float(extension), 3),
+        "sector": "SMH BULLISH" if group == "A" else "OWN TREND",
+        "trigger": "REAL CROSS + FOLLOW-THROUGH",
     }
 
 
@@ -226,11 +315,15 @@ def run_cycle(app, *, now=None):
     cfg, items = config()
     from ASJR_Analyst.Utils import asjr_ibkr as ibkr
     names = [sym for sym, _ in items]
+    # Group A needs sector agreement. Extra symbol is context, not a DDB alert.
+    benchmark_symbol = str(
+        cfg.get("signal_filters", {}).get("group_a_benchmark", "SMH")).upper()
+    requested = names + ([benchmark_symbol] if benchmark_symbol not in names else [])
     started = time.monotonic()
     print("RUDRA DDB 15M | START | A/B/C=22/17/10 |",
           pd.Timestamp.now(tz="UTC").isoformat(), flush=True)
     batches = ibkr.get_ibkr_5m_batch(
-        app, names, duration="3 D", wait_time=16, batch_size=5)
+        app, requested, duration="3 D", wait_time=16, batch_size=5)
     # Use the actual post-fetch time. A 49-symbol fetch may take minutes;
     # never compare completed candles against the start-of-round clock.
     now = pd.Timestamp.now(tz="UTC") if now is None else pd.Timestamp(now)
@@ -238,7 +331,10 @@ def run_cycle(app, *, now=None):
                    for sym in names)
     detected = []
     for sym, group in items:
-        event = signal_on_closed_bars(batches.get(sym), sym, group, now=now)
+        event = signal_on_closed_bars(
+            batches.get(sym), sym, group, now=now,
+            benchmark_df=batches.get(benchmark_symbol) if group == "A" else None,
+            filters=cfg.get("signal_filters", {}))
         if event:
             detected.append(event)
     if detected:
@@ -249,11 +345,14 @@ def run_cycle(app, *, now=None):
                 gann_levels(item["close"], *lowhigh) if lowhigh else [])
         _queue(detected)
     seconds = time.monotonic() - started
-    print("RUDRA DDB 15M | requested=%d | received=%d | matches=%d | "
-          "duration=%.1fs" % (len(names), received, len(detected), seconds),
-          flush=True)
+    benchmark_ok = (batches.get(benchmark_symbol) is not None
+                    and not batches[benchmark_symbol].empty)
+    print("RUDRA DDB V2 15M | requested=%d | received=%d | "
+          "benchmark_%s=%s | matches=%d | duration=%.1fs" %
+          (len(names), received, benchmark_symbol, benchmark_ok,
+           len(detected), seconds), flush=True)
     return {
-        "alert_mode": "ddb_ema_gann_5m", "ddb_alerts": detected,
+        "alert_mode": "ddb_ema_gann_15m_v2", "ddb_alerts": detected,
         "ddb_requested": len(names), "ddb_received": received,
         "ddb_elapsed_seconds": round(seconds, 2),
         "alert_data": [], "rudra_reversal_alerts": [],
@@ -278,10 +377,16 @@ def prepare_alert(result=None):
     lines = []
     for event in pending:
         stamp = pd.Timestamp(event["bar_utc"])
-        if event.get("timeframe") != "15min" or (now - stamp).total_seconds() > 1800:
+        if (event.get("version") != "V2"
+                or event.get("timeframe") != "15min"
+                or (now - stamp).total_seconds() > 1800):
             continue
         section = [
-            f'{event["ticker"]} | {event["bar_uk"]} UK (15min, EMA Crossed)',
+            f'{event["ticker"]} | {event["bar_uk"]} UK '
+            '(15min, TRUE EMA9/20 CROSS + CONFIRM)',
+            f'EMA9 slope +{event["ema9_slope_pct"]:.3f}% | '
+            f'EMA20 slope +{event["ema20_slope_pct"]:.3f}% | '
+            f'Vol {event["volume_ratio"]:.2f}x | {event["sector"]}',
             'GANN LEVEL:',
         ]
         if event.get("gann"):
