@@ -362,6 +362,59 @@ def run_cycle(app, *, now=None):
     }
 
 
+def format_buy_watch_section(event):
+    """Render a compact, actionable Discord BUY WATCH without implying execution.
+
+    The reference price is the last completed 15m signal close, NOT a live
+    quote, limit order or executed fill. Target = nearest ASJR Gann level
+    STRICTLY above that close; if unavailable, don't invent a target.
+    """
+    ticker = event["ticker"]
+    group = event["group"]
+    close = float(event["close"])
+    ema9 = float(event["ema9"])
+    ema20 = float(event["ema20"])
+    slope9 = float(event["ema9_slope_pct"])
+    slope20 = float(event["ema20_slope_pct"])
+    volume = float(event["volume_ratio"])
+    sector = event.get("sector", "NOT CHECKED")
+    gann = sorted(
+        [(float(price), str(kind)) for price, kind
+         in event.get("gann", []) if kind in ("MAIN", "MID")],
+        key=lambda item: item[0],
+    )
+    higher = next(((p, kind) for p, kind in gann if p > close), None)
+    if higher:
+        target_price, target_kind = higher
+        target_gain = (target_price / close - 1.0) * 100.0
+        target_line = (
+            f'🎯 NEXT GANN TARGET: {target_price:.2f} '
+            f'({target_kind}, +{target_gain:.2f}% from signal close)'
+        )
+    else:
+        target_line = "🎯 NEXT GANN TARGET: UNAVAILABLE"
+
+    lines = [
+        f'🟢 {ticker} | GROUP {group} | BUY WATCH (V2)',
+        f'{event["bar_uk"]} UK | 15min | EMA9/20 CROSS CONFIRMED',
+        f'ENTRY REF (15m close): {close:.2f} | NOT AN EXECUTED ORDER',
+        f'EMA9: {ema9:.2f} | slope {slope9:+.3f}% / 15m',
+        f'EMA20: {ema20:.2f} | slope {slope20:+.3f}% / 15m',
+        f'Volume: {volume:.2f}x RTH median | Sector: {sector}',
+        target_line,
+        'GANN LEVEL:',
+    ]
+    if gann:
+        lines.extend(
+            ("🔴 MAIN " if kind == "MAIN" else "🟢 MID  ") +
+            f"{value:.2f}" for value, kind in gann
+        )
+    else:
+        lines.append("GANN UNAVAILABLE (150 daily bars needed)")
+    lines.append("----")
+    return lines
+
+
 _PREPARED = []
 
 
@@ -381,20 +434,7 @@ def prepare_alert(result=None):
                 or event.get("timeframe") != "15min"
                 or (now - stamp).total_seconds() > 1800):
             continue
-        section = [
-            f'{event["ticker"]} | {event["bar_uk"]} UK '
-            '(15min, TRUE EMA9/20 CROSS + CONFIRM)',
-            f'EMA9 slope +{event["ema9_slope_pct"]:.3f}% | '
-            f'EMA20 slope +{event["ema20_slope_pct"]:.3f}% | '
-            f'Vol {event["volume_ratio"]:.2f}x | {event["sector"]}',
-            'GANN LEVEL:',
-        ]
-        if event.get("gann"):
-            section.extend(("🔴 MAIN " if typ == "MAIN" else "🟢 MID  ") +
-                           f'{value:.2f}' for value, typ in event["gann"])
-        else:
-            section.append("GANN UNAVAILABLE (150 daily bars needed)")
-        section.append("----")
+        section = format_buy_watch_section(event)
         candidate = "\n".join(lines + section) + "\n"
         if len(candidate) > 1750:
             break
