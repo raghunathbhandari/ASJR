@@ -144,7 +144,7 @@ class DDBEMAGannV2Tests(unittest.TestCase):
                 [553.0, "MID"], [565.0, "MID"],
             ],
         }
-        message = "\\n".join(format_buy_watch_section(event))
+        message = "\n".join(format_buy_watch_section(event))
         self.assertIn("AMD | GROUP A | BUY WATCH (V2)", message)
         self.assertIn("2026-11-13 16:45 UK | 15min", message)
         self.assertIn("ENTRY REF (15m close): 526.81", message)
@@ -165,10 +165,10 @@ class DDBEMAGannV2Tests(unittest.TestCase):
             "volume_ratio": 1.5, "sector": "SMH BULLISH",
             "gann": [[225.0, "MAIN"], [233.0, "MID"]],
         }
-        message = "\\n".join(format_buy_watch_section(event))
+        message = "\n".join(format_buy_watch_section(event))
         self.assertIn("NEXT GANN TARGET: UNAVAILABLE", message)
         event["gann"] = []
-        message = "\\n".join(format_buy_watch_section(event))
+        message = "\n".join(format_buy_watch_section(event))
         self.assertIn("GANN UNAVAILABLE", message)
 
     def test_approved_universe_unchanged(self):
