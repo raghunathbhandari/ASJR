@@ -3,7 +3,8 @@ import unittest
 import pandas as pd
 
 from RudraScanner.ddb_ema_gann_5m import (
-    gann_levels, signal_on_closed_bars, build_complete_15m_bars, config,
+    gann_levels, signal_on_closed_bars, build_complete_15m_bars,
+    config, format_buy_watch_section,
 )
 
 
@@ -130,6 +131,45 @@ class DDBEMAGannV2Tests(unittest.TestCase):
         now -= pd.Timedelta(hours=8)
         self.assertIsNone(signal_on_closed_bars(
             stock, "AMD", "A", now=now, benchmark_df=sector))
+
+    def test_discord_buy_watch_format_and_next_gann_target(self):
+        event = {
+            "ticker": "AMD", "group": "A",
+            "bar_uk": "2026-11-13 16:45", "close": 526.81,
+            "ema9": 524.23, "ema20": 522.00,
+            "ema9_slope_pct": 0.085, "ema20_slope_pct": 0.022,
+            "volume_ratio": 1.8, "sector": "SMH BULLISH",
+            "gann": [
+                [517.0, "MID"], [529.0, "MAIN"], [541.0, "MID"],
+                [553.0, "MID"], [565.0, "MID"],
+            ],
+        }
+        message = "\\n".join(format_buy_watch_section(event))
+        self.assertIn("AMD | GROUP A | BUY WATCH (V2)", message)
+        self.assertIn("2026-11-13 16:45 UK | 15min", message)
+        self.assertIn("ENTRY REF (15m close): 526.81", message)
+        self.assertIn("NOT AN EXECUTED ORDER", message)
+        self.assertIn("EMA9: 524.23 | slope +0.085%", message)
+        self.assertIn("EMA20: 522.00 | slope +0.022%", message)
+        self.assertIn("Volume: 1.80x RTH median", message)
+        self.assertIn("🎯 NEXT GANN TARGET: 529.00 (MAIN, +0.42%", message)
+        self.assertIn("🔴 MAIN 529.00", message)
+        self.assertIn("🟢 MID  541.00", message)
+
+    def test_discord_target_never_guessed(self):
+        event = {
+            "ticker": "COHR", "group": "A",
+            "bar_uk": "2026-11-13 16:45", "close": 260.0,
+            "ema9": 258.0, "ema20": 255.0,
+            "ema9_slope_pct": 0.1, "ema20_slope_pct": 0.02,
+            "volume_ratio": 1.5, "sector": "SMH BULLISH",
+            "gann": [[225.0, "MAIN"], [233.0, "MID"]],
+        }
+        message = "\\n".join(format_buy_watch_section(event))
+        self.assertIn("NEXT GANN TARGET: UNAVAILABLE", message)
+        event["gann"] = []
+        message = "\\n".join(format_buy_watch_section(event))
+        self.assertIn("GANN UNAVAILABLE", message)
 
     def test_approved_universe_unchanged(self):
         settings, items = config()
