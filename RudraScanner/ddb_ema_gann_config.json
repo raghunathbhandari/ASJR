@@ -1,9 +1,9 @@
 {
-  "version": 1,
+  "version": 2,
   "enabled": true,
   "timeframe": "15m",
-  "rule": "completed 15m candle min(Open, Close) > EMA9(15m) > EMA20(15m), once on false-to-true",
-  "sessions": "US PRE/RTH/POST",
+  "rule": "Real 15m EMA9 crosses ABOVE EMA20, next closed bullish 15m candle confirms; both EMA slopes positive, 1.25x RTH volume, Group A SMH aligned",
+  "sessions": "US RTH only for HIGH-CONFIDENCE BUY alerts (09:30-16:00 America/New_York)",
   "gann": {
     "daily_lookback": 150,
     "main": "odd n^2, even n^2+1",
@@ -67,5 +67,14 @@
     ]
   },
   "source_timeframe": "5m",
-  "aggregation": "3 consecutive completed 5m OHLC bars per 15m bar; reject incomplete buckets"
+  "aggregation": "3 consecutive completed 5m OHLC bars per 15m bar; reject incomplete buckets",
+  "signal_filters": {
+    "ema9_min_slope_pct": 0.05,
+    "ema20_min_slope_pct": 0.01,
+    "min_volume_ratio": 1.25,
+    "max_ema9_extension_pct": 2.5,
+    "group_a_benchmark": "SMH",
+    "required_confirmation_bars": 1,
+    "require_rth": true
+  }
 }
