@@ -50,16 +50,16 @@ string resolvedPriceLabelSize = priceLabelSize == "Tiny" ? size.tiny : priceLabe
 int labelTransparency = input.int(82, "Price-label background transparency", minval=0, maxval=100, group=GV)
 
 string GC = "05 — Method line / label colours"
-color colF8       = input.color(color.lime,    "1. Factor of 8", group=GC)
-color colYear     = input.color(color.yellow,  "2. Yearly Highs & Lows", group=GC)
-color colSquares  = input.color(color.fuchsia, "3. Power of Squares", group=GC)
-color colCubes    = input.color(color.orange,  "4. Power of Cubes", group=GC)
-color colS9Static = input.color(color.aqua,    "5. Square of 9 — Static", group=GC)
-color colS9H      = input.color(color.blue,    "6. Square of 9 — Dynamic H", group=GC)
-color colS9C      = input.color(color.purple,  "7. Square of 9 — Dynamic C", group=GC)
-color colS360     = input.color(color.white,   "8. Square of 360", group=GC)
-color col12       = input.color(color.aqua,    "9. Vertical Cycle 12", group=GC)
-color col90       = input.color(color.yellow,  "10. Vertical Cycle 90", group=GC)
+color colF8       = input.color(color.new(color.lime, 75),    "1. Factor of 8", group=GC)
+color colYear     = input.color(color.new(color.yellow, 75),  "2. Yearly Highs & Lows", group=GC)
+color colSquares  = input.color(color.new(color.fuchsia, 75), "3. Power of Squares", group=GC)
+color colCubes    = input.color(color.new(color.orange, 75),  "4. Power of Cubes", group=GC)
+color colS9Static = input.color(color.new(color.aqua, 75),    "5. Square of 9 — Static", group=GC)
+color colS9H      = input.color(color.new(color.blue, 75),    "6. Square of 9 — Dynamic H", group=GC)
+color colS9C      = input.color(color.new(color.purple, 75),  "7. Square of 9 — Dynamic C", group=GC)
+color colS360     = input.color(color.new(color.white, 75),   "8. Square of 360", group=GC)
+color col12       = input.color(color.new(color.aqua, 75),    "9. Vertical Cycle 12", group=GC)
+color col90       = input.color(color.new(color.yellow, 75),  "10. Vertical Cycle 90", group=GC)
 
 // Source timeframe must be equal to or higher than chart timeframe.
 // This prevents lower-timeframe security requests changing sampled anchors.
