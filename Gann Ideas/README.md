@@ -4,6 +4,21 @@
 
 This is the standalone **ASJR Gann Ideas** overlay for **5m, 15m, 1H, 4H, and Daily** charts. It follows the user's reference screenshot: candlesticks, thin horizontal price lines, right-edge colour-coded method/angle/price labels, and two dashed vertical cycle families. It is not the proprietary AmiBroker "ASHOK GANN SUPER STUDIO" implementation.
 
+## V4 — price-label placement and font size (2026-11-15)
+
+**Active release to install:** `ASJR_Gann_Ideas_V4_Labels.pine` (new TradingView title: **ASJR Gann Ideas V4 Labels**).
+
+The screenshot feedback for V3 was that horizontal price lines crossed the text inside right-side labels. V4 fixes this **without shifting the mathematical price levels**:
+
+- Every horizontal line **ends at its right-side label's anchor** and extends to the **left** only, so it cannot run beneath the label text.
+- Price labels use `label.style_label_up`: the label **floats above the price level**, with a pointer anchored exactly on the price line.
+- New **Settings → Inputs → 04 — Appearance → Gann price label font size** dropdown: `Tiny / Small / Normal / Large`, default **Normal** (previously Tiny).
+- Retains all **10 method colour pickers and native picker-opacity behaviour** from V3.
+- **Label background opacity** is **unchanged**, continuing to use `Price-label background transparency`. Label text is kept fully opaque for readability.
+- Existing vertical-cycle label font/size/background and all price/time calculations remain unchanged.
+
+**Important:** Original V1, V2 and V3 files remain in the folder. Select V4 specifically in Pine Editor. GitHub source presence does not mean TradingView auto-updates an indicator already loaded.
+
 ## Files
 - `ASJR_Gann_Ideas.pine` — indicator source.
 - `GANN_STUDY_NOTES.md` — mathematical research, image-slide examples, historical context and limitations.
