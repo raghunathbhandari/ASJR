@@ -20,6 +20,8 @@ This fixes the screenshot concern where labelled price levels occupied the same 
 
 Horizontal price lines now run to the farther-right label anchor, then extend left across the chart. Labels remain **above** the exact level. The 10 method-specific colour pickers preserve **native colour-picker opacity** on lines; label font/colour and price calculations have not changed.
 
+**V5 colour-picker defaults update:** All 10 method colours now initialise at **25% opacity (75% Pine transparency)**, including vertical cycle lines. Colour-picker opacity remains independently editable for each method. This update **does not alter label font size, label text opacity, or label background transparency**. Existing TradingView instances with stored user inputs may retain old settings; reset the picker to defaults in the newly loaded script if needed.
+
 **TradingView chart spacing:** Pine can draw labels into future bars but cannot guarantee your viewport displays all that blank space. If labels appear outside the right-hand edge, increase the chart's **right margin** (or move the visible price action left), or reduce `Price labels to the right (bars)`. Drawing x-coordinates remain capped to **480 future bars** (below TradingView's 500-bar limit).
 
 **V4 and prior versions remain available**; upgrading requires copying V5 code into a **new Pine script** and adding that script to the chart. Not yet compiled inside the TradingView Pine Editor.
