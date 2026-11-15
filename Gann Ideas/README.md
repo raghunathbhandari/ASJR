@@ -56,6 +56,18 @@ Historical vertical markers are limited to latest 48/cycle by default, plus the 
 - Lines are redrawn on the last bar; historical time markers are stored in capped arrays.
 - Eight toggles do not guarantee eight **visible** lines: a family may have zero levels near market price, missing historical data, or an unavailable confirmed pivot.
 
+
+### Line and label colours (2026-11-15 update)
+Open **ASJR Gann Ideas → Settings → Inputs → 05 — Method line / label colours**.
+
+There are **10 independent colour pickers**, one for each of the eight horizontal price families and one for each vertical cycle (12, 90). Each colour applies to all horizontal lines of its family **and its matching right-edge numerical labels**, or to the corresponding dashed vertical lines and their cycle labels.
+
+The **04 — Appearance** section now also offers:
+- **Horizontal line transparency (0=solid)**, default 22. Reduce towards 0 to make the coloured price lines more visible.
+- **Price-label background transparency**, default 82. Reduce towards 0 for a more filled label background.
+
+These are visual settings only. They **do not change the Gann price calculations, anchors, 12/90 cycle lengths, dropdown units or 10 feature checkboxes**.
+
 ## Install and validate in TradingView
 1. Open TradingView chart of **MES, MNQ, INTC, COHR**, or another symbol.
 2. Open **Pine Editor**; paste the entire `ASJR_Gann_Ideas.pine` text; click **Save** and **Add to chart**.
