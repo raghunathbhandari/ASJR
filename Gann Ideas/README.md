@@ -4,9 +4,29 @@
 
 This is the standalone **ASJR Gann Ideas** overlay for **5m, 15m, 1H, 4H, and Daily** charts. It follows the user's reference screenshot: candlesticks, thin horizontal price lines, right-edge colour-coded method/angle/price labels, and two dashed vertical cycle families. It is not the proprietary AmiBroker "ASHOK GANN SUPER STUDIO" implementation.
 
+## V5 — Clean UI, future-right price labels (2026-11-15)
+
+**Latest release:** `ASJR_Gann_Ideas_V5_Clean_UI.pine`, TradingView name **ASJR Gann Ideas V5 Clean UI**.
+
+This fixes the screenshot concern where labelled price levels occupied the same horizontal area as forming candles. V5 adds a user-adjustable **right-side label rail** in `04 — Appearance`:
+
+| Setting | V5 default | What it does |
+|---|---:|---|
+| `Price labels to the right (bars)` | **35** | Positions all horizontal-level price labels to the right of the latest candle, in blank future chart space |
+| `Nearby price-label extra spacing (bars)` | **10** | Staggers labels horizontally when levels are close together |
+| `Group nearby levels within ATR x` | **0.25** | Sets the price-distance threshold for staggering nearby labels |
+| `Gann price label font size` | **Normal** | Keeps V4's larger text |
+| `Price-label background transparency` | **82** | Keeps V4's independent label background opacity |
+
+Horizontal price lines now run to the farther-right label anchor, then extend left across the chart. Labels remain **above** the exact level. The 10 method-specific colour pickers preserve **native colour-picker opacity** on lines; label font/colour and price calculations have not changed.
+
+**TradingView chart spacing:** Pine can draw labels into future bars but cannot guarantee your viewport displays all that blank space. If labels appear outside the right-hand edge, increase the chart's **right margin** (or move the visible price action left), or reduce `Price labels to the right (bars)`. Drawing x-coordinates remain capped to **480 future bars** (below TradingView's 500-bar limit).
+
+**V4 and prior versions remain available**; upgrading requires copying V5 code into a **new Pine script** and adding that script to the chart. Not yet compiled inside the TradingView Pine Editor.
+
 ## V4 — price-label placement and font size (2026-11-15)
 
-**Active release to install:** `ASJR_Gann_Ideas_V4_Labels.pine` (new TradingView title: **ASJR Gann Ideas V4 Labels**).
+**Prior release:** `ASJR_Gann_Ideas_V4_Labels.pine` (new TradingView title: **ASJR Gann Ideas V4 Labels**).
 
 The screenshot feedback for V3 was that horizontal price lines crossed the text inside right-side labels. V4 fixes this **without shifting the mathematical price levels**:
 
