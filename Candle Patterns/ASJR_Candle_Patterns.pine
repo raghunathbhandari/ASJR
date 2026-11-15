@@ -1,7 +1,7 @@
 //@version=6
 indicator("ASJR Candle Patterns", shorttitle="ASJR Candle Patterns", overlay=true, max_labels_count=500)
 
-// ASJR Candle Patterns v0.3 — 17 patterns, added C1/C2 sweep + C3 high/low break.
+// ASJR Candle Patterns v0.4 — Three Candle direction fixed using C3 candle and wick rejection.
 // Research indicator: no claim that any pattern predicts the next price move.
 // Most named patterns have many published variants. Definitions are in README.
 // Colour changes only affect the detected/confirmed signal candle, never C1/C2 by default.
@@ -118,9 +118,17 @@ bool threeBlack = have2 and bear and close[1] < open[1] and close[2] < open[2] a
 // SELL: C2 sweeps above C1 HIGH; C3 trades BELOW C2 LOW.
 // This uses the full C2 high/low per user request, not the body-break
 // variant in three_candle_learing.py. No body colour or volume rule is added.
-// If both patterns somehow occur on the same C3, treat it as ambiguous.
-bool threeCandleBuy = have2 and low[1] < low[2] and high > high[1]
-bool threeCandleSell = have2 and high[1] > high[2] and low < low[1]
+// First detect the raw structural geometry using full C1/C2/C3 highs and lows.
+bool threeCandleBuyRaw = have2 and low[1] < low[2] and high > high[1]
+bool threeCandleSellRaw = have2 and high[1] > high[2] and low < low[1]
+// A C3 that breaks BOTH directions is resolved by its real body direction
+// AND the rejecting wick: red + dominant upper wick = bearish;
+// green + dominant lower wick = bullish. Otherwise do not force direction.
+// In every case a red C3 cannot be painted bullish by THIS detector.
+bool threeCandleDoubleSweep = threeCandleBuyRaw and threeCandleSellRaw
+bool threeCandleBuy = threeCandleBuyRaw and bull and (not threeCandleDoubleSweep or lower >= upper)
+bool threeCandleSell = threeCandleSellRaw and bear and (not threeCandleDoubleSweep or upper >= lower)
+bool threeCandleAmbiguous = threeCandleDoubleSweep and not threeCandleBuy and not threeCandleSell
 
 // -------- Optional Gann reference: manual / S9 / other script's plotted series --------
 // Input.source can read PLOTS, not lines created by line.new() in Gann Ideas.
@@ -171,17 +179,17 @@ bool ready = (not confirmedOnly or barstate.isconfirmed) and passVolume and pass
 int direction = 0
 string patternName = ""
 if ready
-    // Three Candle has highest priority so C3 colour is not hidden by
-    // other enabled patterns. Colour is based on direction of the setup.
-    if useThreeCandle and threeCandleBuy and threeCandleSell
-        direction := 2
-        patternName := "Three Candle Ambiguous"
-    else if useThreeCandle and threeCandleBuy
+    // Three Candle has highest priority; its BUY/SELL colour follows C3's
+    // body direction. Double sweeps additionally require a matching rejection wick.
+    if useThreeCandle and threeCandleBuy
         direction := 1
         patternName := "Three Candle BUY"
     else if useThreeCandle and threeCandleSell
         direction := -1
         patternName := "Three Candle SELL"
+    else if useThreeCandle and threeCandleAmbiguous
+        direction := 2
+        patternName := "Three Candle Ambiguous"
 
     if direction == 0 and useSweep and buySweep and sellSweep
         direction := 2
