@@ -1,7 +1,7 @@
 //@version=6
 indicator("ASJR Candle Patterns", shorttitle="ASJR Candle Patterns", overlay=true, max_labels_count=500)
 
-// ASJR Candle Patterns v0.1 — independently selectable pattern highlights.
+// ASJR Candle Patterns v0.2 — full-range engulfing (high/low including wicks).
 // Research indicator: no claim that any pattern predicts the next price move.
 // Most named patterns have many published variants. Definitions are in README.
 // Colour changes only affect the detected/confirmed signal candle, never C1/C2 by default.
@@ -30,7 +30,7 @@ string GD = "02 — Candle-pattern quality"
 bool confirmedOnly = input.bool(true, "Only highlight closed candles (non-repainting)", group=GD)
 bool requireTrend = input.bool(true, "Require preceding trend for Hammer / Star / Star groups", group=GD)
 int trendBars = input.int(3, "Preceding trend lookback", minval=2, maxval=20, group=GD)
-float minEngulfBody = input.float(0.35, "Engulfing body / candle range ≥", minval=0.05, maxval=1, step=0.05, group=GD)
+// Engulfing V2 uses full candle HIGH/LOW, so no body-size threshold applies.
 float wickMultiplier = input.float(2.0, "Hammer / pin wick-to-body ≥", minval=1, maxval=10, step=0.25, group=GD)
 float dojiRatio = input.float(0.10, "Doji max body / range", minval=0.01, maxval=0.4, step=0.01, group=GD)
 int tweezerTicks = input.int(3, "Tweezer equal-price tolerance in ticks", minval=0, maxval=30, group=GD)
@@ -74,8 +74,8 @@ bool priorDown2 = not requireTrend or (bar_index >= trendBars + 2 and close[2] <
 bool priorUp2 = not requireTrend or (bar_index >= trendBars + 2 and close[2] > close[trendBars + 2])
 
 // -------- Classical / price-action pattern definitions --------
-bool bullishEngulf = have1 and bull and close[1] < open[1] and open <= close[1] and close >= open[1] and body > math.abs(close[1] - open[1]) and bodyRatio >= minEngulfBody
-bool bearishEngulf = have1 and bear and close[1] > open[1] and open >= close[1] and close <= open[1] and body > math.abs(close[1] - open[1]) and bodyRatio >= minEngulfBody
+bool bullishEngulf = have1 and bull and high >= high[1] and low <= low[1] and (high > high[1] or low < low[1])
+bool bearishEngulf = have1 and bear and high >= high[1] and low <= low[1] and (high > high[1] or low < low[1])
 
 bool hammer = priorDown and bodyRatio <= 0.45 and lower >= realBody * wickMultiplier and upper <= span * 0.15 and closeLocation >= 0.65
 bool shootingStar = priorUp and bodyRatio <= 0.45 and upper >= realBody * wickMultiplier and lower <= span * 0.15 and closeLocation <= 0.35
