@@ -40,6 +40,20 @@ string GV = "04 — Appearance"
 float visiblePct = input.float(20.0, "Draw levels within ±% of last price", minval=0.1, maxval=10000, group=GV)
 int horizontalMax = input.int(160, "Maximum horizontal lines", minval=8, maxval=240, group=GV)
 int labelShift = input.int(6, "Right label offset (bars)", minval=1, maxval=100, group=GV)
+int lineTransparency = input.int(22, "Horizontal line transparency (0=solid)", minval=0, maxval=100, group=GV)
+int labelTransparency = input.int(82, "Price-label background transparency", minval=0, maxval=100, group=GV)
+
+string GC = "05 — Method line / label colours"
+color colF8       = input.color(color.lime,    "1. Factor of 8", group=GC)
+color colYear     = input.color(color.yellow,  "2. Yearly Highs & Lows", group=GC)
+color colSquares  = input.color(color.fuchsia, "3. Power of Squares", group=GC)
+color colCubes    = input.color(color.orange,  "4. Power of Cubes", group=GC)
+color colS9Static = input.color(color.aqua,    "5. Square of 9 — Static", group=GC)
+color colS9H      = input.color(color.blue,    "6. Square of 9 — Dynamic H", group=GC)
+color colS9C      = input.color(color.purple,  "7. Square of 9 — Dynamic C", group=GC)
+color colS360     = input.color(color.white,   "8. Square of 360", group=GC)
+color col12       = input.color(color.aqua,    "9. Vertical Cycle 12", group=GC)
+color col90       = input.color(color.yellow,  "10. Vertical Cycle 90", group=GC)
 
 // Source timeframe must be equal to or higher than chart timeframe.
 // This prevents lower-timeframe security requests changing sampled anchors.
@@ -81,9 +95,9 @@ f_level(float raw, string txt, color cc) =>
             for j = 0 to array.size(hPrices) - 1
                 if math.abs(array.get(hPrices, j) - p) <= syminfo.mintick * 2
                     overlap += 1
-        line ln = line.new(bar_index, p, bar_index + 1, p, xloc=xloc.bar_index, extend=extend.both, color=color.new(cc, 22), width=1)
+        line ln = line.new(bar_index, p, bar_index + 1, p, xloc=xloc.bar_index, extend=extend.both, color=color.new(cc, lineTransparency), width=1)
         int labelX = bar_index + int(math.min(490, labelShift + overlap * 8))
-        label lb = label.new(labelX, p, txt + "  " + str.tostring(p, format.mintick), xloc=xloc.bar_index, style=label.style_label_left, color=color.new(cc, 82), textcolor=cc, size=size.tiny)
+        label lb = label.new(labelX, p, txt + "  " + str.tostring(p, format.mintick), xloc=xloc.bar_index, style=label.style_label_left, color=color.new(cc, labelTransparency), textcolor=cc, size=size.tiny)
         array.push(hLines, ln)
         array.push(hLabels, lb)
         array.push(hPrices, p)
@@ -145,19 +159,19 @@ if barstate.isconfirmed and not na(time[1]) and time >= timeAnchor
     if show12
         if unit12 == "bars"
             if not na(firstAnchorBar) and bar_index > firstAnchorBar and (bar_index - firstAnchorBar) % 12 == 0
-                f_mark(v12, bar_index, false, color.aqua, maxHistoryV)
+                f_mark(v12, bar_index, false, col12, maxHistoryV)
         else
             int next12 = f_nextTime(timeAnchor, 12, unit12, time[1])
             if time >= next12 and time[1] < next12
-                f_mark(v12, time, true, color.aqua, maxHistoryV)
+                f_mark(v12, time, true, col12, maxHistoryV)
     if show90
         if unit90 == "bars"
             if not na(firstAnchorBar) and bar_index > firstAnchorBar and (bar_index - firstAnchorBar) % 90 == 0
-                f_mark(v90, bar_index, false, color.yellow, maxHistoryV)
+                f_mark(v90, bar_index, false, col90, maxHistoryV)
         else
             int next90 = f_nextTime(timeAnchor, 90, unit90, time[1])
             if time >= next90 and time[1] < next90
-                f_mark(v90, time, true, color.yellow, maxHistoryV)
+                f_mark(v90, time, true, col90, maxHistoryV)
 
 // ---------- Last-bar price families and nearest future cycle markers ----------
 var line future12 = na
@@ -182,35 +196,35 @@ if barstate.islast
     if showF8 and not na(rangeHigh) and not na(rangeLow) and rangeHigh > rangeLow
         for i = 0 to 8
             float fraction = i / 8.0
-            f_level(rangeLow + (rangeHigh - rangeLow) * fraction, "F8 " + str.tostring(fraction * 100, "#.##") + "%", color.lime)
+            f_level(rangeLow + (rangeHigh - rangeLow) * fraction, "F8 " + str.tostring(fraction * 100, "#.##") + "%", colF8)
         // Historical screenshot shows a 66% line; this is a separate 2/3 division.
-        f_level(rangeLow + (rangeHigh - rangeLow) * 2.0 / 3.0, "F8 66.67%*", color.lime)
+        f_level(rangeLow + (rangeHigh - rangeLow) * 2.0 / 3.0, "F8 66.67%*", colF8)
     if showYear
-        f_level(previousYearHigh, "YEAR prev high", color.yellow)
-        f_level(previousYearLow, "YEAR prev low", color.yellow)
+        f_level(previousYearHigh, "YEAR prev high", colYear)
+        f_level(previousYearLow, "YEAR prev low", colYear)
     if showSquares
         int n0 = int(math.floor(math.sqrt(close)))
         for delta = -4 to 5
             int n = n0 + delta
             if n > 0
-                f_level(n * n, "SQUARE " + str.tostring(n) + "²", color.fuchsia)
+                f_level(n * n, "SQUARE " + str.tostring(n) + "²", colSquares)
     if showCubes
         int n0 = int(math.floor(math.pow(close, 1.0 / 3.0)))
         for delta = -4 to 5
             int n = n0 + delta
             if n > 0
-                f_level(n * n * n, "CUBE " + str.tostring(n) + "³", color.orange)
+                f_level(n * n * n, "CUBE " + str.tostring(n) + "³", colCubes)
     if showS9Static
-        f_square9(staticAnchor, "S9 STATIC", color.aqua)
+        f_square9(staticAnchor, "S9 STATIC", colS9Static)
     if showS9H
-        f_square9(swingHigh, "S9 H*", color.blue)
+        f_square9(swingHigh, "S9 H*", colS9H)
     if showS9C
-        f_square9(sourceClose, "S9 C*", color.purple)
+        f_square9(sourceClose, "S9 C*", colS9C)
     if showS360 and not na(generalAnchor)
         for i = -8 to 8
             int ang = i * 45
             float lvl = generalAnchor + s360Turn * ang / 360.0
-            f_level(lvl, "S360* " + str.tostring(ang) + "°", color.white)
+            f_level(lvl, "S360* " + str.tostring(ang) + "°", colS360)
 
     if not na(future12)
         line.delete(future12)
@@ -224,10 +238,10 @@ if barstate.islast
     if show12 and time >= timeAnchor
         int nx12 = unit12 == "bars" ? (na(firstAnchorBar) ? na : bar_index + (12 - (bar_index - firstAnchorBar) % 12)) : f_nextTime(timeAnchor, 12, unit12, time)
         if not na(nx12)
-            future12 := line.new(nx12, floorPrice, nx12, roof, xloc=unit12 == "bars" ? xloc.bar_index : xloc.bar_time, extend=extend.both, color=color.aqua, style=line.style_dashed, width=2)
-            next12Label := label.new(nx12, roof + pad, "12 " + unit12, xloc=unit12 == "bars" ? xloc.bar_index : xloc.bar_time, style=label.style_label_down, color=color.new(color.aqua, 75), textcolor=color.aqua, size=size.tiny)
+            future12 := line.new(nx12, floorPrice, nx12, roof, xloc=unit12 == "bars" ? xloc.bar_index : xloc.bar_time, extend=extend.both, color=col12, style=line.style_dashed, width=2)
+            next12Label := label.new(nx12, roof + pad, "12 " + unit12, xloc=unit12 == "bars" ? xloc.bar_index : xloc.bar_time, style=label.style_label_down, color=color.new(col12, 75), textcolor=col12, size=size.tiny)
     if show90 and time >= timeAnchor
         int nx90 = unit90 == "bars" ? (na(firstAnchorBar) ? na : bar_index + (90 - (bar_index - firstAnchorBar) % 90)) : f_nextTime(timeAnchor, 90, unit90, time)
         if not na(nx90)
-            future90 := line.new(nx90, floorPrice, nx90, roof, xloc=unit90 == "bars" ? xloc.bar_index : xloc.bar_time, extend=extend.both, color=color.yellow, style=line.style_dashed, width=2)
-            next90Label := label.new(nx90, roof + pad * 1.5, "90 " + unit90, xloc=unit90 == "bars" ? xloc.bar_index : xloc.bar_time, style=label.style_label_down, color=color.new(color.yellow, 75), textcolor=color.yellow, size=size.tiny)
+            future90 := line.new(nx90, floorPrice, nx90, roof, xloc=unit90 == "bars" ? xloc.bar_index : xloc.bar_time, extend=extend.both, color=col90, style=line.style_dashed, width=2)
+            next90Label := label.new(nx90, roof + pad * 1.5, "90 " + unit90, xloc=unit90 == "bars" ? xloc.bar_index : xloc.bar_time, style=label.style_label_down, color=color.new(col90, 75), textcolor=col90, size=size.tiny)
