@@ -1,0 +1,260 @@
+//@version=6
+indicator("ASJR Candle Patterns", shorttitle="ASJR Candle Patterns", overlay=true, max_labels_count=500)
+
+// ASJR Candle Patterns v0.1 — independently selectable pattern highlights.
+// Research indicator: no claim that any pattern predicts the next price move.
+// Most named patterns have many published variants. Definitions are in README.
+// Colour changes only affect the detected/confirmed signal candle, never C1/C2 by default.
+
+// -------- 16 pattern-family switches --------
+string GP = "01 — Select patterns to highlight (16)"
+bool useBullEngulf = input.bool(true,  "01 Bullish Engulfing", group=GP)
+bool useBearEngulf = input.bool(true,  "02 Bearish Engulfing", group=GP)
+bool useHammer     = input.bool(true,  "03 Hammer", group=GP)
+bool useStar       = input.bool(true,  "04 Shooting Star", group=GP)
+bool useMorning    = input.bool(true,  "05 Morning Star", group=GP)
+bool useEvening    = input.bool(true,  "06 Evening Star", group=GP)
+bool usePin        = input.bool(true,  "07 Bullish / Bearish Pin Bar", group=GP)
+bool useInside     = input.bool(true,  "08 Inside Bar Breakout", group=GP)
+bool useOutside    = input.bool(true,  "09 Outside Bar Reversal", group=GP)
+bool useTweezer    = input.bool(false, "10 Tweezer Top / Bottom", group=GP)
+bool usePiercing   = input.bool(false, "11 Piercing Line / Dark Cloud Cover", group=GP)
+bool useHarami     = input.bool(false, "12 Bullish / Bearish Harami", group=GP)
+bool useDoji       = input.bool(false, "13 Doji", group=GP)
+bool useMarubozu   = input.bool(false, "14 Marubozu", group=GP)
+bool useThree      = input.bool(false, "15 Three White Soldiers / Black Crows", group=GP)
+bool useSweep      = input.bool(true,  "16 Gann Level Sweep + Reclaim", group=GP)
+
+// -------- Detection and appearance --------
+string GD = "02 — Candle-pattern quality"
+bool confirmedOnly = input.bool(true, "Only highlight closed candles (non-repainting)", group=GD)
+bool requireTrend = input.bool(true, "Require preceding trend for Hammer / Star / Star groups", group=GD)
+int trendBars = input.int(3, "Preceding trend lookback", minval=2, maxval=20, group=GD)
+float minEngulfBody = input.float(0.35, "Engulfing body / candle range ≥", minval=0.05, maxval=1, step=0.05, group=GD)
+float wickMultiplier = input.float(2.0, "Hammer / pin wick-to-body ≥", minval=1, maxval=10, step=0.25, group=GD)
+float dojiRatio = input.float(0.10, "Doji max body / range", minval=0.01, maxval=0.4, step=0.01, group=GD)
+int tweezerTicks = input.int(3, "Tweezer equal-price tolerance in ticks", minval=0, maxval=30, group=GD)
+bool requireVolume = input.bool(false, "Volume filter: only above-average volume", group=GD)
+int volumeLen = input.int(20, "Volume MA length", minval=2, maxval=200, group=GD)
+float volumeMultiple = input.float(1.0, "Minimum volume / volume MA", minval=0.1, maxval=10, step=0.1, group=GD)
+
+string GG = "03 — Gann price-level confluence"
+string gannMode = input.string("Disabled", "Gann reference method", options=["Disabled", "Manual", "S9 Static", "External plot"], group=GG)
+bool requireGann = input.bool(false, "Require Gann touch for all standard patterns", group=GG)
+float manualGann = input.float(0.0, "Manual Gann price (must be > 0)", minval=0, group=GG)
+float s9Anchor = input.float(529.0, "S9 Static price anchor (match Gann Ideas)", minval=0.000001, group=GG)
+float externalLevel = input.source(close, "External plotted level (must select another indicator PLOT)", group=GG)
+int toleranceTicks = input.int(2, "Touch distance: minimum ticks", minval=0, maxval=50, group=GG)
+float toleranceAtr = input.float(0.10, "Touch distance: ATR(14) multiplier", minval=0, maxval=2, step=0.01, group=GG)
+
+string GV = "04 — Visualisation and alerts"
+color bullishColour = input.color(color.rgb(39, 196, 106), "Bullish pattern candle", group=GV)
+color bearishColour = input.color(color.rgb(224, 79, 135), "Bearish pattern candle", group=GV)
+color neutralColour = input.color(color.rgb(226, 183, 64), "Indecision pattern candle", group=GV)
+bool showMarkers = input.bool(false, "Show bullish / bearish markers", group=GV)
+bool showLabels = input.bool(false, "Show primary pattern name on chart", group=GV)
+
+// -------- Basic candle anatomy --------
+float tick = syminfo.mintick
+float span = math.max(high - low, tick)
+float body = math.abs(close - open)
+float realBody = math.max(body, tick)
+float upper = math.max(0.0, high - math.max(open, close))
+float lower = math.max(0.0, math.min(open, close) - low)
+float bodyRatio = body / span
+float closeLocation = (close - low) / span
+bool bull = close > open
+bool bear = close < open
+bool have1 = bar_index >= 1
+bool have2 = bar_index >= 2
+bool have3 = bar_index >= 3
+bool priorDown = not requireTrend or (bar_index >= trendBars + 1 and close[1] < close[trendBars + 1])
+bool priorUp = not requireTrend or (bar_index >= trendBars + 1 and close[1] > close[trendBars + 1])
+bool priorDown2 = not requireTrend or (bar_index >= trendBars + 2 and close[2] < close[trendBars + 2])
+bool priorUp2 = not requireTrend or (bar_index >= trendBars + 2 and close[2] > close[trendBars + 2])
+
+// -------- Classical / price-action pattern definitions --------
+bool bullishEngulf = have1 and bull and close[1] < open[1] and open <= close[1] and close >= open[1] and body > math.abs(close[1] - open[1]) and bodyRatio >= minEngulfBody
+bool bearishEngulf = have1 and bear and close[1] > open[1] and open >= close[1] and close <= open[1] and body > math.abs(close[1] - open[1]) and bodyRatio >= minEngulfBody
+
+bool hammer = priorDown and bodyRatio <= 0.45 and lower >= realBody * wickMultiplier and upper <= span * 0.15 and closeLocation >= 0.65
+bool shootingStar = priorUp and bodyRatio <= 0.45 and upper >= realBody * wickMultiplier and lower <= span * 0.15 and closeLocation <= 0.35
+
+// Three-candle star patterns: on continuous futures we don't require gaps.
+bool morningStar = have2 and priorDown2 and close[2] < open[2] and (math.abs(close[2] - open[2]) / math.max(high[2] - low[2], tick)) >= 0.5 and (math.abs(close[1] - open[1]) / math.max(high[1] - low[1], tick)) <= 0.35 and bull and bodyRatio >= 0.35 and close > (open[2] + close[2]) / 2.0
+bool eveningStar = have2 and priorUp2 and close[2] > open[2] and (math.abs(close[2] - open[2]) / math.max(high[2] - low[2], tick)) >= 0.5 and (math.abs(close[1] - open[1]) / math.max(high[1] - low[1], tick)) <= 0.35 and bear and bodyRatio >= 0.35 and close < (open[2] + close[2]) / 2.0
+
+// Pin bars are trend-neutral; hammer/star use the optional trend qualification.
+bool bullishPin = lower >= realBody * wickMultiplier and upper <= span * 0.20 and closeLocation >= 0.70 and bodyRatio <= 0.45
+bool bearishPin = upper >= realBody * wickMultiplier and lower <= span * 0.20 and closeLocation <= 0.30 and bodyRatio <= 0.45
+
+bool insideBull = have2 and high[1] < high[2] and low[1] > low[2] and bull and close > high[2]
+bool insideBear = have2 and high[1] < high[2] and low[1] > low[2] and bear and close < low[2]
+
+bool outsideBull = have1 and high > high[1] and low < low[1] and bull and closeLocation >= 0.70 and close[1] < open[1]
+bool outsideBear = have1 and high > high[1] and low < low[1] and bear and closeLocation <= 0.30 and close[1] > open[1]
+
+bool tweezerBottom = have1 and close[1] < open[1] and bull and math.abs(low - low[1]) <= tick * tweezerTicks
+bool tweezerTop = have1 and close[1] > open[1] and bear and math.abs(high - high[1]) <= tick * tweezerTicks
+
+// Continuous-market tolerant version: new candle starts near the prior close.
+bool piercing = have1 and close[1] < open[1] and bull and open <= close[1] + tick * 2 and close > (open[1] + close[1]) / 2 and close < open[1]
+bool darkCloud = have1 and close[1] > open[1] and bear and open >= close[1] - tick * 2 and close < (open[1] + close[1]) / 2 and close > open[1]
+
+bool bullishHarami = have1 and close[1] < open[1] and bull and open >= close[1] and close <= open[1] and body <= math.abs(close[1] - open[1]) * 0.60
+bool bearishHarami = have1 and close[1] > open[1] and bear and open <= close[1] and close >= open[1] and body <= math.abs(close[1] - open[1]) * 0.60
+
+bool doji = bodyRatio <= dojiRatio
+bool marubozuBull = bull and bodyRatio >= 0.85 and upper <= span * 0.10 and lower <= span * 0.10
+bool marubozuBear = bear and bodyRatio >= 0.85 and upper <= span * 0.10 and lower <= span * 0.10
+
+bool threeWhite = have2 and bull and close[1] > open[1] and close[2] > open[2] and close > close[1] and close[1] > close[2] and bodyRatio >= 0.40 and (math.abs(close[1] - open[1]) / math.max(high[1] - low[1], tick)) >= 0.40
+bool threeBlack = have2 and bear and close[1] < open[1] and close[2] < open[2] and close < close[1] and close[1] < close[2] and bodyRatio >= 0.40 and (math.abs(close[1] - open[1]) / math.max(high[1] - low[1], tick)) >= 0.40
+
+// -------- Optional Gann reference: manual / S9 / other script's plotted series --------
+// Input.source can read PLOTS, not lines created by line.new() in Gann Ideas.
+// S9 Static uses the same sqrt-angle convention: (sqrt(anchor) ± angle / 180)^2.
+float atr14 = ta.atr(14)
+float tolerance = math.max(tick * toleranceTicks, nz(atr14) * toleranceAtr)
+
+f_checkLevel(float p, float tol) =>
+    bool valid = not na(p) and p > 0
+    bool near = valid and low <= p + tol and high >= p - tol
+    bool sweptBuy = valid and low <= p - tick and close >= p + tick
+    bool sweptSell = valid and high >= p + tick and close <= p - tick
+    [near, sweptBuy, sweptSell]
+
+bool gannNear = false
+bool buySweep = false
+bool sellSweep = false
+if gannMode == "Manual" and manualGann > 0
+    [hit, b, s] = f_checkLevel(manualGann, tolerance)
+    gannNear := hit
+    buySweep := b
+    sellSweep := s
+else if gannMode == "External plot"
+    [hit, b, s] = f_checkLevel(externalLevel, tolerance)
+    gannNear := hit
+    buySweep := b
+    sellSweep := s
+else if gannMode == "S9 Static"
+    float root = math.sqrt(s9Anchor)
+    for i = -8 to 8
+        float candidateRoot = root + i * 0.25
+        if candidateRoot > 0
+            float lvl = candidateRoot * candidateRoot
+            [hit, b, s] = f_checkLevel(lvl, tolerance)
+            gannNear := gannNear or hit
+            buySweep := buySweep or b
+            sellSweep := sellSweep or s
+
+// Volume filter is optional; unreported volume will fail when enabled.
+float avgVolume = ta.sma(volume, volumeLen)
+bool passVolume = not requireVolume or (not na(volume) and not na(avgVolume) and volume >= avgVolume * volumeMultiple)
+bool passGann = not requireGann or (gannMode != "Disabled" and gannNear)
+bool ready = (not confirmedOnly or barstate.isconfirmed) and passVolume and passGann
+
+// -------- Single winning pattern per bar, fixed reproducible precedence --------
+// Direction: +1 bullish, -1 bearish, 2 neutral, 0 unmarked.
+// In a multi-pattern candle only the highest-priority enabled pattern is labelled.
+int direction = 0
+string patternName = ""
+if ready
+    if useSweep and buySweep and sellSweep
+        direction := 2
+        patternName := "Dual Sweep"
+    else if useSweep and buySweep
+        direction := 1
+        patternName := "Gann Sweep Reclaim"
+    else if useSweep and sellSweep
+        direction := -1
+        patternName := "Gann Sweep Reject"
+
+    if direction == 0 and useBullEngulf and bullishEngulf
+        direction := 1
+        patternName := "Bull Engulfing"
+    if direction == 0 and useBearEngulf and bearishEngulf
+        direction := -1
+        patternName := "Bear Engulfing"
+    if direction == 0 and useMorning and morningStar
+        direction := 1
+        patternName := "Morning Star"
+    if direction == 0 and useEvening and eveningStar
+        direction := -1
+        patternName := "Evening Star"
+    if direction == 0 and useHammer and hammer
+        direction := 1
+        patternName := "Hammer"
+    if direction == 0 and useStar and shootingStar
+        direction := -1
+        patternName := "Shooting Star"
+    if direction == 0 and usePin and bullishPin
+        direction := 1
+        patternName := "Bull Pin Bar"
+    if direction == 0 and usePin and bearishPin
+        direction := -1
+        patternName := "Bear Pin Bar"
+    if direction == 0 and useOutside and outsideBull
+        direction := 1
+        patternName := "Outside Reversal +"
+    if direction == 0 and useOutside and outsideBear
+        direction := -1
+        patternName := "Outside Reversal -"
+    if direction == 0 and useInside and insideBull
+        direction := 1
+        patternName := "Inside Breakout +"
+    if direction == 0 and useInside and insideBear
+        direction := -1
+        patternName := "Inside Breakout -"
+    if direction == 0 and useTweezer and tweezerBottom
+        direction := 1
+        patternName := "Tweezer Bottom"
+    if direction == 0 and useTweezer and tweezerTop
+        direction := -1
+        patternName := "Tweezer Top"
+    if direction == 0 and usePiercing and piercing
+        direction := 1
+        patternName := "Piercing Line"
+    if direction == 0 and usePiercing and darkCloud
+        direction := -1
+        patternName := "Dark Cloud"
+    if direction == 0 and useHarami and bullishHarami
+        direction := 1
+        patternName := "Bull Harami"
+    if direction == 0 and useHarami and bearishHarami
+        direction := -1
+        patternName := "Bear Harami"
+    if direction == 0 and useThree and threeWhite
+        direction := 1
+        patternName := "Three White Soldiers"
+    if direction == 0 and useThree and threeBlack
+        direction := -1
+        patternName := "Three Black Crows"
+    if direction == 0 and useMarubozu and marubozuBull
+        direction := 1
+        patternName := "Bull Marubozu"
+    if direction == 0 and useMarubozu and marubozuBear
+        direction := -1
+        patternName := "Bear Marubozu"
+    if direction == 0 and useDoji and doji
+        direction := 2
+        patternName := "Doji"
+
+color signalColor = direction == 1 ? bullishColour : direction == -1 ? bearishColour : direction == 2 ? neutralColour : na
+barcolor(signalColor, title="ASJR selected candle-pattern highlight")
+
+plotshape(showMarkers and direction == 1, title="ASJR bullish pattern", style=shape.triangleup, location=location.belowbar, color=bullishColour, size=size.tiny)
+plotshape(showMarkers and direction == -1, title="ASJR bearish pattern", style=shape.triangledown, location=location.abovebar, color=bearishColour, size=size.tiny)
+plotshape(showMarkers and direction == 2, title="ASJR neutral pattern", style=shape.circle, location=location.abovebar, color=neutralColour, size=size.tiny)
+if showLabels and direction != 0 and barstate.isconfirmed
+    label.new(bar_index, direction == 1 ? low : high, patternName, style=direction == 1 ? label.style_label_up : label.style_label_down, color=color.new(signalColor, 15), textcolor=color.white, size=size.tiny)
+
+// Data-window outputs only, not replacement candles.
+plot(direction, title="ASJR Pattern Direction (+1/-1/2)", display=display.data_window)
+plot(gannMode == "Manual" ? manualGann : gannMode == "External plot" ? externalLevel : na, title="ASJR Gann Reference", display=display.data_window)
+alertcondition(direction == 1, title="ASJR Candle Patterns — Bullish", message="Bullish ASJR pattern on {{ticker}} {{interval}} close={{close}}")
+alertcondition(direction == -1, title="ASJR Candle Patterns — Bearish", message="Bearish ASJR pattern on {{ticker}} {{interval}} close={{close}}")
+alertcondition(direction == 2, title="ASJR Candle Patterns — Neutral", message="Neutral ASJR pattern on {{ticker}} {{interval}} close={{close}}")
+alertcondition(direction != 0, title="ASJR Candle Patterns — Any", message="Selected ASJR candle pattern on {{ticker}} {{interval}} close={{close}}")
+alertcondition(ready and useSweep and buySweep and not sellSweep, title="ASJR Gann Sweep — Bullish", message="Bullish Gann sweep/reclaim {{ticker}} {{interval}} close={{close}}")
+alertcondition(ready and useSweep and sellSweep and not buySweep, title="ASJR Gann Sweep — Bearish", message="Bearish Gann sweep/reject {{ticker}} {{interval}} close={{close}}")
