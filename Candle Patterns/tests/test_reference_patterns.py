@@ -1,4 +1,4 @@
-"""Independent OHLC reference tests for ASJR Candle Patterns v0.1.
+"""Independent OHLC reference tests for ASJR Candle Patterns v0.2.
 
 These exercise the documented math with synthetic candle fixtures.
 They do NOT compile, execute, or backtest TradingView Pine.
@@ -30,14 +30,14 @@ class C:
         return max(0.0, min(self.o, self.c) - self.l)
 
 
-def bull_engulf(p, c, min_body=0.35):
-    return (p.c < p.o and c.c > c.o and c.o <= p.c and
-            c.c >= p.o and c.body() > p.body() and c.body()/c.span() >= min_body)
+def bull_engulf(p, c):
+    return (c.c > c.o and c.h >= p.h and c.l <= p.l
+            and (c.h > p.h or c.l < p.l))
 
 
-def bear_engulf(p, c, min_body=0.35):
-    return (p.c > p.o and c.c < c.o and c.o >= p.c and
-            c.c <= p.o and c.body() > p.body() and c.body()/c.span() >= min_body)
+def bear_engulf(p, c):
+    return (c.c < c.o and c.h >= p.h and c.l <= p.l
+            and (c.h > p.h or c.l < p.l))
 
 
 def hammer(c, trend_down=True, multiplier=2.0):
@@ -80,13 +80,27 @@ def s9(anchor, index):
 
 
 class TestEngulfing(unittest.TestCase):
-    def test_bull_engulf(self):
-        self.assertTrue(bull_engulf(C(101,102,98.5,99), C(98.75,103,98,102)))
-        self.assertFalse(bull_engulf(C(101,102,98.5,99), C(99.5,103,98,102)))
+    def test_bull_engulf_wicks_no_body_containment(self):
+        prev = C(101, 104, 99, 100)
+        self.assertTrue(bull_engulf(prev, C(100.5, 105, 98, 101)))
+        self.assertFalse(bull_engulf(prev, C(100.5, 103, 98, 101)))
 
-    def test_bear_engulf(self):
-        self.assertTrue(bear_engulf(C(99,101.5,98.5,101), C(101.25,102,97.5,98)))
-        self.assertFalse(bear_engulf(C(99,101.5,98.5,101), C(100.5,102,97.5,98)))
+    def test_bear_engulf_wicks_no_body_containment(self):
+        prev = C(100, 104, 99, 101)
+        self.assertTrue(bear_engulf(prev, C(101, 105, 98, 100.5)))
+        self.assertFalse(bear_engulf(prev, C(101, 105, 100, 100.5)))
+
+    def test_both_directions_distinguished_by_current_close(self):
+        prev = C(101, 104, 99, 100)
+        self.assertTrue(bull_engulf(prev, C(100, 105, 98, 102)))
+        self.assertTrue(bear_engulf(prev, C(102, 105, 98, 100)))
+        self.assertFalse(bull_engulf(prev, C(100, 105, 98, 100)))
+        self.assertFalse(bear_engulf(prev, C(100, 105, 98, 100)))
+
+    def test_identical_range_not_engulfing(self):
+        prev = C(100, 105, 98, 101)
+        self.assertFalse(bull_engulf(prev, C(100, 105, 98, 102)))
+        self.assertFalse(bear_engulf(prev, C(102, 105, 98, 100)))
 
 
 class TestWicks(unittest.TestCase):
