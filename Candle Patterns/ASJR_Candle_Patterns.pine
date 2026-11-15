@@ -1,13 +1,13 @@
 //@version=6
 indicator("ASJR Candle Patterns", shorttitle="ASJR Candle Patterns", overlay=true, max_labels_count=500)
 
-// ASJR Candle Patterns v0.2 — full-range engulfing (high/low including wicks).
+// ASJR Candle Patterns v0.3 — 17 patterns, added C1/C2 sweep + C3 high/low break.
 // Research indicator: no claim that any pattern predicts the next price move.
 // Most named patterns have many published variants. Definitions are in README.
 // Colour changes only affect the detected/confirmed signal candle, never C1/C2 by default.
 
-// -------- 16 pattern-family switches --------
-string GP = "01 — Select patterns to highlight (16)"
+// -------- 17 independently selectable pattern families --------
+string GP = "01 — Select patterns to highlight (17)"
 bool useBullEngulf = input.bool(true,  "01 Bullish Engulfing", group=GP)
 bool useBearEngulf = input.bool(true,  "02 Bearish Engulfing", group=GP)
 bool useHammer     = input.bool(true,  "03 Hammer", group=GP)
@@ -24,6 +24,7 @@ bool useDoji       = input.bool(false, "13 Doji", group=GP)
 bool useMarubozu   = input.bool(false, "14 Marubozu", group=GP)
 bool useThree      = input.bool(false, "15 Three White Soldiers / Black Crows", group=GP)
 bool useSweep      = input.bool(true,  "16 Gann Level Sweep + Reclaim", group=GP)
+bool useThreeCandle = input.bool(true, "17 ASJR Three Candle Detector (C1/C2 sweep + C3 break)", group=GP)
 
 // -------- Detection and appearance --------
 string GD = "02 — Candle-pattern quality"
@@ -111,6 +112,16 @@ bool marubozuBear = bear and bodyRatio >= 0.85 and upper <= span * 0.10 and lowe
 bool threeWhite = have2 and bull and close[1] > open[1] and close[2] > open[2] and close > close[1] and close[1] > close[2] and bodyRatio >= 0.40 and (math.abs(close[1] - open[1]) / math.max(high[1] - low[1], tick)) >= 0.40
 bool threeBlack = have2 and bear and close[1] < open[1] and close[2] < open[2] and close < close[1] and close[1] < close[2] and bodyRatio >= 0.40 and (math.abs(close[1] - open[1]) / math.max(high[1] - low[1], tick)) >= 0.40
 
+// -------- ASJR Three Candle Detector (V0.3) --------
+// C1 = [2], C2 = [1], C3 = current bar; only C3 gets highlighted.
+// BUY : C2 sweeps below C1 LOW; C3 trades ABOVE C2 HIGH.
+// SELL: C2 sweeps above C1 HIGH; C3 trades BELOW C2 LOW.
+// This uses the full C2 high/low per user request, not the body-break
+// variant in three_candle_learing.py. No body colour or volume rule is added.
+// If both patterns somehow occur on the same C3, treat it as ambiguous.
+bool threeCandleBuy = have2 and low[1] < low[2] and high > high[1]
+bool threeCandleSell = have2 and high[1] > high[2] and low < low[1]
+
 // -------- Optional Gann reference: manual / S9 / other script's plotted series --------
 // Input.source can read PLOTS, not lines created by line.new() in Gann Ideas.
 // S9 Static uses the same sqrt-angle convention: (sqrt(anchor) ± angle / 180)^2.
@@ -160,13 +171,25 @@ bool ready = (not confirmedOnly or barstate.isconfirmed) and passVolume and pass
 int direction = 0
 string patternName = ""
 if ready
-    if useSweep and buySweep and sellSweep
+    // Three Candle has highest priority so C3 colour is not hidden by
+    // other enabled patterns. Colour is based on direction of the setup.
+    if useThreeCandle and threeCandleBuy and threeCandleSell
+        direction := 2
+        patternName := "Three Candle Ambiguous"
+    else if useThreeCandle and threeCandleBuy
+        direction := 1
+        patternName := "Three Candle BUY"
+    else if useThreeCandle and threeCandleSell
+        direction := -1
+        patternName := "Three Candle SELL"
+
+    if direction == 0 and useSweep and buySweep and sellSweep
         direction := 2
         patternName := "Dual Sweep"
-    else if useSweep and buySweep
+    else if direction == 0 and useSweep and buySweep
         direction := 1
         patternName := "Gann Sweep Reclaim"
-    else if useSweep and sellSweep
+    else if direction == 0 and useSweep and sellSweep
         direction := -1
         patternName := "Gann Sweep Reject"
 
@@ -258,3 +281,5 @@ alertcondition(direction == 2, title="ASJR Candle Patterns — Neutral", message
 alertcondition(direction != 0, title="ASJR Candle Patterns — Any", message="Selected ASJR candle pattern on {{ticker}} {{interval}} close={{close}}")
 alertcondition(ready and useSweep and buySweep and not sellSweep, title="ASJR Gann Sweep — Bullish", message="Bullish Gann sweep/reclaim {{ticker}} {{interval}} close={{close}}")
 alertcondition(ready and useSweep and sellSweep and not buySweep, title="ASJR Gann Sweep — Bearish", message="Bearish Gann sweep/reject {{ticker}} {{interval}} close={{close}}")
+alertcondition(direction == 1 and patternName == "Three Candle BUY", title="ASJR Three Candle — BUY", message="ASJR Three Candle BUY: C2 swept C1 low; C3 broke C2 high on {{ticker}} {{interval}} close={{close}}")
+alertcondition(direction == -1 and patternName == "Three Candle SELL", title="ASJR Three Candle — SELL", message="ASJR Three Candle SELL: C2 swept C1 high; C3 broke C2 low on {{ticker}} {{interval}} close={{close}}")
