@@ -96,7 +96,7 @@ f_level(float raw, string txt, color cc) =>
                     overlap += 1
         line ln = line.new(bar_index, p, bar_index + 1, p, xloc=xloc.bar_index, extend=extend.both, color=cc, width=1)
         int labelX = bar_index + int(math.min(490, labelShift + overlap * 8))
-        label lb = label.new(labelX, p, txt + "  " + str.tostring(p, format.mintick), xloc=xloc.bar_index, style=label.style_label_left, color=color.new(cc, labelTransparency), textcolor=cc, size=size.tiny)
+        label lb = label.new(labelX, p, txt + "  " + str.tostring(p, format.mintick), xloc=xloc.bar_index, style=label.style_label_left, color=color.new(cc, labelTransparency), textcolor=color.new(cc, 0), size=size.tiny)
         array.push(hLines, ln)
         array.push(hLabels, lb)
         array.push(hPrices, p)
@@ -238,9 +238,9 @@ if barstate.islast
         int nx12 = unit12 == "bars" ? (na(firstAnchorBar) ? na : bar_index + (12 - (bar_index - firstAnchorBar) % 12)) : f_nextTime(timeAnchor, 12, unit12, time)
         if not na(nx12)
             future12 := line.new(nx12, floorPrice, nx12, roof, xloc=unit12 == "bars" ? xloc.bar_index : xloc.bar_time, extend=extend.both, color=col12, style=line.style_dashed, width=2)
-            next12Label := label.new(nx12, roof + pad, "12 " + unit12, xloc=unit12 == "bars" ? xloc.bar_index : xloc.bar_time, style=label.style_label_down, color=color.new(col12, 75), textcolor=col12, size=size.tiny)
+            next12Label := label.new(nx12, roof + pad, "12 " + unit12, xloc=unit12 == "bars" ? xloc.bar_index : xloc.bar_time, style=label.style_label_down, color=color.new(col12, 75), textcolor=color.new(col12, 0), size=size.tiny)
     if show90 and time >= timeAnchor
         int nx90 = unit90 == "bars" ? (na(firstAnchorBar) ? na : bar_index + (90 - (bar_index - firstAnchorBar) % 90)) : f_nextTime(timeAnchor, 90, unit90, time)
         if not na(nx90)
             future90 := line.new(nx90, floorPrice, nx90, roof, xloc=unit90 == "bars" ? xloc.bar_index : xloc.bar_time, extend=extend.both, color=col90, style=line.style_dashed, width=2)
-            next90Label := label.new(nx90, roof + pad * 1.5, "90 " + unit90, xloc=unit90 == "bars" ? xloc.bar_index : xloc.bar_time, style=label.style_label_down, color=color.new(col90, 75), textcolor=col90, size=size.tiny)
+            next90Label := label.new(nx90, roof + pad * 1.5, "90 " + unit90, xloc=unit90 == "bars" ? xloc.bar_index : xloc.bar_time, style=label.style_label_down, color=color.new(col90, 75), textcolor=color.new(col90, 0), size=size.tiny)
