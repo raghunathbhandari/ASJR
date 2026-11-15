@@ -1,6 +1,6 @@
 # ASJR Candle Patterns — TradingView Pine v6
 
-**Version:** v0.1 research build • **Created:** 2026-11-15 (UK)  
+**Version:** v0.2 research build • **Created:** 2026-11-15 (UK)  
 **Status:** GitHub source committed; **not yet compiled in the TradingView Pine Editor or backtested on live exchange data.**
 
 A standalone **overlay indicator** that colours **only selected candlestick-pattern signal candles** on the user's real price chart. Use it alongside `ASJR Gann Ideas` for potential **Gann price-level + candle price-action** confluence. It does not place orders or promise reversals.
@@ -15,8 +15,8 @@ The first section has **16 independent on/off ticks** (checkboxes). An enabled p
 
 | # | Checkbox | Bullish condition | Bearish / neutral condition | Default |
 |---|---|---|---|---|
-| 1 | Bullish Engulfing | New bullish real body contains the prior bearish body; body ratio ≥ threshold | — | ON |
-| 2 | Bearish Engulfing | — | New bearish real body contains prior bullish body | ON |
+| 1 | Bullish Engulfing | Current candle closes above its open and its entire high–low range engulfs previous candle high–low range (at least one boundary strictly exceeded) | — | ON |
+| 2 | Bearish Engulfing | — | Current candle closes below its open and its entire high–low range engulfs previous candle high–low range (at least one boundary strictly exceeded) | ON |
 | 3 | Hammer | Lower rejection wick ≥ wick multiplier × body, small upper wick; optional preceding decline | — | ON |
 | 4 | Shooting Star | — | Upper rejection wick ≥ wick multiplier × body; optional preceding rise | ON |
 | 5 | Morning Star | Bearish large candle → small middle candle → bullish recovery above first candle's body midpoint | — | ON |
@@ -78,7 +78,7 @@ A Gann touch counts when a candle's `[low,high]` intersects `[level - tolerance,
 ## Pattern settings and definitions
 - `Only highlight closed candles`: ON. Turning it off may produce **in-progress** signal changes before final candle close.
 - `Require preceding trend`: ON for Hammer, Shooting Star and 3-candle Star groups only, with default lookback of 3 closed prior candles.
-- `Engulfing min body/range`: 0.35, adjustable.
+- **Engulfing V0.2:** current high ≥ prior high, current low ≤ prior low, and at least one edge is strictly exceeded; close > open = bullish, close < open = bearish. **Open/close body containment and previous candle direction are not required.** Doji candles are not labelled Engulfing.
 - `Hammer/pin wick/body multiplier`: 2, adjustable.
 - `Doji body/range`: 0.10 or less, adjustable.
 - `Tweezer matching high/low`: within 3 minimum price ticks, adjustable.
