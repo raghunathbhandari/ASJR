@@ -1,6 +1,6 @@
 # ASJR Candle Patterns — TradingView Pine v6
 
-**Version:** v0.3 research build • **Created:** 2026-11-15 (UK)  
+**Version:** v0.4 research build • **Created:** 2026-11-15 (UK)  
 **Status:** GitHub source committed; **not yet compiled in the TradingView Pine Editor or backtested on live exchange data.**
 
 A standalone **overlay indicator** that colours **only selected candlestick-pattern signal candles** on the user's real price chart. Use it alongside `ASJR Gann Ideas` for potential **Gann price-level + candle price-action** confluence. It does not place orders or promise reversals.
@@ -31,7 +31,7 @@ The first section has **17 independent on/off ticks** (checkboxes). An enabled p
 | 14 | Marubozu | Bullish, ≥85% real body, both wicks ≤10% range | Mirror | OFF |
 | 15 | Three White Soldiers / Black Crows | 3 progressively higher bullish closes | 3 progressively lower bearish closes | OFF |
 | 16 | **Gann Level Sweep + Reclaim** | Wick trades ≥1 tick **below Gann level**, closes ≥1 tick **above** | Wick trades ≥1 tick above, closes ≥1 tick below; dual sweep is neutral | ON |
-| 17 | **ASJR Three Candle Detector** | **C2 low < C1 low**, then **C3 high > C2 high** | **C2 high > C1 high**, then **C3 low < C2 low** | ON |
+| 17 | **ASJR Three Candle Detector** | **C2 low < C1 low**, **C3 high > C2 high**, and C3 body bullish | **C2 high > C1 high**, **C3 low < C2 low**, and C3 body bearish | ON |
 
 **Default: 11 selected groups (1–9 plus 16 and 17).** The #7/#10/#11/#12/#14/#15/#16/#17 checkboxes each cover their named bullish and bearish variants. This keeps the Settings compact and editable.
 
@@ -45,7 +45,7 @@ The first section has **17 independent on/off ticks** (checkboxes). An enabled p
 
 ### Fixed priority for multiple matches on one candle
 Only **one primary tag / colour** is produced per candle:
-1. **ASJR Three Candle Detector** (bullish/bearish C3; neutral if both directions satisfy on the same C3).
+1. **ASJR Three Candle Detector** (C3 bullish/bearish confirmation; wick-direction tie-break on both-sided sweeps).
 2. Gann sweep/reclaim (neutral when both directions trigger).
 2. Engulfing.
 3. Morning/Evening Star.
@@ -67,11 +67,11 @@ If a high-priority pattern is disabled, a lower-priority enabled pattern can sti
 Switch **17 ASJR Three Candle Detector** is **ON by default**. It is independent of pattern #15 (Three Soldiers/Black Crows).
 
 - **C1** is 2 chart bars ago; **C2** is 1 chart bar ago; **C3** is the current detection candle.
-- **Green C3 / BUY:** `low[1] < low[2]` (C2 sweeps C1 low) **AND** `high > high[1]` (C3 breaks C2 high).
-- **Red C3 / SELL:** `high[1] > high[2]` (C2 sweeps C1 high) **AND** `low < low[1]` (C3 breaks C2 low).
+- **Green C3 / BUY:** `low[1] < low[2]` (C2 sweeps C1 low) **AND** `high > high[1]` (C3 breaks C2 high) **AND** C3 closes **above its open**.
+- **Red C3 / SELL:** `high[1] > high[2]` (C2 sweeps C1 high) **AND** `low < low[1]` (C3 breaks C2 low) **AND** C3 closes **below its open**.
 - Only **C3** gets the selected pattern colour and, when enabled, the optional marker/name. C1 and C2 are not recoloured by this pattern.
-- **C3 is checked at candle close** by default (the existing `Only highlight closed candles` input); however, the breakout tests C3's **high/low wick**, **not its closing price**, so a C3 wick that breaks and then reverses still qualifies. C3's own real-body colour is not a requirement.
-- **Priority:** Three Candle wins against other enabled patterns on the same C3. If both bullish and bearish structures are simultaneously true, it is marked neutral/amber (ambiguous), **not a directional signal**.
+- **C3 is checked at candle close** by default (the existing `Only highlight closed candles` input). The breakout tests C3's **high/low wick**, not its closing price, but C3's **actual close-versus-open direction must agree** with the Three Candle BUY or SELL signal. A red C3 cannot become Three Candle BUY solely by crossing C2 high.
+- **Priority:** Three Candle wins against other enabled patterns on the same C3. If BOTH structural conditions qualify, use C3 direction **and** wick rejection: **red candle with upper wick ≥ lower wick → SELL**, **green candle with lower wick ≥ upper wick → BUY**; if neither, neutral/amber (ambiguous). A red candle that only triggers raw BUY geometry is no longer a Three Candle BUY, but could still match another independently enabled pattern such as Hammer. Turn ON `Show primary pattern name on chart` to see which pattern produced a highlight.
 - The current visual-detection variant uses **C2's entire high/low**. The separate Python `three_candle_learing.py` `three_candle_core` currently checks C2's **body edge** instead, so these implementations are **intentionally different** in this specific C3 breakout threshold, as requested.
 - Existing Gann proximity, optional volume, and confirmed-candle filters still apply when enabled. No extra wick ratio, trend condition, or automatic trade execution is imposed by this checkbox.
 
