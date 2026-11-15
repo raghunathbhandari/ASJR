@@ -1,4 +1,4 @@
-"""Independent OHLC reference tests for ASJR Candle Patterns v0.2.
+"""Independent OHLC reference tests for ASJR Candle Patterns v0.3.
 
 These exercise the documented math with synthetic candle fixtures.
 They do NOT compile, execute, or backtest TradingView Pine.
@@ -77,6 +77,52 @@ def s9(anchor, index):
     if root <= 0:
         return None
     return root*root
+
+
+def three_candle_buy(c1, c2, c3):
+    """C2 sweeps C1 low; C3's high exceeds C2 high."""
+    return c2.l < c1.l and c3.h > c2.h
+
+
+def three_candle_sell(c1, c2, c3):
+    """C2 sweeps C1 high; C3's low breaks C2 low."""
+    return c2.h > c1.h and c3.l < c2.l
+
+
+class TestThreeCandle(unittest.TestCase):
+    def test_buy_sweep_and_c3_high_break(self):
+        c1 = C(105, 110, 100, 104)
+        c2 = C(102, 106, 98, 103)
+        c3 = C(103, 108, 101, 107)
+        self.assertTrue(three_candle_buy(c1, c2, c3))
+        self.assertFalse(three_candle_sell(c1, c2, c3))
+
+    def test_sell_sweep_and_c3_low_break(self):
+        c1 = C(100, 110, 95, 104)
+        c2 = C(105, 112, 99, 106)
+        c3 = C(106, 108, 98, 100)
+        self.assertTrue(three_candle_sell(c1, c2, c3))
+        self.assertFalse(three_candle_buy(c1, c2, c3))
+
+    def test_requires_strict_high_low_break(self):
+        c1 = C(105, 110, 100, 104)
+        c2 = C(102, 106, 98, 103)
+        self.assertFalse(three_candle_buy(c1, c2, C(103, 106, 99, 105)))
+        self.assertFalse(three_candle_buy(c1, C(102, 106, 100, 103), C(103, 108, 101, 107)))
+        self.assertFalse(three_candle_sell(C(100, 110, 95, 104), C(105, 110, 99, 106), C(106, 108, 98, 100)))
+
+    def test_both_directions_is_ambiguous(self):
+        c1 = C(100, 105, 95, 102)
+        c2 = C(100, 106, 94, 103)
+        c3 = C(100, 107, 93, 103)
+        self.assertTrue(three_candle_buy(c1, c2, c3))
+        self.assertTrue(three_candle_sell(c1, c2, c3))
+
+    def test_c3_body_colour_is_not_required(self):
+        c1 = C(105, 110, 100, 104)
+        c2 = C(102, 106, 98, 103)
+        c3_red = C(105, 108, 101, 102)
+        self.assertTrue(three_candle_buy(c1, c2, c3_red))
 
 
 class TestEngulfing(unittest.TestCase):
