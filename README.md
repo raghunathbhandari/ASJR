@@ -20,6 +20,9 @@ The project is designed around a practical research loop:
 - [Tickers 360 Analysis](ASJR_Analyst/README.md)
 - [AI Automation](RudraScanner/FINAL_RESEARCH_AND_ALERT_GUIDE.md)
 - [VPS Bridge Automation](RudraScanner/ResearchBridge/README.md)
+- [Daily DataLake & Data Import Preparation](ASJR_Analyst/README.md)
+- [Linux VPS Server Automation](RUDRA_DOWNLOADER_GUIDE.md)
+- [IBKR / IB Gateway Automation](Backtesting/DataLoader/IBKR_24H_IMPORT.md)
 
 - [Technology and architecture](#technology-and-architecture)
 - [Strategy catalogue and entry/exit rules](#strategy-catalogue-and-entryexit-rules)
