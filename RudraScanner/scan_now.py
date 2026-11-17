@@ -55,6 +55,7 @@ def main(argv=None):
     parser.add_argument("--ibkr-raw", action="store_true", help="Read saved IBKR four-code scan rankings without another API call")
     parser.add_argument("--ibkr-direct", action="store_true", help="One-shot direct IBKR four-category scanner; no Chakra scan")
     parser.add_argument("--ibkr-7", action="store_true", help="Read-only, on-demand seven-code IBKR discovery; cache ticker universe")
+    parser.add_argument("--ibkr-filter-check", action="store_true", help="Read-only Gateway scanner XML inspection for EMA/RSI/ADX and timeframe")
     from RudraScanner.ibkr_seven_scanner import CODES as IBKR_ALLOWED_CODES
     parser.add_argument("--ibkr-codes", action="store_true", help="List supported named IBKR scanner codes; no broker call")
     parser.add_argument("--ibkr-code", choices=IBKR_ALLOWED_CODES,
@@ -212,6 +213,11 @@ def main(argv=None):
     if args.mover_study:
         from RudraScanner.lead_mover_backtest import main as mover_main
         return mover_main()
+    if args.ibkr_filter_check:
+        from RudraScanner.ibkr_parameter_check import run_parameter_check
+        result = run_parameter_check()
+        print(result, end="")
+        return 0 if "XML RECEIVED" in result else 2
     if args.ibkr_codes:
         print("IBKR SCANNER | APPROVED CODES | 7")
         for code in IBKR_ALLOWED_CODES:
