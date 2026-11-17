@@ -17,6 +17,9 @@ The project is designed around a practical research loop:
 - [Bollinger Band](Backtesting/MeanReversal/bb_mean_reversal_backtest.py)
 - [VWAP/MA Trend Following](Backtesting/VWAP_EMA9/)
 - [4% Up/Down — 4% Down Alert](ASJR_Analyst/Strategies/MeanReversal4Pct/README.md)
+- [Tickers 360 Analysis](ASJR_Analyst/README.md)
+- [AI Automation](RudraScanner/FINAL_RESEARCH_AND_ALERT_GUIDE.md)
+- [VPS Bridge Automation](RudraScanner/ResearchBridge/README.md)
 
 - [Technology and architecture](#technology-and-architecture)
 - [Strategy catalogue and entry/exit rules](#strategy-catalogue-and-entryexit-rules)
