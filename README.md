@@ -18,6 +18,8 @@ The project is designed around a practical research loop:
 - [Gann price levels and price-action research](#gann-price-levels-and-price-action-research)
 - [Gann time cycles and Time = Price](#gann-time-cycles-and-time--price)
 - [Gann learning and historical studies](#gann-learning-and-historical-studies)
+- [Books and further reading](#books-and-further-reading)
+- [Research references and source material](#research-references-and-source-material)
 - [TradingView Pine Scripts](#tradingview-pine-scripts)
 - [Rudra scanner, DDB and market intelligence](#rudra-scanner-ddb-and-market-intelligence)
 - [Data engineering, testing and reproducibility](#data-engineering-testing-and-reproducibility)
@@ -162,6 +164,55 @@ Reading/research files: [`Gann/Gann book source comparison`](Gann/BOOK_SOURCE_CO
 
 **Attribution note:** Dynamic H/C and Square-of-360 formulations in the Pine prototype are documented *working interpretations*, not verified replicas of a third-party proprietary indicator or authenticated original Gann algorithms. Historical/astronomical correlations have not been shown to have predictive power here.
 
+## Books and further reading
+
+ASJR combines hands-on market research with the study of classic trading literature. The titles below help contextualise **price action, market structure, candlesticks, risk management and Gann-inspired price/time analysis**. The list distinguishes material studied in the project from **additional reference reading**; mentioning a book does not mean its full contents have been read or its methods reproduced.
+
+### W. D. Gann — studied and discussed
+
+| Book | Author | Relevance to ASJR |
+| --- | --- | --- |
+| **Truth of the Stock Tape** (1923) | W. D. Gann | Tape reading, price/volume behaviour, trends and market participation; discussed in the project’s ongoing Gann study |
+| **The Tunnel Thru the Air; Or, Looking Back from 1940** (1927) | W. D. Gann | Historical cycles, time, forecasting ideas and source-text study; chapter notes and Nepali translation research are tracked separately |
+| **Speculation: A Profitable Profession** | W. D. Gann | Principles of speculation, discipline and market reasoning; discussed as part of the Gann reading programme |
+
+**Further Gann bibliography:** *45 Years in Wall Street* and *How to Make Profits Trading in Commodities* are additional titles relevant to the time-cycle, trend and trading-method research. They are **reference/future-reading titles**, not represented here as completed book studies.
+
+See [Gann book/source audit](Gann/BOOK_SOURCE_COMPARISON.md), [Gann learning notes](Gann%20Ideas/GANN_STUDY_NOTES.md) and [Gann project directory](Gann/). The book-source audit documents incomplete translations and verification limits; those are not publicly certified editions.
+
+### Other trading and technical-analysis reference books
+
+These are **widely used background references relevant to the topics investigated in ASJR**—not claims that the project has implemented a named author's proprietary method, followed each book end-to-end or independently verified its trading results.
+
+| Book | Author | Related ASJR topic |
+| --- | --- | --- |
+| **Japanese Candlestick Charting Techniques** | Steve Nison | Candle anatomy, engulfing, stars, hammer/pin-bar context and pattern research |
+| **Technical Analysis of the Financial Markets** | John J. Murphy | Trend, support/resistance, moving averages, momentum and multi-timeframe context |
+| **Trading for a Living** | Dr. Alexander Elder | Trading systems, market psychology, confirmation and risk discipline |
+| **Trade Your Way to Financial Freedom** | Van K. Tharp | Position sizing, risk, expectancy and R-multiple evaluation |
+| **Reminiscences of a Stock Operator** | Edwin Lefèvre | Speculation, trend behaviour, market psychology and lessons in risk |
+
+The strategy source files and test reports—not these books alone—define the exact rules used in ASJR.
+
+## Research references and source material
+
+For readers wanting to **trace a rule to its code, data definition or test**, useful starting points include:
+
+| Reference | How it is used |
+| --- | --- |
+| [ASJR Gann Ideas — study notes](Gann%20Ideas/GANN_STUDY_NOTES.md) | Square-of-Nine mathematical convention, time cycles, fixed/dynamic anchors and attribution caveats |
+| [Gann book source comparison](Gann/BOOK_SOURCE_COMPARISON.md) | Research provenance and limitations of chapter translation/source verification |
+| [Three-Candle strategy contract](three_candle/STRATEGY.md) | Explicit distinctions between historical setup studies and executable-entry variants |
+| [Three-Candle historical research results](three_candle/results/) | Candidate matrices, validation notes, archived samples and outcomes |
+| [Rudra-Gann strategy study](RudraScanner/RudraGann/STRATEGY.md) | Price-level calculation and close-break/retest/candle confirmation model |
+| [Gold V2 experiment](three_candle/GOLD_V2_BACKTEST.md) | Reproducible candle, stop and exit variants with research limitations |
+| [RudraScanner research guide](RudraScanner/FINAL_RESEARCH_AND_ALERT_GUIDE.md) | Broker scanner terminology, saved datasets, candidate rankings and alert-state caveats |
+| [IBKR 24-hour data import guide](Backtesting/DataLoader/IBKR_24H_IMPORT.md) | Historical data collection and session-aware market-data handling |
+| [TradingView Pine Script documentation](https://www.tradingview.com/pine-script-docs/) | Language and indicator-platform reference |
+| [Interactive Brokers API documentation](https://www.interactivebrokers.com/campus/ibkr-api-page/) | Broker interface and market-data API background |
+
+**Sources and attribution:** Original books, independent educational sources, exchange/broker feeds and ASJR's own models should be distinguished. Indicators and backtests here are original research implementations **informed by general published trading concepts**; they are not authenticated reproductions of book-specific or third-party proprietary systems.
+
 ## TradingView Pine Scripts
 
 TradingView indicator source lives in two dedicated folders.
@@ -244,6 +295,6 @@ python -m unittest discover -s RudraScanner/tests -p "test_*.py"
 
 ---
 
-**Maintained by [Raghu Nath Bhandari](https://github.com/raghunathbhandari)** · ASJR Trading · **README updated 17 November 2026**.
+**Maintained by [Raghu Nath Bhandari](https://github.com/raghunathbhandari)** · ASJR Trading · **README, Since 2025, Last updated 10 November 2026**.
 
 *Built to study market behaviour systematically, test ideas honestly, and turn repeatable research into better-informed trading decisions.*
