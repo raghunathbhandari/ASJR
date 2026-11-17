@@ -12,6 +12,12 @@ The project is designed around a practical research loop:
 
 ## Contents
 
+- [Mean Reversal](Backtesting/MeanReversal/)
+- [MA Golden Cross (EMA9/EMA21)](three_candle/ma_strategy_v2.py)
+- [Bollinger Band](Backtesting/MeanReversal/bb_mean_reversal_backtest.py)
+- [VWAP/MA Trend Following](Backtesting/VWAP_EMA9/)
+- [4% Up/Down — 4% Down Alert](ASJR_Analyst/Strategies/MeanReversal4Pct/README.md)
+
 - [Technology and architecture](#technology-and-architecture)
 - [Strategy catalogue and entry/exit rules](#strategy-catalogue-and-entryexit-rules)
 - [Three-Candle research](#three-candle-research)
