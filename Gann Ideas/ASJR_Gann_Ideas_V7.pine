@@ -1,0 +1,289 @@
+//@version=6
+indicator("ASJR Gann Ideas V7", shorttitle="ASJR Gann V7", overlay=true, max_lines_count=500, max_labels_count=500, max_bars_back=5000)
+
+// ASJR Gann Ideas V7 (2026-11-18): visible-chart-aware Square of 9 levels and extended angles.
+// Retains V6 label rail and all 10 independent feature checkboxes.
+// Square-of-9 levels extend beyond +/-360 degrees when price coverage requires it.
+// Eight independently enabled horizontal level families, and exactly two
+// independently enabled vertical cycles named 12 and 90.
+// The 12 / 90 numbers are PERIOD LENGTHS, not necessarily years.
+// H/C and the Square-of-360 implementation below are documented WORKING
+// INTERPRETATIONS, not verified reproductions of the screenshot vendor code.
+
+// ---------- The 10 independent switches ----------
+string GP = "01 — Price levels (8 switches)"
+bool showF8       = input.bool(false, "1. Gann Factor of 8", group=GP)
+bool showYear     = input.bool(false, "2. Gann Yearly Highs & Lows", group=GP)
+bool showSquares  = input.bool(false, "3. Gann Power of Squares", group=GP)
+bool showCubes    = input.bool(false, "4. Gann Power of Cubes", group=GP)
+bool showS9Static = input.bool(true,  "5. Gann Square of 9 — Static", group=GP)
+bool showS9H      = input.bool(false, "6. Gann Square of 9 — Dynamic H (working)", group=GP)
+bool showS9C      = input.bool(false, "7. Gann Square of 9 — Dynamic C (working)", group=GP)
+bool showS360     = input.bool(false, "8. Gann Square of 360 (working)", group=GP)
+
+string GT = "02 — Vertical time cycles (2 switches)"
+bool show12 = input.bool(true, "9. Cycle 12", group=GT, inline="t12")
+string unit12 = input.string("bars", "Unit", options=["bars", "mi", "hh", "day", "m", "y"], group=GT, inline="t12")
+bool show90 = input.bool(false, "10. Cycle 90", group=GT, inline="t90")
+string unit90 = input.string("mi", "Unit", options=["bars", "mi", "hh", "day", "m", "y"], group=GT, inline="t90")
+int timeAnchor = input.time(timestamp("01 Jan 2026 00:00 +0000"), "Shared cycle anchor (UTC)", group=GT)
+int maxHistoryV = input.int(48, "Historical verticals per cycle", minval=1, maxval=100, group=GT)
+
+string GA = "03 — Price anchor / multi-timeframe"
+string sourceTF = input.timeframe("D", "Gann price source timeframe", options=["5", "15", "60", "240", "D"], group=GA)
+string anchorMode = input.string("Confirmed swing low", "General price anchor", options=["Manual", "Confirmed swing high", "Confirmed swing low"], group=GA)
+float manualAnchor = input.float(529.0, "Manual general price anchor", minval=0.000001, group=GA)
+float staticAnchor = input.float(529.0, "Static Square of 9 anchor", minval=0.000001, group=GA)
+int pivotLen = input.int(3, "Confirmed swing pivot left/right bars", minval=1, maxval=50, group=GA)
+int rangeLen = input.int(60, "Factor of 8 range — source bars", minval=10, maxval=500, group=GA)
+float s360Turn = input.float(90.0, "Square of 360: price units per full turn (WORKING)", minval=0.000001, group=GA)
+
+string GV = "04 — Appearance"
+float visiblePct = input.float(20.0, "Minimum coverage ±% of last price", minval=0.1, maxval=10000, group=GV)
+float chartPadPct = input.float(5.0, "Extra coverage beyond visible candles %", minval=0.0, maxval=25.0, step=0.5, group=GV)
+int maxS9Steps = input.int(80, "Square of 9 maximum 45° steps each direction", minval=8, maxval=80, group=GV)
+int horizontalMax = input.int(160, "Maximum horizontal lines", minval=8, maxval=240, group=GV)
+// Keep price labels in the future/right blank space instead of over active candles.
+// This offset is in CHART BARS (not real-time minutes). Add chart right margin
+// if the labels are outside the current viewport.
+int labelShift = input.int(35, "Price labels to the right (bars)", minval=10, maxval=240, group=GV)
+int labelStagger = input.int(10, "Nearby price-label extra spacing (bars)", minval=0, maxval=35, group=GV)
+float labelGroupATR = input.float(0.25, "Group nearby levels within ATR x", minval=0, maxval=2, step=0.05, group=GV)
+string priceLabelSize = input.string("Normal", "Gann price label font size", options=["Tiny", "Small", "Normal", "Large"], group=GV)
+string resolvedPriceLabelSize = priceLabelSize == "Tiny" ? size.tiny : priceLabelSize == "Small" ? size.small : priceLabelSize == "Large" ? size.large : size.normal
+int labelTransparency = input.int(82, "Price-label background transparency", minval=0, maxval=100, group=GV)
+
+string GC = "05 — Method line / label colours"
+color colF8       = input.color(color.new(color.lime, 75),    "1. Factor of 8", group=GC)
+color colYear     = input.color(color.new(color.yellow, 75),  "2. Yearly Highs & Lows", group=GC)
+color colSquares  = input.color(color.new(color.fuchsia, 75), "3. Power of Squares", group=GC)
+color colCubes    = input.color(color.new(color.orange, 75),  "4. Power of Cubes", group=GC)
+color colS9Static = input.color(color.new(color.aqua, 75),    "5. Square of 9 — Static", group=GC)
+color colS9H      = input.color(color.new(color.blue, 75),    "6. Square of 9 — Dynamic H", group=GC)
+color colS9C      = input.color(color.new(color.purple, 75),  "7. Square of 9 — Dynamic C", group=GC)
+color colS360     = input.color(color.new(color.white, 75),   "8. Square of 360", group=GC)
+color col12       = input.color(color.new(color.aqua, 75),    "9. Vertical Cycle 12", group=GC)
+color col90       = input.color(color.new(color.yellow, 75),  "10. Vertical Cycle 90", group=GC)
+
+// Source timeframe must be equal to or higher than chart timeframe.
+// This prevents lower-timeframe security requests changing sampled anchors.
+if timeframe.in_seconds(sourceTF) < timeframe.in_seconds(timeframe.period)
+    runtime.error("ASJR Gann Ideas: choose a price source timeframe >= chart timeframe (e.g. Daily for all charts).")
+
+// ---------- Confirmed reference values (previous completed source bar) ----------
+f_lastSwingHigh(int n) =>
+    float ph = ta.pivothigh(high, n, n)
+    float lastPh = ta.valuewhen(not na(ph), ph, 0)
+    lastPh[1]
+
+f_lastSwingLow(int n) =>
+    float pl = ta.pivotlow(low, n, n)
+    float lastPl = ta.valuewhen(not na(pl), pl, 0)
+    lastPl[1]
+
+float swingHigh = request.security(syminfo.tickerid, sourceTF, f_lastSwingHigh(pivotLen), lookahead=barmerge.lookahead_on)
+float swingLow = request.security(syminfo.tickerid, sourceTF, f_lastSwingLow(pivotLen), lookahead=barmerge.lookahead_on)
+float sourceClose = request.security(syminfo.tickerid, sourceTF, close[1], lookahead=barmerge.lookahead_on)
+float rangeHigh = request.security(syminfo.tickerid, sourceTF, ta.highest(high, rangeLen)[1], lookahead=barmerge.lookahead_on)
+float rangeLow = request.security(syminfo.tickerid, sourceTF, ta.lowest(low, rangeLen)[1], lookahead=barmerge.lookahead_on)
+// Last completed 12-month exchange period; never today's forming yearly candle.
+float previousYearHigh = request.security(syminfo.tickerid, "12M", high[1], lookahead=barmerge.lookahead_on)
+float previousYearLow = request.security(syminfo.tickerid, "12M", low[1], lookahead=barmerge.lookahead_on)
+float generalAnchor = anchorMode == "Manual" ? manualAnchor : anchorMode == "Confirmed swing high" ? swingHigh : swingLow
+generalAnchor := na(generalAnchor) ? sourceClose : generalAnchor
+
+// ---------- Price coverage that responds to zoom/pan ----------
+// The chart API supplies visible BAR times, not the price-axis bounds.
+// Aggregate the visible candles; TradingView recalculates when the chart is panned/zoomed.
+// Include at least the user-selected percentage around current price, plus a
+// configurable margin beyond candle extrema so support/resistance reaches the edges.
+var float visibleHigh = na
+var float visibleLow = na
+if time >= chart.left_visible_bar_time and time <= chart.right_visible_bar_time
+    visibleHigh := na(visibleHigh) ? high : math.max(visibleHigh, high)
+    visibleLow := na(visibleLow) ? low : math.min(visibleLow, low)
+
+float fallbackHigh = ta.highest(high, 120)
+float fallbackLow = ta.lowest(low, 120)
+float closeLow = math.max(syminfo.mintick, close * (1.0 - visiblePct / 100.0))
+float closeHigh = close * (1.0 + visiblePct / 100.0)
+float coverageLow = math.max(syminfo.mintick, math.min(nz(visibleLow, fallbackLow), closeLow) * (1.0 - chartPadPct / 100.0))
+float coverageHigh = math.max(nz(visibleHigh, fallbackHigh), closeHigh) * (1.0 + chartPadPct / 100.0)
+
+// ---------- Price drawing helpers ----------
+var array<line> hLines = array.new_line()
+var array<label> hLabels = array.new_label()
+var array<float> hPrices = array.new_float()
+float labelGroupDistance = math.max(syminfo.mintick * 2, nz(ta.atr(14)) * labelGroupATR)
+
+f_level(float raw, string txt, color cc) =>
+    if not na(raw) and raw > 0 and raw >= coverageLow and raw <= coverageHigh and array.size(hLines) < horizontalMax
+        float p = math.round_to_mintick(raw)
+        int overlap = 0
+        if array.size(hPrices) > 0
+            for j = 0 to array.size(hPrices) - 1
+                if math.abs(array.get(hPrices, j) - p) <= labelGroupDistance
+                    overlap += 1
+        // Anchor the entire price-label cluster far enough to the RIGHT of C3/current candles.
+        int labelX = bar_index + int(math.min(480, labelShift + overlap * labelStagger))
+        // Extend LEFT across history; its RIGHT endpoint follows the price label in blank space.
+        line ln = line.new(bar_index, p, labelX, p, xloc=xloc.bar_index, extend=extend.left, color=cc, width=1)
+        // Floating label remains ABOVE its exact price level, outside candle-forming area.
+        label lb = label.new(labelX, p, txt + "  " + str.tostring(p, format.mintick), xloc=xloc.bar_index, style=label.style_label_up, color=color.new(cc, labelTransparency), textcolor=color.new(cc, 0), size=resolvedPriceLabelSize)
+        array.push(hLines, ln)
+        array.push(hLabels, lb)
+        array.push(hPrices, p)
+
+f_square9(float anchor, string prefix, color cc) =>
+    if not na(anchor) and anchor > 0
+        float root = math.sqrt(anchor)
+        // 45 degrees = 0.25 in square-root price space.
+        // Dynamically extend both directions to the chart-derived price coverage.
+        int upSteps = int(math.max(0, math.min(maxS9Steps, math.ceil((math.sqrt(coverageHigh) - root) * 4.0))))
+        int downSteps = int(math.max(0, math.min(maxS9Steps, math.ceil((root - math.sqrt(coverageLow)) * 4.0))))
+        f_level(anchor, prefix + " +0°", cc)
+        int steps = math.max(upSteps, downSteps)
+        if steps > 0
+            for i = 1 to steps
+                float offset = i * 0.25
+                // Alternate up/down to prioritize levels closest to the anchor
+                // when the maximum-horizontal-lines limit is reached.
+                if i <= upSteps
+                    f_level(math.pow(root + offset, 2), prefix + " +" + str.tostring(i * 45) + "°", cc)
+                if i <= downSteps and root > offset
+                    f_level(math.pow(root - offset, 2), prefix + " -" + str.tostring(i * 45) + "°", cc)
+
+// ---------- Vertical cycle helpers ----------
+// Real elapsed time: mi/hh/day. Calendar anniversary: m/y (UTC, leap-safe).
+// bars: counted actual chart candles, separately from calendar time.
+f_calendarAt(int start, int offsetMonths) =>
+    int y0 = year(start, "Etc/UTC")
+    int m0 = month(start, "Etc/UTC")
+    int serial = y0 * 12 + m0 - 1 + offsetMonths
+    int yy = int(math.floor(serial / 12))
+    int mm = serial - yy * 12 + 1
+    bool leap = yy % 4 == 0 and (yy % 100 != 0 or yy % 400 == 0)
+    int lastD = mm == 2 ? (leap ? 29 : 28) : ((mm == 4 or mm == 6 or mm == 9 or mm == 11) ? 30 : 31)
+    int dd = int(math.min(dayofmonth(start, "Etc/UTC"), lastD))
+    timestamp("Etc/UTC", yy, mm, dd, hour(start, "Etc/UTC"), minute(start, "Etc/UTC"))
+
+f_nextTime(int start, int length, string unit, int afterTs) =>
+    int result = na
+    if unit == "mi" or unit == "hh" or unit == "day"
+        int ms = unit == "mi" ? 60000 : unit == "hh" ? 3600000 : 86400000
+        int step = length * ms
+        int k = int(math.max(0, math.floor((afterTs - start) / step) + 1))
+        result := start + k * step
+    else
+        int stepMonths = unit == "m" ? length : length * 12
+        int elapsedMonths = (year(afterTs, "Etc/UTC") - year(start, "Etc/UTC")) * 12 + month(afterTs, "Etc/UTC") - month(start, "Etc/UTC")
+        int k = int(math.max(0, math.floor(elapsedMonths / stepMonths)))
+        result := f_calendarAt(start, k * stepMonths)
+        if result <= afterTs
+            result := f_calendarAt(start, (k + 1) * stepMonths)
+    result
+
+var array<line> v12 = array.new_line()
+var array<line> v90 = array.new_line()
+
+f_mark(array<line> store, int x, bool useTime, color cc, int maxStored) =>
+    line ln = line.new(x, low, x, high + syminfo.mintick, xloc=useTime ? xloc.bar_time : xloc.bar_index, extend=extend.both, color=cc, style=line.style_dashed, width=1)
+    array.push(store, ln)
+    if array.size(store) > maxStored
+        line.delete(array.shift(store))
+
+var int firstAnchorBar = na
+if na(firstAnchorBar) and time >= timeAnchor
+    firstAnchorBar := bar_index
+
+// History: mark crossings at the first available candle on/after the time boundary.
+if barstate.isconfirmed and not na(time[1]) and time >= timeAnchor
+    if show12
+        if unit12 == "bars"
+            if not na(firstAnchorBar) and bar_index > firstAnchorBar and (bar_index - firstAnchorBar) % 12 == 0
+                f_mark(v12, bar_index, false, col12, maxHistoryV)
+        else
+            int next12 = f_nextTime(timeAnchor, 12, unit12, time[1])
+            if time >= next12 and time[1] < next12
+                f_mark(v12, time, true, col12, maxHistoryV)
+    if show90
+        if unit90 == "bars"
+            if not na(firstAnchorBar) and bar_index > firstAnchorBar and (bar_index - firstAnchorBar) % 90 == 0
+                f_mark(v90, bar_index, false, col90, maxHistoryV)
+        else
+            int next90 = f_nextTime(timeAnchor, 90, unit90, time[1])
+            if time >= next90 and time[1] < next90
+                f_mark(v90, time, true, col90, maxHistoryV)
+
+// ---------- Last-bar price families and nearest future cycle markers ----------
+var line future12 = na
+var line future90 = na
+var label next12Label = na
+var label next90Label = na
+float roof = ta.highest(high, 120)
+float floorPrice = ta.lowest(low, 120)
+float pad = ta.atr(14)
+
+if barstate.islast
+    if array.size(hLines) > 0
+        for i = 0 to array.size(hLines) - 1
+            line.delete(array.get(hLines, i))
+    if array.size(hLabels) > 0
+        for i = 0 to array.size(hLabels) - 1
+            label.delete(array.get(hLabels, i))
+    array.clear(hLines)
+    array.clear(hLabels)
+    array.clear(hPrices)
+
+    if showF8 and not na(rangeHigh) and not na(rangeLow) and rangeHigh > rangeLow
+        for i = 0 to 8
+            float fraction = i / 8.0
+            f_level(rangeLow + (rangeHigh - rangeLow) * fraction, "F8 " + str.tostring(fraction * 100, "#.##") + "%", colF8)
+        // Historical screenshot shows a 66% line; this is a separate 2/3 division.
+        f_level(rangeLow + (rangeHigh - rangeLow) * 2.0 / 3.0, "F8 66.67%*", colF8)
+    if showYear
+        f_level(previousYearHigh, "YEAR prev high", colYear)
+        f_level(previousYearLow, "YEAR prev low", colYear)
+    if showSquares
+        int n0 = int(math.floor(math.sqrt(close)))
+        for delta = -4 to 5
+            int n = n0 + delta
+            if n > 0
+                f_level(n * n, "SQUARE " + str.tostring(n) + "²", colSquares)
+    if showCubes
+        int n0 = int(math.floor(math.pow(close, 1.0 / 3.0)))
+        for delta = -4 to 5
+            int n = n0 + delta
+            if n > 0
+                f_level(n * n * n, "CUBE " + str.tostring(n) + "³", colCubes)
+    if showS9Static
+        f_square9(staticAnchor, "S9 STATIC", colS9Static)
+    if showS9H
+        f_square9(swingHigh, "S9 H* [" + sourceTF + "]", colS9H)
+    if showS9C
+        f_square9(sourceClose, "S9 C* [" + sourceTF + "]", colS9C)
+    if showS360 and not na(generalAnchor)
+        for i = -8 to 8
+            int ang = i * 45
+            float lvl = generalAnchor + s360Turn * ang / 360.0
+            f_level(lvl, "S360* " + str.tostring(ang) + "°", colS360)
+
+    if not na(future12)
+        line.delete(future12)
+    if not na(future90)
+        line.delete(future90)
+    if not na(next12Label)
+        label.delete(next12Label)
+    if not na(next90Label)
+        label.delete(next90Label)
+
+    if show12 and time >= timeAnchor
+        int nx12 = unit12 == "bars" ? (na(firstAnchorBar) ? na : bar_index + (12 - (bar_index - firstAnchorBar) % 12)) : f_nextTime(timeAnchor, 12, unit12, time)
+        if not na(nx12)
+            future12 := line.new(nx12, floorPrice, nx12, roof, xloc=unit12 == "bars" ? xloc.bar_index : xloc.bar_time, extend=extend.both, color=col12, style=line.style_dashed, width=2)
+            next12Label := label.new(nx12, roof + pad, "12 " + unit12, xloc=unit12 == "bars" ? xloc.bar_index : xloc.bar_time, style=label.style_label_down, color=color.new(col12, 75), textcolor=color.new(col12, 0), size=size.tiny)
+    if show90 and time >= timeAnchor
+        int nx90 = unit90 == "bars" ? (na(firstAnchorBar) ? na : bar_index + (90 - (bar_index - firstAnchorBar) % 90)) : f_nextTime(timeAnchor, 90, unit90, time)
+        if not na(nx90)
+            future90 := line.new(nx90, floorPrice, nx90, roof, xloc=unit90 == "bars" ? xloc.bar_index : xloc.bar_time, extend=extend.both, color=col90, style=line.style_dashed, width=2)
+            next90Label := label.new(nx90, roof + pad * 1.5, "90 " + unit90, xloc=unit90 == "bars" ? xloc.bar_index : xloc.bar_time, style=label.style_label_down, color=color.new(col90, 75), textcolor=color.new(col90, 0), size=size.tiny)
