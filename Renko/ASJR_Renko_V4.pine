@@ -32,14 +32,19 @@ int rightVisibleTime = chart.right_visible_bar_time
 var int leftVisibleIndex = na
 var int rightVisibleIndex = na
 var float rightVisibleAtr = na
+var int rightVisibleCloseTime = na
 var array<float> sourceCloses = array.new<float>()
+var array<int> visibleBarTimes = array.new<int>()
 
 float atrValue = ta.atr(atrPeriod)
 if time == leftVisibleTime
     leftVisibleIndex := bar_index
 if time == rightVisibleTime
     rightVisibleIndex := bar_index
+    rightVisibleCloseTime := time_close
     rightVisibleAtr := barstate.isconfirmed ? atrValue : atrValue[1]
+if time >= leftVisibleTime and time <= rightVisibleTime
+    array.push(visibleBarTimes, time)
 if barstate.isconfirmed and time <= rightVisibleTime and not na(close)
     array.push(sourceCloses, close)
     if array.size(sourceCloses) > sourceCount
@@ -101,18 +106,24 @@ if barstate.islast
             // Place one full-width adjacent rectangle PER completed brick.
             // They are NOT separated by source-candle time gaps. The packed
             // sequence ends at the LAST VISIBLE source bar (not the live bar).
+            // Time-positioned boxes allow scrolling well beyond the 9999-bar
+            // index distance restriction on TradingView drawing objects.
             int brickTotal = array.size(oBricks)
-            int visibleBars = math.max(0, rightVisibleIndex - leftVisibleIndex + 1)
+            int visibleBars = array.size(visibleBarTimes)
             int fitCount = math.max(0, int(math.floor(visibleBars / brickWidth)))
             int drawCount = math.min(brickTotal, fitCount)
             if drawCount > 0
                 int firstIndex = brickTotal - drawCount
-                int firstX = rightVisibleIndex + 1 - drawCount * brickWidth
+                int firstSlot = visibleBars - drawCount * brickWidth
+                int endTime = not na(rightVisibleCloseTime) and rightVisibleCloseTime > rightVisibleTime ? rightVisibleCloseTime : rightVisibleTime + (visibleBars >= 2 ? array.get(visibleBarTimes, visibleBars - 1) - array.get(visibleBarTimes, visibleBars - 2) : 60000)
                 for i = 0 to drawCount - 1
                     int idx = firstIndex + i
                     float o = array.get(oBricks, idx)
                     float c = array.get(cBricks, idx)
                     color tone = array.get(upBricks, idx) ? riseColor : fallColor
-                    int leftX = firstX + i * brickWidth
-                    box block = box.new(left=leftX, top=math.max(o, c), right=leftX + brickWidth, bottom=math.min(o, c), xloc=xloc.bar_index, border_color=tone, border_width=1, bgcolor=color.new(tone, opacity))
+                    int startSlot = firstSlot + i * brickWidth
+                    int afterSlot = startSlot + brickWidth
+                    int startTime = array.get(visibleBarTimes, startSlot)
+                    int endSlotTime = afterSlot < visibleBars ? array.get(visibleBarTimes, afterSlot) : endTime
+                    box block = box.new(left=startTime, top=math.max(o, c), right=endSlotTime, bottom=math.min(o, c), xloc=xloc.bar_time, border_color=tone, border_width=1, bgcolor=color.new(tone, opacity))
                     array.push(rendered, block)
