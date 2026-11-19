@@ -65,7 +65,7 @@ The project is designed around a practical research loop:
 | [`ASJR_Analyst/`](ASJR_Analyst/) | Analyst pipeline, strategy-specific alerts, market-data processing, configuration and tests |
 | [`Gann%20Ideas/`](Gann%20Ideas/) | Gann price/time-cycle Pine indicators, mathematical study notes and reference tests |
 | [`Candle%20Patterns/`](Candle%20Patterns/) | Pine v6 candlestick-pattern overlay with Three-Candle and Gann confluence options |
-| [`Renko/`](Renko/) | ASJR Renko V1 Pine v6 overlay: ATR/fixed/% brick sizes, close-confirmed EMA9/20 alerts and multiple chart intervals |
+| [`Renko/`](Renko/) | ASJR Renko V2 Pine v6 overlay: visible wickless synthetic bricks, optional individual boxes, ATR/fixed/% sizing and brick EMA9/20 signals across intraday/daily charts |
 | [`Gann/`](Gann/) | Gann book studies and research/source-comparison notes |
 | [`Rudra-DDB/Gann/`](Rudra-DDB/Gann/) | Fixed-anchor INTC Gann research, daily records and historical study |
 | [`utils/asjr_small_repeatable_v1.py`](utils/asjr_small_repeatable_v1.py) | EMA/VWAP pullback research and signal diagnostics |
@@ -236,13 +236,13 @@ TradingView indicator source lives in three dedicated folders.
 | **ASJR Gann Ideas V6** | Eight separately toggleable horizontal price families; static/dynamic anchors; confirmed source timeframe; **12 and 90 vertical cycles**; right-side price labels and per-method colours | [V6 Pine source](Gann%20Ideas/ASJR_Gann_Ideas_V6.pine) · [Guide](Gann%20Ideas/README.md) |
 | **ASJR Gann Ideas V1–V5** | Preserved development history for levels, colour controls, label placement and right-side label spacing | [Versions folder](Gann%20Ideas/) |
 | **ASJR Candle Patterns** | 17 selectable candlestick pattern groups, bullish/bearish highlighting, optional quality gates and Gann reference confluence | [Pine source](Candle%20Patterns/ASJR_Candle_Patterns.pine) · [Guide](Candle%20Patterns/README.md) |
-| **ASJR Renko V1 — Timeframe Friendly** | Close-confirmed Renko-style bricks for 1m/5m/15m/1H/4H/daily charts, ATR/fixed/percentage sizing, per-brick EMA9/20 crossing with optional slope filter and alerts | [V1 Pine source](Renko/ASJR_Renko_V1.pine) · [Guide](Renko/README.md) |
+| **ASJR Renko V2 — Timeframe Friendly** | Clear wickless Renko-style blocks for 1m/5m/15m/1H/4H/daily charts, ATR/fixed/percentage brick sizing, optional individual boxes, brick-based EMA9/20 and confirmed watch alerts | [V2 Pine source](Renko/ASJR_Renko_V2.pine) · [Guide](Renko/README.md) · [V1](Renko/ASJR_Renko_V1.pine) |
 
 **Eight Gann price families:** Factor of Eight; Yearly Highs/Lows; Power of Squares; Power of Cubes; Square of Nine Static; Square of Nine Dynamic H; Square of Nine Dynamic C; Square of 360. The additional two switches are the **12 and 90 vertical cycles**.
 
 **Candle Patterns** covers engulfing, hammer/shooting star, morning/evening star, pin bars, inside/outside bars, tweezers, piercing/dark-cloud patterns, harami, doji, marubozu, three soldiers/crows, **Gann level sweep + reclaim**, and **ASJR Three Candle Detector**. The Pine Three-Candle visual detector is **not identical** to every Python Three-Candle entry model.
 
-**Renko limitation:** ASJR Renko V1 approximates bricks from completed ordinary chart candles, not tick-by-tick prices; synthetic bricks/EMAs are for confirmation, never for presumed fills. See the [Renko guide](Renko/README.md).
+**Renko limitation:** ASJR Renko V2 approximates bricks from completed ordinary chart candles, not tick-by-tick prices; the wide rendering aggregates multiple bricks in a time candle and the individual box positions are visual estimates, not true formation timestamps. Synthetic bricks/EMAs are for confirmation, never for presumed fills. See the [Renko guide](Renko/README.md).
 
 **Validation:** Pine files are committed source/research builds; the folders document that TradingView Pine Editor compilation and live-chart validation were **not yet independently confirmed**. Python reference tests validate selected numerical/pattern examples, **not** the TradingView runtime. No Pine indicator in this repository is an automated broker order strategy.
 
