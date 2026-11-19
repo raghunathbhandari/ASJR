@@ -1,39 +1,36 @@
-# ASJR Renko V3 — Contiguous, Brick-Only Chart
+# ASJR Renko V4 — Scroll-Aware Contiguous Bricks
 
-**Current:** [ASJR Renko V3 Pine Script](ASJR_Renko_V3.pine) · [V2](ASJR_Renko_V2.pine) · [V1](ASJR_Renko_V1.pine) · [ASJR Home](../README.md)
+**Current:** [ASJR Renko V4 Pine Script](ASJR_Renko_V4.pine) · [V3](ASJR_Renko_V3.pine) · [V2](ASJR_Renko_V2.pine) · [V1](ASJR_Renko_V1.pine) · [ASJR Home](../README.md)
 
-V3 fixes the 19 November 2026 AMD daily screenshots: V1 showed mostly EMA steps; V2 displayed intermittent price bodies with time gaps. **V3 draws actual contiguous, full rectangular green/red bricks**, not time-spaced indicator candles. No EMA lines, BUY/SELL icons, or strategy alerts are included in this brick-only version.
+**V4 fixes the historical scrolling issue:** V3 drew bricks in synthetic slots anchored to the **latest chart candle**, so scrolling backward left the bricks behind. V4 uses TradingView's `chart.left_visible_bar_time` / `chart.right_visible_bar_time` values, which **recalculate when scrolling or zooming**. It reconstructs bricks only from source candles at or before the currently visible **right edge** and packs bricks inside the displayed chart window. Using **time-based drawing coordinates** avoids Pine's limit on drawing more than 9999 bars away from the current bar.
 
-## Usage
+## How to use
 
-1. Open [ASJR_Renko_V3.pine](ASJR_Renko_V3.pine), copy the entire source to **TradingView Pine Editor** and add it to a **standard time-based** chart.
-2. Choose **1m, 5m, 15m, 1H, 4H or 1D** (works with other chart timeframes too).
-3. To view **only** Renko, hide the underlying symbol's candles using the symbol **eye** control. V3 also defaults to making original chart bars transparent.
-4. V3 draws up to **100 of the latest bricks**. Set **Horizontal brick width (chart bars)** to **2** initially, increase to **3** for wider blocks, or reduce to **1** to fit more across the screen.
-5. Default sizing is **ATR snapshot 14 × 0.50**. For a genuinely constant user-chosen brick amount, use **Fixed** (e.g. USD 2 on AMD, as a visibility experiment, **not** a trading parameter). If you see too few bricks, reduce the size.
-6. Use **Last bricks to show** to change drawing history (max 400). There are no MA lines, crossover signals, or BUY/SELL triangles to distract from brick construction.
+1. Copy [ASJR_Renko_V4.pine](ASJR_Renko_V4.pine) into TradingView Pine Editor; remove earlier Renko versions from the chart.
+2. Keep the underlying chart type **Candles**, then choose any timeframe such as **1m / 5m / 15m / 1H / 4H / 1D**.
+3. To see only blocks, hide the original price series with TradingView's **eye control**. V4 tries to make ordinary candles transparent by default.
+4. Default sizing: **ATR snapshot 14 × 0.50**, drawing last **100 bricks**, width **2 visible chart bars** per brick. Fixed-size brick mode is more stable for historical comparisons.
+5. Scroll back to an earlier date: the Renko block sequence should **rebuild using prices available by the visible right edge**, not continue showing today's most recent bricks. Zooming in/out changes how many blocks can fit in the visible width.
+6. No EMA lines, buy/sell icons or alerts — this is a **brick-only chart**.
 
-## How it works
+## What the blocks mean
 
-V3 stores the last 1,800 **confirmed chart candle closes**, then at the chart's right edge reconstructs price moves using a **single constant brick size for the entire rendering**. It applies an ordinary **two-brick reversal threshold**, with an opposite brick printed one increment away from the prior Renko close and continuing a second increment in the reversal direction. Each completed brick is a full rectangular box and boxes are placed **directly next to each other on a synthetic horizontal sequence**. No blank time-bar columns are inserted.
+- **Continuation:** one completed brick-size move in the same direction.
+- **Reversal:** a two-brick-size threshold before drawing the next opposite-direction block.
+- **Equal-height rectangles:** each displayed brick has the selected price height, boxes touch horizontally.
+- **Synthetic x-axis:** the horizontal positions are packed into available visible chart bars for readability; they **are not exact trading timestamps**. Scrolling or zooming therefore rebuilds the displayed sequence, **not** a timestamp-aligned historical plot.
+- **Price source:** confirmed chart closes, **not tick-by-tick data**. Intrabar swings cannot be inferred.
+- **ATR snapshot mode:** sizes are calculated from ATR at the visible right edge, then applied as a single constant brick size to all replayed candles. This means moving the right edge can change older brick patterns. Use **Fixed** to compare periods with the same brick size.
+- **Replay history:** up to last 1800 *closed source candles* before the visible right edge, subject to TradingView's loaded chart history. Changing the start of that replay can affect the Renko anchor and thus the brick sequence.
+- **Performance:** Pine needs to reconstruct the brick sequence each time the visible range changes, which may slow extensive scrolling/zooming on low timeframes.
+- **Drawing cap:** up to 400 contiguous brick boxes, constrained further by the number of chart bars visible and chosen brick width.
 
-The horizontal brick positions are **not real timestamps**. The chart's underlying x-axis remains a time axis; V3 uses consecutive time-bar slots purely to give the bricks a uniform visual width. Unlike real Renko chart engines, an overlay cannot replace TradingView's x-axis with a brick-index axis. You may need to zoom to display the number of bricks you prefer.
+**Limitations:** This is a synthetic close-based price-brick display, not TradingView native/tick Renko. Underlying date axis remains a normal time axis even though bricks are packed left-to-right for visual readability. Do not use the synthetic x position or historical brick touch as a trade fill. Actual market candles and prices are required for entries and stop-loss placement.
 
-**Sizing caveat:** ATR snapshot and Percent snapshot modes take the **latest confirmed** ATR or reference price and **replay the whole retained history with that one brick size**. Consequently, past brick shapes can change as new candles arrive and the snapshot size changes. **Fixed** mode avoids that moving brick-size effect (though loaded-history length still affects the initial anchor).
+**Validation status:** Source and GitHub links are verified; TradingView Pine Editor compilation and the user's scroll test are **not yet independently verified**.
 
-## Limitations
+## ASJR repository rule
 
-- This is a **close-based reconstruction**, NOT native Renko and NOT tick-based. Price crossings missed inside a 1m/15m/1D candle cannot be recovered from completed closes alone.
-- A price movement large enough to create several bricks creates several adjacent rectangles; their visual horizontal positions are synthetic, not their actual formation timestamps.
-- The first retained candle anchors the reconstruction. Older chart history, different timeframes or a different source-candle history length can change the start and therefore the reconstructed bricks.
-- Drawing uses TradingView boxes (up to 400 visible), re-created on the last chart bar; do not interpret the brick positions as bar-by-bar trade fills, use the chart's actual prices for execution and risk.
-- Processing is based on chart closes, so a live partial candle **does not** create an unfinished brick.
-- V3 intentionally has **no EMA, signal markers, BUY/SELL icons or alerts**. Keep your other ASJR indicators independent if you need them.
+For every new TradingView indicator: **dedicated folder + versioned Pine Script + folder README + main README link**.
 
-**Validation:** The V3 source and repository links are committed; independent TradingView Pine Editor compilation and AMD chart rendering are **not yet verified**. Confirm visual geometry in TradingView before relying on any part of the visual analysis.
-
-## Repository rule
-
-For every future ASJR TradingView indicator: **dedicated folder + versioned .pine file + folder README + main README link**.
-
-*Educational/research-only tool; not trading advice.*
+*Educational / research use only.*
