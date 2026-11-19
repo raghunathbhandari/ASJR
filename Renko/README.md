@@ -1,51 +1,39 @@
-# ASJR Renko V2 — Timeframe Friendly
+# ASJR Renko V3 — Contiguous, Brick-Only Chart
 
-[**Current Pine Script V2**](ASJR_Renko_V2.pine) · [Previous V1](ASJR_Renko_V1.pine) · [Back to ASJR home](../README.md)
+**Current:** [ASJR Renko V3 Pine Script](ASJR_Renko_V3.pine) · [V2](ASJR_Renko_V2.pine) · [V1](ASJR_Renko_V1.pine) · [ASJR Home](../README.md)
 
-**What changed in V2:** V1's narrow one-bar boxes and always-on cyan/orange EMA lines made daily charts appear as *step lines rather than Renko bricks*. V2 defaults to **wide, wickless green/red synthetic Renko candles**, disables EMA lines by default and sets the ATR multiplier to **0.50** (tune it by ticker/timeframe). Optional individual-sized boxes can be time-split inside each original bar.
+V3 fixes the 19 November 2026 AMD daily screenshots: V1 showed mostly EMA steps; V2 displayed intermittent price bodies with time gaps. **V3 draws actual contiguous, full rectangular green/red bricks**, not time-spaced indicator candles. No EMA lines, BUY/SELL icons, or strategy alerts are included in this brick-only version.
 
-## Timeframes and brick construction
+## Usage
 
-- Runs on **standard, time-based TradingView charts**: 1m, 3m, 5m, 15m, 1H, 4H, 1D and other supported chart intervals. No native Renko chart type is required.
-- Processes **completed chart candle closes** only. It does not use an imagined high/low order within each candle, and it does not generate unfinished-bar signals.
-- **ATR / Fixed / Percent** sizing. ATR 14 × 0.50 is a visibility-oriented starting point, not a proven best parameter. Fixed uses constant price-unit increments. ATR and Percent sizes can vary when the source price/volatility changes.
-- **Continuation** needs one new brick size. **Reversal** needs a two-brick price move before the first opposite brick is printed.
-- Large movements may generate several synthetic bricks on a single original chart bar. Up to 50 per bar by default; beyond the limit, the residual movement can be caught up on later bars.
+1. Open [ASJR_Renko_V3.pine](ASJR_Renko_V3.pine), copy the entire source to **TradingView Pine Editor** and add it to a **standard time-based** chart.
+2. Choose **1m, 5m, 15m, 1H, 4H or 1D** (works with other chart timeframes too).
+3. To view **only** Renko, hide the underlying symbol's candles using the symbol **eye** control. V3 also defaults to making original chart bars transparent.
+4. V3 draws up to **100 of the latest bricks**. Set **Horizontal brick width (chart bars)** to **2** initially, increase to **3** for wider blocks, or reduce to **1** to fit more across the screen.
+5. Default sizing is **ATR snapshot 14 × 0.50**. For a genuinely constant user-chosen brick amount, use **Fixed** (e.g. USD 2 on AMD, as a visibility experiment, **not** a trading parameter). If you see too few bricks, reduce the size.
+6. Use **Last bricks to show** to change drawing history (max 400). There are no MA lines, crossover signals, or BUY/SELL triangles to distract from brick construction.
 
-## Choose the display in indicator settings
+## How it works
 
-| Render mode | What you see | Best for |
-| --- | --- | --- |
-| **Wide Renko candles** (default) | A wide, wickless, coloured synthetic price body on a time candle that creates one or more bricks. If multiple bricks form, the single wide body **aggregates** them. | Clear visibility on daily, 4H, 15m or 5m. |
-| **Individual brick boxes** | Actual per-brick-height rectangles horizontally divided across the time-bar slot. | Inspecting the number and sizes of completed bricks. |
-| **Both** | Wide synthetic body plus individual boxes. | Debugging and comparing the two views. |
+V3 stores the last 1,800 **confirmed chart candle closes**, then at the chart's right edge reconstructs price moves using a **single constant brick size for the entire rendering**. It applies an ordinary **two-brick reversal threshold**, with an opposite brick printed one increment away from the prior Renko close and continuing a second increment in the reversal direction. Each completed brick is a full rectangular box and boxes are placed **directly next to each other on a synthetic horizontal sequence**. No blank time-bar columns are inserted.
 
-**Important:** Bricks do not appear on every time bar, because Renko is **price-driven**. An absence of a new block means no whole Renko brick formed by that completed time candle. On a daily chart, a larger ATR threshold deliberately gives fewer blocks than on a 1-minute chart. Adjust ATR multiplier or use Fixed to inspect sensitivity. If the underlying chart is too visually prominent, leave **Fade original price candles = ON**, or hide the symbol's candle series in TradingView. Plotting an indicator over a time-based chart cannot change the chart's time axis into a true equal-width, brick-index axis.
+The horizontal brick positions are **not real timestamps**. The chart's underlying x-axis remains a time axis; V3 uses consecutive time-bar slots purely to give the bricks a uniform visual width. Unlike real Renko chart engines, an overlay cannot replace TradingView's x-axis with a brick-index axis. You may need to zoom to display the number of bricks you prefer.
 
-**About multiple bricks within one source bar:** V2 positions the individual boxes at *artificial, evenly divided positions* inside that bar's timestamp interval for presentation. These are **not exact intrabar formation times**. Use Wide mode for the cleanest time-aligned overlay.
+**Sizing caveat:** ATR snapshot and Percent snapshot modes take the **latest confirmed** ATR or reference price and **replay the whole retained history with that one brick size**. Consequently, past brick shapes can change as new candles arrive and the snapshot size changes. **Fixed** mode avoids that moving brick-size effect (though loaded-history length still affects the initial anchor).
 
-## EMA confirmation and alerts
+## Limitations
 
-Synthetic EMA9 and EMA20 advance **per completed brick**, not per source time candle. EMA lines are **off by default** so the bricks remain visible. Turning on the slope filter requires EMA9 and EMA20 to both rise for a bullish cross or both fall for a bearish cross. Historical bars use their final close; real-time signals are generated after the actual source candle is confirmed.
+- This is a **close-based reconstruction**, NOT native Renko and NOT tick-based. Price crossings missed inside a 1m/15m/1D candle cannot be recovered from completed closes alone.
+- A price movement large enough to create several bricks creates several adjacent rectangles; their visual horizontal positions are synthetic, not their actual formation timestamps.
+- The first retained candle anchors the reconstruction. Older chart history, different timeframes or a different source-candle history length can change the start and therefore the reconstructed bricks.
+- Drawing uses TradingView boxes (up to 400 visible), re-created on the last chart bar; do not interpret the brick positions as bar-by-bar trade fills, use the chart's actual prices for execution and risk.
+- Processing is based on chart closes, so a live partial candle **does not** create an unfinished brick.
+- V3 intentionally has **no EMA, signal markers, BUY/SELL icons or alerts**. Keep your other ASJR indicators independent if you need them.
 
-Alert conditions: **ASJR Renko V2 - BUY watch** and **ASJR Renko V2 - SELL watch**. In TradingView choose **Once Per Bar Close**; this indicator is a *watch/confirmation tool*, not an automatic order or a backtested trading strategy. For ASJR, confirm a trade with the original time-based price candles, Gann levels, structure and risk/SL.
+**Validation:** The V3 source and repository links are committed; independent TradingView Pine Editor compilation and AMD chart rendering are **not yet verified**. Confirm visual geometry in TradingView before relying on any part of the visual analysis.
 
-## Installation
+## Repository rule
 
-1. Open [ASJR_Renko_V2.pine](ASJR_Renko_V2.pine), copy into TradingView Pine Editor and add the indicator to a **standard candlestick** chart.
-2. Select **1m / 5m / 15m / 1H / 4H / Daily** from the chart timeframe picker. Each timeframe independently recomputes its own close-based bricks.
-3. Leave the default **Wide Renko candles** display and **Plot brick EMAs = OFF** for the clearest chart. Compare fixed brick sizes and ATR multipliers to your instrument.
-4. If needed, switch to **Individual brick boxes** to inspect discrete steps. Do not treat the visual x positions of those boxes as real formation timestamps.
-5. Use the alert conditions only after visually validating on your chart. V1 is preserved for comparison.
+For every future ASJR TradingView indicator: **dedicated folder + versioned .pine file + folder README + main README link**.
 
-## Accuracy and validation limitations
-
-This is an **approximation**, not TradingView's native Renko construction, tick-by-tick bars or true synthetic Renko timestamps. It uses only completed OHLC **closes**, so real intrabar swings are missing. The baseline depends on how much chart history loads. Synthetic prices and indicator alert points are not executable fills. ATR-adjusted brick sizes complicate comparison with conventional constant-size Renko; select Fixed if constant-height Renko is required.
-
-**Validation status:** The Pine v6 source is committed, but it has **not been independently compiled or visually tested inside TradingView**. The next check is loading V2 in Pine Editor and verifying AMD/COHR on 1m, 5m, 15m and 1D; any compile/runtime errors should be corrected before trading or enabling alerts.
-
-## ASJR repository rule
-
-Each new TradingView indicator lives in its own GitHub **folder**, includes a **versioned .pine** source and **folder README**, and has a link from the main **README.md**.
-
-*Research/educational use; no financial advice.*
+*Educational/research-only tool; not trading advice.*
