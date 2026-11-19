@@ -5,7 +5,7 @@ indicator("ASJR Gann Ideas V8", shorttitle="ASJR Gann V8", overlay=true, max_lin
 // 5m/15m unchanged at every 45 degrees; 1H=90 degrees, 4H=180 degrees, Daily=360 degrees.
 // A dropdown overrides the density, and Chart timeframe is the default price source.
 // Continues V7 visible-price coverage, extended angles, and V6 future label rail.
-// Retains V6 label rail and all 10 independent feature checkboxes.
+// Retains all 10 independent feature switches; line labels are optional (OFF by default).
 // Square-of-9 levels extend beyond +/-360 degrees when price coverage requires it.
 // Eight independently enabled horizontal level families, and exactly two
 // independently enabled vertical cycles named 12 and 90.
@@ -44,6 +44,7 @@ int rangeLen = input.int(60, "Factor of 8 range — source bars", minval=10, max
 float s360Turn = input.float(90.0, "Square of 360: price units per full turn (WORKING)", minval=0.000001, group=GA)
 
 string GV = "04 — Appearance"
+bool showLineLabels = input.bool(false, "Show line labels", group=GV, tooltip="Show or hide all horizontal Gann level labels and future 12/90 cycle labels. Lines and calculations remain visible.")
 float visiblePct = input.float(20.0, "Minimum coverage ±% of last price", minval=0.1, maxval=10000, group=GV)
 float chartPadPct = input.float(5.0, "Extra coverage beyond visible candles %", minval=0.0, maxval=25.0, step=0.5, group=GV)
 int maxS9Steps = input.int(80, "Square of 9 maximum intervals per direction", minval=8, maxval=80, group=GV)
@@ -130,7 +131,7 @@ f_level(float raw, string txt, color cc) =>
     if not na(raw) and raw > 0 and raw >= coverageLow and raw <= coverageHigh and array.size(hLines) < horizontalMax
         float p = math.round_to_mintick(raw)
         int overlap = 0
-        if array.size(hPrices) > 0
+        if showLineLabels and array.size(hPrices) > 0
             for j = 0 to array.size(hPrices) - 1
                 if math.abs(array.get(hPrices, j) - p) <= labelGroupDistance
                     overlap += 1
@@ -138,11 +139,12 @@ f_level(float raw, string txt, color cc) =>
         int labelX = bar_index + int(math.min(480, labelShift + overlap * labelStagger))
         // Extend LEFT across history; its RIGHT endpoint follows the price label in blank space.
         line ln = line.new(bar_index, p, labelX, p, xloc=xloc.bar_index, extend=extend.left, color=cc, width=1)
-        // Floating label remains ABOVE its exact price level, outside candle-forming area.
-        label lb = label.new(labelX, p, txt + "  " + str.tostring(p, format.mintick), xloc=xloc.bar_index, style=label.style_label_up, color=color.new(cc, labelTransparency), textcolor=color.new(cc, 0), size=resolvedPriceLabelSize)
         array.push(hLines, ln)
-        array.push(hLabels, lb)
-        array.push(hPrices, p)
+        // Keep level lines, but allocate no labels while the display option is off.
+        if showLineLabels
+            label lb = label.new(labelX, p, txt + "  " + str.tostring(p, format.mintick), xloc=xloc.bar_index, style=label.style_label_up, color=color.new(cc, labelTransparency), textcolor=color.new(cc, 0), size=resolvedPriceLabelSize)
+            array.push(hLabels, lb)
+            array.push(hPrices, p)
 
 f_square9(float anchor, string prefix, color cc) =>
     if not na(anchor) and anchor > 0
@@ -292,9 +294,11 @@ if barstate.islast
         int nx12 = unit12 == "bars" ? (na(firstAnchorBar) ? na : bar_index + (12 - (bar_index - firstAnchorBar) % 12)) : f_nextTime(timeAnchor, 12, unit12, time)
         if not na(nx12)
             future12 := line.new(nx12, floorPrice, nx12, roof, xloc=unit12 == "bars" ? xloc.bar_index : xloc.bar_time, extend=extend.both, color=col12, style=line.style_dashed, width=2)
-            next12Label := label.new(nx12, roof + pad, "12 " + unit12, xloc=unit12 == "bars" ? xloc.bar_index : xloc.bar_time, style=label.style_label_down, color=color.new(col12, 75), textcolor=color.new(col12, 0), size=size.tiny)
+            if showLineLabels
+                next12Label := label.new(nx12, roof + pad, "12 " + unit12, xloc=unit12 == "bars" ? xloc.bar_index : xloc.bar_time, style=label.style_label_down, color=color.new(col12, 75), textcolor=color.new(col12, 0), size=size.tiny)
     if show90 and time >= timeAnchor
         int nx90 = unit90 == "bars" ? (na(firstAnchorBar) ? na : bar_index + (90 - (bar_index - firstAnchorBar) % 90)) : f_nextTime(timeAnchor, 90, unit90, time)
         if not na(nx90)
             future90 := line.new(nx90, floorPrice, nx90, roof, xloc=unit90 == "bars" ? xloc.bar_index : xloc.bar_time, extend=extend.both, color=col90, style=line.style_dashed, width=2)
-            next90Label := label.new(nx90, roof + pad * 1.5, "90 " + unit90, xloc=unit90 == "bars" ? xloc.bar_index : xloc.bar_time, style=label.style_label_down, color=color.new(col90, 75), textcolor=color.new(col90, 0), size=size.tiny)
+            if showLineLabels
+                next90Label := label.new(nx90, roof + pad * 1.5, "90 " + unit90, xloc=unit90 == "bars" ? xloc.bar_index : xloc.bar_time, style=label.style_label_down, color=color.new(col90, 75), textcolor=color.new(col90, 0), size=size.tiny)
