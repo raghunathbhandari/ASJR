@@ -1,0 +1,21 @@
+[Unit]
+Description=ASJR Restricted Admin Bridge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/trading/ASJR
+ExecStart=/root/trading/venv_new/bin/python -u /root/trading/ASJR/Rudra-DDB/AdminBridge/admin_bridge_worker.py --interval 60
+Restart=on-failure
+RestartSec=30
+Environment=PYTHONUNBUFFERED=1
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=false
+# Compatibility with /root/trading layout; review before using production root.
+# No arbitrary shell commands are accepted by the bridge.
+
+[Install]
+WantedBy=multi-user.target
