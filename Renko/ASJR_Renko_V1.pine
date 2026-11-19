@@ -1,0 +1,113 @@
+//@version=6
+// ASJR Renko V1 - timeframe-friendly, close-confirmed Renko-style bricks.
+// Original ASJR research overlay. Not a tick-by-tick or native Renko feed.
+indicator("ASJR Renko V1 - Timeframe Friendly", shorttitle="ASJR Renko", overlay=true, max_boxes_count=500)
+
+const string G_BRICK = "01 - Brick calculation"
+const string G_TREND = "02 - Renko EMA confirmation"
+const string G_VISUAL = "03 - Chart display"
+
+string mode = input.string("ATR", "Brick size mode", options=["ATR", "Fixed", "Percent"], group=G_BRICK)
+int atrLength = input.int(14, "ATR length", minval=1, group=G_BRICK)
+float atrMultiplier = input.float(1.0, "ATR multiplier", minval=0.05, step=0.05, group=G_BRICK)
+float fixedSize = input.float(1.0, "Fixed brick size (price units)", minval=0.01, step=0.05, group=G_BRICK)
+float percentSize = input.float(0.25, "Brick size (% of price)", minval=0.01, step=0.05, group=G_BRICK)
+int maxBricksPerBar = input.int(25, "Max bricks per chart candle", minval=1, maxval=100, group=G_BRICK, tooltip="Caps work on unusually large gaps. Excess price movement is processed on subsequent confirmed chart candles.")
+
+int fastLength = input.int(9, "Renko fast EMA", minval=1, group=G_TREND)
+int slowLength = input.int(20, "Renko slow EMA", minval=2, group=G_TREND)
+bool requireSlopes = input.bool(true, "Require both EMA slopes to agree", group=G_TREND, tooltip="BUY: EMA9 and EMA20 both rising. SELL: both falling.")
+bool showEma = input.bool(true, "Show Renko EMA lines", group=G_TREND)
+bool showCrossSignals = input.bool(true, "Show confirmed EMA cross markers", group=G_TREND)
+
+bool showBricks = input.bool(true, "Draw Renko-style price bricks", group=G_VISUAL)
+bool showStep = input.bool(false, "Show confirmed Renko close step line", group=G_VISUAL)
+bool fadeCandles = input.bool(false, "Fade standard chart candles", group=G_VISUAL)
+int transparency = input.int(40, "Brick fill transparency", minval=0, maxval=95, group=G_VISUAL)
+int keepBricks = input.int(350, "Maximum drawn bricks", minval=25, maxval=450, group=G_VISUAL)
+color upColor = input.color(color.lime, "Up brick", group=G_VISUAL)
+color downColor = input.color(color.red, "Down brick", group=G_VISUAL)
+
+// The chart's own closed candles are the source. The indicator consequently
+// works on 1m/5m/15m/1H/4H/D and other time-based chart intervals.
+// ATR and percentage sizing can vary from bar to bar; use Fixed for constant
+// brick increments. Round sizes to the symbol's minimum tradable price step.
+float atrValue = ta.atr(atrLength)
+float rawSize = mode == "ATR" ? atrValue * atrMultiplier : mode == "Fixed" ? fixedSize : close * percentSize / 100.0
+float brickSize = not na(rawSize) and rawSize > 0 ? math.max(syminfo.mintick, math.round(rawSize / syminfo.mintick) * syminfo.mintick) : na
+
+var float renkoClose = na
+var int trend = 0
+var int completedBricks = 0
+var float renkoEmaFast = na
+var float renkoEmaSlow = na
+var array<box> bricks = array.new<box>()
+
+float fastAlpha = 2.0 / (fastLength + 1.0)
+float slowAlpha = 2.0 / (slowLength + 1.0)
+bool bullishCross = false
+bool bearishCross = false
+bool newUpBrick = false
+bool newDownBrick = false
+
+// One update per completed chart candle avoids projected/unfinished signals.
+// Close-only inputs deliberately avoid guessing whether the high or low came
+// first within a minute (or other OHLC candle).
+if barstate.isconfirmed and not na(close) and not na(brickSize)
+    if na(renkoClose)
+        renkoClose := close
+    else
+        for i = 0 to maxBricksPerBar - 1
+            float upThreshold = renkoClose + brickSize * (trend == -1 ? 2.0 : 1.0)
+            float downThreshold = renkoClose - brickSize * (trend == 1 ? 2.0 : 1.0)
+            bool moveUp = close >= upThreshold
+            bool moveDown = close <= downThreshold
+            if not moveUp and not moveDown
+                break
+
+            // Classic two-brick reversal: the first opposite-direction brick
+            // starts one brick away from the last trend's close.
+            bool isUp = moveUp
+            float openPrice = isUp ? renkoClose + (trend == -1 ? brickSize : 0.0) : renkoClose - (trend == 1 ? brickSize : 0.0)
+            float closePrice = isUp ? openPrice + brickSize : openPrice - brickSize
+
+            renkoClose := closePrice
+            trend := isUp ? 1 : -1
+            completedBricks += 1
+            newUpBrick := newUpBrick or isUp
+            newDownBrick := newDownBrick or not isUp
+
+            if showBricks
+                color brickColor = isUp ? upColor : downColor
+                box drawn = box.new(left=bar_index - 1, top=math.max(openPrice, closePrice), right=bar_index, bottom=math.min(openPrice, closePrice), border_color=brickColor, border_width=1, bgcolor=color.new(brickColor, transparency))
+                array.push(bricks, drawn)
+                if array.size(bricks) > keepBricks
+                    box.delete(array.shift(bricks))
+
+            // The EMA advances for EACH confirmed brick, not for every
+            // time-based candle. Multiple bricks on a single candle count.
+            float previousFast = renkoEmaFast
+            float previousSlow = renkoEmaSlow
+            renkoEmaFast := na(renkoEmaFast) ? closePrice : renkoEmaFast + fastAlpha * (closePrice - renkoEmaFast)
+            renkoEmaSlow := na(renkoEmaSlow) ? closePrice : renkoEmaSlow + slowAlpha * (closePrice - renkoEmaSlow)
+
+            bool ready = completedBricks >= slowLength and not na(previousFast) and not na(previousSlow)
+            bool fastRising = renkoEmaFast > previousFast
+            bool slowRising = renkoEmaSlow > previousSlow
+            bool fastFalling = renkoEmaFast < previousFast
+            bool slowFalling = renkoEmaSlow < previousSlow
+            bool upCross = ready and previousFast <= previousSlow and renkoEmaFast > renkoEmaSlow
+            bool downCross = ready and previousFast >= previousSlow and renkoEmaFast < renkoEmaSlow
+            bullishCross := bullishCross or (upCross and (not requireSlopes or (fastRising and slowRising)))
+            bearishCross := bearishCross or (downCross and (not requireSlopes or (fastFalling and slowFalling)))
+
+// These prices are synthetic confirmation/visualisation values, not fills.
+plot(showStep ? renkoClose : na, title="Renko confirmed close", color=trend == 1 ? upColor : downColor, linewidth=2, style=plot.style_stepline)
+plot(showEma ? renkoEmaFast : na, title="Renko EMA fast", color=color.aqua, linewidth=2, style=plot.style_stepline)
+plot(showEma ? renkoEmaSlow : na, title="Renko EMA slow", color=color.orange, linewidth=2, style=plot.style_stepline)
+barcolor(fadeCandles ? color.new(color.gray, 75) : na)
+plotshape(showCrossSignals and bullishCross, title="Bullish Renko EMA cross", style=shape.triangleup, location=location.belowbar, color=upColor, size=size.tiny)
+plotshape(showCrossSignals and bearishCross, title="Bearish Renko EMA cross", style=shape.triangledown, location=location.abovebar, color=downColor, size=size.tiny)
+
+alertcondition(bullishCross, title="ASJR Renko - BUY watch", message="ASJR Renko: confirmed bullish EMA cross with optional rising slopes on {{ticker}} / {{interval}}. Verify real-price entry and Gann level.")
+alertcondition(bearishCross, title="ASJR Renko - SELL watch", message="ASJR Renko: confirmed bearish EMA cross with optional falling slopes on {{ticker}} / {{interval}}. Verify real-price entry and Gann level.")
