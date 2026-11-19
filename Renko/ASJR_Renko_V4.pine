@@ -1,0 +1,118 @@
+//@version=6
+// ASJR Renko V4 - scroll-aware contiguous synthetic bricks.
+// Replays confirmed chart closes with ONE consistent brick size per redraw.
+// Boxes use synthetic horizontal positions; they do NOT represent candle times.
+indicator("ASJR Renko V4 - Scroll-Aware Bricks", shorttitle="ASJR Renko V4", overlay=true, behind_chart=false, max_boxes_count=500)
+
+const string G_SIZE = "01 - Brick size"
+const string G_BRICKS = "02 - Brick-only display"
+
+string mode = input.string("ATR snapshot", "Brick size", options=["ATR snapshot", "Fixed", "Percent snapshot"], group=G_SIZE)
+int atrPeriod = input.int(14, "ATR period", minval=1, group=G_SIZE)
+float atrFactor = input.float(0.50, "ATR multiplier", minval=0.05, step=0.05, group=G_SIZE)
+float fixedSize = input.float(2.0, "Fixed brick price amount", minval=0.01, step=0.10, group=G_SIZE)
+float percentSize = input.float(0.50, "Price percentage per brick", minval=0.01, step=0.05, group=G_SIZE)
+int sourceCount = input.int(1800, "Closed source candles to replay", minval=200, maxval=5000, group=G_SIZE, tooltip="Historical replay ends at the RIGHT edge of the visible chart, not the latest live bar.")
+int maxPerSourceBar = input.int(60, "Maximum bricks from one source candle", minval=1, maxval=150, group=G_SIZE)
+
+int displayCount = input.int(100, "Last bricks to show", minval=10, maxval=400, group=G_BRICKS, tooltip="V4 redraws these bricks within the currently visible chart width when scrolling/zooming.")
+int brickWidth = input.int(2, "Horizontal brick width (chart bars)", minval=1, maxval=5, group=G_BRICKS, tooltip="Controls drawing width only; horizontal locations do NOT indicate event time.")
+int opacity = input.int(0, "Brick transparency", minval=0, maxval=90, group=G_BRICKS)
+color riseColor = input.color(color.rgb(38, 166, 154), "Rising brick", group=G_BRICKS)
+color fallColor = input.color(color.rgb(239, 83, 80), "Falling brick", group=G_BRICKS)
+bool hideBaseBars = input.bool(true, "Make regular chart bars transparent", group=G_BRICKS, tooltip="For an entirely brick-only view, also hide the chart's main symbol using TradingView's eye control.")
+
+// These two TradingView values trigger a full indicator redraw each time
+// the visible chart range changes (scroll or zoom).
+int leftVisibleTime = chart.left_visible_bar_time
+int rightVisibleTime = chart.right_visible_bar_time
+
+// Cache only fully closed source candles up to the RIGHTMOST VISIBLE bar.
+// This prevents a scroll into the past from displaying future data.
+var int leftVisibleIndex = na
+var int rightVisibleIndex = na
+var float rightVisibleAtr = na
+var array<float> sourceCloses = array.new<float>()
+
+float atrValue = ta.atr(atrPeriod)
+if time == leftVisibleTime
+    leftVisibleIndex := bar_index
+if time == rightVisibleTime
+    rightVisibleIndex := bar_index
+    rightVisibleAtr := barstate.isconfirmed ? atrValue : atrValue[1]
+if barstate.isconfirmed and time <= rightVisibleTime and not na(close)
+    array.push(sourceCloses, close)
+    if array.size(sourceCloses) > sourceCount
+        array.shift(sourceCloses)
+
+barcolor(hideBaseBars ? color.new(color.gray, 100) : na)
+var array<box> rendered = array.new<box>()
+
+// Full chart execution is triggered by visible range changes; drawing is
+// deferred until the last processed chart bar so index bounds are known.
+if barstate.islast
+    if array.size(rendered) > 0
+        for b in rendered
+            box.delete(b)
+        array.clear(rendered)
+
+    int totalCloses = array.size(sourceCloses)
+    if totalCloses >= 2 and not na(leftVisibleIndex) and not na(rightVisibleIndex)
+        float referencePrice = array.get(sourceCloses, totalCloses - 1)
+        float wantedSize = mode == "Fixed" ? fixedSize : mode == "Percent snapshot" ? referencePrice * percentSize / 100.0 : rightVisibleAtr * atrFactor
+        float unit = not na(wantedSize) and wantedSize > 0 ? math.max(syminfo.mintick, math.round(wantedSize / syminfo.mintick) * syminfo.mintick) : na
+        if not na(unit)
+            array<float> oBricks = array.new<float>()
+            array<float> cBricks = array.new<float>()
+            array<bool> upBricks = array.new<bool>()
+
+            float anchor = math.round(array.get(sourceCloses, 0) / syminfo.mintick) * syminfo.mintick
+            float brickClose = anchor
+            int direction = 0
+
+            // Close-only reconstruction, using a constant BRICK HEIGHT for
+            // the entire visible replay. No fake high/low sequence.
+            for j = 1 to totalCloses - 1
+                float price = array.get(sourceCloses, j)
+                for k = 0 to maxPerSourceBar - 1
+                    bool goUp = price >= brickClose + unit * (direction == -1 ? 2.0 : 1.0)
+                    bool goDown = price <= brickClose - unit * (direction == 1 ? 2.0 : 1.0)
+                    if not goUp and not goDown
+                        break
+
+                    // Classic two-unit reversal threshold; the first
+                    // opposite brick is offset by one unit from the peak.
+                    float brickOpen = goUp ? brickClose + (direction == -1 ? unit : 0.0) : brickClose - (direction == 1 ? unit : 0.0)
+                    float nextClose = brickOpen + (goUp ? unit : -unit)
+                    brickOpen := math.round(brickOpen / syminfo.mintick) * syminfo.mintick
+                    nextClose := math.round(nextClose / syminfo.mintick) * syminfo.mintick
+
+                    array.push(oBricks, brickOpen)
+                    array.push(cBricks, nextClose)
+                    array.push(upBricks, goUp)
+                    if array.size(oBricks) > displayCount
+                        array.shift(oBricks)
+                        array.shift(cBricks)
+                        array.shift(upBricks)
+
+                    brickClose := nextClose
+                    direction := goUp ? 1 : -1
+
+            // Place one full-width adjacent rectangle PER completed brick.
+            // They are NOT separated by source-candle time gaps. The packed
+            // sequence ends at the LAST VISIBLE source bar (not the live bar).
+            int brickTotal = array.size(oBricks)
+            int visibleBars = math.max(0, rightVisibleIndex - leftVisibleIndex + 1)
+            int fitCount = math.max(0, int(math.floor(visibleBars / brickWidth)))
+            int drawCount = math.min(brickTotal, fitCount)
+            if drawCount > 0
+                int firstIndex = brickTotal - drawCount
+                int firstX = rightVisibleIndex + 1 - drawCount * brickWidth
+                for i = 0 to drawCount - 1
+                    int idx = firstIndex + i
+                    float o = array.get(oBricks, idx)
+                    float c = array.get(cBricks, idx)
+                    color tone = array.get(upBricks, idx) ? riseColor : fallColor
+                    int leftX = firstX + i * brickWidth
+                    box block = box.new(left=leftX, top=math.max(o, c), right=leftX + brickWidth, bottom=math.min(o, c), xloc=xloc.bar_index, border_color=tone, border_width=1, bgcolor=color.new(tone, opacity))
+                    array.push(rendered, block)
