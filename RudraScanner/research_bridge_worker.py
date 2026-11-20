@@ -7,15 +7,18 @@ git clone to avoid modifying the live ASJR worktree.
 """
 from __future__ import annotations
 import argparse
+import fcntl
 import shutil
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlsplit
 
 REPO = Path("/root/trading/ASJR")
 # Script is launched by absolute path from systemd, so package root is not
@@ -26,10 +29,43 @@ REQ_DIR = "RudraScanner/ResearchBridge/requests"
 RESULT_DIR = "RudraScanner/ResearchBridge/results"
 JOB_TYPES = {"health_check", "research_46_batch", "research_46_finalize", "research_46_publish", "gann_nq_20261016", "gann_nq_october_2026", "three_candle_amd_probe", "three_candle_ibkr_one_candle", "ibkr_range_download", "yahoo_range_download", "mnq_month_download", "mes_month_download"}
 MAX_JOBS_PER_TICK = 1
+SYNC_VERSION = 2
+BRIDGE_REF = "refs/asjr/research-bridge/main"
+OID = re.compile(r"(?:[0-9a-f]{40}|[0-9a-f]{64})")
+JOB_FILE = re.compile(r"research-[0-9]{13}\.json")
 
-def git(*args, cwd=REPO, timeout=90):
-    return subprocess.run(["git", *args], cwd=cwd, text=True,
+def git(*args, cwd=None, timeout=90, input_text=None):
+    return subprocess.run(["git", *args], cwd=REPO if cwd is None else cwd,
+                          text=True, input=input_text,
+                          env={**os.environ, "LC_ALL": "C", "GIT_TERMINAL_PROMPT": "0"},
                           capture_output=True, timeout=timeout, check=False)
+
+def origin_ok(url):
+    if re.fullmatch(r"git@github\.com:raghunathbhandari/ASJR(?:\.git)?", url, re.I):
+        return True
+    parts = urlsplit(url)
+    return (parts.scheme in {"https", "ssh"} and parts.hostname == "github.com"
+            and parts.path.lower().rstrip("/").removesuffix(".git") == "/raghunathbhandari/asjr"
+            and not parts.query and not parts.fragment)
+
+def fetch_main(folder):
+    # Dedicated ref; neither write nor consume the live bot's FETCH_HEAD.
+    result = git("fetch", "-q", "--no-write-fetch-head", "--no-tags", "--refmap=",
+                 "origin", "refs/heads/main:" + BRIDGE_REF, cwd=folder)
+    if result.returncode:
+        return None
+    pinned = git("rev-parse", "--verify", BRIDGE_REF + "^{commit}", cwd=folder)
+    sha = pinned.stdout.strip()
+    return sha if not pinned.returncode and OID.fullmatch(sha) else None
+
+def race_rejection(result):
+    # --porcelain emits the rejection reason in stdout; never echo remote URLs.
+    lines = (result.stdout + "\n" + result.stderr).splitlines()
+    cas = re.search(r"cannot lock ref 'refs/heads/main': is at [0-9a-f]{40,64} "
+                    r"but expected [0-9a-f]{40,64}\b", result.stderr)
+    return bool(cas) or any(line.startswith("!\t") and "[rejected]" in line
+               and ("(fetch first)" in line or "(non-fast-forward)" in line)
+               for line in lines)
 
 def safe_job(obj, file_id):
     if not isinstance(obj, dict) or not isinstance(file_id, str):
@@ -89,7 +125,10 @@ def run_job(obj):
             # block every following research job.
             return {"status": "FAILED", "error": type(exc).__name__}
     if operation == "health_check":
+        head = git("rev-parse", "--verify", "HEAD^{commit}")
         return {"status": "SUCCESS", "python": sys.version.split()[0],
+                "worker_sync_version": SYNC_VERSION,
+                "checkout_head": head.stdout.strip() if not head.returncode else None,
                 "repo_present": (REPO / "RudraScanner/scan_now.py").is_file()}
     if operation == "mes_month_download":
         cmd = [sys.executable, "three_candle/ibkr_mes_bridge_month_download.py",
@@ -163,15 +202,15 @@ def publish_research_files():
                              str(REPO), str(folder)], capture_output=True, timeout=90)
         if cp.returncode: return {"status": "FAILED", "error": "CLONE"}
         origin = git("remote", "get-url", "origin")
-        if origin.returncode or "github.com" not in origin.stdout:
+        if origin.returncode or not origin_ok(origin.stdout.strip()):
             return {"status": "FAILED", "error": "ORIGIN"}
-        git("remote", "set-url", "origin", origin.stdout.strip(), cwd=folder)
-        git("config", "user.name", "ASJR Research Bridge", cwd=folder)
-        git("config", "user.email", "asjr-research-bridge@users.noreply.github.com", cwd=folder)
+        if not setup_publisher(folder, origin.stdout.strip()):
+            return {"status": "FAILED", "error": "PUBLISHER_SETUP"}
         for attempt in range(4):
-            if git("fetch", "-q", "origin", "main", cwd=folder).returncode:
+            snapshot = fetch_main(folder)
+            if not snapshot:
                 return {"status": "FAILED", "error": "FETCH"}
-            if git("checkout", "-q", "-B", "export-tmp", "FETCH_HEAD", cwd=folder).returncode:
+            if git("checkout", "-q", "-B", "export-tmp", snapshot, cwd=folder).returncode:
                 return {"status": "FAILED", "error": "CHECKOUT"}
             for path in files:
                 dest = folder / path.relative_to(REPO)
@@ -179,17 +218,44 @@ def publish_research_files():
                 shutil.copyfile(path, dest)
             if git("add", "--", *(str(p.relative_to(REPO)) for p in files), cwd=folder).returncode:
                 return {"status": "FAILED", "error": "GIT_ADD"}
-            if git("diff", "--cached", "--quiet", cwd=folder).returncode == 0:
+            diff = git("diff", "--cached", "--quiet", cwd=folder).returncode
+            if diff == 0:
                 return {"status": "SUCCESS", "files": len(files), "git": "UNCHANGED"}
+            if diff != 1:
+                return {"status": "FAILED", "error": "DIFF"}
             if git("commit", "-qm", "Research 46 OHLCV evidence", cwd=folder).returncode:
                 return {"status": "FAILED", "error": "COMMIT"}
-            if git("push", "-q", "origin", "HEAD:refs/heads/main", cwd=folder).returncode == 0:
+            pushed = git("push", "--porcelain", "origin", "HEAD:refs/heads/main", cwd=folder)
+            if not pushed.returncode:
                 return {"status": "SUCCESS", "files": len(files), "git": "PUSHED"}
+            if not race_rejection(pushed):
+                return {"status": "FAILED", "error": "PUSH_REJECTED_OR_UNCONFIRMED"}
             time.sleep(attempt + 1)
     return {"status": "FAILED", "error": "PUSH"}
 
-def publish(job_id, report):
+def setup_publisher(folder, remote):
+    return all(not git(*cmd, cwd=folder).returncode for cmd in (
+        ("remote", "set-url", "origin", remote),
+        ("config", "user.name", "ASJR Research Bridge"),
+        ("config", "user.email", "asjr-research-bridge@users.noreply.github.com")))
+
+def tree_rows(folder, sha, *paths):
+    result = git("ls-tree", "-z", sha, "--", *paths, cwd=folder)
+    if result.returncode:
+        raise RuntimeError("cannot read pinned tree")
+    entries = {}
+    for record in result.stdout.split("\0"):
+        if record:
+            meta, path = record.split("\t", 1)
+            mode, kind, oid = meta.split()
+            if not OID.fullmatch(oid):
+                raise ValueError("invalid Git object")
+            entries[path] = (mode, kind, oid)
+    return entries
+
+def publish(job_id, report, request_oid):
     target = f"{RESULT_DIR}/{job_id}.json"
+    request = f"{REQ_DIR}/{job_id}.json"
     # Separate scratch clone: never reset, stage or commit changes in live ASJR.
     with tempfile.TemporaryDirectory(prefix="asjr_research_bridge_") as temp:
         folder = Path(temp) / "repo"
@@ -204,56 +270,121 @@ def publish(job_id, report):
             return False, "ORIGIN_MISSING"
         remote = origin.stdout.strip()
         # Remote may contain a credential; never expose it in report/log.
-        if "github.com" not in remote:
+        if not origin_ok(remote):
             return False, "ORIGIN_UNEXPECTED"
-        git("remote", "set-url", "origin", remote, cwd=folder)
-        git("config", "user.name", "ASJR Research Bridge", cwd=folder)
-        git("config", "user.email", "asjr-research-bridge@users.noreply.github.com", cwd=folder)
+        if not setup_publisher(folder, remote):
+            return False, "PUBLISHER_SETUP_FAILED"
         for attempt in range(4):
-            if git("fetch", "-q", "origin", "main", cwd=folder).returncode:
+            snapshot = fetch_main(folder)
+            if not snapshot:
                 return False, "FETCH_FAILED"
-            if git("checkout", "-q", "-B", "bridge-temp", "FETCH_HEAD", cwd=folder).returncode:
-                return False, "CHECKOUT_FAILED"
-            out = folder / target
-            out.parent.mkdir(parents=True, exist_ok=True)
-            out.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
-            git("add", "--", target, cwd=folder)
-            committed = git("commit", "-qm", f"Research bridge result {job_id}", cwd=folder)
-            if committed.returncode:
+            # Recheck *on every attempt*, including races lost to another worker.
+            entries = tree_rows(folder, snapshot, target, request)
+            if target in entries:
+                if entries[target][:2] != ("100644", "blob"):
+                    return False, "RESULT_PATH_CONFLICT"
+                return True, "ALREADY_PUBLISHED"
+            if entries.get(request) != ("100644", "blob", request_oid):
+                return False, "REQUEST_CHANGED"
+            # Only a temporary index and one JSON blob; never materialise the
+            # trading tree just to publish a small report.
+            if git("read-tree", snapshot, cwd=folder).returncode:
+                return False, "READ_TREE_FAILED"
+            raw = json.dumps(report, indent=2, sort_keys=True) + "\n"
+            blob = git("hash-object", "-w", "--stdin", input_text=raw, cwd=folder)
+            oid = blob.stdout.strip()
+            if (blob.returncode or not OID.fullmatch(oid) or
+                    git("update-index", "--add", "--cacheinfo", "100644", oid, target,
+                        cwd=folder).returncode):
+                return False, "STAGE_FAILED"
+            tree = git("write-tree", cwd=folder)
+            if tree.returncode or not OID.fullmatch(tree.stdout.strip()):
+                return False, "TREE_FAILED"
+            delta = git("diff-tree", "--no-renames", "--no-commit-id", "--name-status",
+                        "-r", snapshot, tree.stdout.strip(), cwd=folder)
+            if delta.returncode or delta.stdout.splitlines() != ["A\t" + target]:
+                return False, "UNEXPECTED_RESULT_DIFF"
+            committed = git("commit-tree", tree.stdout.strip(), "-p", snapshot, "-m",
+                            f"Research bridge result {job_id}", cwd=folder)
+            sha = committed.stdout.strip()
+            if committed.returncode or not OID.fullmatch(sha):
                 return False, "COMMIT_FAILED"
-            pushed = git("push", "-q", "origin", "HEAD:refs/heads/main", cwd=folder)
+            pushed = git("push", "--porcelain", "origin", sha + ":refs/heads/main", cwd=folder)
             if pushed.returncode == 0:
-                return True, "PUSHED"
-            time.sleep(attempt + 1)
+                latest = fetch_main(folder)
+                if latest and tree_rows(folder, latest, target).get(target) == ("100644", "blob", oid):
+                    return True, "PUSHED"
+                return False, "PUSH_NOT_VERIFIED"
+            if not race_rejection(pushed):
+                return False, "PUSH_REJECTED_OR_UNCONFIRMED"
     return False, "PUSH_RETRY_EXHAUSTED"
 
 def tick():
+    common = git("rev-parse", "--git-common-dir")
+    if common.returncode:
+        print("BRIDGE | no Git directory", flush=True)
+        return 2
+    state = REPO / common.stdout.strip() / "asjr-research-bridge"
+    state.mkdir(mode=0o700, exist_ok=True)
+    # PrivateTmp differs between systemd and --once; use shared Git metadata.
+    with (state / "worker.lock").open("a") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            print("BRIDGE | BUSY", flush=True)
+            return 0
+        return tick_locked(state)
+
+def save_pending(path, obj):
+    # A later tick can retry the Git upload without repeating a completed job.
+    with tempfile.NamedTemporaryFile(dir=path.parent, mode="w", delete=False) as out:
+        name = out.name
+        try:
+            json.dump(obj, out)
+            out.flush()
+            os.fsync(out.fileno())
+        except BaseException:
+            os.unlink(name)
+            raise
+    os.replace(name, path)
+    fd = os.open(path.parent, os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+def tick_locked(state):
     remote_url = git("remote", "get-url", "origin")
-    if remote_url.returncode or "github.com" not in remote_url.stdout:
+    if remote_url.returncode or not origin_ok(remote_url.stdout.strip()):
         print("BRIDGE | invalid GitHub origin", flush=True)
         return 2
-    fetch = git("fetch", "-q", "origin", "main")
-    if fetch.returncode:
+    snapshot = fetch_main(REPO)
+    if not snapshot:
         print("BRIDGE | fetch failed", flush=True)
         return 2
-    tree = git("ls-tree", "-r", "--name-only", "FETCH_HEAD", REQ_DIR)
-    if tree.returncode:
-        print("BRIDGE | request list unavailable", flush=True)
-        return 2
+    # One verified snapshot for both lists. An unreadable result tree is an
+    # error, never evidence that every job needs to be executed again.
+    requests = tree_rows(REPO, snapshot, REQ_DIR + "/")
+    results = tree_rows(REPO, snapshot, RESULT_DIR + "/")
     processed = 0
-    for path in tree.stdout.splitlines():
-        if not path.startswith(REQ_DIR + "/") or not path.endswith(".json"):
+    for path, (mode, kind, request_oid) in requests.items():
+        parent, _, name = path.rpartition("/")
+        if (parent != REQ_DIR or not JOB_FILE.fullmatch(name)
+                or (mode, kind) != ("100644", "blob")):
             continue
-        job_id = Path(path).stem
-        if (REPO / RESULT_DIR / f"{job_id}.json").exists():
-            # Local repository may not reflect remote result. Check GitHub ref.
-            pass
-        already = git("cat-file", "-e", f"FETCH_HEAD:{RESULT_DIR}/{job_id}.json")
-        if already.returncode == 0:
+        job_id = name[:-5]
+        pending = state / name
+        if f"{RESULT_DIR}/{name}" in results:
+            pending.unlink(missing_ok=True)
             continue
-        raw = git("show", f"FETCH_HEAD:{path}")
-        if raw.returncode or len(raw.stdout) > 2048:
+        size = git("cat-file", "-s", request_oid)
+        if size.returncode:
+            raise RuntimeError("cannot read request size")
+        if int(size.stdout) > 2048:
             continue
+        raw = git("cat-file", "blob", request_oid)
+        if raw.returncode:
+            raise RuntimeError("cannot read request")
         try:
             obj = json.loads(raw.stdout)
         except ValueError:
@@ -261,17 +392,28 @@ def tick():
         if not safe_job(obj, job_id):
             print(f"BRIDGE | rejected malformed request {job_id}", flush=True)
             continue
-        print(f"BRIDGE | executing {job_id} {obj['operation']}", flush=True)
-        stamp = datetime.now(timezone.utc).isoformat()
-        result = run_job(obj)
-        report = {"id": job_id, "operation": obj["operation"],
-                  "completed_utc": datetime.now(timezone.utc).isoformat(),
-                  "started_utc": stamp, **result}
-        ok, state = publish(job_id, report)
-        print(f"BRIDGE | {job_id} | {state} | {result['status']}", flush=True)
+        if pending.exists():
+            saved = json.loads(pending.read_text())
+            if saved["request_oid"] != request_oid:
+                print(f"BRIDGE | {job_id} | pending request changed; preserved", flush=True)
+                continue
+            report = saved["report"]
+        else:
+            print(f"BRIDGE | executing {job_id} {obj['operation']}", flush=True)
+            stamp = datetime.now(timezone.utc).isoformat()
+            result = run_job(obj)
+            if obj["operation"] == "health_check":
+                result["request_main"] = snapshot
+            report = {"id": job_id, "operation": obj["operation"],
+                      "completed_utc": datetime.now(timezone.utc).isoformat(),
+                      "started_utc": stamp, **result}
+            save_pending(pending, {"request_oid": request_oid, "report": report})
+        ok, outcome = publish(job_id, report, request_oid)
+        print(f"BRIDGE | {job_id} | {outcome} | {report['status']}", flush=True)
         processed += 1
         if not ok:
             return 2
+        pending.unlink(missing_ok=True)
         if processed >= MAX_JOBS_PER_TICK:
             break
     if not processed:

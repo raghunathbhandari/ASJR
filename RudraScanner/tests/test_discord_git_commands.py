@@ -64,13 +64,16 @@ class DiscordGitTests(unittest.TestCase):
             root = Path(folder)
             answers = [
                 cp(str(root)), cp("main"), cp("git@github.com:raghunathbhandari/ASJR.git"),
-                cp("f123abc"), cp(""), cp("fast-forward"), cp("f123abd"),
+                cp("f123abc"), cp(""), cp(""), cp("f123abd" + "0" * 33),
+                cp(""), cp("fast-forward"), cp("f123abd" + "0" * 33),
             ]
             with patch.object(gitbot, "_run", side_effect=answers) as fake:
                 result = gitbot.gitpull("42", repo_root=root, allowed_ids={"42"})
                 ops = [x.args[1:] for x in fake.call_args_list]
             self.assertIn("PULL UPDATED", result)
-            self.assertIn(("pull", "--ff-only", "origin", "main"), ops)
+            self.assertIn(("fetch", "--no-write-fetch-head", "--no-tags", "--refmap=",
+                           "origin", "refs/heads/main:refs/remotes/origin/main"), ops)
+            self.assertIn(("merge", "--ff-only", "--no-overwrite-ignore", "f123abd" + "0" * 33), ops)
             self.assertNotIn(("reset", "--hard"), ops)
 
     def test_dirty_checkout_blocks_pull(self):
@@ -85,7 +88,19 @@ class DiscordGitTests(unittest.TestCase):
                 result = gitbot.gitpull("42", repo_root=root, allowed_ids={"42"})
                 ops = [x.args[1:] for x in fake.call_args_list]
             self.assertIn("REFUSED", result)
-            self.assertNotIn(("pull", "--ff-only", "origin", "main"), ops)
+            self.assertFalse(any(op[0] in ("fetch", "pull", "merge") for op in ops))
+
+    def test_refuses_local_only_history_and_invalid_fetch_targets(self):
+        for target, ancestry, expected in [(("a" * 40), [cp("", 1)], "local-only"),
+                                            ("HEAD", [], "invalid remote commit")]:
+            with self.subTest(target=target), tempfile.TemporaryDirectory() as path:
+                root = Path(path)
+                answers = [cp(path), cp("main"), cp("git@github.com:raghunathbhandari/ASJR"),
+                           cp("b" * 7), cp(""), cp(""), cp(target)] + ancestry
+                with patch.object(gitbot, "_run", side_effect=answers) as fake:
+                    result = gitbot.gitpull("42", repo_root=root, allowed_ids={"42"})
+                self.assertIn(expected, result)
+                self.assertNotIn("merge", [x.args[1] for x in fake.call_args_list])
 
     def test_gitpush_does_not_add_or_commit(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -93,13 +108,14 @@ class DiscordGitTests(unittest.TestCase):
             answers = [
                 cp(str(root)), cp("main"),
                 cp("https://github.com/raghunathbhandari/ASJR"),
-                cp("f123abc"), cp("", 0, "Everything up-to-date"),
+                cp("f123abc"), cp("https://github.com/raghunathbhandari/ASJR"),
+                cp("", 0, "Everything up-to-date"),
             ]
             with patch.object(gitbot, "_run", side_effect=answers) as fake:
                 result = gitbot.gitpush("42", repo_root=root, allowed_ids={"42"})
                 ops = [x.args[1:] for x in fake.call_args_list]
             self.assertIn("PUSH SUCCESS", result)
-            self.assertIn(("push", "origin", "main"), ops)
+            self.assertIn(("push", "origin", "refs/heads/main:refs/heads/main"), ops)
             self.assertFalse(any(op[0] in ("add", "commit") for op in ops))
 
     def test_nonmain_refused(self):
@@ -128,7 +144,8 @@ class DiscordGitTests(unittest.TestCase):
             answers = [
                 cp(str(root)), cp("main"),
                 cp("git@github.com:raghunathbhandari/ASJR.git"),
-                cp("f123abc"), cp("", 1, "non-fast-forward rejected"),
+                cp("f123abc"), cp("git@github.com:raghunathbhandari/ASJR.git"),
+                cp("", 1, "non-fast-forward rejected"),
             ]
             with patch.object(gitbot, "_run", side_effect=answers):
                 result = gitbot.gitpush("42", repo_root=root, allowed_ids={"42"})

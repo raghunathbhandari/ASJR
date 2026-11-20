@@ -5,7 +5,7 @@ NOT register commands, start a bot, stage files, commit, restart services,
 or install an IBKR connection.
 
 VPS repo: /root/trading/ASJR
-Commands: !gitpull -> git pull --ff-only origin main
+Commands: !gitpull -> fetch origin/main, then fast-forward to its pinned commit
           !gitpush -> git push origin main (existing commits ONLY)
 
 SECURITY: Discord user ID MUST match ASJR_DISCORD_GIT_ALLOWED_IDS.
@@ -39,6 +39,7 @@ def _run(repo: Path, *args: str, timeout: int = TIMEOUT_SECONDS):
             cwd=str(repo),
             capture_output=True,
             text=True,
+            env={**os.environ, "GIT_TERMINAL_PROMPT": "0"},
             timeout=timeout,
             check=False,
         )
@@ -131,6 +132,19 @@ def run_git_command(command: str, author_id, *,
                 _safe_excerpt(f"{type(exc).__name__}: {exc}"))
 
 
+# Compatibility names used by existing bot adapters and the offline contract
+# tests. All routes run the same exact-command, origin and author checks.
+handle_git_command = run_git_command
+
+
+def gitpull(author_id, *, repo_root=REPO_ROOT, allowed_ids=None):
+    return run_git_command("!gitpull", author_id, repo_root=repo_root, allowed_ids=allowed_ids)
+
+
+def gitpush(author_id, *, repo_root=REPO_ROOT, allowed_ids=None):
+    return run_git_command("!gitpush", author_id, repo_root=repo_root, allowed_ids=allowed_ids)
+
+
 def _execute_checked(cmd: str, root: Path) -> str:
     # No shell arguments ever come from Discord except the 2 fixed commands.
     worktree = _run(root, "rev-parse", "--show-toplevel")
@@ -158,20 +172,46 @@ def _execute_checked(cmd: str, root: Path) -> str:
         if changed.stdout.strip():
             return ("ASJR | GIT PULL REFUSED | tracked files have local changes. "
                     "No reset, stash, or data loss performed.")
-        result = _run(root, "pull", "--ff-only", REMOTE, BRANCH)
+        # Chakra and the research worker can fetch in this same repository.
+        # Never merge their mutable FETCH_HEAD, even when it has multiple lines.
+        ref = "refs/remotes/origin/main"
+        fetched = _run(root, "fetch", "--no-write-fetch-head", "--no-tags",
+                       "--refmap=", REMOTE, "refs/heads/main:" + ref)
+        if fetched.returncode:
+            return _failure("PULL FETCH", fetched)
+        pinned = _run(root, "rev-parse", "--verify", ref + "^{commit}")
+        if pinned.returncode:
+            return _failure("PULL REF", pinned)
+        target = pinned.stdout.strip()
+        if not re.fullmatch(r"(?:[a-f0-9]{40}|[a-f0-9]{64})", target):
+            return "ASJR | GIT PULL REFUSED | invalid remote commit"
+        # No local-only commits may be mistaken for 'already up to date'.
+        ancestry = _run(root, "merge-base", "--is-ancestor", "HEAD", target)
+        if ancestry.returncode == 1:
+            return "ASJR | GIT PULL REFUSED | main has local-only commits; nothing changed"
+        if ancestry.returncode:
+            return _failure("PULL ANCESTRY", ancestry)
+        result = _run(root, "merge", "--ff-only", "--no-overwrite-ignore", target)
         if result.returncode:
             return _failure("PULL", result)
-        after = _run(root, "rev-parse", "--short", "HEAD")
+        after = _run(root, "rev-parse", "--verify", "HEAD")
         if after.returncode:
             return _failure("PULL VERIFY", after)
-        old, new = before.stdout.strip(), after.stdout.strip()
+        if after.stdout.strip() != target:
+            return "ASJR | GIT PULL VERIFY FAILED | HEAD differs from the fetched commit"
+        old = before.stdout.strip()
+        new = target[:len(old)]
         state = "ALREADY UP TO DATE" if old == new else "UPDATED"
         return (f"ASJR | GIT PULL {state}\n"
                 f"main: {old} -> {new}\n"
                 "Updated files are on disk; restart the running bot only if needed.")
 
     # !gitpush: never implicitly add files/commit logs/stage credentials.
-    result = _run(root, "push", REMOTE, BRANCH)
+    push_urls = _run(root, "remote", "get-url", "--push", "--all", REMOTE)
+    destinations = push_urls.stdout.strip().splitlines()
+    if push_urls.returncode or len(destinations) != 1 or not _correct_origin(destinations[0]):
+        return "ASJR | GIT PUSH REFUSED | unexpected push destination"
+    result = _run(root, "push", REMOTE, "refs/heads/main:refs/heads/main")
     if result.returncode:
         return _failure("PUSH", result)
     summary = _safe_excerpt((result.stdout or "") + "\n" + (result.stderr or ""))
