@@ -1,0 +1,166 @@
+//@version=6
+indicator("ASJR Gann Swing V1", shorttitle="ASJR Gann Swing", overlay=true, max_lines_count=500)
+
+// ASJR Gann Swing V1 - original educational implementation of bar-count swings.
+// Confirmations occur ONLY when the confirming candle closes.
+// The drawn pivot can be earlier than its confirmation. Do not trade at the pivot bar.
+// This is not a byte-for-byte reproduction of Optuma's proprietary swing engine.
+
+string G1 = "01 — Swing Rules"
+int barsToConfirm = input.int(2, "Opposite bars required", minval=1, maxval=3, group=G1, tooltip="1 = responsive, 2 = default, 3 = smoother. Counts qualifying directional bars, not fixed-period fractal pivots.")
+string insideRule = input.string("Ignore", "Inside bars", options=["Ignore", "Close direction"], group=G1, tooltip="Ignore: do not advance the count. Close direction: classify an inside bar by its close compared with the previous close.")
+string outsideRule = input.string("Next bar", "Outside bars", options=["Next bar", "Follow trend", "Close direction"], group=G1, tooltip="Next bar: skip this bar and let the next qualifying bar resolve direction. Follow trend: treat it as a current-trend bar. Close direction: classify by close vs previous close.")
+string G2 = "02 — Appearance"
+bool showSwing = input.bool(true, "Show swing path", group=G2)
+string colorMode = input.string("Direction colors", "Line mode", options=["Direction colors", "Single color"], group=G2)
+color upColor = input.color(color.rgb(36, 185, 110), "Up swing", group=G2)
+color downColor = input.color(color.rgb(229, 68, 82), "Down swing", group=G2)
+color oneColor = input.color(color.rgb(160, 100, 220), "Single swing color", group=G2)
+int lineWidth = input.int(2, "Swing line width", minval=1, maxval=5, group=G2)
+bool showFlipMarks = input.bool(false, "Show reversal confirmation markers", group=G2)
+int keepLegs = input.int(400, "Historical swing legs to keep", minval=30, maxval=480, group=G2)
+
+bool turnUp = false
+bool turnDown = false
+
+// 0 = not yet established; 1 = ascending leg; -1 = descending leg.
+var int swingDir = 0
+var int countUp = 0
+var int countDown = 0
+var float legHigh = na
+var int legHighBar = na
+var float legLow = na
+var int legLowBar = na
+var float pendingHigh = na
+var int pendingHighBar = na
+var float pendingLow = na
+var int pendingLowBar = na
+var float lastConfirmedHigh = na
+var float lastConfirmedLow = na
+var line activeLeg = na
+var array<line> legHistory = array.new<line>()
+
+// Helper: cap line-object usage on long historical charts.
+f_keep_line(array<line> history, line newest, int cap) =>
+    array.push(history, newest)
+    if array.size(history) > cap
+        line.delete(array.shift(history))
+
+color risingColor = colorMode == "Single color" ? oneColor : upColor
+color fallingColor = colorMode == "Single color" ? oneColor : downColor
+
+if barstate.isconfirmed and bar_index > 0
+    bool higherBar = high > high[1] and low >= low[1]
+    bool lowerBar = low < low[1] and high <= high[1]
+    bool outsideBar = high > high[1] and low < low[1]
+    bool insideBar = high <= high[1] and low >= low[1] and not (high == high[1] and low == low[1])
+    bool classifyUp = higherBar
+    bool classifyDown = lowerBar
+
+    if insideBar and insideRule == "Close direction"
+        classifyUp := close > close[1]
+        classifyDown := close < close[1]
+    if outsideBar
+        if outsideRule == "Follow trend"
+            classifyUp := swingDir == 1
+            classifyDown := swingDir == -1
+        else if outsideRule == "Close direction"
+            classifyUp := close > close[1]
+            classifyDown := close < close[1]
+
+    // The first directional bar initializes a leg, not a reversal signal.
+    if swingDir == 0
+        if classifyUp
+            swingDir := 1
+            legHigh := high
+            legHighBar := bar_index
+            if showSwing
+                activeLeg := line.new(bar_index - 1, low[1], legHighBar, legHigh, color=risingColor, width=lineWidth)
+                f_keep_line(legHistory, activeLeg, keepLegs)
+        else if classifyDown
+            swingDir := -1
+            legLow := low
+            legLowBar := bar_index
+            if showSwing
+                activeLeg := line.new(bar_index - 1, high[1], legLowBar, legLow, color=fallingColor, width=lineWidth)
+                f_keep_line(legHistory, activeLeg, keepLegs)
+
+    else if swingDir == 1
+        // The endpoint can extend as fresh confirmed higher highs appear.
+        if na(legHigh) or high > legHigh
+            legHigh := high
+            legHighBar := bar_index
+            if showSwing and not na(activeLeg)
+                line.set_xy2(activeLeg, legHighBar, legHigh)
+
+        if classifyUp
+            countDown := 0
+            pendingLow := na
+            pendingLowBar := na
+        else if classifyDown
+            countDown += 1
+            if na(pendingLow) or low < pendingLow
+                pendingLow := low
+                pendingLowBar := bar_index
+
+            if countDown >= barsToConfirm and not na(pendingLow)
+                // A confirmed down swing starts at the preceding established high.
+                lastConfirmedHigh := legHigh
+                swingDir := -1
+                legLow := pendingLow
+                legLowBar := pendingLowBar
+                countDown := 0
+                countUp := 0
+                pendingLow := na
+                pendingLowBar := na
+                pendingHigh := na
+                pendingHighBar := na
+                turnDown := true
+                if showSwing
+                    activeLeg := line.new(legHighBar, legHigh, legLowBar, legLow, color=fallingColor, width=lineWidth)
+                    f_keep_line(legHistory, activeLeg, keepLegs)
+
+    else if swingDir == -1
+        if na(legLow) or low < legLow
+            legLow := low
+            legLowBar := bar_index
+            if showSwing and not na(activeLeg)
+                line.set_xy2(activeLeg, legLowBar, legLow)
+
+        if classifyDown
+            countUp := 0
+            pendingHigh := na
+            pendingHighBar := na
+        else if classifyUp
+            countUp += 1
+            if na(pendingHigh) or high > pendingHigh
+                pendingHigh := high
+                pendingHighBar := bar_index
+
+            if countUp >= barsToConfirm and not na(pendingHigh)
+                lastConfirmedLow := legLow
+                swingDir := 1
+                legHigh := pendingHigh
+                legHighBar := pendingHighBar
+                countDown := 0
+                countUp := 0
+                pendingLow := na
+                pendingLowBar := na
+                pendingHigh := na
+                pendingHighBar := na
+                turnUp := true
+                if showSwing
+                    activeLeg := line.new(legLowBar, legLow, legHighBar, legHigh, color=risingColor, width=lineWidth)
+                    f_keep_line(legHistory, activeLeg, keepLegs)
+
+// Confirmation markers occur on the CONFIRMATION bar, not the historical pivot bar.
+plotshape(showFlipMarks and turnUp, title="Confirmed swing UP", style=shape.triangleup, location=location.belowbar, color=upColor, size=size.tiny)
+plotshape(showFlipMarks and turnDown, title="Confirmed swing DOWN", style=shape.triangledown, location=location.abovebar, color=downColor, size=size.tiny)
+
+// Available in Data Window, without drawing additional overlays.
+plot(lastConfirmedHigh, "Last confirmed swing high", color=color.new(downColor, 100), display=display.data_window)
+plot(lastConfirmedLow, "Last confirmed swing low", color=color.new(upColor, 100), display=display.data_window)
+plot(float(swingDir), "Current swing direction (1/-1)", color=color.new(oneColor, 100), display=display.data_window)
+
+alertcondition(turnUp, "ASJR Gann Swing UP", "ASJR Gann Swing: confirmed UP leg on {{ticker}} {{interval}} at {{time}}")
+alertcondition(turnDown, "ASJR Gann Swing DOWN", "ASJR Gann Swing: confirmed DOWN leg on {{ticker}} {{interval}} at {{time}}")
