@@ -155,16 +155,16 @@ Further research includes **Gann level sweep/reclaim**, close-break → retest �
 
 **Gann time study is a separate research topic from the horizontal price levels.** The principle being examined is whether independently defined *time windows* and *price-level interactions* show reproducible confluence around market turning points. This is a hypothesis to test, **not a forecast guarantee**.
 
-The [ASJR Gann Ideas Pine v6](Gann%20Ideas/ASJR_Gann_Ideas_V6.pine) overlay includes **exactly two independent vertical time-cycle switches**:
+The [ASJR Gann Ideas Pine V10](Gann%20Ideas/ASJR_Gann_Ideas_V10.pine) overlay includes **exactly two independent vertical time-cycle switches with editable lengths**:
 
 | Switch | Length | Independent unit choices | Example interpretation |
 | --- | --- | --- | --- |
-| **Cycle 12** | 12 | `bars / mi / hh / day / m / y` | 12 chart candles, 12 minutes, 12 hours, etc. |
-| **Cycle 90** | 90 | `bars / mi / hh / day / m / y` | 90 minutes, 90 hours, 90 days, etc. |
+| **Cycle A** | Editable, default **12** | `bars / mi / hh / day / m / y` | 12 bars by default; set 10 bars, 100 bars, etc. |
+| **Cycle B** | Editable, default **90** | `bars / mi / hh / day / m / y` | 90 bars by default; independently set 10 or 100 bars. |
 
 - `bars` = chart bars; `mi` = minutes; `hh` = hours; `day` = elapsed 24-hour days; `m` = calendar months; `y` = calendar years.
-- Both use an editable shared UTC anchor; each cycle has its **own** enable switch and unit dropdown.
-- **12 and 90 are numerical periods, not hard-coded 12-year/90-year cycles.** For intraday research, bar/minute/hour/day choices can be more relevant.
+- Both use an editable shared UTC anchor; each cycle has its **own** enable switch, editable length (1–500) and unit dropdown.
+- **12 and 90 are just the default lengths, not fixed cycles or years.** Change them to 10, 100 or any allowed period according to the selected unit.
 - Market closures, missing candles, exchange calendars and DST can affect where an eligible vertical line appears. Time-only signals are insufficient to enter a trade.
 - Explore a time window **together with** Gann price level, candle confirmation, trend and location. Compare against non-cycle baseline dates rather than selecting only successful examples.
 
@@ -239,7 +239,7 @@ TradingView indicator source lives in dedicated folders.
 
 | Indicator | Main features | Source / guide |
 | --- | --- | --- |
-| **ASJR Gann Ideas V6** | Eight separately toggleable horizontal price families; static/dynamic anchors; confirmed source timeframe; **12 and 90 vertical cycles**; right-side price labels and per-method colours | [V6 Pine source](Gann%20Ideas/ASJR_Gann_Ideas_V6.pine) · [Guide](Gann%20Ideas/README.md) |
+| **ASJR Gann Ideas V10** | Eight separately toggleable horizontal price families; original Gann V9 price logic; two vertical cycles **A/B with editable lengths** (defaults 12/90), independent unit dropdowns and optional labels | [V10 Pine source](Gann%20Ideas/ASJR_Gann_Ideas_V10.pine) · [Guide](Gann%20Ideas/README.md) |
 | **ASJR Gann Ideas V1–V5** | Preserved development history for levels, colour controls, label placement and right-side label spacing | [Versions folder](Gann%20Ideas/) |
 | **ASJR Candle Patterns** | 17 selectable candlestick pattern groups, bullish/bearish highlighting, optional quality gates and Gann reference confluence | [Pine source](Candle%20Patterns/ASJR_Candle_Patterns.pine) · [Guide](Candle%20Patterns/README.md) |
 | **ASJR Renko V4 — Scroll-Aware, Brick Only** | Contiguous green/red bricks reconstructed through the chart's visible right edge, re-rendered on scroll/zoom; ATR snapshot / fixed / percent snapshot size, 1m/5m/15m/1H/4H/daily. No EMA/BUY/SELL icons. | [V4 Pine source](Renko/ASJR_Renko_V4.pine) · [Guide](Renko/README.md) · [V3](Renko/ASJR_Renko_V3.pine) |
