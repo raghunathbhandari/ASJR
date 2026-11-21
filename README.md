@@ -26,6 +26,7 @@ The project is designed around a practical research loop:
 - [ASJR Renko V4 — scroll-aware contiguous bricks](Renko/README.md)
 - [ASJR Volume Delta Pressure V2 — 12-zone pressure with EMA9/EMA21/EMA200](Volume%20Delta%20Pressure/README.md)
 - [ASJR 360 View V5 — responsive EMA21 trend colouring and two-row dashboard](ASJR%20360%20View/README.md)
+- [ASJR Gann Swing V1 — configurable 1/2/3-bar swing overlay](ASJR-Gann-Swing/README.md)
 
 - [Technology and architecture](#technology-and-architecture)
 - [Strategy catalogue and entry/exit rules](#strategy-catalogue-and-entryexit-rules)
@@ -241,6 +242,7 @@ TradingView indicator source lives in dedicated folders.
 | **ASJR Renko V4 — Scroll-Aware, Brick Only** | Contiguous green/red bricks reconstructed through the chart's visible right edge, re-rendered on scroll/zoom; ATR snapshot / fixed / percent snapshot size, 1m/5m/15m/1H/4H/daily. No EMA/BUY/SELL icons. | [V4 Pine source](Renko/ASJR_Renko_V4.pine) · [Guide](Renko/README.md) · [V3](Renko/ASJR_Renko_V3.pine) |
 | **ASJR Volume Delta Pressure V2** | 12 price-zone OHLCV pressure estimate; existing EMA21 anchor; independently styled EMA9 and EMA200 chart overlays | [V2 Pine source](Volume%20Delta%20Pressure/ASJR_Volume_Delta_Pressure_V2.pine) · [Guide](Volume%20Delta%20Pressure/README.md) |
 | **ASJR 360 View V5** | EMA21 trend-first GREEN/RED after completed aligned EMA candles (or optional strict 360 mode); pressure and RSI still shown and checked; RVOL-at-Time 5/20 reference only; bordered two-row configurable dashboard; retains V4 plot-count fix. | [V5 Pine source](ASJR%20360%20View/ASJR_360_View_V5.pine) · [Guide](ASJR%20360%20View/README.md) |
+| **ASJR Gann Swing V1** | Configurable 1/2/3-bar structural swings; inside/outside-bar handling; coloured diagonal swing legs, optional on-confirmation reversal markers and alerts | [V1 Pine source](ASJR-Gann-Swing/ASJR_Gann_Swing_V1.pine) · [Guide](ASJR-Gann-Swing/README.md) |
 
 **Eight Gann price families:** Factor of Eight; Yearly Highs/Lows; Power of Squares; Power of Cubes; Square of Nine Static; Square of Nine Dynamic H; Square of Nine Dynamic C; Square of 360. The additional two switches are the **12 and 90 vertical cycles**.
 
