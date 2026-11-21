@@ -1,4 +1,14 @@
-# ASJR 360 View V1
+# ASJR 360 View V2 (plot-budget fix)
+
+**Recommended version:** [ASJR 360 View V2 Pine source](ASJR_360_View_V2.pine). This is an attempt to resolve the TradingView loading error observed in V1. It is not yet verified by a live TradingView Pine Editor run.
+
+- Preserves 12 original zone plots, EMA9, dynamic EMA21, EMA200, RSI and time-based RVOL5/20 dashboard; original pressure mathematics unchanged.
+- Reduces the expected TradingView plot count to the 64-count maximum by omitting the optional EMA21 glow and replacing two `alertcondition()` plots with `alert()` calls.
+- **Optional alerts:** enable the new `Enable state-change alerts` setting and create a TradingView alert with **Any alert() function call**. Choose Both / Green only / Red only in the indicator settings.
+- V1 and Volume Delta Pressure V2 files remain available unchanged.
+
+## Previous V1 documentation
+
 
 A **new, separate TradingView Pine Script v6 overlay** for intraday chart confirmation. The existing `Volume Delta Pressure/ASJR_Volume_Delta_Pressure_V2.pine` is **not modified**.
 
