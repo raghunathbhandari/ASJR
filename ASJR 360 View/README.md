@@ -1,3 +1,19 @@
+# ASJR 360 View V3 — RVOL function fix
+
+**Use the latest source:** [ASJR 360 View V3 Pine Script](ASJR_360_View_V3.pine).
+
+## What V3 fixes
+
+V2 incorrectly called `rv.averageAtTime(volume, rvolLen5, rvolAnchor, isCum)` and the corresponding 20-session call with a timeframe **string** as the third argument. TradingView's official `RelativeValue/4` library requires the third argument to be a **series bool anchor**, such as `timeframe.change("1D")`. V3 passes `isNewAnchor = timeframe.change(rvolAnchor)` to both functions, preserving the selected daily anchor's intended behaviour.
+
+- All original **12 price-zone pressure formulas** and strict **trend + pressure + RSI** green/red/grey rules remain unchanged.
+- RVOL5/20 remain *reference only*. Same TradingView-style time-of-session baseline and optional cumulative or regular mode.
+- V2's plot-budget fix is retained: 12 zone candles, 3 EMA plots, no glow; optional alerts via `alert()`.
+- V1, V2 and the original Volume Delta Pressure V2 remain intact in GitHub.
+- **Not yet independently compiled in TradingView's Pine Editor.** If the chart does not load, capture the **exact error text and line number** rather than guessing a new fix.
+
+## Prior documentation
+
 # ASJR 360 View V2 (plot-budget fix)
 
 **Recommended version:** [ASJR 360 View V2 Pine source](ASJR_360_View_V2.pine). This is an attempt to resolve the TradingView loading error observed in V1. It is not yet verified by a live TradingView Pine Editor run.
