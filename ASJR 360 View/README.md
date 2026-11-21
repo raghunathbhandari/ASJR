@@ -1,3 +1,19 @@
+# ASJR 360 View V4 — RE10140 fix
+
+**Current test version:** [ASJR 360 View V4 Pine Script](ASJR_360_View_V4.pine).
+
+## V4 change: respect TradingView's 64-plot ceiling
+
+The actual TradingView screenshot for V3 reported **RE10140: 66 plot counts (limit 64)**. My earlier plot-count estimate was wrong. TradingView [documents](https://www.tradingview.com/pine-script-docs/writing/limitations/) that each dynamic `plotcandle()` uses multiple plot counts, while `line.new()` uses **zero** plot counts.
+
+**Fix:** retain 11 historical `plotcandle()` pressure bands and render **the 12th pressure cell** as a vertical `line.new()` drawing, using the **same p11–p12 boundaries and exact cell colour**. All 12 pressure bands and pressure mathematics remain active. The script should now be **approximately 61 plot counts**, below 64. This is an estimate from the observed 66 and the removed candle plot, not a TradingView-verified count.
+
+**Trade-off:** the 12th band's vertical lines are retained for **up to 500 recent eligible bars** because TradingView caps line drawings; the other 11 candle plots cover all available chart history. The user-facing table, dynamic EMA21, EMA9/EMA200, RSI, RVOL5/20 and optional alerts are unchanged.
+
+V1, V2 and V3 remain preserved for reference. **V4 has not been independently compiled or executed inside TradingView.** Please load V4 as a new indicator and share the exact error screenshot if anything else appears.
+
+## Earlier notes and documentation
+
 # ASJR 360 View V3 — RVOL function fix
 
 **Use the latest source:** [ASJR 360 View V3 Pine Script](ASJR_360_View_V3.pine).
