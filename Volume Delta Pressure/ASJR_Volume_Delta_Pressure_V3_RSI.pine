@@ -1,0 +1,159 @@
+//@version=6
+// Profile layout adapted from Zeiierman's Rolling Candle Profile.
+// Original: (c) Zeiierman, CC BY-NC-SA 4.0.
+// https://creativecommons.org/licenses/by-nc-sa/4.0/
+// This adaptation is distributed under the same CC BY-NC-SA 4.0 terms.
+indicator("ASJR - Volume Delta Pressure v3", overlay = false, behind_chart = true, max_bars_back = 100, calc_bars_count = 600)
+
+// Twelve price-zone pressure cells inspired by Rolling Candle Profile.
+// This estimates directional volume from OHLCV; it is NOT exchange bid/ask delta.
+anchorLength = input.int(21, "EMA anchor", minval = 5, maxval = 100)
+
+// Two additional EMAs. The existing EMA21 remains the pressure anchor.
+emaGroup = "Additional EMAs"
+showEmaFast = input.bool(true, "Show EMA 1", group = emaGroup)
+emaFastLength = input.int(9, "EMA 1 length", minval = 1, maxval = 1000, group = emaGroup)
+emaFastColor = input.color(#E59B23, "EMA 1 colour", group = emaGroup)
+emaFastWidth = input.int(2, "EMA 1 line width", minval = 1, maxval = 4, group = emaGroup)
+showEmaSlow = input.bool(true, "Show EMA 2", group = emaGroup)
+emaSlowLength = input.int(200, "EMA 2 length", minval = 1, maxval = 1000, group = emaGroup)
+emaSlowColor = input.color(#3676C8, "EMA 2 colour", group = emaGroup)
+emaSlowWidth = input.int(3, "EMA 2 line width", minval = 1, maxval = 4, group = emaGroup)
+memory = input.int(12, "Volume history (bars)", minval = 4, maxval = 24)
+localWidth = input.float(0.45, "Price localization (ATR)", minval = 0.1, maxval = 2, step = 0.05)
+wickWeight = input.float(0.35, "Wick rejection influence", minval = 0, maxval = 1, step = 0.05)
+buyColor = input.color(#00EFB4, "Buying pressure")
+sellColor = input.color(#FF3D6E, "Selling pressure")
+showDashboard = input.bool(true, "Show 12-point dashboard")
+dashboardPosition = input.string("Top Right", "Dashboard position", options = ["Top Left", "Top Center", "Top Right", "Middle Left", "Middle Center", "Middle Right", "Bottom Left", "Bottom Center", "Bottom Right"])
+
+// RSI 14 confirmation in its own pane; pressure/EMA plots remain on price chart.
+rsiGroup = "RSI Confirmation"
+showRsi = input.bool(true, "Show RSI", group = rsiGroup)
+rsiLength = input.int(14, "RSI length", minval = 2, maxval = 200, group = rsiGroup)
+rsiSource = input.source(close, "RSI source", group = rsiGroup)
+rsiColor = input.color(#A78BFA, "RSI line colour", group = rsiGroup)
+rsiLineWidth = input.int(2, "RSI line width", minval = 1, maxval = 4, group = rsiGroup)
+rsiOverbought = input.int(70, "Overbought level", minval = 50, maxval = 100, group = rsiGroup)
+rsiOversold = input.int(30, "Oversold level", minval = 0, maxval = 50, group = rsiGroup)
+rsiShowLevels = input.bool(true, "Show 30 / 50 / 70 guide lines", group = rsiGroup)
+rsiValue = ta.rsi(rsiSource, rsiLength)
+
+
+clamp(float x, float lo, float hi) => math.max(lo, math.min(hi, x))
+kernel(float distance, float width) =>
+    q = clamp(1 - math.abs(distance) / math.max(width, syminfo.mintick), 0, 1)
+    q * q * (3 - 2 * q)
+
+anchor = ta.ema(close, anchorLength)
+atr = ta.atr(14)
+avgVolume = ta.sma(volume, 20)
+bodyLow = math.min(open, close)
+bodyHigh = math.max(open, close)
+edge = anchor < bodyLow ? bodyLow : anchor > bodyHigh ? bodyHigh : na
+ready = not na(edge) and not na(atr) and bar_index > math.max(anchorLength, memory + 20) and math.abs(edge - anchor) > syminfo.mintick * 2
+step = ready ? (edge - anchor) / 12 : na
+
+var array<color> cells = array.new_color(12, na)
+array.fill(cells, na)
+int bullPoints = 0
+int bearPoints = 0
+float buyTotal = 0.0
+float sellTotal = 0.0
+
+if ready
+    for band = 0 to 11
+        level = anchor + step * (band + 0.5)
+        float buyPressure = 0.0
+        float sellPressure = 0.0
+        for k = 0 to memory - 1
+            r = math.max(high[k] - low[k], syminfo.mintick)
+            body = clamp((close[k] - open[k]) / r, -1, 1)
+            closePosition = clamp((2 * close[k] - high[k] - low[k]) / r, -1, 1)
+            buyShare = clamp(0.5 + 0.5 * (0.65 * body + 0.35 * closePosition), 0, 1)
+            traded = math.max(nz(volume[k]), 0)
+            lowerWick = (math.min(open[k], close[k]) - low[k]) / r
+            upperWick = (high[k] - math.max(open[k], close[k])) / r
+            // Center each directional contribution near the price where it acted.
+            buyCenter = 0.7 * close[k] + 0.3 * high[k]
+            sellCenter = 0.7 * close[k] + 0.3 * low[k]
+            width = math.max(nz(atr[k], atr) * localWidth, math.abs(step) * 1.5)
+            age = math.pow(0.5, k / 5.0)
+            buyPressure += age * traded * (buyShare * kernel(level - buyCenter, width) + wickWeight * lowerWick * kernel(level - low[k], width))
+            sellPressure += age * traded * ((1 - buyShare) * kernel(level - sellCenter, width) + wickWeight * upperWick * kernel(level - high[k], width))
+        activity = (buyPressure + sellPressure) / math.max(nz(avgVolume), 1)
+        if activity >= 0.03
+            fraction = buyPressure / math.max(buyPressure + sellPressure, 0.000001)
+            dominance = math.abs(fraction - 0.5) * 2
+            transparency = int(math.round(clamp(75 - 40 * dominance - 20 * math.min(activity, 1), 8, 80)))
+            array.set(cells, band, color.new(fraction >= 0.5 ? buyColor : sellColor, transparency))
+            bullPoints += fraction > 0.53 ? 1 : 0
+            bearPoints += fraction < 0.47 ? 1 : 0
+            buyTotal += buyPressure
+            sellTotal += sellPressure
+
+// Each narrow candle body is a colored pressure cell, as in the original.
+p0 = ready ? anchor : na
+p1 = ready ? anchor + step : na
+p2 = ready ? anchor + 2 * step : na
+p3 = ready ? anchor + 3 * step : na
+p4 = ready ? anchor + 4 * step : na
+p5 = ready ? anchor + 5 * step : na
+p6 = ready ? anchor + 6 * step : na
+p7 = ready ? anchor + 7 * step : na
+p8 = ready ? anchor + 8 * step : na
+p9 = ready ? anchor + 9 * step : na
+p10 = ready ? anchor + 10 * step : na
+p11 = ready ? anchor + 11 * step : na
+p12 = ready ? edge : na
+plotcandle(p0, math.max(p0, p1), math.min(p0, p1), p1, "Pressure 01", color = cells.get(0), wickcolor = na, bordercolor = na, force_overlay = true)
+plotcandle(p1, math.max(p1, p2), math.min(p1, p2), p2, "Pressure 02", color = cells.get(1), wickcolor = na, bordercolor = na, force_overlay = true)
+plotcandle(p2, math.max(p2, p3), math.min(p2, p3), p3, "Pressure 03", color = cells.get(2), wickcolor = na, bordercolor = na, force_overlay = true)
+plotcandle(p3, math.max(p3, p4), math.min(p3, p4), p4, "Pressure 04", color = cells.get(3), wickcolor = na, bordercolor = na, force_overlay = true)
+plotcandle(p4, math.max(p4, p5), math.min(p4, p5), p5, "Pressure 05", color = cells.get(4), wickcolor = na, bordercolor = na, force_overlay = true)
+plotcandle(p5, math.max(p5, p6), math.min(p5, p6), p6, "Pressure 06", color = cells.get(5), wickcolor = na, bordercolor = na, force_overlay = true)
+plotcandle(p6, math.max(p6, p7), math.min(p6, p7), p7, "Pressure 07", color = cells.get(6), wickcolor = na, bordercolor = na, force_overlay = true)
+plotcandle(p7, math.max(p7, p8), math.min(p7, p8), p8, "Pressure 08", color = cells.get(7), wickcolor = na, bordercolor = na, force_overlay = true)
+plotcandle(p8, math.max(p8, p9), math.min(p8, p9), p9, "Pressure 09", color = cells.get(8), wickcolor = na, bordercolor = na, force_overlay = true)
+plotcandle(p9, math.max(p9, p10), math.min(p9, p10), p10, "Pressure 10", color = cells.get(9), wickcolor = na, bordercolor = na, force_overlay = true)
+plotcandle(p10, math.max(p10, p11), math.min(p10, p11), p11, "Pressure 11", color = cells.get(10), wickcolor = na, bordercolor = na, force_overlay = true)
+plotcandle(p11, math.max(p11, p12), math.min(p11, p12), p12, "Pressure 12", color = cells.get(11), wickcolor = na, bordercolor = na, force_overlay = true)
+
+anchorColor = anchor >= anchor[1] ? buyColor : sellColor
+plot(anchor, "EMA glow", color = color.new(anchorColor, 75), linewidth = 5, force_overlay = true)
+plot(anchor, "EMA", color = anchorColor, linewidth = 2, force_overlay = true)
+
+// The added EMAs do not affect the original 12-zone pressure calculation.
+emaFast = ta.ema(close, emaFastLength)
+emaSlow = ta.ema(close, emaSlowLength)
+plot(showEmaFast ? emaFast : na, "EMA 1 (configurable)", color = emaFastColor, linewidth = emaFastWidth, force_overlay = true)
+plot(showEmaSlow ? emaSlow : na, "EMA 2 (configurable)", color = emaSlowColor, linewidth = emaSlowWidth, force_overlay = true)
+
+// The RSI line uses a native 0-100 scale in a separate pane. Do not map RSI to price.
+plot(showRsi ? rsiValue : na, "RSI", color = rsiColor, linewidth = rsiLineWidth)
+hline(rsiOverbought, "RSI overbought", color = color.new(color.red, rsiShowLevels ? 40 : 100), linestyle = hline.style_dotted)
+hline(50, "RSI midpoint", color = color.new(color.gray, rsiShowLevels ? 55 : 100), linestyle = hline.style_dotted)
+hline(rsiOversold, "RSI oversold", color = color.new(color.lime, rsiShowLevels ? 40 : 100), linestyle = hline.style_dotted)
+
+
+share = buyTotal + sellTotal > 0 ? 100 * buyTotal / (buyTotal + sellTotal) : 50.0
+tablePosition = switch dashboardPosition
+    "Top Left" => position.top_left
+    "Top Center" => position.top_center
+    "Top Right" => position.top_right
+    "Middle Left" => position.middle_left
+    "Middle Center" => position.middle_center
+    "Middle Right" => position.middle_right
+    "Bottom Left" => position.bottom_left
+    "Bottom Center" => position.bottom_center
+    => position.bottom_right
+var table stats = table.new(tablePosition, 2, 4, border_width = 1, force_overlay = true)
+if barstate.islast and showDashboard
+    table.cell(stats, 0, 0, "ASJR VOLUME", text_color = color.white, bgcolor = color.rgb(40, 44, 52))
+    table.cell(stats, 1, 0, "12 POINTS", text_color = color.white, bgcolor = color.rgb(40, 44, 52))
+    table.cell(stats, 0, 1, "Buy / Sell", text_color = color.white, bgcolor = color.rgb(40, 44, 52))
+    table.cell(stats, 1, 1, str.tostring(bullPoints) + " / " + str.tostring(bearPoints), text_color = color.white, bgcolor = color.rgb(40, 44, 52))
+    table.cell(stats, 0, 2, "Est. buy share", text_color = color.white, bgcolor = color.rgb(40, 44, 52))
+    table.cell(stats, 1, 2, str.tostring(share, "#.0") + "%", text_color = color.white, bgcolor = color.rgb(40, 44, 52))
+    table.cell(stats, 0, 3, "RSI (" + str.tostring(rsiLength) + ")", text_color = color.white, bgcolor = color.rgb(40, 44, 52))
+    table.cell(stats, 1, 3, str.tostring(rsiValue, "#.0"), text_color = rsiValue >= 50 ? buyColor : sellColor, bgcolor = color.rgb(40, 44, 52))
