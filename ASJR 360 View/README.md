@@ -1,3 +1,30 @@
+# ASJR 360 View V5 — Responsive EMA21 + readable dashboard
+
+**Latest test version:** [ASJR 360 View V5 Pine Script](ASJR_360_View_V5.pine)
+
+## Changes from working V4
+
+**1. Main EMA21 line now follows confirmed trend promptly.** V4 required every original estimated pressure zone and the strict RSI threshold to agree, leaving EMA21 grey even through visible downtrends. V5 defaults to **Trend-first**:
+- **RED** on the first **completed candle** when EMA9 < EMA21 **and both EMA slopes fall**, unless **both** strong bullish pressure and bullish RSI strongly oppose that bearish direction.
+- **GREEN** on the first **completed candle** when EMA9 > EMA21 **and both EMA slopes rise**, unless **both** strong bearish pressure and bearish RSI strongly oppose that bullish direction.
+- **GREY** when EMAs are not directionally aligned or there is an unusually strong combined counter-signal.
+
+The line remains on the EMA21 price path. Historical bars show the corresponding confirmed colour; the current unclosed bar shows the previous confirmed colour. **Being RED or GREEN under Trend-first does not mean full 360 confirmation.** The table marks this explicitly.
+
+The original **strict** signal remains available under Settings → **360 line colouring: Strict 360**, requiring the original trend + **8-zone/60% pressure** + **RSI55/45 slope** conditions. These conditions are unchanged. V5's **Trend-first** is a new visual interpretation, not a validated trading entry rule.
+
+The **360 LINE** cell reads `RED TREND` / `GREEN TREND` for responsive colours or `RED FULL` / `GREEN FULL` only when *all original strict confirmations* agree.
+
+**2. Dashboard now has separate heading and value rows** with vertical and horizontal borders, seven columns, subtle mild-dark header/background. Settings still provide show/hide, nine positions, text size, background, opacity, font/border colours; new **Column / row divider width** accepts 1–3.
+
+**3. Alerts** (optional) now follow the **selected line-colour mode**, labelled `TREND` or `FULL` and triggered on confirmed candles. They are not buy/sell orders.
+
+**Unchanged:** Original 12-zone pressure mathematics and EMA9/21/200; RSI14; TradingView-style RVOL5/RVOL20 at time, reference only; prior V4 workaround for TradingView's 64-plot limit (the final pressure band is a bounded-history line drawing). Versions 1–4 and the separate Volume Delta Pressure V2 are untouched.
+
+**Testing status:** Source consistency and GitHub persistence checked; direct Pine Editor compilation and runtime still require user testing.
+
+## Earlier versions and research
+
 # ASJR 360 View V4 — RE10140 fix
 
 **Current test version:** [ASJR 360 View V4 Pine Script](ASJR_360_View_V4.pine).
