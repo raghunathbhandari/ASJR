@@ -321,6 +321,6 @@ python -m unittest discover -s RudraScanner/tests -p "test_*.py"
 
 ---
 
-**Maintained by [Raghu Nath Bhandari](https://github.com/raghunathbhandari)** · ASJR Trading · **README, Since 2022, Last updated 19 November 2026**.
+**Maintained by [Raghu Nath Bhandari](https://github.com/raghunathbhandari)** · ASJR Trading · **README, Since 2022, Last updated 21 November 2026**.
 
 *Built to study market behaviour systematically, test ideas honestly, and turn repeatable research into better-informed trading decisions.*
