@@ -1,0 +1,297 @@
+//@version=6
+// Profile layout adapted from Zeiierman's Rolling Candle Profile.
+// Original: (c) Zeiierman, CC BY-NC-SA 4.0.
+// https://creativecommons.org/licenses/by-nc-sa/4.0/
+// This adaptation is distributed under the same CC BY-NC-SA 4.0 terms.
+// V2: Pine plot-budget correction. Keep exactly 12 original zone candles.
+// 12 series-coloured plotcandles x 5 = 60 plot counts.
+// EMA21 dynamic series colour = 2; EMA9 input colour = 1; EMA200 input colour = 1.
+// Total = 64, TradingView's limit; use alert() (zero plot counts).
+// V4: Fix RE10140 shown by TradingView (66 plot counts; limit 64).
+// Zone 12 is represented as a vertical line drawing rather than plotcandle;
+// line.new consumes zero plot counts, preserving all pressure calculations.
+// max_lines_count=500 retains Zone 12 on the latest up to 500 eligible candles.
+indicator("ASJR 360 View V5", overlay = true, behind_chart = true, max_bars_back = 150, calc_bars_count = 6000, max_lines_count = 500)
+import TradingView/RelativeValue/4 as rv
+
+// Twelve price-zone pressure cells inspired by Rolling Candle Profile.
+// This estimates directional volume from OHLCV; it is NOT exchange bid/ask delta.
+// -----------------------------------------------------------------------------
+// ASJR 360 VIEW — a NEW indicator; original Volume Delta Pressure V2 is untouched.
+// Original 12-zone OHLCV pressure mathematics preserved below.
+// -----------------------------------------------------------------------------
+// EMA21 is the anchor for pressure and the dynamic 360 confirmation line.
+emaGroup = "01 | EMA lines"
+anchorLength = input.int(21, "EMA21 / pressure anchor length", minval = 5, maxval = 100, group = emaGroup)
+showAnchor = input.bool(true, "Show 360 EMA21 confirmation line", group = emaGroup)
+anchorWidth = input.int(2, "360 EMA21 line width", minval = 1, maxval = 4, group = emaGroup)
+showEmaFast = input.bool(true, "Show EMA 1", group = emaGroup)
+emaFastLength = input.int(9, "EMA 1 length", minval = 1, maxval = 1000, group = emaGroup)
+emaFastColor = input.color(#E59B23, "EMA 1 colour", group = emaGroup)
+emaFastWidth = input.int(2, "EMA 1 line width", minval = 1, maxval = 4, group = emaGroup)
+showEmaSlow = input.bool(true, "Show EMA 3", group = emaGroup)
+emaSlowLength = input.int(200, "EMA 3 length", minval = 1, maxval = 1000, group = emaGroup)
+emaSlowColor = input.color(#3676C8, "EMA 3 colour", group = emaGroup)
+emaSlowWidth = input.int(3, "EMA 3 line width", minval = 1, maxval = 4, group = emaGroup)
+bullLineColor = input.color(#42D5A5, "360 bullish line colour", group = emaGroup)
+bearLineColor = input.color(#EB7581, "360 bearish line colour", group = emaGroup)
+neutralLineColor = input.color(#9BA5B1, "360 mixed / N/A line colour", group = emaGroup)
+lineResponse = input.string("Trend-first", "360 line colouring", options = ["Trend-first", "Strict 360"], tooltip = "Trend-first colours EMA21 at the first confirmed candle when EMA9 and EMA21 align and slope together, unless BOTH strict pressure and RSI strongly oppose the trend. Strict 360 requires EMA trend, 8 zones / 60% pressure and RSI55/45 all to agree. A trend-only colour is NOT a fully confirmed 360 signal.", group = emaGroup)
+
+pressureGroup = "02 | Original 12-zone pressure"
+memory = input.int(12, "Volume history (bars)", minval = 4, maxval = 24, group = pressureGroup)
+localWidth = input.float(0.45, "Price localization (ATR)", minval = 0.1, maxval = 2, step = 0.05, group = pressureGroup)
+wickWeight = input.float(0.35, "Wick rejection influence", minval = 0, maxval = 1, step = 0.05, group = pressureGroup)
+buyColor = input.color(#00EFB4, "Buying pressure", group = pressureGroup)
+sellColor = input.color(#FF3D6E, "Selling pressure", group = pressureGroup)
+showPressureZones = input.bool(true, "Show 12 pressure zones", group = pressureGroup)
+minZones = input.int(8, "Min confirming pressure zones", minval = 1, maxval = 12, group = pressureGroup)
+bullShareMin = input.float(60.0, "Bullish estimated buy share min (%)", minval = 50, maxval = 100, step = 1, group = pressureGroup)
+bearShareMax = input.float(40.0, "Bearish estimated buy share max (%)", minval = 0, maxval = 50, step = 1, group = pressureGroup)
+
+rsiGroup = "03 | RSI momentum"
+rsiLength = input.int(14, "RSI length", minval = 2, maxval = 100, group = rsiGroup)
+rsiBullLevel = input.float(55, "Bullish RSI threshold", minval = 50, maxval = 100, step = 1, group = rsiGroup)
+rsiBearLevel = input.float(45, "Bearish RSI threshold", minval = 0, maxval = 50, step = 1, group = rsiGroup)
+rsiSlopeBars = input.int(1, "RSI slope lookback (bars)", minval = 1, maxval = 10, group = rsiGroup)
+
+rvolGroup = "04 | RVOL at Time (reference only)"
+rvolLen5 = input.int(5, "RVOL fast lookback (sessions)", minval = 1, maxval = 100, group = rvolGroup)
+rvolLen20 = input.int(20, "RVOL slow lookback (sessions)", minval = 1, maxval = 100, group = rvolGroup)
+rvolAnchor = input.timeframe("1D", "Anchor timeframe", group = rvolGroup)
+rvolMode = input.string("Cumulative", "Calculation mode", options = ["Cumulative", "Regular"], group = rvolGroup)
+rvolHighColour = input.color(#42D5A5, "Above 1.0 colour", group = rvolGroup)
+rvolLowColour = input.color(#EB7581, "Below 1.0 colour", group = rvolGroup)
+
+uiGroup = "05 | Compact 360 dashboard"
+showDashboard = input.bool(true, "Show dashboard", group = uiGroup)
+dashboardPosition = input.string("Top Right", "Dashboard position", options = ["Top Left", "Top Center", "Top Right", "Middle Left", "Middle Center", "Middle Right", "Bottom Left", "Bottom Center", "Bottom Right"], group = uiGroup)
+dashboardSize = input.string("Small", "Font size", options = ["Tiny", "Small", "Normal"], group = uiGroup)
+dashboardBg = input.color(#2B3441, "Mild dark background", group = uiGroup)
+dashboardBgTransparency = input.int(15, "Background transparency (%)", minval = 0, maxval = 100, group = uiGroup)
+dashboardText = input.color(#E4E9F1, "Text colour", group = uiGroup)
+dashboardBorder = input.color(#718096, "Table divider and border colour", group = uiGroup)
+dashboardDividerWidth = input.int(1, "Column / row divider width", minval = 1, maxval = 3, group = uiGroup)
+
+clamp(float x, float lo, float hi) => math.max(lo, math.min(hi, x))
+kernel(float distance, float width) =>
+    q = clamp(1 - math.abs(distance) / math.max(width, syminfo.mintick), 0, 1)
+    q * q * (3 - 2 * q)
+
+anchor = ta.ema(close, anchorLength)
+atr = ta.atr(14)
+avgVolume = ta.sma(volume, 20)
+bodyLow = math.min(open, close)
+bodyHigh = math.max(open, close)
+edge = anchor < bodyLow ? bodyLow : anchor > bodyHigh ? bodyHigh : na
+ready = not na(edge) and not na(atr) and bar_index > math.max(anchorLength, memory + 20) and math.abs(edge - anchor) > syminfo.mintick * 2
+step = ready ? (edge - anchor) / 12 : na
+
+var array<color> cells = array.new_color(12, na)
+array.fill(cells, na)
+int bullPoints = 0
+int bearPoints = 0
+float buyTotal = 0.0
+float sellTotal = 0.0
+
+if ready
+    for band = 0 to 11
+        level = anchor + step * (band + 0.5)
+        float buyPressure = 0.0
+        float sellPressure = 0.0
+        for k = 0 to memory - 1
+            r = math.max(high[k] - low[k], syminfo.mintick)
+            body = clamp((close[k] - open[k]) / r, -1, 1)
+            closePosition = clamp((2 * close[k] - high[k] - low[k]) / r, -1, 1)
+            buyShare = clamp(0.5 + 0.5 * (0.65 * body + 0.35 * closePosition), 0, 1)
+            traded = math.max(nz(volume[k]), 0)
+            lowerWick = (math.min(open[k], close[k]) - low[k]) / r
+            upperWick = (high[k] - math.max(open[k], close[k])) / r
+            // Center each directional contribution near the price where it acted.
+            buyCenter = 0.7 * close[k] + 0.3 * high[k]
+            sellCenter = 0.7 * close[k] + 0.3 * low[k]
+            width = math.max(nz(atr[k], atr) * localWidth, math.abs(step) * 1.5)
+            age = math.pow(0.5, k / 5.0)
+            buyPressure += age * traded * (buyShare * kernel(level - buyCenter, width) + wickWeight * lowerWick * kernel(level - low[k], width))
+            sellPressure += age * traded * ((1 - buyShare) * kernel(level - sellCenter, width) + wickWeight * upperWick * kernel(level - high[k], width))
+        activity = (buyPressure + sellPressure) / math.max(nz(avgVolume), 1)
+        if activity >= 0.03
+            fraction = buyPressure / math.max(buyPressure + sellPressure, 0.000001)
+            dominance = math.abs(fraction - 0.5) * 2
+            transparency = int(math.round(clamp(75 - 40 * dominance - 20 * math.min(activity, 1), 8, 80)))
+            array.set(cells, band, color.new(fraction >= 0.5 ? buyColor : sellColor, transparency))
+            bullPoints += fraction > 0.53 ? 1 : 0
+            bearPoints += fraction < 0.47 ? 1 : 0
+            buyTotal += buyPressure
+            sellTotal += sellPressure
+
+// Each narrow candle body is a colored pressure cell, as in the original.
+p0 = ready ? anchor : na
+p1 = ready ? anchor + step : na
+p2 = ready ? anchor + 2 * step : na
+p3 = ready ? anchor + 3 * step : na
+p4 = ready ? anchor + 4 * step : na
+p5 = ready ? anchor + 5 * step : na
+p6 = ready ? anchor + 6 * step : na
+p7 = ready ? anchor + 7 * step : na
+p8 = ready ? anchor + 8 * step : na
+p9 = ready ? anchor + 9 * step : na
+p10 = ready ? anchor + 10 * step : na
+p11 = ready ? anchor + 11 * step : na
+p12 = ready ? edge : na
+plotcandle(p0, math.max(p0, p1), math.min(p0, p1), p1, "Pressure 01", color = showPressureZones ? cells.get(0) : na, wickcolor = na, bordercolor = na)
+plotcandle(p1, math.max(p1, p2), math.min(p1, p2), p2, "Pressure 02", color = showPressureZones ? cells.get(1) : na, wickcolor = na, bordercolor = na)
+plotcandle(p2, math.max(p2, p3), math.min(p2, p3), p3, "Pressure 03", color = showPressureZones ? cells.get(2) : na, wickcolor = na, bordercolor = na)
+plotcandle(p3, math.max(p3, p4), math.min(p3, p4), p4, "Pressure 04", color = showPressureZones ? cells.get(3) : na, wickcolor = na, bordercolor = na)
+plotcandle(p4, math.max(p4, p5), math.min(p4, p5), p5, "Pressure 05", color = showPressureZones ? cells.get(4) : na, wickcolor = na, bordercolor = na)
+plotcandle(p5, math.max(p5, p6), math.min(p5, p6), p6, "Pressure 06", color = showPressureZones ? cells.get(5) : na, wickcolor = na, bordercolor = na)
+plotcandle(p6, math.max(p6, p7), math.min(p6, p7), p7, "Pressure 07", color = showPressureZones ? cells.get(6) : na, wickcolor = na, bordercolor = na)
+plotcandle(p7, math.max(p7, p8), math.min(p7, p8), p8, "Pressure 08", color = showPressureZones ? cells.get(7) : na, wickcolor = na, bordercolor = na)
+plotcandle(p8, math.max(p8, p9), math.min(p8, p9), p9, "Pressure 09", color = showPressureZones ? cells.get(8) : na, wickcolor = na, bordercolor = na)
+plotcandle(p9, math.max(p9, p10), math.min(p9, p10), p10, "Pressure 10", color = showPressureZones ? cells.get(9) : na, wickcolor = na, bordercolor = na)
+plotcandle(p10, math.max(p10, p11), math.min(p10, p11), p11, "Pressure 11", color = showPressureZones ? cells.get(10) : na, wickcolor = na, bordercolor = na)
+// Pressure zone 12 retains the original price boundaries and cell colour.
+// Render via a vertical drawing rather than plotcandle to save 5+ plot counts.
+// TradingView permits up to 500 line drawings: older Zone 12 drawings may
+// disappear when scrolling far back, while the other 11 zones remain plotted.
+if showPressureZones and ready and not na(cells.get(11))
+    line.new(x1 = bar_index, y1 = p11, x2 = bar_index, y2 = p12, xloc = xloc.bar_index, extend = extend.none, color = cells.get(11), width = 4)
+
+// -----------------------------------------------------------------------------
+// Combined 360 confirmation — trend + original pressure + RSI.
+// RVOL5/RVOL20 are DISPLAY REFERENCES ONLY: NEVER used in EMA21 line colouring.
+// -----------------------------------------------------------------------------
+// The pressure model remains exactly the original 12-zone OHLCV estimation above.
+// A missing/inactive profile is NOT bullish/bearish, even though V2 used 50%
+// as a display fallback for the buy-share calculation.
+float buyShare = buyTotal + sellTotal > 0 ? 100.0 * buyTotal / (buyTotal + sellTotal) : na
+bool pressureValid = ready and not na(buyShare)
+bool bullPressure = pressureValid and bullPoints >= minZones and buyShare >= bullShareMin
+bool bearPressure = pressureValid and bearPoints >= minZones and buyShare <= bearShareMax
+
+float emaFast = ta.ema(close, emaFastLength)
+float emaSlow = ta.ema(close, emaSlowLength)
+bool bullTrend = emaFast > anchor and emaFast > emaFast[1] and anchor > anchor[1]
+bool bearTrend = emaFast < anchor and emaFast < emaFast[1] and anchor < anchor[1]
+float rsiValue = ta.rsi(close, rsiLength)
+bool bullRsi = not na(rsiValue) and rsiValue >= rsiBullLevel and rsiValue > rsiValue[rsiSlopeBars]
+bool bearRsi = not na(rsiValue) and rsiValue <= rsiBearLevel and rsiValue < rsiValue[rsiSlopeBars]
+
+// The strict original 360 calculation is unchanged (trend + 12-zone pressure + RSI).
+// In V4 it was used for line colour, making many genuine downtrends GREY when
+// the 12-zone profile was unavailable or fewer than 8 zones were active.
+int rawState = bullTrend and bullPressure and bullRsi ? 1 : bearTrend and bearPressure and bearRsi ? -1 : 0
+
+// V5 DEFAULT: responsive trend-first line colour. An aligned EMA9/EMA21
+// falling trend makes EMA21 red at the FIRST completed aligned bar, even if the
+// strict pressure threshold has not accumulated 8 confirming zones.
+// RSI and pressure are still evaluated: *both* strictly opposing confirmations
+// veto the responsive direction. A direction without all strict checks is
+// explicitly marked TREND (not FULL) in the dashboard.
+// The alternative "Strict 360" reproduces V4's original line colouring.
+bool strongBullConflict = bearPressure and bearRsi
+bool strongBearConflict = bullPressure and bullRsi
+int trendFirstState = bullTrend and not strongBullConflict ? 1 : bearTrend and not strongBearConflict ? -1 : 0
+int lineState = lineResponse == "Trend-first" ? trendFirstState : rawState
+
+// Preserve last CONFIRMED bar's state while the live bar is forming.
+int confirmedState = barstate.isconfirmed ? lineState : nz(lineState[1], 0)
+int confirmedFullState = barstate.isconfirmed ? rawState : nz(rawState[1], 0)
+color stateColour = confirmedState == 1 ? bullLineColor : confirmedState == -1 ? bearLineColor : neutralLineColor
+plot(showAnchor ? anchor : na, "360 EMA21 confirmation", color = stateColour, linewidth = anchorWidth)
+plot(showEmaFast ? emaFast : na, "EMA 1", color = emaFastColor, linewidth = emaFastWidth)
+plot(showEmaSlow ? emaSlow : na, "EMA 3", color = emaSlowColor, linewidth = emaSlowWidth)
+
+// V3 FIX: TradingView RelativeValue/4 averageAtTime(source, length, anchor, isCumulative)
+// expects a *series bool* anchor, not a timeframe string. The anchor bool is
+// timeframe.change(rvolAnchor), calculated each bar and shared by both RVOLs.
+// The chart's session setting determines whether extended-hours bars exist.
+bool isCum = rvolMode == "Cumulative"
+bool isNewAnchor = timeframe.change(rvolAnchor)
+float cumulativeVol = rv.calcCumulativeSeries(volume, isNewAnchor)
+float currentVol = isCum ? cumulativeVol : volume
+float avgVol5 = rv.averageAtTime(volume, rvolLen5, isNewAnchor, isCum)
+float avgVol20 = rv.averageAtTime(volume, rvolLen20, isNewAnchor, isCum)
+// Require one complete anchor sample beyond each historical reference period.
+var int anchorPeriodsSeen = 0
+if barstate.isfirst
+    anchorPeriodsSeen := 1
+else if isNewAnchor
+    anchorPeriodsSeen += 1
+bool supportedRvolFrame = timeframe.isintraday and timeframe.in_seconds(rvolAnchor) > timeframe.in_seconds(timeframe.period)
+float rvol5 = supportedRvolFrame and anchorPeriodsSeen > rvolLen5 and not na(avgVol5) and avgVol5 > 0 ? currentVol / avgVol5 : na
+float rvol20 = supportedRvolFrame and anchorPeriodsSeen > rvolLen20 and not na(avgVol20) and avgVol20 > 0 ? currentVol / avgVol20 : na
+
+// Values on dashboard also use last completed chart candle (no intrabar flicker).
+bool showBullTrend = barstate.isconfirmed ? bullTrend : bullTrend[1]
+bool showBearTrend = barstate.isconfirmed ? bearTrend : bearTrend[1]
+bool showPressureValid = barstate.isconfirmed ? pressureValid : pressureValid[1]
+int showBullPoints = barstate.isconfirmed ? bullPoints : bullPoints[1]
+int showBearPoints = barstate.isconfirmed ? bearPoints : bearPoints[1]
+float showBuyShare = barstate.isconfirmed ? buyShare : buyShare[1]
+float showRsi = barstate.isconfirmed ? rsiValue : rsiValue[1]
+bool showRsiUp = barstate.isconfirmed ? rsiValue > rsiValue[1] : rsiValue[1] > rsiValue[2]
+float showRvol5 = barstate.isconfirmed ? rvol5 : rvol5[1]
+float showRvol20 = barstate.isconfirmed ? rvol20 : rvol20[1]
+
+formatRvol(float v) =>
+    na(v) ? "N/A" : str.tostring(v, "#.00") + "x"
+rvolColour(float v) =>
+    na(v) or v == 1.0 ? neutralLineColor : v > 1.0 ? rvolHighColour : rvolLowColour
+
+tablePosition = switch dashboardPosition
+    "Top Left" => position.top_left
+    "Top Center" => position.top_center
+    "Top Right" => position.top_right
+    "Middle Left" => position.middle_left
+    "Middle Center" => position.middle_center
+    "Middle Right" => position.middle_right
+    "Bottom Left" => position.bottom_left
+    "Bottom Center" => position.bottom_center
+    => position.bottom_right
+textSize = switch dashboardSize
+    "Tiny" => size.tiny
+    "Normal" => size.normal
+    => size.small
+
+// Two distinct rows with proper TradingView table cell borders so headers,
+// values, columns, and rows are visually separated (not merely newlines).
+color cellBg = color.new(dashboardBg, dashboardBgTransparency)
+color headerBg = color.new(dashboardBg, math.max(0, dashboardBgTransparency - 10))
+var table board = table.new(tablePosition, 7, 2, bgcolor = cellBg, frame_color = dashboardBorder, frame_width = 1, border_color = dashboardBorder, border_width = dashboardDividerWidth)
+if barstate.islast
+    if showDashboard
+        string trendText = showBullTrend ? "BULL ↑" : showBearTrend ? "BEAR ↓" : "MIXED"
+        color trendColour = showBullTrend ? bullLineColor : showBearTrend ? bearLineColor : neutralLineColor
+        string pressText = showPressureValid ? str.tostring(showBullPoints) + "/" + str.tostring(showBearPoints) + " · " + str.tostring(showBuyShare, "#.0") + "%" : "N/A"
+        color pressColour = showPressureValid and showBuyShare >= bullShareMin and showBullPoints >= minZones ? bullLineColor : showPressureValid and showBuyShare <= bearShareMax and showBearPoints >= minZones ? bearLineColor : neutralLineColor
+        string rsiText = na(showRsi) ? "N/A" : str.tostring(showRsi, "#.0") + (showRsiUp ? " ↑" : " ↓")
+        color rsiColour = na(showRsi) ? neutralLineColor : showRsi >= rsiBullLevel and showRsiUp ? bullLineColor : showRsi <= rsiBearLevel and not showRsiUp ? bearLineColor : #B6A4EF
+        string stateText = confirmedState == 1 ? (confirmedFullState == 1 ? "GREEN FULL" : "GREEN TREND") : confirmedState == -1 ? (confirmedFullState == -1 ? "RED FULL" : "RED TREND") : "GREY"
+        table.cell(board, 0, 0, "ASJR 360", text_color = dashboardText, bgcolor = headerBg, text_size = textSize, text_halign = text.align_center)
+        table.cell(board, 1, 0, "TREND", text_color = dashboardText, bgcolor = headerBg, text_size = textSize, text_halign = text.align_center)
+        table.cell(board, 2, 0, "PRESSURE", text_color = dashboardText, bgcolor = headerBg, text_size = textSize, text_halign = text.align_center)
+        table.cell(board, 3, 0, "RSI " + str.tostring(rsiLength), text_color = dashboardText, bgcolor = headerBg, text_size = textSize, text_halign = text.align_center)
+        table.cell(board, 4, 0, "RVOL " + str.tostring(rvolLen5), text_color = dashboardText, bgcolor = headerBg, text_size = textSize, text_halign = text.align_center)
+        table.cell(board, 5, 0, "RVOL " + str.tostring(rvolLen20), text_color = dashboardText, bgcolor = headerBg, text_size = textSize, text_halign = text.align_center)
+        table.cell(board, 6, 0, "360 LINE", text_color = dashboardText, bgcolor = headerBg, text_size = textSize, text_halign = text.align_center)
+        table.cell(board, 0, 1, timeframe.period, text_color = dashboardText, bgcolor = cellBg, text_size = textSize, text_halign = text.align_center)
+        table.cell(board, 1, 1, trendText, text_color = trendColour, bgcolor = cellBg, text_size = textSize, text_halign = text.align_center)
+        table.cell(board, 2, 1, pressText, text_color = pressColour, bgcolor = cellBg, text_size = textSize, text_halign = text.align_center)
+        table.cell(board, 3, 1, rsiText, text_color = rsiColour, bgcolor = cellBg, text_size = textSize, text_halign = text.align_center)
+        table.cell(board, 4, 1, formatRvol(showRvol5), text_color = rvolColour(showRvol5), bgcolor = cellBg, text_size = textSize, text_halign = text.align_center)
+        table.cell(board, 5, 1, formatRvol(showRvol20), text_color = rvolColour(showRvol20), bgcolor = cellBg, text_size = textSize, text_halign = text.align_center)
+        table.cell(board, 6, 1, stateText, text_color = stateColour, bgcolor = cellBg, text_size = textSize, text_halign = text.align_center)
+    else
+        table.clear(board, 0, 0, 6, 1)
+
+// Confirmed GREEN/RED changes. alert() uses no Pine plot counts, unlike
+// alertcondition(). Configure TradingView alert: "Any alert() function call".
+// Alerts are research notifications, not orders or recommendations.
+alertsEnabled = input.bool(false, "Enable state-change alerts", group = "06 | Alerts")
+alertDirection = input.string("Both", "Direction", options = ["Both", "Green only", "Red only"], group = "06 | Alerts")
+if alertsEnabled and barstate.isconfirmed
+    if lineState == 1 and lineState[1] != 1 and alertDirection != "Red only"
+        alert("ASJR 360 GREEN " + (rawState == 1 ? "FULL" : "TREND") + " | " + syminfo.ticker + " | " + timeframe.period + " | close " + str.tostring(close, format.mintick), alert.freq_once_per_bar_close)
+    else if lineState == -1 and lineState[1] != -1 and alertDirection != "Green only"
+        alert("ASJR 360 RED " + (rawState == -1 ? "FULL" : "TREND") + " | " + syminfo.ticker + " | " + timeframe.period + " | close " + str.tostring(close, format.mintick), alert.freq_once_per_bar_close)
