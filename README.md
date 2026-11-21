@@ -24,6 +24,7 @@ The project is designed around a practical research loop:
 - [Linux VPS Server Automation](RUDRA_DOWNLOADER_GUIDE.md)
 - [IBKR / IB Gateway Automation](Backtesting/DataLoader/IBKR_24H_IMPORT.md)
 - [ASJR Renko V4 — scroll-aware contiguous bricks](Renko/README.md)
+- [ASJR Volume Delta Pressure V2 — 12-zone pressure with EMA9/EMA21/EMA200](Volume%20Delta%20Pressure/README.md)
 
 - [Technology and architecture](#technology-and-architecture)
 - [Strategy catalogue and entry/exit rules](#strategy-catalogue-and-entryexit-rules)
@@ -237,6 +238,7 @@ TradingView indicator source lives in dedicated folders.
 | **ASJR Gann Ideas V1–V5** | Preserved development history for levels, colour controls, label placement and right-side label spacing | [Versions folder](Gann%20Ideas/) |
 | **ASJR Candle Patterns** | 17 selectable candlestick pattern groups, bullish/bearish highlighting, optional quality gates and Gann reference confluence | [Pine source](Candle%20Patterns/ASJR_Candle_Patterns.pine) · [Guide](Candle%20Patterns/README.md) |
 | **ASJR Renko V4 — Scroll-Aware, Brick Only** | Contiguous green/red bricks reconstructed through the chart's visible right edge, re-rendered on scroll/zoom; ATR snapshot / fixed / percent snapshot size, 1m/5m/15m/1H/4H/daily. No EMA/BUY/SELL icons. | [V4 Pine source](Renko/ASJR_Renko_V4.pine) · [Guide](Renko/README.md) · [V3](Renko/ASJR_Renko_V3.pine) |
+| **ASJR Volume Delta Pressure V2** | 12 price-zone OHLCV pressure estimate; existing EMA21 anchor; independently styled EMA9 and EMA200 chart overlays | [V2 Pine source](Volume%20Delta%20Pressure/ASJR_Volume_Delta_Pressure_V2.pine) · [Guide](Volume%20Delta%20Pressure/README.md) |
 
 **Eight Gann price families:** Factor of Eight; Yearly Highs/Lows; Power of Squares; Power of Cubes; Square of Nine Static; Square of Nine Dynamic H; Square of Nine Dynamic C; Square of 360. The additional two switches are the **12 and 90 vertical cycles**.
 
