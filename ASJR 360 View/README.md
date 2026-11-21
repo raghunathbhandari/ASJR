@@ -50,6 +50,10 @@ For background:
 4. Confirm a Gann/market-structure price location and a completed candle rather than treating a line colour change as a trade.
 5. Two optional alert conditions: first confirmed GREEN bar and first confirmed RED bar after a different status.
 
+## Historical MES replay
+
+[12-month MES 5m/15m backtest (Nov 2025–Oct 2026)](MES_15M_5M_BACKTEST_2025-11_TO_2026-10.md): 70,689 IBKR 5-minute bars; under a one-contract ATR 1R-stop/2R-target test, all tested V1 colour-change variants lost money after assumed costs. The line is **confirmation only**, not a validated standalone entry strategy.
+
 ## Validation and limitations
 - Source created and structurally checked; **TradingView Pine Editor compilation and live-chart plotting are not independently verified**.
 - This is research/confirmation, not a trading system, guaranteed edge or order-placement strategy.
