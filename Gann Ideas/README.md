@@ -4,6 +4,26 @@
 
 This is the standalone **ASJR Gann Ideas** overlay for **5m, 15m, 1H, 4H, and Daily** charts. It follows the user's reference screenshot: candlesticks, thin horizontal price lines, right-edge colour-coded method/angle/price labels, and two dashed vertical cycle families. It is not the proprietary AmiBroker "ASHOK GANN SUPER STUDIO" implementation.
 
+## V10 — Configurable vertical-cycle lengths (2026-11-21)
+
+**Latest release:** [ASJR Gann Ideas V10](ASJR_Gann_Ideas_V10.pine), based on V9 (not V6). The eight horizontal Gann price families, angle-density controls, optional labels and original price calculations are retained.
+
+**The 10 feature checkboxes remain unchanged:** eight price families and two independent vertical time cycles. What changed is that cycle lengths are no longer hard-coded:
+
+| Switch | Numeric length | Unit dropdown | Default |
+| --- | --- | --- | --- |
+| 9. Cycle A | Editable **1–500** | `bars / mi / hh / day / m / y` | **12 bars** |
+| 10. Cycle B | Editable **1–500** | `bars / mi / hh / day / m / y` | **90 bars** (off until enabled) |
+
+Examples: **Cycle A = 10, bars** marks every 10 chart candles; **Cycle B = 100, bars** marks every 100 chart candles from the shared UTC anchor. You can change both independently, or select elapsed/calendar units instead. Both histories and next-future markers use the editable length; optional cycle labels display the selected number and unit.
+
+Cycle B's default unit is now **bars**, matching the V6-style setting shown in the screenshot; V9 had defaulted Cycle B to minutes. All existing Pine files are preserved.
+
+The shared UTC anchor and historical-verticals limit are unchanged. Note that TradingView cannot project a `bar_index` line farther than 500 bars into the future, so the numeric cap is 500. Changing the length/units may change which candles get a vertical marker, but does not change the horizontal Gann level calculations.
+
+**Validation:** source changes and GitHub commit have been verified; direct TradingView compilation and live chart drawing are not independently tested.
+
+
 ## V5 — Clean UI, future-right price labels (2026-11-15)
 
 **Latest release:** `ASJR_Gann_Ideas_V5_Clean_UI.pine`, TradingView name **ASJR Gann Ideas V5 Clean UI**.
