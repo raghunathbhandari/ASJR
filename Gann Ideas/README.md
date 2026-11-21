@@ -4,6 +4,29 @@
 
 This is the standalone **ASJR Gann Ideas** overlay for **5m, 15m, 1H, 4H, and Daily** charts. It follows the user's reference screenshot: candlesticks, thin horizontal price lines, right-edge colour-coded method/angle/price labels, and two dashed vertical cycle families. It is not the proprietary AmiBroker "ASHOK GANN SUPER STUDIO" implementation.
 
+## V11 — Monk-friendly colours at 25% opacity (2026-11-21)
+
+**Latest source:** [ASJR Gann Ideas V11 Pine Script](ASJR_Gann_Ideas_V11.pine).
+
+The ten method-specific colour-picker **defaults** now use a calm monastery-inspired palette suitable for dark charts. All have **25% opacity**, represented by `color.new(#HEX, 75)` in Pine Script (75% transparency). The palette keeps every method distinguishable without overpowering price candles.
+
+| Feature | Colour name | Default hex |
+| --- | --- | --- |
+| 1. Factor of 8 | Monastery ochre | `#D39828` |
+| 2. Yearly highs/lows | Sandal gold | `#E3BC73` |
+| 3. Power of squares | Terracotta | `#B76B4A` |
+| 4. Power of cubes | Oxide red | `#96473F` |
+| 5. Square of 9 static | Saffron | `#E88735` |
+| 6. Square of 9 dynamic H | Warm vermilion | `#BE4B39` |
+| 7. Square of 9 dynamic C | Meditation sage | `#71917B` |
+| 8. Square of 360 | Stone linen | `#C9B9A5` |
+| 9. Vertical Cycle A | Monk maroon | `#A04758` |
+| 10. Vertical Cycle B | Himalayan slate blue | `#7799AE` |
+
+When labels are enabled, **their text uses the configured colour's existing opacity**, rather than overriding it to 100% opacity. Price-label background transparency defaults to **75%** (25% opacity). Existing settings permit changing this independently; default labels remain **off**, as in V10.
+
+**Unchanged:** eight Gann price-level calculations, original line-placement logic, editable Cycle A / B lengths (12 and 90 by default), independent time unit dropdowns, ten feature switches, chart-timeframe handling and default disabled labels. V10 and earlier are preserved. **TradingView compilation not independently verified**; source consistency and GitHub commit checked.
+
 ## V10 — Configurable vertical-cycle lengths (2026-11-21)
 
 **Latest release:** [ASJR Gann Ideas V10](ASJR_Gann_Ideas_V10.pine), based on V9 (not V6). The eight horizontal Gann price families, angle-density controls, optional labels and original price calculations are retained.
