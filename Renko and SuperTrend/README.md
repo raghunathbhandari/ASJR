@@ -6,7 +6,7 @@
 
 - Green and red Renko bricks, calculated from **confirmed ordinary chart closes**.
 - A conventional SuperTrend on **synthetic completed Renko brick prices**. Wilder ATR is updated once for each newly formed brick.
-- Brick boxes aligned to their original candle timestamps. If several bricks form in one 15-minute candle, their price rectangles stack at the *same* 15-minute candle, not in invented earlier time slots.
+- Brick boxes aligned to their original candle timestamps (using xloc.bar_time). If several bricks form in one 15-minute candle, their price rectangles stack at the *same* 15-minute candle, not in invented earlier time slots.
 - Scrolling/zooming rebuilds visible brick boxes; full loaded prior history still feeds the calculation.
 - Optional hidden ordinary bars, trend flip labels, status panel and colours.
 
@@ -35,6 +35,12 @@
 3. Scroll back to Nov 17–20, 2026. The boxes should move with the candles instead of staying near the live chart.
 4. Use SuperTrend defaults **ATR length 14, Base Factor 3**; compare against ordinary-candle SuperTrend and TradingView's native Renko. Their input sequences may differ.
 5. Confirm **8.33 is a fixed brick price distance**, not 8.33% or ATR / 8.33. Native Renko may still differ because its source/anchor construction and historical data can differ.
+
+## Numerical reference checks
+
+Run `python test_traditional_renko_v1.py`. The independent Python reference covers nine cases: tick rounding at 0.05 and 0.01, 1-brick continuation, exact 2-brick reversal, multiple bricks per source candle, ignored wicks, source-candle brick cap, Wilder ATR warm-up after 14 synthetic bricks, and reversal-gap true range. **All 9 corresponding local mathematical checks passed on 22 November 2026.** This does **not** prove Pine compilation, perfect TradingView native-Renko parity, or market accuracy.
+
+[Open the numerical test code](test_traditional_renko_v1.py).
 
 Older [ASJR Renko V1–V4](../Renko/) are preserved.
 
