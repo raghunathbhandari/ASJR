@@ -12,9 +12,9 @@
 
 ## Settings
 
-**Renko brick engine:** Default **Box size assignment method = Traditional** and **Box size = 8.33** fixed instrument-price units (e.g. 8.33 Nifty index points on Nifty, not a percentage or ATR divisor). Other optional methods are ATR (ATR length 14 × multiplier 0.50) and Percentage (0.50% by default). As with all other settings in this research prototype, 8.33 is a user-selected box-size setting, not a claim about Dr Devendra's proprietary code.
+**Renko brick engine:** **Source = Close** by default (editable). Default **Box size assignment method = Traditional** and **Box size = 8.33** fixed instrument-price units (8.33 Nifty index points becomes **8.35** when the symbol's minimum tick is 0.05; this is not a percentage or ATR divisor). Other optional methods are ATR (ATR length 14 × multiplier 0.50) and Percentage (0.50% by default). As with all other settings in this research prototype, 8.33 is a user-selected box-size setting, not a claim about Dr Devendra's proprietary code.
 
-**SuperTrend:** enabled by default, Renko brick ATR length 10 and multiplier 3.0.
+**SuperTrend:** enabled by default with **ATR Length = 14 synthetic bricks** and **Base Factor = 3**. Optional Choppy Filter (ADX) defaults OFF, threshold 15; its ordinary-candle ADX filters flip markers/alerts only, not the line. Wilder ATR seeds from the first 14 synthetic-brick true ranges.
 
 **Display:** 400 visible box objects maximum by default, 0 opacity, no flip labels by default. Normal price candles visible by default for testing.
 
@@ -31,9 +31,9 @@
 ## Checks in TradingView
 
 1. Run this indicator on a regular **AMD 15-minute candle chart**; keep the candles visible initially.
-2. Start with **Traditional 8.33** to compare across dates, then optionally ATR(14) × 0.5. Confirm every box is timestamp-aligned with the completed candle that caused it.
+2. Start with **Source Close / Traditional 8.33**; for Nifty's 0.05 tick the effective brick size should display **8.35**. Bricks should be time-aligned with the completed source candle.
 3. Scroll back to Nov 17–20, 2026. The boxes should move with the candles instead of staying near the live chart.
-4. Compare the trend line to ordinary-candle SuperTrend and TradingView's native Renko. Different inputs and bar formation rules can produce different results.
+4. Use SuperTrend defaults **ATR length 14, Base Factor 3**; compare against ordinary-candle SuperTrend and TradingView's native Renko. Their input sequences may differ.
 5. Confirm **8.33 is a fixed brick price distance**, not 8.33% or ATR / 8.33. Native Renko may still differ because its source/anchor construction and historical data can differ.
 
 Older [ASJR Renko V1–V4](../Renko/) are preserved.
