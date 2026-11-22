@@ -4,6 +4,20 @@
 
 This is the standalone **ASJR Gann Ideas** overlay for **5m, 15m, 1H, 4H, and Daily** charts. It follows the user's reference screenshot: candlesticks, thin horizontal price lines, right-edge colour-coded method/angle/price labels, and two dashed vertical cycle families. It is not the proprietary AmiBroker "ASHOK GANN SUPER STUDIO" implementation.
 
+## V14 — Fix pivot LOW/HIGH cycle starting point and repeated lines (2026-11-22)
+
+**Latest test release:** [ASJR Gann Ideas V14](ASJR_Gann_Ideas_V14.pine)
+
+**Why:** The COHR 4H screenshot with Cycle A = 12 bars and Pivot LOW selected showed the anchor on a recent minor swing and only a small number of verticals. V13 selected the **last confirmed pivot in the visible range**, which was often too near the right edge to generate many 12-bar markers.
+
+**V14 correction:** **Pivot LOW = lowest confirmed pivot low inside the visible chart range. Pivot HIGH = highest confirmed pivot high inside the visible chart range.** The pivot's **original candle** (not its later confirmation candle) is bar 0. Only confirmed pivots are eligible; candidates near the chart's right edge require the configured right-side confirmation bars, and the current unconfirmed low cannot be selected early. If the visible range contains no confirmed pivot, the code falls back to the most recent confirmed pivot before the visible range.
+
+**Repeat interval:** Cycle A = 12 bars creates +12, +24, +36, +48 … from the chosen bar 0; Cycle B = 90 bars creates +90, +180 … . Historical verticals are rebuilt from existing exchange candles in the current viewport; **three upcoming projected markers per enabled cycle** replace V13's single future marker when drawing bounds permit. Bar-index drawings cannot be more than 500 bars ahead of the live script execution or more than approximately 10,000 behind it; extra projections beyond this are silently skipped to avoid TradingView runtime errors.
+
+**Scrolling:** The strongest confirmed pivot is recomputed for the new visible window when you scroll/zoom. This is intentional, view-dependent exploration and not a fixed backtesting reference. The **Manual UTC** option retains prior behaviour for reproducibility, including its single next projected line. Cycle intervals, time-unit choices, colours, the eight horizontal Gann calculations, ten switches, optional labels and historic vertical line caps remain intact.
+
+**Test:** On a COHR 4H chart, select Pivot LOW, Cycle A = 12 bars and scroll to include the older major low. You should see the gold zero marker on the lowest confirmed low and multiple dashed 12-bar intervals to the right, plus additional future markers. Switch to Pivot HIGH to choose the highest confirmed swing high. Repeat on 15m and when scrolling to a different window. Please provide a screenshot if the live Pine indicator differs: GitHub source/logic checks passed, but it has **not been compiled or run in TradingView** by the assistant.
+
 ## V13 — New numbered release (2026-11-22)
 
 **Latest release:** [ASJR Gann Ideas V13 Pine v6](ASJR_Gann_Ideas_V13.pine).
