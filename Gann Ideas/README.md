@@ -4,6 +4,38 @@
 
 This is the standalone **ASJR Gann Ideas** overlay for **5m, 15m, 1H, 4H, and Daily** charts. It follows the user's reference screenshot: candlesticks, thin horizontal price lines, right-edge colour-coded method/angle/price labels, and two dashed vertical cycle families. It is not the proprietary AmiBroker "ASHOK GANN SUPER STUDIO" implementation.
 
+## V15 — Historical pivot cycles survive forward/backward scrolling (2026-11-22)
+
+**Latest test release:** [ASJR Gann Ideas V15 Pine v6](ASJR_Gann_Ideas_V15.pine)
+
+### Bug fixed
+V14 selected the largest confirmed HIGH / smallest confirmed LOW **within the currently visible chart** and deleted/rebuilt the cycle lines each time the visible range changed. That moved point 0 and erased previous cycles when scrolling forward. V15 moves all cycle **anchor selection and historical line generation** into a history-driven, confirmed-bar pass that does not use the visible window. The chart may re-execute on scrolling, but the previously identified historical anchor phases and cycle positions are reconstructed deterministically from available OHLC history instead of resetting according to the viewport.
+
+### Anchor modes and UTC start date
+
+| Cycle starting point | How it works |
+| --- | --- |
+| **Pivot LOW** (default) | Track successively **lower confirmed pivot lows**, using the existing `pivotLen` confirmation (default 3 left/right candles); a new record low starts a new cycle *from its original candle*. Older completed cycle lines are **not deleted** merely because a stronger low is confirmed later |
+| **Pivot HIGH** | Mirror rule: successively **higher confirmed pivot highs** |
+| **Manual UTC** | **Fixed exact date/time** from the existing `Shared cycle anchor (UTC)` field; `bars` start at the first chart candle at/after that timestamp; clock/calendar units use the timestamp itself |
+
+In **Pivot HIGH/LOW**, the `Shared cycle anchor (UTC)` field acts as the **earliest pivot search date**, initially **2026-01-01 00:00 UTC**. For example, set it to **2026-11-01** to examine the main COHR November swing without earlier 2026 lows/highs dominating your pivot selection. In **Manual UTC**, the same field defines bar 0 directly. The field's new tooltip explains the two behaviours.
+
+**Important:** V15 does **not** permanently lock a single screen-selected pivot, because TradingView restarts Pine scripts when the chart's visible range changes, so `var` cannot remember a choice made in a previous scroll session. It uses a deterministic historical sequence of confirmed record pivots after the selected UTC start. If a new stronger pivot is confirmed later, the current cycle phase changes **without retroactively deleting older drawn cycles** (except the configured drawing budget). If the underlying chart loads *additional older data*, reconstruction can legitimately change. For an immutable individual starting point, use **Manual UTC**.
+
+### Cycle lines and historical limits
+- Cycle A/B default **12 / 90 bars**; each remains independently configurable from 1–500, with `bars / mi / hh / day / m / y` units. On completed candles after the active pivot, markers appear at successive multiples (e.g. +12, +24, +36…).
+- The current pivot point is the original price-extreme candle but is only recognised after the right-side confirmation candles; no unconfirmed pivot is used.
+- V15 does **not** delete/recreate all history lines inside `barstate.islast` or select a new extreme on every pan. Historical cycle lines are produced as the historical script replay reaches their bars. Future projections are aligned to the latest loaded bar and the last eligible confirmed pivot—not the viewport's right edge.
+- **Finite TradingView drawing budget:** `Historical verticals per cycle` remains **48 by default (up to 100)**. Only the most recent 48 (or configured number) line drawings per cycle remain on the chart; the oldest are removed when that cap is exceeded. This is a platform/drawing limit, **not** a viewport reset. To inspect longer history, increase the setting to 100. Not all historic markers can exist simultaneously once the limit is exceeded; for unlimited, reproducible records export the cycle dates/indices to a data-based backtest outside the indicator.
+- Up to three upcoming markers per enabled cycle are projected, within TradingView's 500-future-bar index limit. Previous versions including V14 remain intact.
+- Eight Gann price families, independent Cycle A/B lengths and units, ten main switches, existing Gann level calculations, monk-colour defaults at 25% opacity and optional label styling are unchanged.
+
+### Testing
+On a COHR 4H chart, choose Pivot LOW, `Shared cycle anchor (UTC) = 2026-11-01 00:00`, Cycle A = 12 bars, Cycle B disabled. Observe confirmed pivot low and vertical lines at +12, +24, +36… . Pan backwards and then forwards: the cycle positions for the same loaded history should be unchanged. For a guaranteed fixed pivot chosen manually, switch to Manual UTC and specify the actual swing date/time. If historical lines eventually stop farther back, inspect the **Historical verticals per cycle** cap.
+
+**Verification:** GitHub source and source-invariant checks passed. This code has **not** been compiled/run in TradingView Pine Editor by the assistant.
+
 ## V14 — Fix pivot LOW/HIGH cycle starting point and repeated lines (2026-11-22)
 
 **Latest test release:** [ASJR Gann Ideas V14](ASJR_Gann_Ideas_V14.pine)
