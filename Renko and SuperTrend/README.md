@@ -12,7 +12,7 @@
 
 ## Settings
 
-**Renko brick engine:** **Source = Close** by default (editable). Default **Box size assignment method = Traditional** and **Box size = 8.33** fixed instrument-price units (8.33 Nifty index points becomes **8.35** when the symbol's minimum tick is 0.05; this is not a percentage or ATR divisor). Other optional methods are ATR (ATR length 14 × multiplier 0.50) and Percentage (0.50% by default). As with all other settings in this research prototype, 8.33 is a user-selected box-size setting, not a claim about Dr Devendra's proprietary code.
+**Renko brick engine:** **Source = Close** by default (editable). Default **Box size assignment method = Traditional** and **Box size = 8.33** fixed instrument-price units (8.33 Nifty index points becomes **8.35** when the symbol's minimum tick is 0.05; this is not a percentage or ATR divisor). Other optional methods are ATR (ATR length 14 × multiplier 0.50) and Percentage (0.50% by default). The 8.33 value is a user-selected fixed box size.
 
 **SuperTrend:** enabled by default with **ATR Length = 14 synthetic bricks** and **Base Factor = 3**. Optional Choppy Filter (ADX) defaults OFF, threshold 15; its ordinary-candle ADX filters flip markers/alerts only, not the line. Wilder ATR seeds from the first 14 synthetic-brick true ranges.
 
