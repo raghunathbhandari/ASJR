@@ -120,7 +120,8 @@ if barstate.isconfirmed and not na(renkoSource)
             // from one candle stack vertically, never backdate into earlier bars.
             if showBoxes and time >= leftVisibleTime and time <= rightVisibleTime
                 color brickColor = rising ? upColor : downColor
-                box bx = box.new(left=bar_index, top=brickHigh, right=bar_index + 1, bottom=brickLow, xloc=xloc.bar_index, border_color=brickColor, border_width=1, bgcolor=color.new(brickColor, transparency))
+                int endOfBar = not na(time_close) and time_close > time ? time_close : time + int(timeframe.in_seconds(timeframe.period) * 1000)
+                box bx = box.new(left=time, top=brickHigh, right=endOfBar, bottom=brickLow, xloc=xloc.bar_time, border_color=brickColor, border_width=1, bgcolor=color.new(brickColor, transparency))
                 array.push(drawn, bx)
                 if array.size(drawn) > maxVisible
                     box.delete(array.shift(drawn))
