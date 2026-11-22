@@ -2,7 +2,7 @@
 // ASJR Renko and SuperTrend v1
 // Original close-confirmed Renko emulator. Bricks are time-aligned to their source bar.
 // Not Dr Devendra's proprietary script and not a tick-accurate/native Renko chart.
-// ATR / 8.33 is an explicitly EXPERIMENTAL sizing hypothesis, NOT an attribution.
+// Default traditional fixed price-unit box size = 8.33, matching the requested UI.
 indicator("ASJR Renko and SuperTrend v1", shorttitle="ASJR Renko ST v1", overlay=true, behind_chart=false, max_boxes_count=500)
 
 const string G_RENKO = "01 - RENKO BRICK ENGINE"
@@ -10,12 +10,11 @@ const string G_TREND = "02 - RENKO SUPERTREND"
 const string G_VIEW = "03 - DISPLAY AND COLOURS"
 const string G_INFO = "04 - STATUS"
 
-string sizeMode = input.string("ATR x factor", "Brick size method", options=["ATR x factor", "Fixed", "Price percent", "ATR / divisor (experiment)"], group=G_RENKO)
+string sizeMode = input.string("Traditional", "Box size assignment method", options=["Traditional", "ATR", "Percentage"], group=G_RENKO)
 int atrPeriod = input.int(14, "Source ATR period", minval=1, group=G_RENKO)
 float atrFactor = input.float(0.50, "ATR multiplier", minval=0.01, step=0.05, group=G_RENKO)
-float fixedSize = input.float(2.00, "Fixed brick amount", minval=0.000001, step=0.25, group=G_RENKO)
+float fixedSize = input.float(8.33, "Box size (Traditional)", minval=0.000001, step=0.01, group=G_RENKO, tooltip="Fixed Renko brick size in this instrument\'s PRICE units. 8.33 means 8.33 index points or currency units, NOT 8.33%.")
 float percentSize = input.float(0.50, "Brick as % of close", minval=0.01, step=0.05, group=G_RENKO)
-float divisor = input.float(8.33, "ATR divisor - experimental", minval=0.01, step=0.01, group=G_RENKO, tooltip="Experimental ATR / divisor test. The precise 8.33 rule taught by Dr Devendra has NOT been independently verified.")
 int maxPerBar = input.int(80, "Maximum bricks from one candle", minval=1, maxval=150, group=G_RENKO, tooltip="Safety limit for a large move within one completed chart candle. If reached, the move may not be fully represented.")
 bool showST = input.bool(true, "Show Renko SuperTrend", group=G_TREND)
 int stLength = input.int(10, "SuperTrend ATR length (Renko bricks)", minval=1, group=G_TREND)
@@ -35,7 +34,7 @@ bool showPanel = input.bool(true, "Show compact status panel", group=G_INFO)
 int leftVisibleTime = chart.left_visible_bar_time
 int rightVisibleTime = chart.right_visible_bar_time
 float sourceAtr = ta.atr(atrPeriod)
-float wanted = sizeMode == "Fixed" ? fixedSize : sizeMode == "Price percent" ? close * percentSize / 100.0 : sizeMode == "ATR / divisor (experiment)" ? sourceAtr / divisor : sourceAtr * atrFactor
+float wanted = sizeMode == "Traditional" ? fixedSize : sizeMode == "Percentage" ? close * percentSize / 100.0 : sourceAtr * atrFactor
 float brickSize = not na(wanted) and wanted > 0 ? math.max(syminfo.mintick, math.round(wanted / syminfo.mintick) * syminfo.mintick) : na
 
 // State of the confirmed close-based Renko bricks.
