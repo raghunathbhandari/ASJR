@@ -23,7 +23,7 @@ The project is designed around a practical research loop:
 - [Daily DataLake & Data Import Preparation](ASJR_Analyst/README.md)
 - [Linux VPS Server Automation](RUDRA_DOWNLOADER_GUIDE.md)
 - [IBKR / IB Gateway Automation](Backtesting/DataLoader/IBKR_24H_IMPORT.md)
-- [ASJR Renko and SuperTrend V3 — contiguous Renko with connected SuperTrend](Renko%20and%20SuperTrend/README.md)
+- [ASJR Renko and SuperTrend V4 — contiguous Renko with continuous SuperTrend](Renko%20and%20SuperTrend/README.md)
 - [ASJR Renko V4 — scroll-aware contiguous bricks](Renko/README.md)
 - [ASJR Volume Delta Pressure V2 — 12-zone pressure with EMA9/EMA21/EMA200](Volume%20Delta%20Pressure/README.md)
 - [ASJR 360 View V5 — responsive EMA21 trend colouring and two-row dashboard](ASJR%20360%20View/README.md)
@@ -72,7 +72,7 @@ The project is designed around a practical research loop:
 | [`ASJR_Analyst/`](ASJR_Analyst/) | Analyst pipeline, strategy-specific alerts, market-data processing, configuration and tests |
 | [`Gann%20Ideas/`](Gann%20Ideas/) | Gann price/time-cycle Pine indicators, mathematical study notes and reference tests |
 | [`Candle%20Patterns/`](Candle%20Patterns/) | Pine v6 candlestick-pattern overlay with Three-Candle and Gann confluence options |
-| [`Renko%20and%20SuperTrend/`](Renko%20and%20SuperTrend/) | ASJR Renko and SuperTrend V3 test release: contiguous bricks plus diagonally connected SuperTrend; V1/V2 preserved |
+| [`Renko%20and%20SuperTrend/`](Renko%20and%20SuperTrend/) | ASJR Renko and SuperTrend V4 test release: contiguous bricks plus continuous SuperTrend by default; V1–V3 preserved |
 | [`Renko/`](Renko/) | ASJR Renko V4 Pine v6: contiguous green/red price bricks, scroll/zoom-aware historical reconstruction, intraday and daily charts; prior versions preserved |
 | [`Gann/`](Gann/) | Gann book studies and research/source-comparison notes |
 | [`Rudra-DDB/Gann/`](Rudra-DDB/Gann/) | Fixed-anchor INTC Gann research, daily records and historical study |
@@ -245,7 +245,7 @@ TradingView indicator source lives in dedicated folders.
 | **ASJR Gann Ideas V15** | Stable historical **Pivot LOW/HIGH** cycle phases independent of chart viewport; completed historical lines retained up to the drawing budget; Manual UTC fixed anchor; 12/90 default cycle lengths and monk colours preserved | [V15 Pine source](Gann%20Ideas/ASJR_Gann_Ideas_V15.pine) · [Guide](Gann%20Ideas/README.md) |
 | **ASJR Gann Ideas V1–V5** | Preserved development history for levels, colour controls, label placement and right-side label spacing | [Versions folder](Gann%20Ideas/) |
 | **ASJR Candle Patterns** | 17 selectable candlestick pattern groups, bullish/bearish highlighting, optional quality gates and Gann reference confluence | [Pine source](Candle%20Patterns/ASJR_Candle_Patterns.pine) · [Guide](Candle%20Patterns/README.md) |
-| **ASJR Renko and SuperTrend V3 (test release)** | V4-style contiguous Renko bricks with continuous diagonal/flat SuperTrend connectors. Source Close, Traditional 8.33, ST ATR(14) factor 3; default trend-flip gap; ADX optional. Pine runtime validation pending. | [V3 source](Renko%20and%20SuperTrend/ASJR_Renko_and_SuperTrend_V3.pine) · [V2 archive](Renko%20and%20SuperTrend/ASJR_Renko_and_SuperTrend_V2.pine) · [V1 archive](Renko%20and%20SuperTrend/ASJR_Renko_and_SuperTrend_v1.pine) · [Guide](Renko%20and%20SuperTrend/README.md) |
+| **ASJR Renko and SuperTrend V4 (test release)** | V4-style contiguous Renko bricks, connected diagonal/flat SuperTrend (continuity across flips ON), Source Close, Traditional 8.33, ST ATR(14) factor 3; clean UI with status panel OFF. Pine runtime testing pending. | [V4 Pine](Renko%20and%20SuperTrend/ASJR_Renko_and_SuperTrend_V4.pine) · [V3](Renko%20and%20SuperTrend/ASJR_Renko_and_SuperTrend_V3.pine) · [V2](Renko%20and%20SuperTrend/ASJR_Renko_and_SuperTrend_V2.pine) · [V1](Renko%20and%20SuperTrend/ASJR_Renko_and_SuperTrend_v1.pine) · [Guide](Renko%20and%20SuperTrend/README.md) |
 | **ASJR Renko V4 — Scroll-Aware, Brick Only** | Contiguous green/red bricks reconstructed through the chart's visible right edge, re-rendered on scroll/zoom; ATR snapshot / fixed / percent snapshot size, 1m/5m/15m/1H/4H/daily. No EMA/BUY/SELL icons. | [V4 Pine source](Renko/ASJR_Renko_V4.pine) · [Guide](Renko/README.md) · [V3](Renko/ASJR_Renko_V3.pine) |
 | **ASJR Volume Delta Pressure V2** | 12 price-zone OHLCV pressure estimate; existing EMA21 anchor; independently styled EMA9 and EMA200 chart overlays | [V2 Pine source](Volume%20Delta%20Pressure/ASJR_Volume_Delta_Pressure_V2.pine) · [Guide](Volume%20Delta%20Pressure/README.md) |
 | **ASJR 360 View V5** | EMA21 trend-first GREEN/RED after completed aligned EMA candles (or optional strict 360 mode); pressure and RSI still shown and checked; RVOL-at-Time 5/20 reference only; bordered two-row configurable dashboard; retains V4 plot-count fix. | [V5 Pine source](ASJR%20360%20View/ASJR_360_View_V5.pine) · [Guide](ASJR%20360%20View/README.md) |
