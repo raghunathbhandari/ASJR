@@ -38,10 +38,13 @@ int leftVisibleTime = chart.left_visible_bar_time
 int rightVisibleTime = chart.right_visible_bar_time
 float sourceAtr = ta.atr(atrPeriod)
 float wanted = sizeMode == "Traditional" ? fixedSize : sizeMode == "Percentage" ? renkoSource * percentSize / 100.0 : sourceAtr * atrFactor
-float brickSize = not na(wanted) and wanted > 0 ? math.max(syminfo.mintick, math.round(wanted / syminfo.mintick) * syminfo.mintick) : na
+// Use integer ticks for all brick thresholds to avoid floating-point boundary drift.
+int boxTicks = not na(wanted) and wanted > 0 ? math.max(1, int(math.round(wanted / syminfo.mintick))) : na
+float brickSize = not na(boxTicks) ? boxTicks * syminfo.mintick : na
 
 // State of the confirmed close-based Renko bricks.
 var float renkoClose = na
+var int renkoCloseTicks = na
 var int renkoDirection = 0
 var int totalBricks = 0
 var int maxBarOverflow = 0
@@ -61,24 +64,27 @@ var int trendDirection = 0
 bool bullishFlip = false
 bool bearishFlip = false
 if barstate.isconfirmed and not na(renkoSource)
-    if na(renkoClose)
-        renkoClose := math.round(renkoSource / syminfo.mintick) * syminfo.mintick
-    else if not na(brickSize)
+    if na(renkoCloseTicks)
+        renkoCloseTicks := int(math.round(renkoSource / syminfo.mintick))
+        renkoClose := renkoCloseTicks * syminfo.mintick
+    else if not na(boxTicks)
+        int sourceTicks = int(math.round(renkoSource / syminfo.mintick))
         int formed = 0
         while formed < maxPerBar
-            bool rising = renkoSource >= renkoClose + brickSize * (renkoDirection == -1 ? 2.0 : 1.0)
-            bool falling = renkoSource <= renkoClose - brickSize * (renkoDirection == 1 ? 2.0 : 1.0)
+            bool rising = sourceTicks >= renkoCloseTicks + boxTicks * (renkoDirection == -1 ? 2 : 1)
+            bool falling = sourceTicks <= renkoCloseTicks - boxTicks * (renkoDirection == 1 ? 2 : 1)
             if not rising and not falling
                 break
 
             float previousBrickClose = renkoClose
-            float brickOpen = rising ? renkoClose + (renkoDirection == -1 ? brickSize : 0.0) : renkoClose - (renkoDirection == 1 ? brickSize : 0.0)
-            float brickClose = brickOpen + (rising ? brickSize : -brickSize)
-            brickOpen := math.round(brickOpen / syminfo.mintick) * syminfo.mintick
-            brickClose := math.round(brickClose / syminfo.mintick) * syminfo.mintick
+            int openTicks = rising ? renkoCloseTicks + (renkoDirection == -1 ? boxTicks : 0) : renkoCloseTicks - (renkoDirection == 1 ? boxTicks : 0)
+            int closeTicks = openTicks + (rising ? boxTicks : -boxTicks)
+            float brickOpen = openTicks * syminfo.mintick
+            float brickClose = closeTicks * syminfo.mintick
             float brickHigh = math.max(brickOpen, brickClose)
             float brickLow = math.min(brickOpen, brickClose)
 
+            renkoCloseTicks := closeTicks
             renkoClose := brickClose
             renkoDirection := rising ? 1 : -1
             totalBricks += 1
@@ -120,8 +126,8 @@ if barstate.isconfirmed and not na(renkoSource)
                     box.delete(array.shift(drawn))
 
         if formed == maxPerBar
-            bool stillUp = renkoSource >= renkoClose + brickSize * (renkoDirection == -1 ? 2.0 : 1.0)
-            bool stillDown = renkoSource <= renkoClose - brickSize * (renkoDirection == 1 ? 2.0 : 1.0)
+            bool stillUp = sourceTicks >= renkoCloseTicks + boxTicks * (renkoDirection == -1 ? 2 : 1)
+            bool stillDown = sourceTicks <= renkoCloseTicks - boxTicks * (renkoDirection == 1 ? 2 : 1)
             if stillUp or stillDown
                 maxBarOverflow += 1
 
