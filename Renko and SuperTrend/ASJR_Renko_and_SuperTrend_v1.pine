@@ -10,6 +10,7 @@ const string G_TREND = "02 - RENKO SUPERTREND"
 const string G_VIEW = "03 - DISPLAY AND COLOURS"
 const string G_INFO = "04 - STATUS"
 
+float renkoSource = input.source(close, "Source", group=G_RENKO)
 string sizeMode = input.string("Traditional", "Box size assignment method", options=["Traditional", "ATR", "Percentage"], group=G_RENKO)
 int atrPeriod = input.int(14, "Source ATR period", minval=1, group=G_RENKO)
 float atrFactor = input.float(0.50, "ATR multiplier", minval=0.01, step=0.05, group=G_RENKO)
@@ -17,8 +18,10 @@ float fixedSize = input.float(8.33, "Box size (Traditional)", minval=0.000001, s
 float percentSize = input.float(0.50, "Brick as % of close", minval=0.01, step=0.05, group=G_RENKO)
 int maxPerBar = input.int(80, "Maximum bricks from one candle", minval=1, maxval=150, group=G_RENKO, tooltip="Safety limit for a large move within one completed chart candle. If reached, the move may not be fully represented.")
 bool showST = input.bool(true, "Show Renko SuperTrend", group=G_TREND)
-int stLength = input.int(10, "SuperTrend ATR length (Renko bricks)", minval=1, group=G_TREND)
-float stFactor = input.float(3.0, "SuperTrend factor", minval=0.10, step=0.10, group=G_TREND)
+int stLength = input.int(14, "ATR Length (Renko bricks)", minval=1, group=G_TREND)
+float stFactor = input.float(3.0, "Base Factor", minval=0.10, step=0.10, group=G_TREND)
+bool choppyFilter = input.bool(false, "Choppy Filter (ADX)", group=G_TREND, tooltip="Filters flip markers and alerts using ordinary-candle ADX. Does not change SuperTrend line.")
+float adxThreshold = input.float(15.0, "ADX Threshold", minval=0.0, step=0.5, group=G_TREND)
 bool showBoxes = input.bool(true, "Show time-aligned Renko bricks", group=G_VIEW)
 bool hideCandles = input.bool(false, "Make ordinary candles transparent", group=G_VIEW)
 int maxVisible = input.int(400, "Maximum visible brick boxes", minval=20, maxval=450, group=G_VIEW)
@@ -34,7 +37,7 @@ bool showPanel = input.bool(true, "Show compact status panel", group=G_INFO)
 int leftVisibleTime = chart.left_visible_bar_time
 int rightVisibleTime = chart.right_visible_bar_time
 float sourceAtr = ta.atr(atrPeriod)
-float wanted = sizeMode == "Traditional" ? fixedSize : sizeMode == "Percentage" ? close * percentSize / 100.0 : sourceAtr * atrFactor
+float wanted = sizeMode == "Traditional" ? fixedSize : sizeMode == "Percentage" ? renkoSource * percentSize / 100.0 : sourceAtr * atrFactor
 float brickSize = not na(wanted) and wanted > 0 ? math.max(syminfo.mintick, math.round(wanted / syminfo.mintick) * syminfo.mintick) : na
 
 // State of the confirmed close-based Renko bricks.
@@ -47,21 +50,24 @@ var array<box> drawn = array.new<box>()
 // Independent Wilder ATR and trailing SuperTrend bands, updated per
 // COMPLETED SYNTHETIC BRICK, not once per ordinary chart candle.
 var float renkoAtr = na
+var float trSeedSum = 0.0
+var int atrBrickCount = 0
 var float upperBand = na
 var float lowerBand = na
 var float trailingLine = na
 var int trendDirection = 0
 
+[plusDI, minusDI, sourceAdx] = ta.dmi(14, 14)
 bool bullishFlip = false
 bool bearishFlip = false
-if barstate.isconfirmed and not na(close)
+if barstate.isconfirmed and not na(renkoSource)
     if na(renkoClose)
-        renkoClose := math.round(close / syminfo.mintick) * syminfo.mintick
+        renkoClose := math.round(renkoSource / syminfo.mintick) * syminfo.mintick
     else if not na(brickSize)
         int formed = 0
         while formed < maxPerBar
-            bool rising = close >= renkoClose + brickSize * (renkoDirection == -1 ? 2.0 : 1.0)
-            bool falling = close <= renkoClose - brickSize * (renkoDirection == 1 ? 2.0 : 1.0)
+            bool rising = renkoSource >= renkoClose + brickSize * (renkoDirection == -1 ? 2.0 : 1.0)
+            bool falling = renkoSource <= renkoClose - brickSize * (renkoDirection == 1 ? 2.0 : 1.0)
             if not rising and not falling
                 break
 
@@ -80,20 +86,29 @@ if barstate.isconfirmed and not na(close)
 
             // True range includes the gap created by a classic 2-box reversal.
             float tr = math.max(brickHigh - brickLow, math.max(math.abs(brickHigh - previousBrickClose), math.abs(brickLow - previousBrickClose)))
-            renkoAtr := na(renkoAtr) ? tr : (renkoAtr * (stLength - 1) + tr) / stLength
+            atrBrickCount += 1
+            // Wilder RMA seeds on the average of the first stLength brick TR values.
+            if atrBrickCount <= stLength
+                trSeedSum += tr
+                if atrBrickCount == stLength
+                    renkoAtr := trSeedSum / stLength
+            else
+                renkoAtr := (renkoAtr * (stLength - 1) + tr) / stLength
 
-            float basicUpper = (brickHigh + brickLow) / 2.0 + stFactor * renkoAtr
-            float basicLower = (brickHigh + brickLow) / 2.0 - stFactor * renkoAtr
-            float priorUpper = upperBand
-            float priorLower = lowerBand
-            upperBand := na(priorUpper) or basicUpper < priorUpper or previousBrickClose > priorUpper ? basicUpper : priorUpper
-            lowerBand := na(priorLower) or basicLower > priorLower or previousBrickClose < priorLower ? basicLower : priorLower
+            if not na(renkoAtr)
+                float basicUpper = (brickHigh + brickLow) / 2.0 + stFactor * renkoAtr
+                float basicLower = (brickHigh + brickLow) / 2.0 - stFactor * renkoAtr
+                float priorUpper = upperBand
+                float priorLower = lowerBand
+                upperBand := na(priorUpper) or basicUpper < priorUpper or previousBrickClose > priorUpper ? basicUpper : priorUpper
+                lowerBand := na(priorLower) or basicLower > priorLower or previousBrickClose < priorLower ? basicLower : priorLower
 
-            int wasDirection = trendDirection
-            trendDirection := wasDirection == 0 ? renkoDirection : wasDirection == 1 ? (brickClose < lowerBand ? -1 : 1) : (brickClose > upperBand ? 1 : -1)
-            trailingLine := trendDirection == 1 ? lowerBand : upperBand
-            bullishFlip := bullishFlip or (wasDirection == -1 and trendDirection == 1)
-            bearishFlip := bearishFlip or (wasDirection == 1 and trendDirection == -1)
+                int wasDirection = trendDirection
+                trendDirection := wasDirection == 0 ? renkoDirection : wasDirection == 1 ? (brickClose < lowerBand ? -1 : 1) : (brickClose > upperBand ? 1 : -1)
+                trailingLine := trendDirection == 1 ? lowerBand : upperBand
+                bool flipAllowed = not choppyFilter or (not na(sourceAdx) and sourceAdx >= adxThreshold)
+                bullishFlip := bullishFlip or (flipAllowed and wasDirection == -1 and trendDirection == 1)
+                bearishFlip := bearishFlip or (flipAllowed and wasDirection == 1 and trendDirection == -1)
 
             // Each brick gets the source candle's X coordinate; multiple bricks
             // from one candle stack vertically, never backdate into earlier bars.
@@ -105,8 +120,8 @@ if barstate.isconfirmed and not na(close)
                     box.delete(array.shift(drawn))
 
         if formed == maxPerBar
-            bool stillUp = close >= renkoClose + brickSize * (renkoDirection == -1 ? 2.0 : 1.0)
-            bool stillDown = close <= renkoClose - brickSize * (renkoDirection == 1 ? 2.0 : 1.0)
+            bool stillUp = renkoSource >= renkoClose + brickSize * (renkoDirection == -1 ? 2.0 : 1.0)
+            bool stillDown = renkoSource <= renkoClose - brickSize * (renkoDirection == 1 ? 2.0 : 1.0)
             if stillUp or stillDown
                 maxBarOverflow += 1
 
