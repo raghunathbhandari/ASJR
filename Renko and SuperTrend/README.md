@@ -1,6 +1,14 @@
-# ASJR Renko and SuperTrend v1
+# ASJR Renko and SuperTrend V2 — Current Test Release
 
-**Original Pine Script v6 research prototype:** [Source](ASJR_Renko_and_SuperTrend_v1.pine) | [ASJR home](../README.md)
+**Current Pine Script v6:** [V2 — current test release](ASJR_Renko_and_SuperTrend_V2.pine) | [V1 — preserved](ASJR_Renko_and_SuperTrend_v1.pine) | [ASJR home](../README.md)
+
+## Release and TradingView version rule
+
+- Every **new release** gets a new numbered `.pine` file, a matching `indicator()` title and short title, and a matching version in the chart status panel.
+- Earlier versioned files remain untouched, so builds can be compared or rolled back.
+- **V2** carries the V4-style contiguous brick reconstruction and aligned SuperTrend steps; **V1** is preserved as the earlier source snapshot.
+- Pasting a new version into the Pine Editor and adding it to the chart is necessary: changing a GitHub filename does **not** automatically refresh an indicator already saved on TradingView. Remove the old chart indicator to avoid mixed output.
+- Source-level checks are not equivalent to Pine Editor compilation; validate in TradingView before relying on displayed chart results.
 
 ## What it displays
 
