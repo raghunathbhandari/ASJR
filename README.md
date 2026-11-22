@@ -155,7 +155,7 @@ Further research includes **Gann level sweep/reclaim**, close-break → retest �
 
 **Gann time study is a separate research topic from the horizontal price levels.** The principle being examined is whether independently defined *time windows* and *price-level interactions* show reproducible confluence around market turning points. This is a hypothesis to test, **not a forecast guarantee**.
 
-The [ASJR Gann Ideas Pine V14](Gann%20Ideas/ASJR_Gann_Ideas_V14.pine) overlay includes **exactly two independent vertical time-cycle switches with editable lengths**:
+The [ASJR Gann Ideas Pine V15](Gann%20Ideas/ASJR_Gann_Ideas_V15.pine) overlay includes **exactly two independent vertical time-cycle switches with editable lengths**:
 
 | Switch | Length | Independent unit choices | Example interpretation |
 | --- | --- | --- | --- |
@@ -240,7 +240,7 @@ TradingView indicator source lives in dedicated folders.
 
 | Indicator | Main features | Source / guide |
 | --- | --- | --- |
-| **ASJR Gann Ideas V14** | Viewport-strongest confirmed **Pivot LOW/HIGH** replaces V13's latest-minor-pivot choice; repeated 12/90-bar cycle lines and up to 3 projected markers; manual UTC, 8 price families and monk palette preserved | [V14 Pine source](Gann%20Ideas/ASJR_Gann_Ideas_V14.pine) · [Guide](Gann%20Ideas/README.md) |
+| **ASJR Gann Ideas V15** | Stable historical **Pivot LOW/HIGH** cycle phases independent of chart viewport; completed historical lines retained up to the drawing budget; Manual UTC fixed anchor; 12/90 default cycle lengths and monk colours preserved | [V15 Pine source](Gann%20Ideas/ASJR_Gann_Ideas_V15.pine) · [Guide](Gann%20Ideas/README.md) |
 | **ASJR Gann Ideas V1–V5** | Preserved development history for levels, colour controls, label placement and right-side label spacing | [Versions folder](Gann%20Ideas/) |
 | **ASJR Candle Patterns** | 17 selectable candlestick pattern groups, bullish/bearish highlighting, optional quality gates and Gann reference confluence | [Pine source](Candle%20Patterns/ASJR_Candle_Patterns.pine) · [Guide](Candle%20Patterns/README.md) |
 | **ASJR Renko V4 — Scroll-Aware, Brick Only** | Contiguous green/red bricks reconstructed through the chart's visible right edge, re-rendered on scroll/zoom; ATR snapshot / fixed / percent snapshot size, 1m/5m/15m/1H/4H/daily. No EMA/BUY/SELL icons. | [V4 Pine source](Renko/ASJR_Renko_V4.pine) · [Guide](Renko/README.md) · [V3](Renko/ASJR_Renko_V3.pine) |
