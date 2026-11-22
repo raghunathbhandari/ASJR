@@ -1,0 +1,424 @@
+//@version=6
+indicator("ASJR Gann Ideas V15", shorttitle="ASJR Gann V15", overlay=true, max_lines_count=500, max_labels_count=500, max_bars_back=5000)
+
+// ASJR Gann Ideas V15 (2026-11-22): stable history-driven pivot cycles, not viewport-selected.
+// Older cycle markers are preserved when a stronger swing appears, subject to the line budget.
+// ASJR Gann Ideas V14 (2026-11-22): strongest confirmed visible pivot LOW/HIGH and repeated future cycle lines.
+// Fixes V13 selecting the latest minor pivot (too near chart edge), which left few historical cycles.
+// ASJR Gann Ideas V13 (2026-11-22): distinct versioned release of V12 pivot-anchor functionality.
+// All cycle anchor, price, colour and plot algorithms carried forward unchanged.
+// ASJR Gann Ideas V12 (2026-11-22): scroll-aware confirmed HIGH/LOW pivot time anchors.
+// Manual UTC anchor remains available; cycle lengths, Gann levels and colours unchanged.
+// ASJR Gann Ideas V11 (2026-11-21): monk-inspired ten-method colour palette; 25% default opacity.
+// Based on V10 with independently configurable vertical cycle lengths.
+// Based on V9, with labels OFF by default and the eight price families unchanged.
+// Based on V8 TF-specific S9 anchors and adaptive major-angle spacing.
+// 5m/15m unchanged at every 45 degrees; 1H=90 degrees, 4H=180 degrees, Daily=360 degrees.
+// A dropdown overrides the density, and Chart timeframe is the default price source.
+// Continues V7 visible-price coverage, extended angles, and V6 future label rail.
+// Retains all 10 independent feature switches; line labels are optional (OFF by default).
+// Square-of-9 levels extend beyond +/-360 degrees when price coverage requires it.
+// Eight independently enabled horizontal level families, and exactly two
+// independently enabled vertical cycles A and B, defaulting to 12 and 90.
+// They are editable period lengths, not fixed years.
+// H/C and the Square-of-360 implementation below are documented WORKING
+// INTERPRETATIONS, not verified reproductions of the screenshot vendor code.
+
+// ---------- The 10 independent switches ----------
+string GP = "01 — Price levels (8 switches)"
+bool showF8       = input.bool(false, "1. Gann Factor of 8", group=GP)
+bool showYear     = input.bool(false, "2. Gann Yearly Highs & Lows", group=GP)
+bool showSquares  = input.bool(false, "3. Gann Power of Squares", group=GP)
+bool showCubes    = input.bool(false, "4. Gann Power of Cubes", group=GP)
+bool showS9Static = input.bool(true,  "5. Gann Square of 9 — Static", group=GP)
+bool showS9H      = input.bool(false, "6. Gann Square of 9 — Dynamic H (working)", group=GP)
+bool showS9C      = input.bool(false, "7. Gann Square of 9 — Dynamic C (working)", group=GP)
+bool showS360     = input.bool(false, "8. Gann Square of 360 (working)", group=GP)
+
+string GT = "02 — Vertical time cycles (2 switches)"
+bool show12 = input.bool(true, "9. Cycle A", group=GT, inline="t12")
+int length12 = input.int(12, "Length", minval=1, maxval=500, group=GT, inline="t12", tooltip="Cycle A interval (bars, minutes, hours, days, months or years).")
+string unit12 = input.string("bars", "Unit", options=["bars", "mi", "hh", "day", "m", "y"], group=GT, inline="t12")
+bool show90 = input.bool(false, "10. Cycle B", group=GT, inline="t90")
+int length90 = input.int(90, "Length", minval=1, maxval=500, group=GT, inline="t90", tooltip="Cycle B independent interval (bars or selected calendar/clock units).")
+string unit90 = input.string("bars", "Unit", options=["bars", "mi", "hh", "day", "m", "y"], group=GT, inline="t90")
+string cycleAnchorMode = input.string("Pivot LOW", "Cycle starting point", options=["Pivot HIGH", "Pivot LOW", "Manual UTC"], group=GT, tooltip="Pivot modes follow confirmed historical HIGH/LOW extremes from the UTC date below (pivot scan start); they do not select by the visible chart area. Previous completed cycle lines remain on the chart, subject to Historical verticals per cycle. Manual UTC uses the date itself as fixed bar 0.")
+int timeAnchor = input.time(timestamp("01 Jan 2026 00:00 +0000"), "Shared cycle anchor (UTC)", group=GT)
+int maxHistoryV = input.int(48, "Historical verticals per cycle", minval=1, maxval=100, group=GT)
+
+string GA = "03 — Price anchor / multi-timeframe"
+string sourceTFChoice = input.string("Chart", "Gann price source timeframe", options=["Chart", "1", "2", "3", "5", "15", "30", "60", "240", "D"], group=GA)
+string sourceTF = sourceTFChoice == "Chart" ? timeframe.period : sourceTFChoice
+string sourceTFLabel = sourceTF == "D" or sourceTF == "1D" ? "Daily" : sourceTF == "240" ? "4H" : sourceTF == "60" ? "1H" : sourceTF + "m"
+string anchorMode = input.string("Confirmed swing low", "General price anchor", options=["Manual", "Confirmed swing high", "Confirmed swing low"], group=GA)
+float manualAnchor = input.float(529.0, "Manual general price anchor", minval=0.000001, group=GA)
+float staticAnchor = input.float(529.0, "Static Square of 9 anchor", minval=0.000001, group=GA)
+int pivotLen = input.int(3, "Confirmed swing pivot left/right bars", minval=1, maxval=50, group=GA)
+int rangeLen = input.int(60, "Factor of 8 range — source bars", minval=10, maxval=500, group=GA)
+float s360Turn = input.float(90.0, "Square of 360: price units per full turn (WORKING)", minval=0.000001, group=GA)
+
+string GV = "04 — Appearance"
+bool showLineLabels = input.bool(false, "Show line labels", group=GV, tooltip="Show or hide all horizontal Gann level labels and future Cycle A/B labels. Lines and calculations remain visible.")
+float visiblePct = input.float(20.0, "Minimum coverage ±% of last price", minval=0.1, maxval=10000, group=GV)
+float chartPadPct = input.float(5.0, "Extra coverage beyond visible candles %", minval=0.0, maxval=25.0, step=0.5, group=GV)
+int maxS9Steps = input.int(80, "Square of 9 maximum intervals per direction", minval=8, maxval=80, group=GV)
+string s9Density = input.string("Auto", "Square of 9 angle spacing (degrees)", options=["Auto", "45", "90", "180", "360"], group=GV)
+int chartTFSeconds = timeframe.in_seconds()
+int autoAngleStep = chartTFSeconds <= 15 * 60 ? 45 : chartTFSeconds <= 60 * 60 ? 90 : chartTFSeconds <= 4 * 60 * 60 ? 180 : 360
+int angleStepDeg = s9Density == "Auto" ? autoAngleStep : int(str.tonumber(s9Density))
+float sqrtPriceStep = angleStepDeg / 180.0
+int horizontalMax = input.int(160, "Maximum horizontal lines", minval=8, maxval=240, group=GV)
+// Keep price labels in the future/right blank space instead of over active candles.
+// This offset is in CHART BARS (not real-time minutes). Add chart right margin
+// if the labels are outside the current viewport.
+int labelShift = input.int(35, "Price labels to the right (bars)", minval=10, maxval=240, group=GV)
+int labelStagger = input.int(10, "Nearby price-label extra spacing (bars)", minval=0, maxval=35, group=GV)
+float labelGroupATR = input.float(0.25, "Group nearby levels within ATR x", minval=0, maxval=2, step=0.05, group=GV)
+string priceLabelSize = input.string("Normal", "Gann price label font size", options=["Tiny", "Small", "Normal", "Large"], group=GV)
+string resolvedPriceLabelSize = priceLabelSize == "Tiny" ? size.tiny : priceLabelSize == "Small" ? size.small : priceLabelSize == "Large" ? size.large : size.normal
+int labelTransparency = input.int(75, "Price-label background transparency", minval=0, maxval=100, group=GV)
+
+// Monk-friendly earth colours. Input opacity = 25%: Pine transparency = 75.
+// Individual colour pickers remain editable; alpha is never overridden on label text.
+string GC = "05 — Method line / label colours"
+color colF8       = input.color(color.new(#D39828, 75),    "1. Factor of 8", group=GC)
+color colYear     = input.color(color.new(#E3BC73, 75),  "2. Yearly Highs & Lows", group=GC)
+color colSquares  = input.color(color.new(#B76B4A, 75), "3. Power of Squares", group=GC)
+color colCubes    = input.color(color.new(#96473F, 75),  "4. Power of Cubes", group=GC)
+color colS9Static = input.color(color.new(#E88735, 75),    "5. Square of 9 — Static", group=GC)
+color colS9H      = input.color(color.new(#BE4B39, 75),    "6. Square of 9 — Dynamic H", group=GC)
+color colS9C      = input.color(color.new(#71917B, 75),  "7. Square of 9 — Dynamic C", group=GC)
+color colS360     = input.color(color.new(#C9B9A5, 75),   "8. Square of 360", group=GC)
+color col12       = input.color(color.new(#A04758, 75),    "9. Vertical Cycle A", group=GC)
+color col90       = input.color(color.new(#7799AE, 75),  "10. Vertical Cycle B", group=GC)
+
+// Source timeframe must be equal to or higher than chart timeframe.
+// This prevents lower-timeframe security requests changing sampled anchors.
+if timeframe.in_seconds(sourceTF) < timeframe.in_seconds(timeframe.period)
+    runtime.error("ASJR Gann Ideas: choose a price source timeframe >= chart timeframe (e.g. Daily for all charts).")
+
+// ---------- Confirmed reference values (previous completed source bar) ----------
+f_lastSwingHigh(int n) =>
+    float ph = ta.pivothigh(high, n, n)
+    float lastPh = ta.valuewhen(not na(ph), ph, 0)
+    lastPh[1]
+
+f_lastSwingLow(int n) =>
+    float pl = ta.pivotlow(low, n, n)
+    float lastPl = ta.valuewhen(not na(pl), pl, 0)
+    lastPl[1]
+
+float swingHigh = request.security(syminfo.tickerid, sourceTF, f_lastSwingHigh(pivotLen), lookahead=barmerge.lookahead_on)
+float swingLow = request.security(syminfo.tickerid, sourceTF, f_lastSwingLow(pivotLen), lookahead=barmerge.lookahead_on)
+float sourceClose = request.security(syminfo.tickerid, sourceTF, close[1], lookahead=barmerge.lookahead_on)
+float rangeHigh = request.security(syminfo.tickerid, sourceTF, ta.highest(high, rangeLen)[1], lookahead=barmerge.lookahead_on)
+float rangeLow = request.security(syminfo.tickerid, sourceTF, ta.lowest(low, rangeLen)[1], lookahead=barmerge.lookahead_on)
+// Last completed 12-month exchange period; never today's forming yearly candle.
+float previousYearHigh = request.security(syminfo.tickerid, "12M", high[1], lookahead=barmerge.lookahead_on)
+float previousYearLow = request.security(syminfo.tickerid, "12M", low[1], lookahead=barmerge.lookahead_on)
+float generalAnchor = anchorMode == "Manual" ? manualAnchor : anchorMode == "Confirmed swing high" ? swingHigh : swingLow
+generalAnchor := na(generalAnchor) ? sourceClose : generalAnchor
+
+// ---------- Price coverage that responds to zoom/pan ----------
+// The chart API supplies visible BAR times, not the price-axis bounds.
+// Aggregate the visible candles; TradingView recalculates when the chart is panned/zoomed.
+// Include at least the user-selected percentage around current price, plus a
+// configurable margin beyond candle extrema so support/resistance reaches the edges.
+var float visibleHigh = na
+var float visibleLow = na
+if time >= chart.left_visible_bar_time and time <= chart.right_visible_bar_time
+    visibleHigh := na(visibleHigh) ? high : math.max(visibleHigh, high)
+    visibleLow := na(visibleLow) ? low : math.min(visibleLow, low)
+
+float fallbackHigh = ta.highest(high, 120)
+float fallbackLow = ta.lowest(low, 120)
+float closeLow = math.max(syminfo.mintick, close * (1.0 - visiblePct / 100.0))
+float closeHigh = close * (1.0 + visiblePct / 100.0)
+float coverageLow = math.max(syminfo.mintick, math.min(nz(visibleLow, fallbackLow), closeLow) * (1.0 - chartPadPct / 100.0))
+float coverageHigh = math.max(nz(visibleHigh, fallbackHigh), closeHigh) * (1.0 + chartPadPct / 100.0)
+
+// ---------- Price drawing helpers ----------
+var array<line> hLines = array.new_line()
+var array<label> hLabels = array.new_label()
+var array<float> hPrices = array.new_float()
+float labelGroupDistance = math.max(syminfo.mintick * 2, nz(ta.atr(14)) * labelGroupATR)
+
+f_level(float raw, string txt, color cc) =>
+    if not na(raw) and raw > 0 and raw >= coverageLow and raw <= coverageHigh and array.size(hLines) < horizontalMax
+        float p = math.round_to_mintick(raw)
+        int overlap = 0
+        if showLineLabels and array.size(hPrices) > 0
+            for j = 0 to array.size(hPrices) - 1
+                if math.abs(array.get(hPrices, j) - p) <= labelGroupDistance
+                    overlap += 1
+        // Anchor the entire price-label cluster far enough to the RIGHT of C3/current candles.
+        int labelX = bar_index + int(math.min(480, labelShift + overlap * labelStagger))
+        // Extend LEFT across history; its RIGHT endpoint follows the price label in blank space.
+        line ln = line.new(bar_index, p, labelX, p, xloc=xloc.bar_index, extend=extend.left, color=cc, width=1)
+        array.push(hLines, ln)
+        // Keep level lines, but allocate no labels while the display option is off.
+        if showLineLabels
+            label lb = label.new(labelX, p, txt + "  " + str.tostring(p, format.mintick), xloc=xloc.bar_index, style=label.style_label_up, color=color.new(cc, labelTransparency), textcolor=cc, size=resolvedPriceLabelSize)
+            array.push(hLabels, lb)
+            array.push(hPrices, p)
+
+f_square9(float anchor, string prefix, color cc) =>
+    if not na(anchor) and anchor > 0
+        float root = math.sqrt(anchor)
+        // Keep the Square-of-9 formula constant. Only choose the angle increment
+        // according to the displayed chart timeframe to reduce higher-TF clutter.
+        // sqrtPriceStep = angleStepDeg / 180 (45 degrees = 0.25 root units).
+        int upSteps = int(math.max(0, math.min(maxS9Steps, math.ceil((math.sqrt(coverageHigh) - root) / sqrtPriceStep))))
+        int downSteps = int(math.max(0, math.min(maxS9Steps, math.ceil((root - math.sqrt(coverageLow)) / sqrtPriceStep))))
+        f_level(anchor, prefix + " +0°", cc)
+        int steps = math.max(upSteps, downSteps)
+        if steps > 0
+            for i = 1 to steps
+                float offset = i * sqrtPriceStep
+                int degrees = i * angleStepDeg
+                // Alternate up/down and preserve the actual Gann angle in labels.
+                if i <= upSteps
+                    f_level(math.pow(root + offset, 2), prefix + " +" + str.tostring(degrees) + "°", cc)
+                if i <= downSteps and root > offset
+                    f_level(math.pow(root - offset, 2), prefix + " -" + str.tostring(degrees) + "°", cc)
+
+// ---------- Vertical cycle helpers ----------
+// Real elapsed time: mi/hh/day. Calendar anniversary: m/y (UTC, leap-safe).
+// bars: counted actual chart candles, separately from calendar time.
+f_calendarAt(int start, int offsetMonths) =>
+    int y0 = year(start, "Etc/UTC")
+    int m0 = month(start, "Etc/UTC")
+    int serial = y0 * 12 + m0 - 1 + offsetMonths
+    int yy = int(math.floor(serial / 12))
+    int mm = serial - yy * 12 + 1
+    bool leap = yy % 4 == 0 and (yy % 100 != 0 or yy % 400 == 0)
+    int lastD = mm == 2 ? (leap ? 29 : 28) : ((mm == 4 or mm == 6 or mm == 9 or mm == 11) ? 30 : 31)
+    int dd = int(math.min(dayofmonth(start, "Etc/UTC"), lastD))
+    timestamp("Etc/UTC", yy, mm, dd, hour(start, "Etc/UTC"), minute(start, "Etc/UTC"))
+
+f_nextTime(int start, int length, string unit, int afterTs) =>
+    int result = na
+    if unit == "mi" or unit == "hh" or unit == "day"
+        int ms = unit == "mi" ? 60000 : unit == "hh" ? 3600000 : 86400000
+        int step = length * ms
+        int k = int(math.max(0, math.floor((afterTs - start) / step) + 1))
+        result := start + k * step
+    else
+        int stepMonths = unit == "m" ? length : length * 12
+        int elapsedMonths = (year(afterTs, "Etc/UTC") - year(start, "Etc/UTC")) * 12 + month(afterTs, "Etc/UTC") - month(start, "Etc/UTC")
+        int k = int(math.max(0, math.floor(elapsedMonths / stepMonths)))
+        result := f_calendarAt(start, k * stepMonths)
+        if result <= afterTs
+            result := f_calendarAt(start, (k + 1) * stepMonths)
+    result
+
+var array<line> v12 = array.new_line()
+var array<line> v90 = array.new_line()
+
+f_mark(array<line> store, int x, bool useTime, color cc, int maxStored) =>
+    line ln = line.new(x, low, x, high + syminfo.mintick, xloc=useTime ? xloc.bar_time : xloc.bar_index, extend=extend.both, color=cc, style=line.style_dashed, width=1)
+    array.push(store, ln)
+    if array.size(store) > maxStored
+        line.delete(array.shift(store))
+
+f_clearCycle(array<line> store) =>
+    if array.size(store) > 0
+        for j = 0 to array.size(store) - 1
+            line.delete(array.get(store, j))
+    array.clear(store)
+
+// Fixed UTC mode: preserve V11 historical cycle generation unchanged.
+var int firstAnchorBar = na
+if na(firstAnchorBar) and time >= timeAnchor
+    firstAnchorBar := bar_index
+if cycleAnchorMode == "Manual UTC" and barstate.isconfirmed and not na(time[1]) and time >= timeAnchor
+    if show12
+        if unit12 == "bars"
+            if not na(firstAnchorBar) and bar_index > firstAnchorBar and (bar_index - firstAnchorBar) % length12 == 0
+                f_mark(v12, bar_index, false, col12, maxHistoryV)
+        else
+            int next12 = f_nextTime(timeAnchor, length12, unit12, time[1])
+            if time >= next12 and time[1] < next12
+                f_mark(v12, time, true, col12, maxHistoryV)
+    if show90
+        if unit90 == "bars"
+            if not na(firstAnchorBar) and bar_index > firstAnchorBar and (bar_index - firstAnchorBar) % length90 == 0
+                f_mark(v90, bar_index, false, col90, maxHistoryV)
+        else
+            int next90 = f_nextTime(timeAnchor, length90, unit90, time[1])
+            if time >= next90 and time[1] < next90
+                f_mark(v90, time, true, col90, maxHistoryV)
+
+// V15 history-driven pivot mode — NO dependency on chart's visible range.
+// A confirmed pivot becomes eligible at its confirmation candle, but bar zero
+// is the original pivot candle. We maintain the strongest confirmed HIGH/LOW
+// seen since the UTC search date. If a stronger historic swing appears later,
+// it starts a new cycle PHASE while earlier cycle drawings are NOT cleared.
+// Chart scrolling restarts Pine, which deterministically replays these phases
+// from the available history, rather than selecting a fresh on-screen pivot.
+// The chart's loaded history and TradingView's 500-line drawing budget are
+// finite; "Manual UTC" is the truly fixed historical reference option.
+float cyclePivotHigh = ta.pivothigh(high, pivotLen, pivotLen)
+float cyclePivotLow = ta.pivotlow(low, pivotLen, pivotLen)
+var float historicPivotPrice = na
+var int historicPivotTime = na
+var int historicPivotIndex = na
+var array<line> historicPivotZeroLines = array.new_line()
+const int MAX_PIVOT_ZERO_LINES = 12
+bool cyclePivotChosen = cycleAnchorMode != "Manual UTC"
+float candidatePrice = cycleAnchorMode == "Pivot HIGH" ? cyclePivotHigh : cyclePivotLow
+bool eligiblePivot = cyclePivotChosen and barstate.isconfirmed and not na(candidatePrice) and time[pivotLen] >= timeAnchor
+if eligiblePivot
+    bool strongerHistoricPivot = na(historicPivotPrice) or (cycleAnchorMode == "Pivot LOW" ? candidatePrice < historicPivotPrice : candidatePrice > historicPivotPrice)
+    if strongerHistoricPivot
+        historicPivotPrice := candidatePrice
+        historicPivotTime := time[pivotLen]
+        historicPivotIndex := bar_index[pivotLen]
+        // The first point of this newly confirmed historical cycle, marked
+        // at the actual pivot bar and only when confirmation is available.
+        line zeroMark = line.new(historicPivotTime, low, historicPivotTime, high + syminfo.mintick, xloc=xloc.bar_time, extend=extend.both, color=color.new(#D39828, 75), style=line.style_solid, width=2)
+        array.push(historicPivotZeroLines, zeroMark)
+        if array.size(historicPivotZeroLines) > MAX_PIVOT_ZERO_LINES
+            line.delete(array.shift(historicPivotZeroLines))
+
+// Draw every eligible confirmed historical interval while replaying bars.
+// This is independent of viewport and works when moving both back and forth.
+// A 12-bar cycle from pivot i generates lines at i+12, i+24, i+36, etc.
+// Once another stronger pivot is confirmed, a new phase begins; old drawings
+// remain until the user-set Historical verticals per cycle cap is reached.
+if cyclePivotChosen and barstate.isconfirmed and not na(historicPivotIndex) and bar_index > historicPivotIndex and not na(time[1])
+    if show12
+        bool hitA = false
+        if unit12 == "bars"
+            hitA := (bar_index - historicPivotIndex) % length12 == 0
+        else
+            int boundaryA = f_nextTime(historicPivotTime, length12, unit12, math.max(time[1], historicPivotTime))
+            hitA := time[1] < boundaryA and time >= boundaryA
+        if hitA
+            f_mark(v12, time, true, col12, maxHistoryV)
+    if show90
+        bool hitB = false
+        if unit90 == "bars"
+            hitB := (bar_index - historicPivotIndex) % length90 == 0
+        else
+            int boundaryB = f_nextTime(historicPivotTime, length90, unit90, math.max(time[1], historicPivotTime))
+            hitB := time[1] < boundaryB and time >= boundaryB
+        if hitB
+            f_mark(v90, time, true, col90, maxHistoryV)
+
+// ---------- Last-bar price families and nearest future cycle markers ----------
+var line future12 = na
+var line future90 = na
+var array<line> extraFuture12 = array.new_line()
+var array<line> extraFuture90 = array.new_line()
+var label next12Label = na
+var label next90Label = na
+float roof = ta.highest(high, 120)
+float floorPrice = ta.lowest(low, 120)
+float pad = ta.atr(14)
+
+if barstate.islast
+    if array.size(hLines) > 0
+        for i = 0 to array.size(hLines) - 1
+            line.delete(array.get(hLines, i))
+    if array.size(hLabels) > 0
+        for i = 0 to array.size(hLabels) - 1
+            label.delete(array.get(hLabels, i))
+    array.clear(hLines)
+    array.clear(hLabels)
+    array.clear(hPrices)
+
+    if showF8 and not na(rangeHigh) and not na(rangeLow) and rangeHigh > rangeLow
+        for i = 0 to 8
+            float fraction = i / 8.0
+            f_level(rangeLow + (rangeHigh - rangeLow) * fraction, "F8 " + str.tostring(fraction * 100, "#.##") + "%", colF8)
+        // Historical screenshot shows a 66% line; this is a separate 2/3 division.
+        f_level(rangeLow + (rangeHigh - rangeLow) * 2.0 / 3.0, "F8 66.67%*", colF8)
+    if showYear
+        f_level(previousYearHigh, "YEAR prev high", colYear)
+        f_level(previousYearLow, "YEAR prev low", colYear)
+    if showSquares
+        int n0 = int(math.floor(math.sqrt(close)))
+        for delta = -4 to 5
+            int n = n0 + delta
+            if n > 0
+                f_level(n * n, "SQUARE " + str.tostring(n) + "²", colSquares)
+    if showCubes
+        int n0 = int(math.floor(math.pow(close, 1.0 / 3.0)))
+        for delta = -4 to 5
+            int n = n0 + delta
+            if n > 0
+                f_level(n * n * n, "CUBE " + str.tostring(n) + "³", colCubes)
+    if showS9Static
+        f_square9(staticAnchor, "S9 STATIC", colS9Static)
+    if showS9H
+        f_square9(swingHigh, "S9 H* [" + sourceTFLabel + "]", colS9H)
+    if showS9C
+        f_square9(sourceClose, "S9 C* [" + sourceTFLabel + "]", colS9C)
+    if showS360 and not na(generalAnchor)
+        for i = -8 to 8
+            int ang = i * 45
+            float lvl = generalAnchor + s360Turn * ang / 360.0
+            f_level(lvl, "S360* " + str.tostring(ang) + "°", colS360)
+
+    // Clear and recreate projected markers on each last-bar recalculation.
+    f_clearCycle(extraFuture12)
+    f_clearCycle(extraFuture90)
+    if not na(future12)
+        line.delete(future12)
+    if not na(future90)
+        line.delete(future90)
+    if not na(next12Label)
+        label.delete(next12Label)
+    if not na(next90Label)
+        label.delete(next90Label)
+
+    if cycleAnchorMode == "Manual UTC"
+        // Preserve the V11 manual UTC behaviour and its fixed bar-0 definition.
+        if show12 and time >= timeAnchor
+            int nx12 = unit12 == "bars" ? (na(firstAnchorBar) ? na : bar_index + (length12 - (bar_index - firstAnchorBar) % length12)) : f_nextTime(timeAnchor, length12, unit12, time)
+            if not na(nx12)
+                future12 := line.new(nx12, floorPrice, nx12, roof, xloc=unit12 == "bars" ? xloc.bar_index : xloc.bar_time, extend=extend.both, color=col12, style=line.style_dashed, width=2)
+                if showLineLabels
+                    next12Label := label.new(nx12, roof + pad, str.tostring(length12) + " " + unit12, xloc=unit12 == "bars" ? xloc.bar_index : xloc.bar_time, style=label.style_label_down, color=color.new(col12, 75), textcolor=col12, size=size.tiny)
+        if show90 and time >= timeAnchor
+            int nx90 = unit90 == "bars" ? (na(firstAnchorBar) ? na : bar_index + (length90 - (bar_index - firstAnchorBar) % length90)) : f_nextTime(timeAnchor, length90, unit90, time)
+            if not na(nx90)
+                future90 := line.new(nx90, floorPrice, nx90, roof, xloc=unit90 == "bars" ? xloc.bar_index : xloc.bar_time, extend=extend.both, color=col90, style=line.style_dashed, width=2)
+                if showLineLabels
+                    next90Label := label.new(nx90, roof + pad * 1.5, str.tostring(length90) + " " + unit90, xloc=unit90 == "bars" ? xloc.bar_index : xloc.bar_time, style=label.style_label_down, color=color.new(col90, 75), textcolor=col90, size=size.tiny)
+    else
+        // V15 forward projection is based on the active HISTORICAL pivot
+        // and latest loaded chart bar, never the current viewport. It therefore
+        // keeps the same phase when the chart is scrolled forwards or backwards.
+        int chosenTime = historicPivotTime
+        int chosenBar = historicPivotIndex
+        if not na(chosenTime) and not na(chosenBar)
+            if show12
+                int nx12 = unit12 == "bars" ? bar_index + (length12 - (bar_index - chosenBar) % length12) : f_nextTime(chosenTime, length12, unit12, time)
+                bool safe12 = unit12 != "bars" or (nx12 >= bar_index - 9999 and nx12 <= bar_index + 500)
+                if safe12
+                    future12 := line.new(nx12, floorPrice, nx12, roof, xloc=unit12 == "bars" ? xloc.bar_index : xloc.bar_time, extend=extend.both, color=col12, style=line.style_dashed, width=2)
+                    if showLineLabels
+                        next12Label := label.new(nx12, roof + pad, str.tostring(length12) + " " + unit12, xloc=unit12 == "bars" ? xloc.bar_index : xloc.bar_time, style=label.style_label_down, color=color.new(col12, 75), textcolor=col12, size=size.tiny)
+                    int extraX12 = nx12
+                    for extra = 1 to 2
+                        extraX12 := unit12 == "bars" ? nx12 + extra * length12 : f_nextTime(chosenTime, length12, unit12, extraX12)
+                        bool safeExtra12 = unit12 != "bars" or (extraX12 >= bar_index - 9999 and extraX12 <= bar_index + 500)
+                        if safeExtra12
+                            line nextLn12 = line.new(extraX12, floorPrice, extraX12, roof, xloc=unit12 == "bars" ? xloc.bar_index : xloc.bar_time, extend=extend.both, color=col12, style=line.style_dashed, width=1)
+                            array.push(extraFuture12, nextLn12)
+            if show90
+                int nx90 = unit90 == "bars" ? bar_index + (length90 - (bar_index - chosenBar) % length90) : f_nextTime(chosenTime, length90, unit90, time)
+                bool safe90 = unit90 != "bars" or (nx90 >= bar_index - 9999 and nx90 <= bar_index + 500)
+                if safe90
+                    future90 := line.new(nx90, floorPrice, nx90, roof, xloc=unit90 == "bars" ? xloc.bar_index : xloc.bar_time, extend=extend.both, color=col90, style=line.style_dashed, width=2)
+                    if showLineLabels
+                        next90Label := label.new(nx90, roof + pad * 1.5, str.tostring(length90) + " " + unit90, xloc=unit90 == "bars" ? xloc.bar_index : xloc.bar_time, style=label.style_label_down, color=color.new(col90, 75), textcolor=col90, size=size.tiny)
+                    int extraX90 = nx90
+                    for extra = 1 to 2
+                        extraX90 := unit90 == "bars" ? nx90 + extra * length90 : f_nextTime(chosenTime, length90, unit90, extraX90)
+                        bool safeExtra90 = unit90 != "bars" or (extraX90 >= bar_index - 9999 and extraX90 <= bar_index + 500)
+                        if safeExtra90
+                            line nextLn90 = line.new(extraX90, floorPrice, extraX90, roof, xloc=unit90 == "bars" ? xloc.bar_index : xloc.bar_time, extend=extend.both, color=col90, style=line.style_dashed, width=1)
+                            array.push(extraFuture90, nextLn90)
