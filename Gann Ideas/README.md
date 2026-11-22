@@ -4,6 +4,16 @@
 
 This is the standalone **ASJR Gann Ideas** overlay for **5m, 15m, 1H, 4H, and Daily** charts. It follows the user's reference screenshot: candlesticks, thin horizontal price lines, right-edge colour-coded method/angle/price labels, and two dashed vertical cycle families. It is not the proprietary AmiBroker "ASHOK GANN SUPER STUDIO" implementation.
 
+## V13 — New numbered release (2026-11-22)
+
+**Latest release:** [ASJR Gann Ideas V13 Pine v6](ASJR_Gann_Ideas_V13.pine).
+
+V13 is a **new, separately named source file**, deliberately preserving the V12 implementation of scroll-aware confirmed **Pivot HIGH / Pivot LOW** starting points and the **Manual UTC** alternative. All eight price methods, configurable Cycle A/B lengths and units, monk colours (25% default opacity), and optional labels are unchanged.
+
+**Release convention:** Every subsequent ASJR Gann release gets a new version number and a new Pine Script filename. Previously published versions remain available unchanged. V12 can remain on existing TradingView charts while V13 is tested separately.
+
+V13 was verified against V12 by comparing the sources after removing only the version title and the new release-note comments. **TradingView compilation, runtime and scrolling behaviour are not independently verified.**
+
 ## V12 — Scroll-aware Gann time-cycle anchor (2026-11-22)
 
 **Latest source:** [ASJR Gann Ideas V12 Pine v6](ASJR_Gann_Ideas_V12.pine).
