@@ -1,7 +1,7 @@
 //@version=6
 // ASJR Renko and SuperTrend v1
 // Original close-confirmed Renko emulator. Bricks are time-aligned to their source bar.
-// Not Dr Devendra's proprietary script and not a tick-accurate/native Renko chart.
+// Historical bricks use confirmed candle sources; this is not tick-based Renko.
 // Default traditional fixed price-unit box size = 8.33, matching the requested UI.
 indicator("ASJR Renko and SuperTrend v1", shorttitle="ASJR Renko ST v1", overlay=true, behind_chart=false, max_boxes_count=500)
 
