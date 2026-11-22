@@ -43,7 +43,7 @@ bool show90 = input.bool(false, "10. Cycle B", group=GT, inline="t90")
 int length90 = input.int(90, "Length", minval=1, maxval=500, group=GT, inline="t90", tooltip="Cycle B independent interval (bars or selected calendar/clock units).")
 string unit90 = input.string("bars", "Unit", options=["bars", "mi", "hh", "day", "m", "y"], group=GT, inline="t90")
 string cycleAnchorMode = input.string("Pivot LOW", "Cycle starting point", options=["Pivot HIGH", "Pivot LOW", "Manual UTC"], group=GT, tooltip="Pivot modes follow confirmed historical HIGH/LOW extremes from the UTC date below (pivot scan start); they do not select by the visible chart area. Previous completed cycle lines remain on the chart, subject to Historical verticals per cycle. Manual UTC uses the date itself as fixed bar 0.")
-int timeAnchor = input.time(timestamp("01 Jan 2026 00:00 +0000"), "Shared cycle anchor (UTC)", group=GT)
+int timeAnchor = input.time(timestamp("01 Jan 2026 00:00 +0000"), "Shared cycle anchor (UTC)", group=GT, tooltip="Manual UTC: fixed point 0. Pivot LOW/HIGH: earliest date from which confirmed historical pivots are considered. This prevents older unrelated lows/highs from replacing your study range.")
 int maxHistoryV = input.int(48, "Historical verticals per cycle", minval=1, maxval=100, group=GT)
 
 string GA = "03 — Price anchor / multi-timeframe"
