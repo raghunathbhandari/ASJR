@@ -4,6 +4,40 @@
 
 This is the standalone **ASJR Gann Ideas** overlay for **5m, 15m, 1H, 4H, and Daily** charts. It follows the user's reference screenshot: candlesticks, thin horizontal price lines, right-edge colour-coded method/angle/price labels, and two dashed vertical cycle families. It is not the proprietary AmiBroker "ASHOK GANN SUPER STUDIO" implementation.
 
+## V12 — Scroll-aware Gann time-cycle anchor (2026-11-22)
+
+**Latest source:** [ASJR Gann Ideas V12 Pine v6](ASJR_Gann_Ideas_V12.pine).
+
+### Starting-point selector
+
+Added **one dropdown** in `02 — Vertical time cycles`: **Cycle starting point**.
+
+| Setting | Meaning |
+| --- | --- |
+| **Pivot LOW** (default) | Use the latest **confirmed chart-timeframe swing LOW** whose pivot candle is within the visible window |
+| **Pivot HIGH** | Use the latest **confirmed chart-timeframe swing HIGH** whose pivot candle is within the visible window |
+| **Manual UTC** | Keep V11's manually selected date and time as the fixed reference |
+
+When there is no confirmed pivot *within* the visible range, automatic mode uses the most recent confirmed pivot **before** the left edge. If no qualifying confirmed pivot is available in the loaded price history, no automatic cycle/0 marker is drawn. This is safer than inventing an anchor.
+
+The selection uses the **existing** `Confirmed swing pivot left/right bars` input (**3** by default) in the price-anchor group; it **does not** change the Dynamic H / C price anchors. Automatic cycle pivot detection uses the **chart timeframe**, while `Gann price source timeframe` still applies to price-level families.
+
+### The bar-zero rule and scrolling
+
+A pivot requires `pivotLen` future bars to confirm. **The actual high/low pivot candle becomes bar 0**, but it is not selectable until the right-side confirmation candles close. This distinction is important when reviewing historical examples; it avoids treating an unconfirmed high or low as a known trading signal.
+
+For Cycle A length = **12 bars** and Cycle B length = **90 bars**, historical lines appear at pivot +12, +24, +36… and +90, +180… chart candles. The two cycle lengths remain independently editable from **1–500**, with independent `bars / mi / hh / day / m / y` units.
+
+Moving the chart horizontally updates TradingView's `chart.left_visible_bar_time` / `chart.right_visible_bar_time`, which triggers a script recalculation. In automatic Pivot HIGH/LOW modes, the algorithm selects the newest confirmed pivot **in the displayed historical window**, rebuilding the historical lines accordingly. This is *view-dependent*, so it is for visual studies—not a stable backtest anchor. For reproducible testing, choose **Manual UTC**.
+
+In pivot mode the selected pivot is indicated by a **subtle, solid gold vertical zero line**. Turning on the existing `Show line labels` option displays its `0 · Pivot HIGH/LOW` label; the default remains OFF. Cycle lines remain dashed and use the existing per-method monk-friendly colours (25% default opacity).
+
+For calendar/clock units, a boundary that falls in a market closure is shown on the **first available candle after it**, rather than drawing a line in an empty session gap. The next projected cycle marker is based on the **right edge of the visible window**, not necessarily the most recent live candle. TradingView prevents `bar_index` drawings beyond 10,000 bars into the past or 500 bars into the future; when scrolling very far backwards, a far-away **future bar-count projection may be omitted** while actual historical cycle lines remain plotted. Historical visible samples are capped to the latest 6,000 candles for drawing-performance reasons; older markers may be omitted in an exceptionally wide view. The existing `Historical verticals per cycle` input still caps each family (48 by default, 100 maximum).
+
+**Unchanged:** Exactly 10 main switches (8 price / 2 vertical), all eight price-family algorithms, the editable 12/90 defaults and 6 units, manual UTC anchor value, 25%-opacity monk palette, label preferences and existing appearance controls. V11 remains intact.
+
+**Validation:** GitHub file saved and structural invariants checked. TradingView Pine Editor compilation/runtime and scroll-triggered behaviour cannot be directly tested from here; please validate Pivot LOW, Pivot HIGH, Manual UTC and scrolling on MES/COHR before using these lines for research.
+
 ## V11 — Monk-friendly colours at 25% opacity (2026-11-21)
 
 **Latest source:** [ASJR Gann Ideas V11 Pine Script](ASJR_Gann_Ideas_V11.pine).
