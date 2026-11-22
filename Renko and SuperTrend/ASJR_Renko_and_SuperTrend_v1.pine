@@ -1,9 +1,9 @@
 //@version=6
 // ASJR Renko and SuperTrend v1
-// Original close-confirmed Renko emulator. Bricks are time-aligned to their source bar.
-// Historical bricks use confirmed candle sources; this is not tick-based Renko.
-// Default traditional fixed price-unit box size = 8.33, matching the requested UI.
-indicator("ASJR Renko and SuperTrend v1", shorttitle="ASJR Renko ST v1", overlay=true, behind_chart=false, max_boxes_count=500)
+// Contiguous, scroll-aware Renko bricks built from confirmed source candles.
+// Classic one-box continuation and two-box reversal; not a tick-based chart.
+// Bricks are packed into visible chart space; their X positions are synthetic.
+indicator("ASJR Renko and SuperTrend v1", shorttitle="ASJR Renko ST v1", overlay=true, behind_chart=false, max_boxes_count=500, max_lines_count=500, max_labels_count=200)
 
 const string G_RENKO = "01 - RENKO BRICK ENGINE"
 const string G_TREND = "02 - RENKO SUPERTREND"
@@ -12,144 +12,223 @@ const string G_INFO = "04 - STATUS"
 
 float renkoSource = input.source(close, "Source", group=G_RENKO)
 string sizeMode = input.string("Traditional", "Box size assignment method", options=["Traditional", "ATR", "Percentage"], group=G_RENKO)
+float fixedSize = input.float(8.33, "Box size (Traditional)", minval=0.000001, step=0.01, group=G_RENKO, tooltip="Fixed price-unit box size; rounded to the symbol's minimum tick. 8.33 at a 0.05 tick becomes 8.35.")
 int atrPeriod = input.int(14, "Source ATR period", minval=1, group=G_RENKO)
 float atrFactor = input.float(0.50, "ATR multiplier", minval=0.01, step=0.05, group=G_RENKO)
-float fixedSize = input.float(8.33, "Box size (Traditional)", minval=0.000001, step=0.01, group=G_RENKO, tooltip="Fixed Renko brick size in this instrument\'s PRICE units. 8.33 means 8.33 index points or currency units, NOT 8.33%.")
-float percentSize = input.float(0.50, "Brick as % of close", minval=0.01, step=0.05, group=G_RENKO)
-int maxPerBar = input.int(80, "Maximum bricks from one candle", minval=1, maxval=150, group=G_RENKO, tooltip="Safety limit for a large move within one completed chart candle. If reached, the move may not be fully represented.")
+float percentSize = input.float(0.50, "Brick as % of price", minval=0.01, step=0.05, group=G_RENKO)
+int sourceCount = input.int(1800, "Closed source candles to replay", minval=200, maxval=5000, group=G_RENKO)
+int maxPerBar = input.int(80, "Maximum bricks per source candle", minval=1, maxval=150, group=G_RENKO)
+
 bool showST = input.bool(true, "Show Renko SuperTrend", group=G_TREND)
 int stLength = input.int(14, "ATR Length (Renko bricks)", minval=1, group=G_TREND)
 float stFactor = input.float(3.0, "Base Factor", minval=0.10, step=0.10, group=G_TREND)
-bool choppyFilter = input.bool(false, "Choppy Filter (ADX)", group=G_TREND, tooltip="Filters flip markers and alerts using ordinary-candle ADX. Does not change SuperTrend line.")
+bool choppyFilter = input.bool(false, "Choppy Filter (ADX)", group=G_TREND, tooltip="Only filters optional SuperTrend flip labels using ADX from the original chart candles.")
 float adxThreshold = input.float(15.0, "ADX Threshold", minval=0.0, step=0.5, group=G_TREND)
-bool showBoxes = input.bool(true, "Show time-aligned Renko bricks", group=G_VIEW)
-bool hideCandles = input.bool(false, "Make ordinary candles transparent", group=G_VIEW)
-int maxVisible = input.int(400, "Maximum visible brick boxes", minval=20, maxval=450, group=G_VIEW)
+
+bool showBoxes = input.bool(true, "Show contiguous Renko bricks", group=G_VIEW)
+bool hideCandles = input.bool(true, "Make regular candles transparent", group=G_VIEW, tooltip="Hide the chart's base symbol with its eye icon if candles remain visible.")
+int maxVisible = input.int(400, "Last bricks to show", minval=10, maxval=400, group=G_VIEW)
+int brickWidth = input.int(2, "Horizontal brick width (chart bars)", minval=1, maxval=5, group=G_VIEW, tooltip="Synthetic display width. The position of a brick is NOT its real formation time.")
 int transparency = input.int(0, "Brick transparency", minval=0, maxval=90, group=G_VIEW)
 color upColor = input.color(color.rgb(38, 166, 154), "Up brick / bullish SuperTrend", group=G_VIEW)
 color downColor = input.color(color.rgb(239, 83, 80), "Down brick / bearish SuperTrend", group=G_VIEW)
-bool showFlips = input.bool(false, "Show SuperTrend flip markers", group=G_VIEW)
+bool showFlips = input.bool(false, "Show SuperTrend flip labels", group=G_VIEW)
 bool showPanel = input.bool(true, "Show compact status panel", group=G_INFO)
 
-// TradingView reruns the indicator when the visible range changes.
-// Calculations process ALL loaded confirmed bars, but boxes are drawn only
-// inside the visible window. This prevents future-looking historical bricks.
+// Visible-range inputs force re-execution when scrolling and zooming.
+// Only prices at or before the rightmost visible source candle are replayed.
 int leftVisibleTime = chart.left_visible_bar_time
 int rightVisibleTime = chart.right_visible_bar_time
+var array<float> sourcePrices = array.new<float>()
+var array<float> sourceAdxs = array.new<float>()
+var array<int> visibleTimes = array.new<int>()
+var float rightAtr = na
+var int rightEndTime = na
+var float rightPrice = na
+
 float sourceAtr = ta.atr(atrPeriod)
-float wanted = sizeMode == "Traditional" ? fixedSize : sizeMode == "Percentage" ? renkoSource * percentSize / 100.0 : sourceAtr * atrFactor
-// Use integer ticks for all brick thresholds to avoid floating-point boundary drift.
-int boxTicks = not na(wanted) and wanted > 0 ? math.max(1, int(math.round(wanted / syminfo.mintick))) : na
-float brickSize = not na(boxTicks) ? boxTicks * syminfo.mintick : na
-
-// State of the confirmed close-based Renko bricks.
-var float renkoClose = na
-var int renkoCloseTicks = na
-var int renkoDirection = 0
-var int totalBricks = 0
-var int maxBarOverflow = 0
-var array<box> drawn = array.new<box>()
-
-// Independent Wilder ATR and trailing SuperTrend bands, updated per
-// COMPLETED SYNTHETIC BRICK, not once per ordinary chart candle.
-var float renkoAtr = na
-var float trSeedSum = 0.0
-var int atrBrickCount = 0
-var float upperBand = na
-var float lowerBand = na
-var float trailingLine = na
-var int trendDirection = 0
-
-[plusDI, minusDI, sourceAdx] = ta.dmi(14, 14)
-bool bullishFlip = false
-bool bearishFlip = false
-if barstate.isconfirmed and not na(renkoSource)
-    if na(renkoCloseTicks)
-        renkoCloseTicks := int(math.round(renkoSource / syminfo.mintick))
-        renkoClose := renkoCloseTicks * syminfo.mintick
-    else if not na(boxTicks)
-        int sourceTicks = int(math.round(renkoSource / syminfo.mintick))
-        int formed = 0
-        while formed < maxPerBar
-            bool rising = sourceTicks >= renkoCloseTicks + boxTicks * (renkoDirection == -1 ? 2 : 1)
-            bool falling = sourceTicks <= renkoCloseTicks - boxTicks * (renkoDirection == 1 ? 2 : 1)
-            if not rising and not falling
-                break
-
-            float previousBrickClose = renkoClose
-            int openTicks = rising ? renkoCloseTicks + (renkoDirection == -1 ? boxTicks : 0) : renkoCloseTicks - (renkoDirection == 1 ? boxTicks : 0)
-            int closeTicks = openTicks + (rising ? boxTicks : -boxTicks)
-            float brickOpen = openTicks * syminfo.mintick
-            float brickClose = closeTicks * syminfo.mintick
-            float brickHigh = math.max(brickOpen, brickClose)
-            float brickLow = math.min(brickOpen, brickClose)
-
-            renkoCloseTicks := closeTicks
-            renkoClose := brickClose
-            renkoDirection := rising ? 1 : -1
-            totalBricks += 1
-            formed += 1
-
-            // True range includes the gap created by a classic 2-box reversal.
-            float tr = math.max(brickHigh - brickLow, math.max(math.abs(brickHigh - previousBrickClose), math.abs(brickLow - previousBrickClose)))
-            atrBrickCount += 1
-            // Wilder RMA seeds on the average of the first stLength brick TR values.
-            if atrBrickCount <= stLength
-                trSeedSum += tr
-                if atrBrickCount == stLength
-                    renkoAtr := trSeedSum / stLength
-            else
-                renkoAtr := (renkoAtr * (stLength - 1) + tr) / stLength
-
-            if not na(renkoAtr)
-                float basicUpper = (brickHigh + brickLow) / 2.0 + stFactor * renkoAtr
-                float basicLower = (brickHigh + brickLow) / 2.0 - stFactor * renkoAtr
-                float priorUpper = upperBand
-                float priorLower = lowerBand
-                upperBand := na(priorUpper) or basicUpper < priorUpper or previousBrickClose > priorUpper ? basicUpper : priorUpper
-                lowerBand := na(priorLower) or basicLower > priorLower or previousBrickClose < priorLower ? basicLower : priorLower
-
-                int wasDirection = trendDirection
-                trendDirection := wasDirection == 0 ? renkoDirection : wasDirection == 1 ? (brickClose < lowerBand ? -1 : 1) : (brickClose > upperBand ? 1 : -1)
-                trailingLine := trendDirection == 1 ? lowerBand : upperBand
-                bool flipAllowed = not choppyFilter or (not na(sourceAdx) and sourceAdx >= adxThreshold)
-                bullishFlip := bullishFlip or (flipAllowed and wasDirection == -1 and trendDirection == 1)
-                bearishFlip := bearishFlip or (flipAllowed and wasDirection == 1 and trendDirection == -1)
-
-            // Each brick gets the source candle's X coordinate; multiple bricks
-            // from one candle stack vertically, never backdate into earlier bars.
-            if showBoxes and time >= leftVisibleTime and time <= rightVisibleTime
-                color brickColor = rising ? upColor : downColor
-                int endOfBar = not na(time_close) and time_close > time ? time_close : time + int(timeframe.in_seconds(timeframe.period) * 1000)
-                box bx = box.new(left=time, top=brickHigh, right=endOfBar, bottom=brickLow, xloc=xloc.bar_time, border_color=brickColor, border_width=1, bgcolor=color.new(brickColor, transparency))
-                array.push(drawn, bx)
-                if array.size(drawn) > maxVisible
-                    box.delete(array.shift(drawn))
-
-        if formed == maxPerBar
-            bool stillUp = sourceTicks >= renkoCloseTicks + boxTicks * (renkoDirection == -1 ? 2 : 1)
-            bool stillDown = sourceTicks <= renkoCloseTicks - boxTicks * (renkoDirection == 1 ? 2 : 1)
-            if stillUp or stillDown
-                maxBarOverflow += 1
+[plusDI, minusDI, currentAdx] = ta.dmi(14, 14)
+if time >= leftVisibleTime and time <= rightVisibleTime
+    array.push(visibleTimes, time)
+if time == rightVisibleTime
+    rightAtr := barstate.isconfirmed ? sourceAtr : sourceAtr[1]
+    rightPrice := barstate.isconfirmed ? renkoSource : renkoSource[1]
+    rightEndTime := time_close
+if barstate.isconfirmed and time <= rightVisibleTime and not na(renkoSource)
+    array.push(sourcePrices, renkoSource)
+    array.push(sourceAdxs, currentAdx)
+    if array.size(sourcePrices) > sourceCount
+        array.shift(sourcePrices)
+        array.shift(sourceAdxs)
 
 barcolor(hideCandles ? color.new(color.gray, 100) : na)
-plot(showST and trendDirection == 1 ? trailingLine : na, "Bullish Renko SuperTrend", color=upColor, linewidth=2, style=plot.style_linebr)
-plot(showST and trendDirection == -1 ? trailingLine : na, "Bearish Renko SuperTrend", color=downColor, linewidth=2, style=plot.style_linebr)
-plotshape(showFlips and bullishFlip, title="SuperTrend bullish flip", text="UP", style=shape.labelup, location=location.belowbar, color=upColor, textcolor=color.white, size=size.tiny)
-plotshape(showFlips and bearishFlip, title="SuperTrend bearish flip", text="DN", style=shape.labeldown, location=location.abovebar, color=downColor, textcolor=color.white, size=size.tiny)
-alertcondition(bullishFlip, "ASJR Renko ST bullish flip", "ASJR Renko SuperTrend bullish flip (confirmed chart candle)")
-alertcondition(bearishFlip, "ASJR Renko ST bearish flip", "ASJR Renko SuperTrend bearish flip (confirmed chart candle)")
-plot(brickSize, "Source brick size", display=display.data_window)
-plot(renkoClose, "Completed Renko close", display=display.data_window)
 
-var table panel = table.new(position.top_right, 2, 3, border_width=1)
+var array<box> renderedBoxes = array.new<box>()
+var array<line> renderedST = array.new<line>()
+var array<label> renderedLabels = array.new<label>()
+var table panel = table.new(position.top_right, 2, 4, border_width=1)
+
 if barstate.islast
+    for bx in renderedBoxes
+        box.delete(bx)
+    array.clear(renderedBoxes)
+    for ln in renderedST
+        line.delete(ln)
+    array.clear(renderedST)
+    for lb in renderedLabels
+        label.delete(lb)
+    array.clear(renderedLabels)
+
+    int total = array.size(sourcePrices)
+    int barsVisible = array.size(visibleTimes)
+    float sizeWanted = na
+    float unit = na
+    int formedTotal = 0
+    int cappedBars = 0
+    float finalClose = na
+    int finalTrend = 0
+
+    if total >= 2 and barsVisible >= 2
+        float reference = not na(rightPrice) ? rightPrice : array.get(sourcePrices, total - 1)
+        sizeWanted := sizeMode == "Traditional" ? fixedSize : sizeMode == "Percentage" ? reference * percentSize / 100.0 : rightAtr * atrFactor
+        int unitTicks = not na(sizeWanted) and sizeWanted > 0 ? math.max(1, int(math.round(sizeWanted / syminfo.mintick))) : na
+        unit := not na(unitTicks) ? unitTicks * syminfo.mintick : na
+
+        if not na(unitTicks)
+            // A capped rolling history is preserved for drawing, while
+            // Renko and SuperTrend state uses ALL replayed closed candles.
+            array<float> brickOpens = array.new<float>()
+            array<float> brickCloses = array.new<float>()
+            array<bool> brickUps = array.new<bool>()
+            array<float> trendPrices = array.new<float>()
+            array<int> trendDirs = array.new<int>()
+            array<bool> trendFlips = array.new<bool>()
+
+            int lastTicks = int(math.round(array.get(sourcePrices, 0) / syminfo.mintick))
+            int brickDir = 0
+            float atrBrick = na
+            float atrSeed = 0.0
+            int atrCount = 0
+            float upper = na
+            float lower = na
+            float trail = na
+            int trendDir = 0
+
+            for j = 1 to total - 1
+                int targetTicks = int(math.round(array.get(sourcePrices, j) / syminfo.mintick))
+                float candleAdx = array.get(sourceAdxs, j)
+                int made = 0
+                for k = 0 to maxPerBar - 1
+                    bool rising = targetTicks >= lastTicks + unitTicks * (brickDir == -1 ? 2 : 1)
+                    bool falling = targetTicks <= lastTicks - unitTicks * (brickDir == 1 ? 2 : 1)
+                    if not rising and not falling
+                        break
+
+                    int opening = rising ? lastTicks + (brickDir == -1 ? unitTicks : 0) : lastTicks - (brickDir == 1 ? unitTicks : 0)
+                    int closing = opening + (rising ? unitTicks : -unitTicks)
+                    float bOpen = opening * syminfo.mintick
+                    float bClose = closing * syminfo.mintick
+                    float bHigh = math.max(bOpen, bClose)
+                    float bLow = math.min(bOpen, bClose)
+                    float oldClose = lastTicks * syminfo.mintick
+                    lastTicks := closing
+                    brickDir := rising ? 1 : -1
+                    formedTotal += 1
+                    made += 1
+
+                    // Wilder ATR on completed synthetic Renko OHLC,
+                    // seeded from the first stLength brick true ranges.
+                    float tr = math.max(bHigh - bLow, math.max(math.abs(bHigh - oldClose), math.abs(bLow - oldClose)))
+                    atrCount += 1
+                    if atrCount <= stLength
+                        atrSeed += tr
+                        if atrCount == stLength
+                            atrBrick := atrSeed / stLength
+                    else
+                        atrBrick := (atrBrick * (stLength - 1) + tr) / stLength
+
+                    bool flip = false
+                    if not na(atrBrick)
+                        float basicUp = (bHigh + bLow) / 2.0 + stFactor * atrBrick
+                        float basicDn = (bHigh + bLow) / 2.0 - stFactor * atrBrick
+                        float oldUpper = upper
+                        float oldLower = lower
+                        upper := na(oldUpper) or basicUp < oldUpper or oldClose > oldUpper ? basicUp : oldUpper
+                        lower := na(oldLower) or basicDn > oldLower or oldClose < oldLower ? basicDn : oldLower
+                        int oldTrend = trendDir
+                        trendDir := oldTrend == 0 ? brickDir : oldTrend == 1 ? (bClose < lower ? -1 : 1) : (bClose > upper ? 1 : -1)
+                        trail := trendDir == 1 ? lower : upper
+                        bool passedFilter = not choppyFilter or (not na(candleAdx) and candleAdx >= adxThreshold)
+                        flip := oldTrend != 0 and trendDir != oldTrend and passedFilter
+
+                    array.push(brickOpens, bOpen)
+                    array.push(brickCloses, bClose)
+                    array.push(brickUps, rising)
+                    array.push(trendPrices, trail)
+                    array.push(trendDirs, trendDir)
+                    array.push(trendFlips, flip)
+                    if array.size(brickOpens) > maxVisible
+                        array.shift(brickOpens)
+                        array.shift(brickCloses)
+                        array.shift(brickUps)
+                        array.shift(trendPrices)
+                        array.shift(trendDirs)
+                        array.shift(trendFlips)
+
+                if made == maxPerBar
+                    bool stillRising = targetTicks >= lastTicks + unitTicks * (brickDir == -1 ? 2 : 1)
+                    bool stillFalling = targetTicks <= lastTicks - unitTicks * (brickDir == 1 ? 2 : 1)
+                    if stillRising or stillFalling
+                        cappedBars += 1
+
+            finalClose := lastTicks * syminfo.mintick
+            finalTrend := trendDir
+
+            // Exactly the V4 contiguous packing principle: every retained
+            // brick occupies one adjacent synthetic slot in the visible area.
+            int stored = array.size(brickOpens)
+            int slots = math.max(0, int(math.floor(barsVisible / brickWidth)))
+            int drawCount = math.min(stored, slots)
+            if drawCount > 0
+                int first = stored - drawCount
+                int firstSlot = barsVisible - drawCount * brickWidth
+                int stepMs = barsVisible >= 2 ? array.get(visibleTimes, barsVisible - 1) - array.get(visibleTimes, barsVisible - 2) : 60000
+                int endTime = not na(rightEndTime) and rightEndTime > rightVisibleTime ? rightEndTime : rightVisibleTime + math.max(1, stepMs)
+                for i = 0 to drawCount - 1
+                    int ix = first + i
+                    float bOpen = array.get(brickOpens, ix)
+                    float bClose = array.get(brickCloses, ix)
+                    bool rising = array.get(brickUps, ix)
+                    int startSlot = firstSlot + i * brickWidth
+                    int afterSlot = startSlot + brickWidth
+                    int startTime = array.get(visibleTimes, startSlot)
+                    int stopTime = afterSlot < barsVisible ? array.get(visibleTimes, afterSlot) : endTime
+                    color brickColor = rising ? upColor : downColor
+
+                    if showBoxes
+                        box bx = box.new(left=startTime, top=math.max(bOpen, bClose), right=stopTime, bottom=math.min(bOpen, bClose), xloc=xloc.bar_time, border_color=brickColor, border_width=1, bgcolor=color.new(brickColor, transparency))
+                        array.push(renderedBoxes, bx)
+                    float stPrice = array.get(trendPrices, ix)
+                    int sign = array.get(trendDirs, ix)
+                    if showST and not na(stPrice) and sign != 0
+                        color trendColor = sign == 1 ? upColor : downColor
+                        line ln = line.new(x1=startTime, y1=stPrice, x2=stopTime, y2=stPrice, xloc=xloc.bar_time, extend=extend.none, color=trendColor, width=2)
+                        array.push(renderedST, ln)
+                    if showFlips and array.get(trendFlips, ix) and array.size(renderedLabels) < 100
+                        color flipColor = sign == 1 ? upColor : downColor
+                        label lb = label.new(x=startTime, y=bClose, text=sign == 1 ? "UP" : "DN", xloc=xloc.bar_time, style=sign == 1 ? label.style_label_up : label.style_label_down, color=flipColor, textcolor=color.white, size=size.tiny)
+                        array.push(renderedLabels, lb)
+
     if showPanel
-        table.cell(panel, 0, 0, "ASJR RENKO ST", bgcolor=color.new(color.black, 15), text_color=color.white)
-        table.cell(panel, 1, 0, "v1", bgcolor=color.new(color.black, 15), text_color=color.white)
-        table.cell(panel, 0, 1, "Brick / trend", text_color=color.white, bgcolor=color.new(color.black, 30))
-        table.cell(panel, 1, 1, str.tostring(brickSize, format.mintick) + " / " + (trendDirection == 1 ? "UP" : trendDirection == -1 ? "DOWN" : "WAIT"), text_color=trendDirection == 1 ? upColor : trendDirection == -1 ? downColor : color.silver, bgcolor=color.new(color.black, 30))
-        table.cell(panel, 0, 2, "Bricks / capped bars", text_color=color.white, bgcolor=color.new(color.black, 30))
-        table.cell(panel, 1, 2, str.tostring(totalBricks) + " / " + str.tostring(maxBarOverflow), text_color=color.white, bgcolor=color.new(color.black, 30))
+        color titleBg = color.new(color.black, 15)
+        color bodyBg = color.new(color.black, 30)
+        table.cell(panel, 0, 0, "ASJR RENKO ST", bgcolor=titleBg, text_color=color.white)
+        table.cell(panel, 1, 0, "v1", bgcolor=titleBg, text_color=color.white)
+        table.cell(panel, 0, 1, "Method / box", bgcolor=bodyBg, text_color=color.white)
+        table.cell(panel, 1, 1, sizeMode + " / " + (na(unit) ? "N/A" : str.tostring(unit, format.mintick)), bgcolor=bodyBg, text_color=color.white)
+        table.cell(panel, 0, 2, "Trend / close", bgcolor=bodyBg, text_color=color.white)
+        table.cell(panel, 1, 2, (finalTrend == 1 ? "UP" : finalTrend == -1 ? "DOWN" : "WAIT") + " / " + (na(finalClose) ? "N/A" : str.tostring(finalClose, format.mintick)), bgcolor=bodyBg, text_color=finalTrend == 1 ? upColor : finalTrend == -1 ? downColor : color.silver)
+        table.cell(panel, 0, 3, "Bricks / capped bars", bgcolor=bodyBg, text_color=color.white)
+        table.cell(panel, 1, 3, str.tostring(formedTotal) + " / " + str.tostring(cappedBars), bgcolor=bodyBg, text_color=color.white)
     else
-        table.clear(panel, 0, 0, 1, 2)
+        table.clear(panel, 0, 0, 1, 3)
