@@ -740,9 +740,16 @@ def run_asjr_manual_pipeline(*args, **kwargs):
 _premarket_prepared_events = []
 
 
+def _is_ddb_alert_result(result):
+    """Match the DDB scanner's versioned result mode for Discord routing."""
+    if not result:
+        return False
+    from RudraScanner.ddb_ema_gann_5m import DDB_ALERT_MODE
+    return result.get("alert_mode") == DDB_ALERT_MODE
+
 def prepare_alert(result):
     """Reuse canonical Chakra Discord sender; DDB-only mode bypasses ALL old alert jobs."""
-    if result and result.get("alert_mode") == "ddb_ema_gann_5m":
+    if _is_ddb_alert_result(result):
         from RudraScanner.ddb_ema_gann_5m import prepare_alert as ddb_prepare
         return ddb_prepare(result)
     global _premarket_prepared_events
@@ -784,7 +791,7 @@ def mark_alert_sent():
 
 def send_alerts(result, sender):
     """Send DDB events instead of WICKS/Reversal when DDB-only mode is active."""
-    if result and result.get("alert_mode") == "ddb_ema_gann_5m":
+    if _is_ddb_alert_result(result):
         from RudraScanner.ddb_ema_gann_5m import prepare_alert as ddb_prepare
         from RudraScanner.ddb_ema_gann_5m import mark_alert_sent as ddb_mark
         message = ddb_prepare(result)
