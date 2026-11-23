@@ -10,10 +10,25 @@ this versioned result mode (never the config selector **ddb_ema_gann_5m**).
 - The next completed 15m bullish candle has its **entire body above EMA9**.
 - Both EMA9 and EMA20 slopes positive; EMA9 slope must exceed EMA20.
 - Confirmation is within 2.5% of EMA9. Group A requires bullish SMH.
-- Signals only during US regular trading hours. No stale/incomplete 15m candles.
+- Signal evaluation in ALL available sessions: overnight, premarket, RTH and
+  after-hours (as long as complete, fresh broker bars exist).
+- Missing/breaking 15-minute bars never create an artificial cross.
+- Group A SMH filter is strict in RTH. Outside RTH, a fresh available SMH
+  benchmark must be bullish; if absent, the BUY WATCH explicitly says
+  "SMH UNAVAILABLE (EXTENDED)" (not sector-confirmed).
 - Exactly three contiguous completed IBKR 5m OHLC bars form each 15m bar.
 - No volume minimum or volume ratio filter; no Gann-level calculations or
   Gann values in delivered Discord alerts.
+
+## 24-hour data coverage limitation
+The current IBKR 5m batch already requests `useRTH=0`, so SMART historical
+data can include regular premarket and after-hours trades. The IBKR OVERNIGHT
+venue is separately routed and may not be represented in SMART 5m history.
+The code checks at every existing bot cycle around the clock, but it never
+fabricates overnight bars, signals or market activity where no feed is present.
+A dedicated IBKR OVERNIGHT data source and qualified contracts require an
+independent verified integration before claiming full overnight coverage.
+US stock trading is not continuous through weekends or exchange breaks.
 
 ## Scope
 No additional background job, live order, RVOL, Wicks, 1H Reversal,
