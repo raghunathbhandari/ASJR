@@ -186,7 +186,7 @@ class DDBEMAGannV2Tests(unittest.TestCase):
     def test_us_midnight_transition_does_not_suppress_valid_overnight_cross(self):
         # At 00:15 ET the confirmed signal must remain eligible; the earlier
         # cross and follow-through may straddle the local calendar boundary.
-        stock, _, now = self._shifted_sample("9h")
+        stock, _, now = self._shifted_sample("9h30min")
         event = signal_on_closed_bars(stock, "PGR", "B", now=now)
         self.assertIsNotNone(event)
         self.assertEqual(event["session"], "OVERNIGHT")
