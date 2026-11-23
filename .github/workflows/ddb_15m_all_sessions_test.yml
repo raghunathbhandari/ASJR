@@ -1,0 +1,21 @@
+name: DDB 15m All Sessions Test (temporary)
+on:
+  push:
+    branches: [fix/ddb-15m-all-sessions-20261123]
+permissions:
+  contents: read
+jobs:
+  offline-ddb-v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install minimal dependencies
+        run: python -m pip install --disable-pip-version-check pandas==2.2.3
+      - name: Compile Python
+        run: python -m py_compile RudraScanner/ddb_ema_gann_5m.py ASJR_Analyst/Tests/test_asjr_pipeline.py RudraScanner/tests/test_ddb_ema_gann_5m.py
+      - name: Test extended and regular sessions
+        run: python -m unittest RudraScanner.tests.test_ddb_ema_gann_5m -v
