@@ -3,7 +3,7 @@
   "enabled": true,
   "timeframe": "15m",
   "rule": "Real 15m EMA9 crosses ABOVE EMA20; next closed bullish 15m candle confirms; both EMA slopes positive; Group A SMH aligned. No volume threshold or Gann levels.",
-  "sessions": "US RTH only for HIGH-CONFIDENCE BUY alerts (09:30-16:00 America/New_York)",
+  "sessions": "ALL AVAILABLE SESSIONS 24h monitoring: OVERNIGHT, PREMARKET, RTH, AFTERHOURS. Completed real 15m bars only; no signals when no valid IBKR bar data; SMART feed may not contain OVERNIGHT venue trades.",
   "groups": {
     "A": [
       "INTC",
@@ -69,6 +69,6 @@
     "max_ema9_extension_pct": 2.5,
     "group_a_benchmark": "SMH",
     "required_confirmation_bars": 1,
-    "require_rth": true
+    "require_rth": false
   }
 }
