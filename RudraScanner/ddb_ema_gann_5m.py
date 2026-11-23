@@ -136,11 +136,17 @@ def build_complete_15m_bars(df, *, now):
     return result[(result.index + pd.Timedelta(minutes=15)) <= now]
 
 
-def _is_rth(ts):
-    """New York 09:30-16:00, DST safe; only completed 15m RTH bars."""
+def _session_name(ts):
+    """Identify the US stock session from a timestamp in New York local time."""
     t = ts.tz_convert(ET)
     minute = t.hour * 60 + t.minute
-    return 570 <= minute < 960
+    if 570 <= minute < 960:
+        return "RTH"
+    if 240 <= minute < 570:
+        return "PREMARKET"
+    if 960 <= minute < 1200:
+        return "AFTERHOURS"
+    return "OVERNIGHT"
 
 
 def _benchmark_bullish(benchmark_df, curr_time, now):
@@ -182,11 +188,12 @@ def signal_on_closed_bars(df, ticker, group, *, now=None,
     age = (now - (curr_time + pd.Timedelta(minutes=15))).total_seconds()
     if age < 0 or age > 900:
         return None
-    if curr_time.tz_convert(ET).date() != now.tz_convert(ET).date():
+    # Cross and confirmation must be contiguous 15m bars, including across
+    # midnight. Never infer a crossover across a missing/closed-market gap.
+    if ((bars.index[-1] - bars.index[-2]) != pd.Timedelta(minutes=15)
+            or (bars.index[-2] - bars.index[-3]) != pd.Timedelta(minutes=15)):
         return None
-    # The crossover bar and follow-through bar must BOTH be inside RTH.
-    if not _is_rth(curr_time) or not _is_rth(bars.index[-2]):
-        return None
+    session = _session_name(curr_time)
 
     opens, closes = bars["Open"], bars["Close"]
     lows = bars["Low"]
@@ -217,10 +224,25 @@ def signal_on_closed_bars(df, ticker, group, *, now=None,
     if extension > max_extension:
         return None
 
-    # Group A moves together: do not BUY against a bearish SMH regime.
-    if group == "A" and not _benchmark_bullish(
-            benchmark_df, curr_time, now):
-        return None
+    # Group A: retain the strict SMH filter during regular hours.
+    # In extended sessions, SMART may not publish an SMH candle at the
+    # stock's timestamp. If SMH is available, require it to be bullish;
+    # otherwise disclose the unconfirmed sector rather than hide all signals.
+    sector = "OWN TREND"
+    if group == "A":
+        if benchmark_df is None or benchmark_df.empty:
+            benchmark_ready = False
+        else:
+            sbars = build_complete_15m_bars(benchmark_df, now=now)
+            benchmark_ready = len(sbars) >= 28 and sbars.index[-1] == curr_time
+        if benchmark_ready:
+            if not _benchmark_bullish(benchmark_df, curr_time, now):
+                return None
+            sector = "SMH BULLISH"
+        elif session == "RTH":
+            return None
+        else:
+            sector = "SMH UNAVAILABLE (EXTENDED)"
 
     stamp = curr_time.tz_convert(UK)
     return {
@@ -228,6 +250,7 @@ def signal_on_closed_bars(df, ticker, group, *, now=None,
         "key": f"{ticker}|{curr_time.isoformat()}|DDB_EMA9_20_15M_V2",
         "timeframe": "15min",
         "ticker": ticker, "group": group,
+        "session": session,
         "bar_uk": stamp.strftime("%Y-%m-%d %H:%M"),
         "bar_utc": curr_time.isoformat(),
         "open": round(float(opens.iloc[-1]), 4),
@@ -238,7 +261,7 @@ def signal_on_closed_bars(df, ticker, group, *, now=None,
         "ema9_slope_pct": round(float(slope9), 3),
         "ema20_slope_pct": round(float(slope20), 3),
         "ema9_extension_pct": round(float(extension), 3),
-        "sector": "SMH BULLISH" if group == "A" else "OWN TREND",
+        "sector": sector,
         "trigger": "REAL CROSS + FOLLOW-THROUGH",
     }
 
@@ -268,7 +291,7 @@ def run_cycle(app, *, now=None):
         cfg.get("signal_filters", {}).get("group_a_benchmark", "SMH")).upper()
     requested = names + ([benchmark_symbol] if benchmark_symbol not in names else [])
     started = time.monotonic()
-    print("RUDRA DDB 15M | START | A/B/C=22/17/10 |",
+    print("RUDRA DDB 15M | START | ALL SESSIONS | A/B/C=22/17/10 |",
           pd.Timestamp.now(tz="UTC").isoformat(), flush=True)
     batches = ibkr.get_ibkr_5m_batch(
         app, requested, duration="3 D", wait_time=16, batch_size=5)
@@ -317,7 +340,7 @@ def format_buy_watch_section(event):
     sector = event.get("sector", "NOT CHECKED")
     return [
         f'🟢 {ticker} | GROUP {group} | BUY WATCH (V2)',
-        f'{event["bar_uk"]} UK | 15min | EMA9/20 CROSS CONFIRMED',
+        f'{event["bar_uk"]} UK | 15min | {event.get("session", "UNKNOWN")} | EMA9/20 CROSS CONFIRMED',
         f'ENTRY REF (15m close): {close:.2f} | NOT AN EXECUTED ORDER',
         f'EMA9: {ema9:.2f} | slope {slope9:+.3f}% / 15m',
         f'EMA20: {ema20:.2f} | slope {slope20:+.3f}% / 15m',
