@@ -4,6 +4,18 @@
 
 This is the standalone **ASJR Gann Ideas** overlay for **5m, 15m, 1H, 4H, and Daily** charts. It follows the user's reference screenshot: candlesticks, thin horizontal price lines, right-edge colour-coded method/angle/price labels, and two dashed vertical cycle families. It is not the proprietary AmiBroker "ASHOK GANN SUPER STUDIO" implementation.
 
+## V16 — Square-of-9 levels cover the visible candle range (2026-11-23)
+
+**New test release:** [ASJR Gann Ideas V16 Pine v6](ASJR_Gann_Ideas_V16.pine)
+
+**AMD 15m bug in V6:** the old Square-of-9 level generator stopped after eight +/-45-degree rotations (up to +/-360 degrees) around the selected anchor. On a strong move from a higher swing anchor, the bottom level could sit far above current price: the indicator therefore looked broken on AMD although it still showed levels on COHR. This is a **range-generation limitation**, not a symbol-specific failure.
+
+**V16 fix:** keep the same square-root Gann equation, but derive the relevant positive/negative angle indices directly from the **high and low of all currently visible candles**, with the existing 5% default padding and minimum +/-20% close-price coverage. This includes angles past +/-360 degrees where needed, regardless of ticker, price scale, or timeframe. As you scroll or zoom the indicator recalculates the horizontal coverage. Gann price source timeframe, static/dynamic price anchors, all ten feature switches and the V15 historical time-cycle logic remain available.
+
+When the chart spans an extremely large price region, the finite `Square of 9 max levels per family` and `Maximum horizontal lines` budgets mean **not every single angle can be plotted**. Instead, V16 uses a larger integer-angle stride to distribute exact Gann grid levels across the *entire* candle range. It does not fabricate non-Gann levels. With a normal visible range the stride is one and all eligible angles are drawn. Yearly high/low references and other individual price families keep their original semantics; this V16 change specifically repairs the Square-of-9 families (Static, Dynamic H, Dynamic C).
+
+**Chart check:** open AMD 15m with Dynamic H enabled, then pan back to include the older high and the subsequent lower candles. Gann S9 H lines should now appear around the low, middle and upper portions of those candles rather than stopping near the old anchor. Repeat on COHR, 5m, 1H, 4H and Daily; check scroll/zoom coverage and the line-count cap. **Pine Editor compilation and TradingView chart behaviour require user validation; only source-level invariants have been checked here.**
+
 ## V15 — Historical pivot cycles survive forward/backward scrolling (2026-11-22)
 
 **Latest test release:** [ASJR Gann Ideas V15 Pine v6](ASJR_Gann_Ideas_V15.pine)
