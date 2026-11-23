@@ -130,13 +130,66 @@ class DDBEMAGannV2Tests(unittest.TestCase):
             stock, "AMD", "A", now=now + pd.Timedelta(minutes=31),
             benchmark_df=sector))
 
-    def test_closed_signal_not_extended_hours(self):
+    def _shifted_sample(self, offset):
         stock, sector, now = self.sample()
-        stock.index = stock.index - pd.Timedelta(hours=8)
-        sector.index = sector.index - pd.Timedelta(hours=8)
-        now -= pd.Timedelta(hours=8)
+        delta = pd.Timedelta(offset)
+        stock.index = stock.index + delta
+        sector.index = sector.index + delta
+        return stock, sector, now + delta
+
+    def test_premarket_buy_signal_allowed(self):
+        stock, sector, now = self._shifted_sample("-6h45min")
+        event = signal_on_closed_bars(
+            stock, "AMD", "A", now=now, benchmark_df=sector)
+        self.assertIsNotNone(event)
+        self.assertEqual(event["session"], "PREMARKET")
+
+    def test_afterhours_buy_signal_allowed(self):
+        stock, sector, now = self._shifted_sample("3h15min")
+        event = signal_on_closed_bars(
+            stock, "PGR", "B", now=now)
+        self.assertIsNotNone(event)
+        self.assertEqual(event["session"], "AFTERHOURS")
+
+    def test_overnight_buy_signal_allowed_when_bars_exist(self):
+        stock, sector, now = self._shifted_sample("8h15min")
+        event = signal_on_closed_bars(
+            stock, "PGR", "B", now=now)
+        self.assertIsNotNone(event)
+        self.assertEqual(event["session"], "OVERNIGHT")
+
+    def test_no_fabricated_signal_without_fresh_overnight_bars(self):
+        stock, sector, now = self._shifted_sample("8h15min")
         self.assertIsNone(signal_on_closed_bars(
-            stock, "AMD", "A", now=now, benchmark_df=sector))
+            stock, "PGR", "B", now=now + pd.Timedelta(minutes=31)))
+
+    def test_no_cross_across_market_gap(self):
+        stock, sector, now = self.sample()
+        # Shift the cross bar earlier, but keep the 5m bucket complete.
+        prev = stock.index.floor("15min").unique()[-2]
+        mask = stock.index.floor("15min") == prev
+        shift = pd.Timedelta(hours=1)
+        stock.index = stock.index.where(~mask, stock.index - shift)
+        self.assertIsNone(signal_on_closed_bars(
+            stock, "PGR", "B", now=now))
+
+    def test_extended_group_a_without_smh_is_labelled(self):
+        stock, _, now = self._shifted_sample("8h15min")
+        event = signal_on_closed_bars(stock, "AMD", "A", now=now)
+        self.assertIsNotNone(event)
+        self.assertEqual(event["sector"], "SMH UNAVAILABLE (EXTENDED)")
+
+    def test_rth_group_a_without_smh_still_rejected(self):
+        stock, _, now = self.sample()
+        self.assertIsNone(signal_on_closed_bars(stock, "AMD", "A", now=now))
+
+    def test_us_midnight_transition_does_not_suppress_valid_overnight_cross(self):
+        # At 00:15 ET the confirmed signal must remain eligible; the earlier
+        # cross and follow-through may straddle the local calendar boundary.
+        stock, _, now = self._shifted_sample("9h")
+        event = signal_on_closed_bars(stock, "PGR", "B", now=now)
+        self.assertIsNotNone(event)
+        self.assertEqual(event["session"], "OVERNIGHT")
 
     def test_discord_alert_omits_volume_and_gann(self):
         event = {
@@ -158,6 +211,7 @@ class DDBEMAGannV2Tests(unittest.TestCase):
         self.assertNotIn("Volume", message)
         self.assertNotIn("GANN", message)
         self.assertNotIn("529.00", message)
+        self.assertIn("UNKNOWN", message)
 
     def test_dispatch_identifier_is_shared_by_adapter_and_scanner(self):
         from pathlib import Path
@@ -232,6 +286,7 @@ class DDBEMAGannV2Tests(unittest.TestCase):
         settings, items = config()
         self.assertEqual(settings["version"], 2)
         self.assertEqual(settings["timeframe"], "15m")
+        self.assertFalse(settings["signal_filters"]["require_rth"])
         self.assertEqual(len(items), 49)
         self.assertEqual([
             sum(group == g for _, group in items) for g in "ABC"
