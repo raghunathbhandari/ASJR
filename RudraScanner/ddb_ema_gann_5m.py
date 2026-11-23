@@ -1,4 +1,4 @@
-"""Rudra DDB A/B/C: fifteen-minute EMA9/EMA20 BUY WATCH and ASJR Gann levels.
+"""Rudra DDB A/B/C: fifteen-minute EMA9/EMA20 BUY WATCH alerts.
 
 Runs exclusively through the existing Chakra IBKR app and Discord hook.
 No orders, independent broker connection, new scheduler, or legacy alerts.
@@ -8,7 +8,6 @@ from __future__ import annotations
 import json
 import os
 import time
-from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -17,7 +16,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "RudraScanner" / "ddb_ema_gann_config.json"
 STATE = ROOT / "ASJR_Analyst" / "state" / "ddb_ema_gann_alerts.json"
-GANN_CACHE = ROOT / "ASJR_Analyst" / "state" / "ddb_gann_150d_cache.json"
+DDB_ALERT_MODE = "ddb_ema_gann_15m_v2"  # Stable dispatch identifier
 ET = ZoneInfo("America/New_York")
 UK = ZoneInfo("Europe/London")
 
@@ -172,12 +171,11 @@ def signal_on_closed_bars(df, ticker, group, *, now=None,
         raise ValueError("now must have timezone")
     now = now.tz_convert("UTC")
     bars = build_complete_15m_bars(df, now=now)
-    if len(bars) < 28 or "Volume" not in bars:
+    if len(bars) < 28:
         return None
     cfg = filters or {}
     min_fast_slope = float(cfg.get("ema9_min_slope_pct", 0.05))
     min_slow_slope = float(cfg.get("ema20_min_slope_pct", 0.01))
-    min_volume_ratio = float(cfg.get("min_volume_ratio", 1.25))
     max_extension = float(cfg.get("max_ema9_extension_pct", 2.5))
 
     curr_time = bars.index[-1]
@@ -219,21 +217,6 @@ def signal_on_closed_bars(df, ticker, group, *, now=None,
     if extension > max_extension:
         return None
 
-    # Only RTH volume is compared, never misleading overnight volume.
-    history = bars.iloc[:-1]
-    rth_history = history.loc[[_is_rth(t) for t in history.index]]
-    if len(rth_history) < 12:
-        return None
-    past_vol = pd.to_numeric(
-        rth_history["Volume"].iloc[-12:], errors="coerce")
-    baseline = float(past_vol.median())
-    current_vol = float(bars["Volume"].iloc[-1])
-    if baseline <= 0 or current_vol <= 0:
-        return None
-    volume_ratio = current_vol / baseline
-    if volume_ratio < min_volume_ratio:
-        return None
-
     # Group A moves together: do not BUY against a bearish SMH regime.
     if group == "A" and not _benchmark_bullish(
             benchmark_df, curr_time, now):
@@ -254,45 +237,10 @@ def signal_on_closed_bars(df, ticker, group, *, now=None,
         "ema20": round(float(ema20.iloc[-1]), 4),
         "ema9_slope_pct": round(float(slope9), 3),
         "ema20_slope_pct": round(float(slope20), 3),
-        "volume_ratio": round(float(volume_ratio), 2),
         "ema9_extension_pct": round(float(extension), 3),
         "sector": "SMH BULLISH" if group == "A" else "OWN TREND",
         "trigger": "REAL CROSS + FOLLOW-THROUGH",
     }
-
-
-def _daily_gann_ranges(tickers, *, now=None):
-    """Daily Yahoo 150-bar ranges, cached by UK day; never guessed on failure."""
-    now = datetime.now(UK) if now is None else now
-    cache = _load(GANN_CACHE, {})
-    today = now.strftime("%Y-%m-%d")
-    if cache.get("day") == today and all(
-            ticker in cache.get("ranges", {}) for ticker in tickers):
-        return cache.get("ranges", {})
-    import yfinance as yf
-    ranges = {}
-    try:
-        source = yf.download(
-            tickers=" ".join(tickers), period="1y", interval="1d",
-            auto_adjust=False, group_by="ticker", threads=True, progress=False,
-        )
-        for sym in tickers:
-            data = source[sym] if isinstance(source.columns, pd.MultiIndex) else (
-                source if len(tickers) == 1 else pd.DataFrame())
-            if data is None or len(data) < 150:
-                continue
-            last150 = data[["High", "Low"]].apply(
-                pd.to_numeric, errors="coerce").dropna().tail(150)
-            if len(last150) != 150:
-                continue
-            ranges[sym] = [float(last150["Low"].min()),
-                           float(last150["High"].max())]
-    except Exception as exc:
-        print("RUDRA DDB | GANN daily data unavailable:", type(exc).__name__)
-    # Cache partial results only; next cycle retries any missing names.
-    if ranges:
-        _save(GANN_CACHE, {"day": today, "ranges": ranges, "provider": "Yahoo 1D"})
-    return ranges
 
 
 def _queue(events):
@@ -338,11 +286,6 @@ def run_cycle(app, *, now=None):
         if event:
             detected.append(event)
     if detected:
-        ranges = _daily_gann_ranges(names, now=now.tz_convert(UK).to_pydatetime())
-        for item in detected:
-            lowhigh = ranges.get(item["ticker"])
-            item["gann"] = (
-                gann_levels(item["close"], *lowhigh) if lowhigh else [])
         _queue(detected)
     seconds = time.monotonic() - started
     benchmark_ok = (batches.get(benchmark_symbol) is not None
@@ -352,7 +295,7 @@ def run_cycle(app, *, now=None):
           (len(names), received, benchmark_symbol, benchmark_ok,
            len(detected), seconds), flush=True)
     return {
-        "alert_mode": "ddb_ema_gann_15m_v2", "ddb_alerts": detected,
+        "alert_mode": DDB_ALERT_MODE, "ddb_alerts": detected,
         "ddb_requested": len(names), "ddb_received": received,
         "ddb_elapsed_seconds": round(seconds, 2),
         "alert_data": [], "rudra_reversal_alerts": [],
@@ -363,12 +306,7 @@ def run_cycle(app, *, now=None):
 
 
 def format_buy_watch_section(event):
-    """Render a compact, actionable Discord BUY WATCH without implying execution.
-
-    The reference price is the last completed 15m signal close, NOT a live
-    quote, limit order or executed fill. Target = nearest ASJR Gann level
-    STRICTLY above that close; if unavailable, don't invent a target.
-    """
+    """15m EMA BUY WATCH only; neither volume nor Gann is a signal requirement."""
     ticker = event["ticker"]
     group = event["group"]
     close = float(event["close"])
@@ -376,43 +314,16 @@ def format_buy_watch_section(event):
     ema20 = float(event["ema20"])
     slope9 = float(event["ema9_slope_pct"])
     slope20 = float(event["ema20_slope_pct"])
-    volume = float(event["volume_ratio"])
     sector = event.get("sector", "NOT CHECKED")
-    gann = sorted(
-        [(float(price), str(kind)) for price, kind
-         in event.get("gann", []) if kind in ("MAIN", "MID")],
-        key=lambda item: item[0],
-    )
-    higher = next(((p, kind) for p, kind in gann if p > close), None)
-    if higher:
-        target_price, target_kind = higher
-        target_gain = (target_price / close - 1.0) * 100.0
-        target_line = (
-            f'🎯 NEXT GANN TARGET: {target_price:.2f} '
-            f'({target_kind}, +{target_gain:.2f}% from signal close)'
-        )
-    else:
-        target_line = "🎯 NEXT GANN TARGET: UNAVAILABLE"
-
-    lines = [
+    return [
         f'🟢 {ticker} | GROUP {group} | BUY WATCH (V2)',
         f'{event["bar_uk"]} UK | 15min | EMA9/20 CROSS CONFIRMED',
         f'ENTRY REF (15m close): {close:.2f} | NOT AN EXECUTED ORDER',
         f'EMA9: {ema9:.2f} | slope {slope9:+.3f}% / 15m',
         f'EMA20: {ema20:.2f} | slope {slope20:+.3f}% / 15m',
-        f'Volume: {volume:.2f}x RTH median | Sector: {sector}',
-        target_line,
-        'GANN LEVEL:',
+        f'Sector: {sector}',
+        '----',
     ]
-    if gann:
-        lines.extend(
-            ("🔴 MAIN " if kind == "MAIN" else "🟢 MID  ") +
-            f"{value:.2f}" for value, kind in gann
-        )
-    else:
-        lines.append("GANN UNAVAILABLE (150 daily bars needed)")
-    lines.append("----")
-    return lines
 
 
 _PREPARED = []
