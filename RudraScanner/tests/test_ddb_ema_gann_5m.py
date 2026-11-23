@@ -170,6 +170,64 @@ class DDBEMAGannV2Tests(unittest.TestCase):
         self.assertIn("return result.get(\"alert_mode\") == DDB_ALERT_MODE", adapter)
         self.assertNotIn('result.get("alert_mode") == "ddb_ema_gann_5m"', adapter)
 
+    def test_send_alerts_routes_real_v2_result_to_discord(self):
+        # Execute the actual adapter functions in isolation, without loading
+        # the unrelated legacy pipeline modules or a live IBKR connection.
+        import ast
+        from pathlib import Path
+        from unittest.mock import patch, Mock
+        from RudraScanner.ddb_ema_gann_5m import DDB_ALERT_MODE
+        source = (Path(__file__).resolve().parents[2] /
+                  "ASJR_Analyst" / "Tests" / "test_asjr_pipeline.py"
+                  ).read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        wanted = {"_is_ddb_alert_result", "send_alerts"}
+        nodes = [n for n in tree.body
+                 if isinstance(n, ast.FunctionDef) and n.name in wanted]
+        self.assertEqual({n.name for n in nodes}, wanted)
+        isolated = {}
+        exec(compile(ast.Module(body=nodes, type_ignores=[]),
+                     "<actual_adapter>", "exec"), isolated)
+        self.assertTrue(isolated["_is_ddb_alert_result"](
+            {"alert_mode": DDB_ALERT_MODE}))
+        self.assertFalse(isolated["_is_ddb_alert_result"](
+            {"alert_mode": "ddb_ema_gann_5m"}))
+        sender = Mock(return_value=True)
+        with patch("RudraScanner.ddb_ema_gann_5m.prepare_alert",
+                   return_value="DDB 15m BUY WATCH") as prepare, patch(
+            "RudraScanner.ddb_ema_gann_5m.mark_alert_sent"
+        ) as acknowledge:
+            sent = isolated["send_alerts"](
+                {"alert_mode": DDB_ALERT_MODE}, sender)
+        self.assertEqual(sent, 1)
+        sender.assert_called_once_with("DDB 15m BUY WATCH")
+        prepare.assert_called_once()
+        acknowledge.assert_called_once()
+
+    def test_failed_discord_send_does_not_ack_signal(self):
+        import ast
+        from pathlib import Path
+        from unittest.mock import patch
+        from RudraScanner.ddb_ema_gann_5m import DDB_ALERT_MODE
+        source = (Path(__file__).resolve().parents[2] /
+                  "ASJR_Analyst" / "Tests" / "test_asjr_pipeline.py"
+                  ).read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        wanted = {"_is_ddb_alert_result", "send_alerts"}
+        nodes = [n for n in tree.body
+                 if isinstance(n, ast.FunctionDef) and n.name in wanted]
+        isolated = {}
+        exec(compile(ast.Module(body=nodes, type_ignores=[]),
+                     "<actual_adapter>", "exec"), isolated)
+        with patch("RudraScanner.ddb_ema_gann_5m.prepare_alert",
+                   return_value="DDB 15m BUY WATCH"), patch(
+            "RudraScanner.ddb_ema_gann_5m.mark_alert_sent"
+        ) as acknowledge:
+            with self.assertRaisesRegex(RuntimeError, "sender failed"):
+                isolated["send_alerts"](
+                    {"alert_mode": DDB_ALERT_MODE}, lambda _: False)
+            acknowledge.assert_not_called()
+
     def test_approved_universe_unchanged(self):
         settings, items = config()
         self.assertEqual(settings["version"], 2)
