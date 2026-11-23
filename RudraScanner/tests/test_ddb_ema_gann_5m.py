@@ -52,7 +52,7 @@ class DDBEMAGannV2Tests(unittest.TestCase):
             (577.0, "MAIN"), (589.0, "MID")
         ])
 
-    def test_real_cross_confirmed_with_slope_volume_sector(self):
+    def test_real_cross_confirmed_with_slope_and_sector(self):
         stock, sector, now = self.sample()
         event = signal_on_closed_bars(
             stock, "AMD", "A", now=now, benchmark_df=sector)
@@ -63,7 +63,7 @@ class DDBEMAGannV2Tests(unittest.TestCase):
         self.assertEqual(event["bar_uk"], "2026-11-12 19:45")
         self.assertGreater(event["ema9_slope_pct"], 0.05)
         self.assertGreater(event["ema20_slope_pct"], 0.01)
-        self.assertGreaterEqual(event["volume_ratio"], 1.25)
+        self.assertNotIn("volume_ratio", event)
         self.assertEqual(event["sector"], "SMH BULLISH")
 
     def test_complete_three_5m_bars_only(self):
@@ -88,9 +88,15 @@ class DDBEMAGannV2Tests(unittest.TestCase):
         self.assertIsNotNone(signal_on_closed_bars(
             stock, "PGR", "B", now=now))
 
-    def test_low_volume_rejected(self):
-        stock, sector, now = self.sample(volume_ratio=1.0)
-        self.assertIsNone(signal_on_closed_bars(
+    def test_zero_volume_does_not_block_ema_signal(self):
+        stock, sector, now = self.sample(volume_ratio=0.0)
+        self.assertIsNotNone(signal_on_closed_bars(
+            stock, "AMD", "A", now=now, benchmark_df=sector))
+
+    def test_missing_volume_column_does_not_block_ema_signal(self):
+        stock, sector, now = self.sample()
+        stock = stock.drop(columns=["Volume"])
+        self.assertIsNotNone(signal_on_closed_bars(
             stock, "AMD", "A", now=now, benchmark_df=sector))
 
     def test_insufficient_fast_slope_rejected(self):
@@ -132,17 +138,14 @@ class DDBEMAGannV2Tests(unittest.TestCase):
         self.assertIsNone(signal_on_closed_bars(
             stock, "AMD", "A", now=now, benchmark_df=sector))
 
-    def test_discord_buy_watch_format_and_next_gann_target(self):
+    def test_discord_alert_omits_volume_and_gann(self):
         event = {
             "ticker": "AMD", "group": "A",
             "bar_uk": "2026-11-13 16:45", "close": 526.81,
             "ema9": 524.23, "ema20": 522.00,
             "ema9_slope_pct": 0.085, "ema20_slope_pct": 0.022,
-            "volume_ratio": 1.8, "sector": "SMH BULLISH",
-            "gann": [
-                [517.0, "MID"], [529.0, "MAIN"], [541.0, "MID"],
-                [553.0, "MID"], [565.0, "MID"],
-            ],
+            "sector": "SMH BULLISH",
+            "volume_ratio": 1.8, "gann": [[529.0, "MAIN"]],
         }
         message = "\n".join(format_buy_watch_section(event))
         self.assertIn("AMD | GROUP A | BUY WATCH (V2)", message)
@@ -151,25 +154,79 @@ class DDBEMAGannV2Tests(unittest.TestCase):
         self.assertIn("NOT AN EXECUTED ORDER", message)
         self.assertIn("EMA9: 524.23 | slope +0.085%", message)
         self.assertIn("EMA20: 522.00 | slope +0.022%", message)
-        self.assertIn("Volume: 1.80x RTH median", message)
-        self.assertIn("🎯 NEXT GANN TARGET: 529.00 (MAIN, +0.42%", message)
-        self.assertIn("🔴 MAIN 529.00", message)
-        self.assertIn("🟢 MID  541.00", message)
+        self.assertIn("Sector: SMH BULLISH", message)
+        self.assertNotIn("Volume", message)
+        self.assertNotIn("GANN", message)
+        self.assertNotIn("529.00", message)
 
-    def test_discord_target_never_guessed(self):
-        event = {
-            "ticker": "COHR", "group": "A",
-            "bar_uk": "2026-11-13 16:45", "close": 260.0,
-            "ema9": 258.0, "ema20": 255.0,
-            "ema9_slope_pct": 0.1, "ema20_slope_pct": 0.02,
-            "volume_ratio": 1.5, "sector": "SMH BULLISH",
-            "gann": [[225.0, "MAIN"], [233.0, "MID"]],
-        }
-        message = "\n".join(format_buy_watch_section(event))
-        self.assertIn("NEXT GANN TARGET: UNAVAILABLE", message)
-        event["gann"] = []
-        message = "\n".join(format_buy_watch_section(event))
-        self.assertIn("GANN UNAVAILABLE", message)
+    def test_dispatch_identifier_is_shared_by_adapter_and_scanner(self):
+        from pathlib import Path
+        from RudraScanner.ddb_ema_gann_5m import DDB_ALERT_MODE
+        adapter = (Path(__file__).resolve().parents[2] /
+                   "ASJR_Analyst" / "Tests" / "test_asjr_pipeline.py"
+                   ).read_text(encoding="utf-8")
+        self.assertEqual(DDB_ALERT_MODE, "ddb_ema_gann_15m_v2")
+        self.assertEqual(adapter.count("if _is_ddb_alert_result(result):"), 2)
+        self.assertIn("return result.get(\"alert_mode\") == DDB_ALERT_MODE", adapter)
+        self.assertNotIn('result.get("alert_mode") == "ddb_ema_gann_5m"', adapter)
+
+    def test_send_alerts_routes_real_v2_result_to_discord(self):
+        # Execute the actual adapter functions in isolation, without loading
+        # the unrelated legacy pipeline modules or a live IBKR connection.
+        import ast
+        from pathlib import Path
+        from unittest.mock import patch, Mock
+        from RudraScanner.ddb_ema_gann_5m import DDB_ALERT_MODE
+        source = (Path(__file__).resolve().parents[2] /
+                  "ASJR_Analyst" / "Tests" / "test_asjr_pipeline.py"
+                  ).read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        wanted = {"_is_ddb_alert_result", "send_alerts"}
+        nodes = [n for n in tree.body
+                 if isinstance(n, ast.FunctionDef) and n.name in wanted]
+        self.assertEqual({n.name for n in nodes}, wanted)
+        isolated = {}
+        exec(compile(ast.Module(body=nodes, type_ignores=[]),
+                     "<actual_adapter>", "exec"), isolated)
+        self.assertTrue(isolated["_is_ddb_alert_result"](
+            {"alert_mode": DDB_ALERT_MODE}))
+        self.assertFalse(isolated["_is_ddb_alert_result"](
+            {"alert_mode": "ddb_ema_gann_5m"}))
+        sender = Mock(return_value=True)
+        with patch("RudraScanner.ddb_ema_gann_5m.prepare_alert",
+                   return_value="DDB 15m BUY WATCH") as prepare, patch(
+            "RudraScanner.ddb_ema_gann_5m.mark_alert_sent"
+        ) as acknowledge:
+            sent = isolated["send_alerts"](
+                {"alert_mode": DDB_ALERT_MODE}, sender)
+        self.assertEqual(sent, 1)
+        sender.assert_called_once_with("DDB 15m BUY WATCH")
+        prepare.assert_called_once()
+        acknowledge.assert_called_once()
+
+    def test_failed_discord_send_does_not_ack_signal(self):
+        import ast
+        from pathlib import Path
+        from unittest.mock import patch
+        from RudraScanner.ddb_ema_gann_5m import DDB_ALERT_MODE
+        source = (Path(__file__).resolve().parents[2] /
+                  "ASJR_Analyst" / "Tests" / "test_asjr_pipeline.py"
+                  ).read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        wanted = {"_is_ddb_alert_result", "send_alerts"}
+        nodes = [n for n in tree.body
+                 if isinstance(n, ast.FunctionDef) and n.name in wanted]
+        isolated = {}
+        exec(compile(ast.Module(body=nodes, type_ignores=[]),
+                     "<actual_adapter>", "exec"), isolated)
+        with patch("RudraScanner.ddb_ema_gann_5m.prepare_alert",
+                   return_value="DDB 15m BUY WATCH"), patch(
+            "RudraScanner.ddb_ema_gann_5m.mark_alert_sent"
+        ) as acknowledge:
+            with self.assertRaisesRegex(RuntimeError, "sender failed"):
+                isolated["send_alerts"](
+                    {"alert_mode": DDB_ALERT_MODE}, lambda _: False)
+            acknowledge.assert_not_called()
 
     def test_approved_universe_unchanged(self):
         settings, items = config()
