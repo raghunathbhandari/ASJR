@@ -1,29 +1,34 @@
-# Rudra DDB 15M EMA9/EMA20 + ASJR Gann — deployment
-As of 2026-11-12, target universe A=22, B=17, C=10 (49 unique stocks).
-Group C is provisional research (BKNG RCL MAR DAL WM CTAS LMT URI DE VLO).
-Only BUY WATCH: newest COMPLETED 15-minute candle FULL BODY above
-EMA9(15m), with EMA9(15m) > EMA20(15m).
-Strict rule: min(Open, Close) > EMA9(15m) > EMA20(15m), not Close alone.
-The lower wick may cross EMA9; an incomplete 15-minute bar never qualifies.
-Use exactly three contiguous confirmed 5-minute IBKR candles per 15-minute
-bar with timestamp labels :00, :15, :30, :45 UK/ET. Reject incomplete buckets
-and missing intermediate 5-minute bars. Compute EMA on the 15-minute CLOSE
-series (not on 5-minute close series).
-Alert on false->true relative to the preceding completed 15-minute candle.
-The 49-stock bot can poll every 5 minutes but a new alert is considered only
-after a 15-minute candle has closed. UK timestamps, PRE/RTH/POST data.
-Existing 5-minute queued signals are ignored after deployment (distinct 15m keys).
-Levels follow ASJR Pine n=1..100: odd MAIN n*n; even MAIN n*n+1;
-MID three quarter-spaced levels between neighboring MAIN levels;
-restrict to 150 latest Yahoo daily bars' low/high, show 5 nearest.
-Yahoo 1D may differ from TradingView 150D during a forming session.
-No Gann levels are fabricated if daily history is incomplete.
-No live orders. No RVOL, Scanner, Wick, 1H reversal or DDB360 in this mode.
+# Rudra DDB V2 — 15-minute EMA9/EMA20 BUY WATCH
+
+Updated 2026-11-23. Alerts use official A=22, B=17, C=10 (49 unique stocks).
+The code file and mode selector retain their historical filenames for compatibility;
+the runtime result mode is **ddb_ema_gann_15m_v2**. The Discord adapter MUST match
+this versioned result mode (never the config selector **ddb_ema_gann_5m**).
+
+## Active signal requirements
+- A **real 15m EMA9 cross above EMA20** on the prior completed 15-minute candle.
+- The next completed 15m bullish candle has its **entire body above EMA9**.
+- Both EMA9 and EMA20 slopes positive; EMA9 slope must exceed EMA20.
+- Confirmation is within 2.5% of EMA9. Group A requires bullish SMH.
+- Signals only during US regular trading hours. No stale/incomplete 15m candles.
+- Exactly three contiguous completed IBKR 5m OHLC bars form each 15m bar.
+- No volume minimum or volume ratio filter; no Gann-level calculations or
+  Gann values in delivered Discord alerts.
+
+## Scope
+No additional background job, live order, RVOL, Wicks, 1H Reversal,
+premarket Scanner or automated DataLake import in this mode.
+Group C remains the existing ten-stock research list.
+
+## Dispatch safety
+The DDB formatter receives versioned results through a dedicated mode-check
+helper. Signals stay queued until Discord reports delivery success; rejected
+delivery does not ACK them. The old formatter must not receive DDB results.
 
 The external existing Chakra Discord sender must import
 ASJR_Analyst/Tests/test_asjr_pipeline.py and call its
 prepare_alert(result)/mark_alert_sent() hooks. This is the historical
-integration documented in ASJR handoff; **VERIFY** on the actual VPS.
+integration documented in ASJR handoff; **VERIFY** on the actual VPS after deploying this patch.
 
 ## Operator deployment (requires actual user command)
 1. In Discord: `!mbdstop`. Confirm `!runSCommand bot` -> STOPPED.
