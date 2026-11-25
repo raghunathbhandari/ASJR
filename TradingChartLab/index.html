@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c1118">
+  <meta name="description" content="ASJR Trading Chart Lab — reusable historical MES price, VWAP and strategy research dashboard.">
+  <title>ASJR Trading Chart Lab</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./strategies.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand"><div class="brand-icon">A</div><div><h1>ASJR Trading Chart Lab <span class="version">v1.0</span></h1><p>One chart workspace · Multiple research strategies</p></div></div>
+      <div class="toplinks"><span class="pill">Historical research only</span><a target="_blank" rel="noopener noreferrer" href="https://github.com/raghunathbhandari/ASJR/tree/main/TradingChartLab">GitHub source ↗</a></div>
+    </header>
+    <div class="layout">
+      <aside class="sidebar panel">
+        <div class="section-heading"><h2>Strategy library</h2><span id="strategy-count"></span></div>
+        <p class="muted small">Select a strategy to view its rules. Only entries marked <strong>Active</strong> generate trades.</p>
+        <div id="strategy-list" class="strategy-list"></div>
+        <form id="add-strategy-form" class="new-strategy">
+          <label for="new-strategy">New strategy name</label>
+          <div class="field-row"><input id="new-strategy" maxlength="60" placeholder="e.g. Renko + Gann" required><button type="submit" class="button secondary">Add</button></div>
+          <p class="muted tiny">New names are stored in this browser as drafts until committed to GitHub.</p>
+        </form>
+        <div class="sidebar-foot"><h3>Research milestones</h3><div class="mini-row"><span>VWAP Mean Reversion</span><span class="good">Running</span></div><div class="mini-row"><span>Price / VWAP / EMA</span><span class="good">Charted</span></div><div class="mini-row"><span>Renko integration</span><span>Planned</span></div><div class="mini-row"><span>RSI / ADX filters</span><span>Planned</span></div></div>
+      </aside>
+      <main class="main">
+        <section class="panel controls">
+          <div class="section-heading"><div><h2 id="active-title">VWAP Mean Reversion</h2><p class="muted small" id="active-description"></p></div><span id="data-status" class="pill">Loading MES data…</span></div>
+          <div class="toolbar">
+            <div class="field"><label for="dataset">Historical dataset</label><select id="dataset"><option value="mes-oct-2026">MESZ2026 · October 2026</option></select></div>
+            <div class="field"><label for="focus">Focus</label><select id="focus"><option value="session">1 session</option><option value="6h">6 hours</option><option value="3">3 sessions</option><option value="5">5 sessions</option><option value="all">Full month</option></select></div>
+            <div class="field"><label for="session">Start session (UTC)</label><select id="session"></select></div>
+            <div class="field buttons"><label>Move window</label><div class="field-row"><button id="prev" class="button secondary" title="Previous session">‹</button><button id="next" class="button secondary" title="Next session">›</button><button id="reset" class="button secondary" title="Reset focus">Reset</button></div></div>
+          </div>
+          <div class="toolbar slim">
+            <fieldset class="toggle-group"><legend>Overlays</legend>
+              <label><input type="checkbox" id="show-vwap" checked> VWAP</label>
+              <label><input type="checkbox" id="show-ema9"> EMA 9</label>
+              <label><input type="checkbox" id="show-ema20"> EMA 20</label>
+              <label><input type="checkbox" id="show-trades" checked> BUY / EXIT</label>
+              <label><input type="checkbox" id="show-candles"> Candles</label>
+            </fieldset>
+            <div class="hint">Wheel = zoom · Drag = pan · Hover = candle details</div>
+          </div>
+        </section>
+        <section class="panel chart-panel">
+          <div class="chart-header"><div><h3>MESZ2026 · Price and session VWAP</h3><p class="muted small" id="range-caption">IBKR 5-minute bars, resampled to completed 15-minute candles · UK time on hover</p></div><div class="legend"><span><i class="line price"></i>Price</span><span><i class="line vwap"></i>VWAP</span><span><i class="line ema9"></i>EMA 9</span><span><i class="triangle"></i>BUY</span><span><i class="circle"></i>VWAP exit</span><span><i class="circle danger"></i>Other exit</span></div></div>
+          <div id="chart-wrap" class="chart-wrap" tabindex="0" aria-label="Interactive price and VWAP chart, drag to pan, mousewheel to zoom">
+            <canvas id="chart" aria-label="MES price, session VWAP and buy and exit signals"></canvas>
+            <div id="tooltip" class="tooltip" hidden></div>
+          </div>
+          <div class="chart-footer"><span>VWAP resets at the CME 17:00 Chicago / 22:00 UTC session open</span><span>Data source: <a id="data-link" target="_blank" rel="noopener noreferrer" href="https://github.com/raghunathbhandari/ASJR/blob/main/three_candle/data/MESZ2026_IBKR_5m_2026-10.csv">ASJR GitHub MES CSV ↗</a></span></div>
+        </section>
+        <section class="metrics" aria-live="polite">
+          <div class="metric panel"><span>October trades</span><strong id="metric-trades">–</strong></div>
+          <div class="metric panel"><span>Win rate</span><strong id="metric-winrate">–</strong></div>
+          <div class="metric panel"><span>Gross MES points</span><strong id="metric-points">–</strong><small id="metric-dollars"></small></div>
+          <div class="metric panel"><span>Closed-equity max DD</span><strong id="metric-drawdown">–</strong></div>
+        </section>
+        <section class="panel parameters">
+          <div class="section-heading"><h3>Backtest rules · Long-only prototype</h3><span class="pill">Editable inputs</span></div>
+          <div class="toolbar slim">
+            <div class="field"><label for="deviation">Minimum below VWAP · points</label><input type="number" id="deviation" min="1" max="100" step="0.25" value="15"></div>
+            <div class="field"><label for="stop">Stop-loss · points</label><input type="number" id="stop" min="0.25" max="200" step="0.25" value="20"></div>
+            <div class="field"><label for="hold">Max hold · 15m bars</label><input type="number" id="hold" min="1" max="92" step="1" value="16"></div>
+            <div class="field buttons"><label>Update simulation</label><button id="recalculate" class="button primary">Recalculate</button></div>
+          </div>
+          <p id="rule-explanation" class="muted small"></p>
+        </section>
+        <section class="panel trades-panel">
+          <div class="section-heading"><div><h3>Entries in focused area</h3><p class="muted small" id="trade-caption"></p></div><button id="export-trades" class="button secondary">Export trades CSV</button></div>
+          <div class="table-scroll"><table><thead><tr><th>Session</th><th>BUY (UK)</th><th>Entry</th><th>Exit</th><th>Exit reason</th><th>MES pts</th><th>1 MES gross</th></tr></thead><tbody id="trades-body"><tr><td colspan="7">Loading…</td></tr></tbody></table></div>
+        </section>
+        <footer class="muted small">ASJR Trading Chart Lab · Research only, no orders. Historical OHLC stop-first assumptions, execution gaps and costs can change real results. Strategy settings have been studied on the same October data; not an independent out-of-sample evaluation.</footer>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
