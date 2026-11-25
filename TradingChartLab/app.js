@@ -252,7 +252,7 @@
       const j=Math.min(state.end-1,state.start+Math.floor((state.end-state.start-1)*i/5));
       const x=q.x(j);ctx.strokeStyle="#1b2938";ctx.beginPath();ctx.moveTo(x,q.top);ctx.lineTo(x,q.top+q.plotHeight);ctx.stroke();
       const longWindow=state.end-state.start>100;
-      const label=longWindow?utcTime(bars[j].t).slice(0,6):utcTime(bars[j].t).slice(7,12);
+      const label=longWindow?utcTime(bars[j].t).slice(0,5):utcTime(bars[j].t).slice(6,11);
       ctx.fillStyle="#9dafc3";ctx.textAlign="center";ctx.fillText(label,x,q.height-20);
     }
     for(const s of state.sessions){
@@ -375,7 +375,7 @@
     const fields=["session","entry_uk","entry_price","target","stop","exit_uk","exit_price","exit_reason","gross_pts","gross_usd_1mes"];
     const rows=[fields.join(",")];
     for(const t of state.trades){
-      rows.push([t.session,ukTime(state.bars[t.entryIndex].t),t.entry,t.target,t.stop,ukTime(state.bars[t.exitIndex].t),t.exit,t.reason,t.points,t.points*5].join(","));
+      rows.push([t.session,ukTime(state.bars[t.entryIndex].t),t.entry,t.target,t.stop,ukTime(state.bars[t.exitIndex].t),t.exit,t.reason,t.points,t.points*5].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(","));
     }
     const url=URL.createObjectURL(new Blob([rows.join("\n")+"\n"],{type:"text/csv;charset=utf-8;"}));
     const a=document.createElement("a");a.href=url;a.download="ASJR_MES_2026-10_VWAP_MeanReversion_Trades.csv";a.click();
