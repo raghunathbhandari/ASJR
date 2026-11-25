@@ -137,7 +137,7 @@
     a=Math.max(0,Math.min(n-span,Math.round(a)));
     state.start=a;state.end=a+span;
     if(custom)refs.focus.value="custom";
-    updateFocusDetails();render();
+    updateFocusDetails();renderTrades();render();
   }
   function focusOnSelection(){
     const s=state.sessions;
