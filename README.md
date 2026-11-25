@@ -24,6 +24,7 @@ The project is designed around a practical research loop:
 - [Linux VPS Server Automation](RUDRA_DOWNLOADER_GUIDE.md)
 - [IBKR / IB Gateway Automation](Backtesting/DataLoader/IBKR_24H_IMPORT.md)
 - [ASJR Renko V4 — scroll-aware contiguous bricks](Renko/README.md)
+- [AlgoWithRenko — MES 20-point Renko Swing Strategy (rules, backtests, chart)](AlgoWithRenko/README.md)
 - [ASJR Volume Delta Pressure V2 — 12-zone pressure with EMA9/EMA21/EMA200](Volume%20Delta%20Pressure/README.md)
 - [ASJR 360 View V5 — responsive EMA21 trend colouring and two-row dashboard](ASJR%20360%20View/README.md)
 - [ASJR Gann Swing V2 — diagonal swing + purple High/Low step overlay](ASJR-Gann-Swing/README.md)
