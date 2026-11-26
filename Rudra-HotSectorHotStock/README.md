@@ -86,3 +86,23 @@ A stock can pass a milestone then fall back through the protective stop; a stop 
 - [BACKTEST_PLAN.md](BACKTEST_PLAN.md) — historical validation, measurements and failure checks.
 
 > Not investment advice. This is a hypothesis to backtest, not proven profitability.
+
+## Phase 1 — November 2026 sector study (26 Nov 2026 update)
+
+The 15-minute research pilot below supersedes the provisional 5-minute **entry-selection** timing described in the original V1 specification above; that original specification is retained for historical reference.
+
+- **Sample:** 2026-11-01 through 2026-11-25, 18 US regular trading sessions (November 1 is Sunday).
+- **Sector universe:** 11 Select Sector SPDR ETFs; also download SPY as market benchmark.
+- **Signal time:** 09:45 ET / 14:45 UK. Compare each sector's *completed first 15-minute candle* (09:30–09:45 ET) as `(close/open - 1) × 100`.
+- **Stock-selection hypothesis:** from the leading sector, examine the top three stocks by the first 15-minute price gain; choose the highest first-15-minute **absolute volume** among those three. Historical constituent-universe and liquidity screening must be point-in-time; do not select stocks retroactively using the day's closing winners.
+- **Entry for backtest:** after the 09:45 ET signal, with an executable fill assumption (e.g. next-bar open). No assumption of a guaranteed close-price fill.
+- **Exit:** initial stop -1% from actual fill; at each +1% entry-relative milestone raise the stop by 1% of the initial entry price (at +1% move to breakeven, at +2% to +1%, etc.). Stop never moves down. Close any still-open trade by 16:00 ET / 21:00 UK.
+- **Execution study:** preserve 5-minute stock price data for exit and stop evaluation; flag bars where intrabar high/low ordering is ambiguous.
+
+### Phase 1 download — sectors only
+
+Run [`download_sector_15m_nov2026.py`](download_sector_15m_nov2026.py) from the VPS using the existing IBKR Python environment. It invokes the established `three_candle/ibkr_bridge_range_download.py` once per ETF, which **publishes each successful CSV plus a manifest to GitHub main** through a temporary isolated checkout. It will **not** queue or download constituent stocks.
+
+The script checks 18 trading dates, opening 09:30 ET 15-minute candles, 26 regular-session 15-minute bars per day, and prints the leading two sector ETFs for each day's first completed candle. Logs and job mappings are stored outside the repo in `/root/trading/ASJR_research_logs/hot_sector/`. All timestamps in operational logs are UK time; CSV timestamps remain UTC.
+
+**Phase 2 (after audit):** define the historical sector-specific candidate universe for each date, then download the top 10 eligible stocks per day's selected sector. Do not use future/day-end leadership when choosing 09:45 candidates. No stock downloads are part of Phase 1.
