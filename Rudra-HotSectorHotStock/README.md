@@ -124,3 +124,8 @@ Script: [phase2_top10_nov2026.py](phase2_top10_nov2026.py). Run from the existin
 4. Download five-minute candles for the daily selected trade(s) to test stepped stops, true entry timing, and end-of-day exits; the initial 15-minute historical data only selects candidates.
 
 **Quality guardrails:** Ranks are computed only from data available at 09:45 ET, not eventual day-end winners. Missing candidate bars yield INCOMPLETE_BARS status, not fabricated complete ranks. Even COMPLETE_BARS means only full coverage of the **current-holdings proxy**, not historically verified membership. No trades or live bot changes.
+
+
+## Day-wise top-10 stock research CSV
+
+See [**november_2026_daily_top10_stocks.csv**](november_2026_daily_top10_stocks.csv) for the consolidated per-date stock research table. It currently contains the **2 Nov XLY web-researched 10 full-day gainers** and **25 Nov XLE 10 sampled stock first-15-minute results**, with separate rank-method and research-status fields. Other 16 dates remain pending. The 2 Nov ranking uses **end-of-day returns**, so it cannot be used to claim a genuine 09:45 ET stock selection or an unbiased live-strategy backtest. [Daily sector-leader index](november_2026_sector_leaders.csv) links each day's stock-candidate CSV when available. [Detailed source notes](NOVEMBER_2026_DAILY_SECTOR_AND_STOCKS.md).
