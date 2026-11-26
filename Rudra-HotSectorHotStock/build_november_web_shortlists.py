@@ -146,17 +146,27 @@ def get_archive(date):
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument("--dry-run",action="store_true",help="Audit web results without GitHub push")
-    parser.add_argument("--only-date",help="Process one pending date")
+    parser.add_argument("--only-date",help="Process one day if no stock rows exist; existing data is never overwritten")
     args=parser.parse_args()
 
     # Sync refs only: production working tree is not changed.
     git(ROOT,"fetch","-q","origin","main:refs/remotes/origin/main")
     leader_text=git(ROOT,"show","origin/main:"+INDEX).stdout
     leader_rows=list(csv.DictReader(io.StringIO(leader_text)))
-    pending=[r for r in leader_rows if r["date_us"] not in ("2026-11-02","2026-11-25")]
+    master_text=git(ROOT,"show","origin/main:"+MASTER).stdout
+    master_rows=list(csv.DictReader(io.StringIO(master_text)))
+    # Never overwrite a researched date, especially a date with downloaded
+    # IBKR CSV links. The initial runner incorrectly retried 5/13/17 Nov.
+    already_researched={r["date_us"] for r in master_rows}
+    all_dates={r["date_us"] for r in leader_rows}
+    if args.only_date and args.only_date not in all_dates:
+        parser.error("Trading day is not in the November sector index.")
+    pending=[r for r in leader_rows if r["date_us"] not in already_researched]
     if args.only_date:
         pending=[r for r in pending if r["date_us"]==args.only_date]
-        if not pending:parser.error("Date is not one of the 16 pending days.")
+    if not pending:
+        print("NOOP | all selected dates already have stock research rows; nothing to overwrite",flush=True)
+        return 0
 
     results={}
     errors={}
