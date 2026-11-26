@@ -71,6 +71,14 @@ Full replay requires actual archived OHLCV files. The September regression optio
 
 Nominal target-gain percentage is a sum of individual target-price movements at each setup's actual R distance, not executed net P&L or account returns. The previously reported +8.30%, +15.00%, +19.20% are minimum-step illustrations rather than booked results. C3 look-ahead, stop ordering, trading costs and overlapping positions still require a causal replay.
 
+## MES October 2026 — original pattern research
+
+- [MES October backtest report](MES_OCTOBER_2026_BACKTEST.md) — original historical 1R/2R/3R touches versus after-C3 simulated entries, 8 setups across 22 RTH trading days.
+- [MES backtest Python](backtest_mes_october.py) — reproducible 5m next-open entry and original-style step trailing research, separate from frozen original rules.
+
+Run from the repository root: `python ASJR-Three-Candle-Original/backtest_mes_october.py --verify-october`
+
+October MES: ex-post target touches 1R=7/8, 2R=5/8, 3R=2/8. After waiting for C3 confirmation, hypothetical step-trailing produced 3 positive and 5 negative exits, gross -1.00 MES point (-USD 5 for one MES), **before costs**. Price touches are not executed trade wins. Newly added replay Python has not had a separate verified execution run; see methodology and limitations in the report.
 ## Materials
 
 - [Frozen original strategy specification](STRATEGY.md)
