@@ -106,3 +106,8 @@ Run [`download_sector_15m_nov2026.py`](download_sector_15m_nov2026.py) from the 
 The script checks 18 trading dates, opening 09:30 ET 15-minute candles, 26 regular-session 15-minute bars per day, and prints the leading two sector ETFs for each day's first completed candle. Logs and job mappings are stored outside the repo in `/root/trading/ASJR_research_logs/hot_sector/`. All timestamps in operational logs are UK time; CSV timestamps remain UTC.
 
 **Phase 2 (after audit):** define the historical sector-specific candidate universe for each date, then download the top 10 eligible stocks per day's selected sector. Do not use future/day-end leadership when choosing 09:45 candidates. No stock downloads are part of Phase 1.
+
+## November 2026 day-by-day report
+
+- [**November 2026 — 18 daily sector leaders, first 15-minute gains, existing sampled stock rankings and exact GitHub CSV paths**](NOVEMBER_2026_DAILY_SECTOR_AND_STOCKS.md).
+- **Status:** All 12 ETF files audited (18/18 sessions, 26 RTH 15-minute bars per session). Stock top 10 is **incomplete** until the broader daily winning-sector constituent universe and historical first-15-minute data are downloaded; only a labelled 25 November Energy 10-stock sample is currently available. Do not use end-of-day winners as the 09:45 historical candidate pool.
