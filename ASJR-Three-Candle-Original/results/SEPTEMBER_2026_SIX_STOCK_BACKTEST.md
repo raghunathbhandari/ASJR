@@ -58,6 +58,7 @@ The original pattern catches many bullish later-session highs but overstates ach
 
 ## 5. Evidence and reproduction
 
+- [54 individual signal and after-C3 exit audit rows](SEPTEMBER_2026_SIX_STOCK_SIGNALS_AND_EXITS.csv)
 - [Full six-stock original / step-trailing ticker summary](SEPTEMBER_2026_SIX_STOCK_SUMMARY.csv)
 - [Exit variant comparison CSV](SEPTEMBER_2026_SIX_STOCK_VARIANTS.csv)
 - [Reproducible Python backtest](../backtest_september_six_stocks.py) — source added; **the Python script has not yet completed an independently verified end-to-end run in this session**. The numbers here were computed directly by a separate timestamp-aware replay of all six GitHub CSV datasets.
