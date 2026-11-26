@@ -138,3 +138,26 @@ See [**november_2026_daily_top10_stocks.csv**](november_2026_daily_top10_stocks.
 Use [build_november_web_shortlists.py](build_november_web_shortlists.py) to fetch the [Market Wrap dated S&P sector tables](https://www.market-wrap.com/daily-wrap/) for the 16 dates 3–24 Nov, audit constituent-table coverage against published sector counts, and automatically write a per-day web shortlist CSV, update the master CSV and sector-leader index, and create NOVEMBER_2026_WEB_CANDIDATES.md. It uses an **isolated temporary Git clone** and does not modify the live ASJR worktree or place trades. The script needs Python `beautifulsoup4` and VPS internet access. Try `--dry-run --only-date 2026-11-03` before running without flags; unresolved/invalid dates remain pending instead of claiming ten winners.
 
 **Critical:** Website lists **full-day S&P 500 sector gainers** (day-end hindsight). They are NOT the leading stocks at 09:45 ET and may not match sector ETF membership exactly. These are research shortlists only; IBKR historical 09:30–09:45 candles are required before comparing our opening-momentum strategy.
+
+## Phase 3 — Day-wise IBKR 5-minute stock data from researched shortlists
+
+**Script:** [download_daywise_top10_ibkr_5min.py](download_daywise_top10_ibkr_5min.py). This operationalises the existing **day-wise researched top-10 candidate CSV** instead of downloading all sector constituents. As of 26 Nov 2026, the master contains **5 dates × 10 tickers = 50 stock-day shortlist rows**, not 18 complete days. New candidate dates are automatically discovered when the master CSV is updated on GitHub.
+
+Download target: for **each stock on each researched day**, fetch only that day's **5-minute IBKR OHLCV**, including extended session, with at least **78 regular-session bars** for a fully complete stock-day. Three 5-minute bars from 09:30–09:45 ET measure first-candle growth and summed share volume. The post-09:45 regular-session highs permit max-upside study and subsequent 5-minute stop backtesting.
+
+**How it runs:** Fetch `origin/main` → read November master and daily winning sector index → require ten unique ranked stock entries for each researched day → examine existing daily/monthly 5-minute exports and reuse complete data → download missing day/ticker pairs through the already tested `three_candle/ibkr_bridge_range_download.py`, read-only Gateway 4002 → each successful file + manifest is automatically pushed by the existing downloader → audit 5-minute regular-session coverage → append source path, opening growth, opening volume and after-14:45 maximum upside to the master; publish [November stock IBKR coverage report](NOVEMBER_2026_IBKR_5MIN_DATA_STATUS.md) from a temporary clone. **The coverage report is a future output and not available until the command executes.**
+
+**Run in SSH** (script fetched from `origin/main`, production worktree unchanged):
+
+```bash
+cd /root/trading/ASJR
+git fetch origin main
+git show origin/main:Rudra-HotSectorHotStock/download_daywise_top10_ibkr_5min.py > /tmp/download_daywise_top10_ibkr_5min.py
+/root/trading/venv_new/bin/python -u /tmp/download_daywise_top10_ibkr_5min.py --dry-run
+/root/trading/venv_new/bin/python -u /tmp/download_daywise_top10_ibkr_5min.py --date 2026-11-02 --limit 10
+/root/trading/venv_new/bin/python -u /tmp/download_daywise_top10_ibkr_5min.py --limit 10
+```
+
+Repeat `--limit 10` to process remaining missing stock-days; `--limit 0` downloads all missing at once. Existing partial data is reported rather than overwritten; `--retry-incomplete` can explicitly request a new export for incomplete stock-days.
+
+**Research integrity:** Full-day web lists were unknowable at 09:45 ET, so IBKR opening re-ranking **within that preselected list** is not an unbiased historical live screen. The download script preserves the `rank_method`, original rank, and `research_status` columns. It does not trade, change production processes, or claim every date is already complete.
