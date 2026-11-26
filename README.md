@@ -12,6 +12,7 @@ The project is designed around a practical research loop:
 
 ## Contents
 
+- [ASJR Three-Candle — original equity strategy, September 2026 results and refinement](ASJR-Three-Candle-Original/README.md)
 - [ASJR Trading Chart Lab — interactive MES price/VWAP, zoom, BUY/EXIT and strategy library](TradingChartLab/README.md)
 - [Mean Reversal](Backtesting/MeanReversal/)
 - [MA Golden Cross (EMA9/EMA21)](three_candle/ma_strategy_v2.py)
