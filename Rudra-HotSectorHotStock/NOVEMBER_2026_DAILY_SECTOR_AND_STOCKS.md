@@ -13,7 +13,7 @@
 
 | Date (2026) | #1 sector | 09:30–09:45 gain | #2 sector | Gain | #1 sector IBKR data | Top-10 stock ranking |
 |---|---|---:|---|---:|---|---|
-| 2026-11-02 | **Consumer Discretionary (XLY)** | +0.950% | Communication Services (XLC) | +0.558% | [XLY 15m CSV](https://github.com/raghunathbhandari/ASJR/blob/main/three_candle/data/ibkr_bridge/research-1795712318568/XLY_2026-11-01_2026-11-25_15min_UTC.csv) | **Pending** (full sector stock universe not downloaded) |
+| 2026-11-02 | **Consumer Discretionary (XLY)** | +0.950% | Communication Services (XLC) | +0.558% | [XLY 15m CSV](https://github.com/raghunathbhandari/ASJR/blob/main/three_candle/data/ibkr_bridge/research-1795712318568/XLY_2026-11-01_2026-11-25_15min_UTC.csv) | [10 web full-day gainers](data/2026-11-02/xly_web_close_gainers_top10.csv) — **NOT 14:45 winners** |
 | 2026-11-03 | **Technology (XLK)** | +1.101% | Healthcare (XLV) | +0.681% | [XLK 15m CSV](https://github.com/raghunathbhandari/ASJR/blob/main/three_candle/data/ibkr_bridge/research-1795712318566/XLK_2026-11-01_2026-11-25_15min_UTC.csv) | **Pending** (full sector stock universe not downloaded) |
 | 2026-11-04 | **Technology (XLK)** | +1.688% | Consumer Discretionary (XLY) | +1.127% | [XLK 15m CSV](https://github.com/raghunathbhandari/ASJR/blob/main/three_candle/data/ibkr_bridge/research-1795712318566/XLK_2026-11-01_2026-11-25_15min_UTC.csv) | **Pending** (full sector stock universe not downloaded) |
 | 2026-11-05 | **Energy (XLE)** | +0.421% | Utilities (XLU) | -0.159% | [XLE 15m CSV](https://github.com/raghunathbhandari/ASJR/blob/main/three_candle/data/ibkr_bridge/research-1795712318572/XLE_2026-11-01_2026-11-25_15min_UTC.csv) | **Pending** (full sector stock universe not downloaded) |
@@ -104,3 +104,14 @@ Sector collection script: [`download_sector_15m_nov2026.py`](download_sector_15m
 ## 7. Machine-readable daily results
 
 The same verified 18-date leader list is available as [`november_2026_sector_leaders.csv`](november_2026_sector_leaders.csv), including first-15-minute sector gains, exact ETF source CSV paths, and each date's stock-top-10 research status. This allows Phase 2 to populate daily top-10 rankings without manually re-entering the sector choices.
+
+
+## 8. Consolidated day-wise stock shortlist CSV
+
+Master research CSV: [**`november_2026_daily_top10_stocks.csv`**](november_2026_daily_top10_stocks.csv), with a consistent day/sector/rank/ticker schema, columns for web full-day return, IBKR first-15-minute gain, 15-minute share volume, maximum subsequent upside and source data paths. **Current entries: 20 candidate rows across two dates; all other dates are pending.**
+
+- **2 Nov (XLY):** 10 ranked **full-day close-to-close gainers** from [The Market Wrap 2 Nov archive](https://www.market-wrap.com/daily-wrap/2026-11-02/): DASH, CVNA, PHM, NVR, DHI, LEN, EXPE, RCL, LOW, MAR. These are **look-ahead candidates**, not the actual opening top 10 at 14:45 UK. Their intraday IBKR stock candles have **not yet been downloaded**.
+- **25 Nov (XLE):** 10 previously downloaded Energy sample stocks ranked by first-15-minute performance, with IBKR 5-minute path and volume. The **sample stock universe was selected using later-day winners**, therefore the reported ordering is only within that preselected sample, not the whole sector's genuine opening top 10.
+- **Other 16 sessions:** no validated constituent top-10 list yet. Their winning sectors are already recorded in [`november_2026_sector_leaders.csv`](november_2026_sector_leaders.csv); don't manufacture missing rankings.
+
+Retain both kinds of rankings **separately**: an internet-researched full-day shortlist is useful for retrospective exploration, but must not be confused with the live-available 09:45 ET signal. Future validated intraday ranks should use an explicit `IBKR_FULL_UNIVERSE_0945` status and point to the underlying stock bars.
