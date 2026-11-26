@@ -12,6 +12,8 @@ The project is designed around a practical research loop:
 
 ## Contents
 
+- [Rudra-HotSectorHotStock — 9:35 ET sector ETF + IBKR stock scanner momentum strategy](Rudra-HotSectorHotStock/README.md)
+
 - [ASJR Three-Candle — original equity strategy, September 2026 results and refinement](ASJR-Three-Candle-Original/README.md)
 - [ASJR Trading Chart Lab — interactive MES price/VWAP, zoom, BUY/EXIT and strategy library](TradingChartLab/README.md)
 - [Mean Reversal](Backtesting/MeanReversal/)
