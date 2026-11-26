@@ -101,3 +101,6 @@ A complete daily top-10 ranking must cover every known eligible constituent (or 
 
 Sector collection script: [`download_sector_15m_nov2026.py`](download_sector_15m_nov2026.py). Live sectors downloader source: [`three_candle/ibkr_bridge_range_download.py`](../three_candle/ibkr_bridge_range_download.py). Next: obtain frozen constituent universes for the seven winning sectors (XLK, XLY, XLV, XLE, XLC, XLP, XLB); download their 5m data for the required historical dates; then replace `Pending` with verified daily ranked stock reports and actual paths. Do not alter the original source CSVs.
 
+## 7. Machine-readable daily results
+
+The same verified 18-date leader list is available as [`november_2026_sector_leaders.csv`](november_2026_sector_leaders.csv), including first-15-minute sector gains, exact ETF source CSV paths, and each date's stock-top-10 research status. This allows Phase 2 to populate daily top-10 rankings without manually re-entering the sector choices.
