@@ -111,3 +111,16 @@ The script checks 18 trading dates, opening 09:30 ET 15-minute candles, 26 regul
 
 - [**November 2026 — 18 daily sector leaders, first 15-minute gains, existing sampled stock rankings and exact GitHub CSV paths**](NOVEMBER_2026_DAILY_SECTOR_AND_STOCKS.md).
 - **Status:** All 12 ETF files audited (18/18 sessions, 26 RTH 15-minute bars per session). Stock top 10 is **incomplete** until the broader daily winning-sector constituent universe and historical first-15-minute data are downloaded; only a labelled 25 November Energy 10-stock sample is currently available. Do not use end-of-day winners as the 09:45 historical candidate pool.
+
+## Phase 2 — Construct daily top-10 stock candidates
+
+**Status:** Phase 2 script created, but the new seven-sector constituent download and 18-day top-10 stock ranking have **not** been run.
+
+Script: [phase2_top10_nov2026.py](phase2_top10_nov2026.py). Run from the existing VPS Python.
+
+1. **--mode universe**: download the seven winning-sector ETF holdings from State Street and freeze a constituent CSV under /root/trading/ASJR_research_logs/hot_sector/phase2/frozen_sector_holdings.csv. The snapshot is a **retrospective current-holdings proxy**, NOT proven Nov 2026 point-in-time membership.
+2. **--mode download --limit 15**: reuse already published full-month tickers, then request up to 15 missing stocks per run from the existing read-only IBKR downloader, 2026-11-01 to 2026-11-25, 15min interval; the downloader automatically publishes each CSV and manifest to GitHub main. Repeat to resume. --limit 0 attempts all missing stocks.
+3. **--mode rank**: produce 18 day-specific rankings by the completed 09:30–09:45 ET stock candle open/close gain, record opening share volume and the best-volume ticker among top-three gainers, then publish data/YYYY-MM-DD/top10_opening_15m.csv and NOVEMBER_2026_TOP10_STOCKS.md through an isolated clone.
+4. Download five-minute candles for the daily selected trade(s) to test stepped stops, true entry timing, and end-of-day exits; the initial 15-minute historical data only selects candidates.
+
+**Quality guardrails:** Ranks are computed only from data available at 09:45 ET, not eventual day-end winners. Missing candidate bars yield INCOMPLETE_BARS status, not fabricated complete ranks. Even COMPLETE_BARS means only full coverage of the **current-holdings proxy**, not historically verified membership. No trades or live bot changes.
