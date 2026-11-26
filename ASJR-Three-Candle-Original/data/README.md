@@ -1,36 +1,54 @@
-# ASJR Original Three-Candle — IBKR 5-minute stock market data
+# ASJR Original Three-Candle — IBKR 5-minute Stock Data
 
-Requested on 26 November 2026 for six highly traded US stocks, September, October and November 2026 (November through 25 November, last completed date before request). **This is a request manifest, not proof downloads succeeded.**
+**Collection completed and imported 26 November 2026:** 18/18 VPS jobs returned `SUCCESS`, exit code 0, no downloader errors. All 18 original CSVs and manifests were inspected. They have the expected row count, aligned 5-minute UTC timestamps, no duplicate timestamps and no invalid OHLCV envelopes.
 
-Data source: IBKR Gateway via existing VPS worker `ibkr_range_download`, Stock/SMART/USD, TRADES, 5-minute, extended-session (`useRTH=False`). Original strategy tests resample the US regular session to 15-minute C1/C2/C3 candles. No automatic strategy run is implied.
+IBKR Gateway, Stock/SMART/USD, TRADES, 5-minute bars with premarket and after-hours (`useRTH=False`). All CSV timestamps are UTC; format research results in Europe/London. November covers completed New York sessions from 2 to 25 November (the final after-hours bar is stamped 26 November 00:55 UTC).
 
-The deployed downloader writes successful exports to **unique** `three_candle/data/ibkr_bridge/<job-id>/` GitHub directories. Existing files remain unchanged. Once jobs complete and the CSV and manifest are verified, source files may be linked or imported here without re-downloading.
+## Record counts and data QA
 
-| Ticker | Month | Requested calendar dates | VPS bridge job | Status as of request |
-|---|---|---|---|---|
-| NVDA | September 2026 | 2026-09-01 — 2026-09-30 | `research-1795685200001` | Pending verification |
-| NVDA | October 2026 | 2026-10-01 — 2026-10-31 | `research-1795685200002` | Pending verification |
-| NVDA | November 2026 | 2026-11-01 — 2026-11-25 | `research-1795685200003` | Pending verification |
-| INTC | September 2026 | 2026-09-01 — 2026-09-30 | `research-1795685200004` | Pending verification |
-| INTC | October 2026 | 2026-10-01 — 2026-10-31 | `research-1795685200005` | Pending verification |
-| INTC | November 2026 | 2026-11-01 — 2026-11-25 | `research-1795685200006` | Pending verification |
-| TSLA | September 2026 | 2026-09-01 — 2026-09-30 | `research-1795685200007` | Pending verification |
-| TSLA | October 2026 | 2026-10-01 — 2026-10-31 | `research-1795685200008` | Pending verification |
-| TSLA | November 2026 | 2026-11-01 — 2026-11-25 | `research-1795685200009` | Pending verification |
-| PLTR | September 2026 | 2026-09-01 — 2026-09-30 | `research-1795685200010` | Pending verification |
-| PLTR | October 2026 | 2026-10-01 — 2026-10-31 | `research-1795685200011` | Pending verification |
-| PLTR | November 2026 | 2026-11-01 — 2026-11-25 | `research-1795685200012` | Pending verification |
-| AMD | September 2026 | 2026-09-01 — 2026-09-30 | `research-1795685200013` | Pending verification |
-| AMD | October 2026 | 2026-10-01 — 2026-10-31 | `research-1795685200014` | Pending verification |
-| AMD | November 2026 | 2026-11-01 — 2026-11-25 | `research-1795685200015` | Pending verification |
-| AAPL | September 2026 | 2026-09-01 — 2026-09-30 | `research-1795685200016` | Pending verification |
-| AAPL | October 2026 | 2026-10-01 — 2026-10-31 | `research-1795685200017` | Pending verification |
-| AAPL | November 2026 | 2026-11-01 — 2026-11-25 | `research-1795685200018` | Pending verification |
+| Ticker | Sep 2026 | Oct 2026 | Nov 1–25 | Total rows | Zero-volume bars |
+|---|---:|---:|---:|---:|---:|
+| NVDA | 4,032 | 4,224 | 3,456 | 11,712 | 0 |
+| INTC | 4,032 | 4,224 | 3,456 | 11,712 | 0 |
+| TSLA | 4,032 | 4,224 | 3,456 | 11,712 | 0 |
+| PLTR | 4,032 | 4,224 | 3,456 | 11,712 | 351 |
+| AMD | 4,032 | 4,224 | 3,456 | 11,712 | 207 |
+| AAPL | 4,032 | 4,224 | 3,456 | 11,712 | 31 |
+| **Total** | **24,192** | **25,344** | **20,736** | **70,272** | **589** |
 
-For each job:
-- Request: `RudraScanner/ResearchBridge/requests/<job-id>.json`
-- Result: `RudraScanner/ResearchBridge/results/<job-id>.json`; require `status=SUCCESS`, `exit_code=0`
-- Manifest and CSV: `three_candle/data/ibkr_bridge/<job-id>/`; verify actual count, dates, gaps, errors and `verified_complete` flag
-- The worker processes at most one job per poll. Jobs marked pending in this static manifest might have since finished; check result files.
-- November 26 is incomplete at time of request; it is excluded. Next completed November dates can be requested separately.
-- Do not commit live broker credentials or duplicate raw data when an immutable Git blob already exists.
+21 regular sessions in September, 22 in October, 18 from 2–25 November. The source downloader deliberately retains extended-hours candles, including zero-volume bars. **Source manifests still state `verified_complete: false`**; row-count and basic OHLC checks do not guarantee every market or corporate-action adjustment. Especially audit PLTR, AMD and AAPL zero-volume periods before using C3 volume filters. No fabricated candles.
+
+## Imported files (shared original Git blob objects)
+
+- [2026-09](./2026-09/) — six stocks, `TICKER_5min_UTC.csv` and `TICKER_manifest.json` each
+- [2026-10](./2026-10/) — six stocks, `TICKER_5min_UTC.csv` and `TICKER_manifest.json` each
+- [2026-11](./2026-11/) — six stocks, `TICKER_5min_UTC.csv` and `TICKER_manifest.json` each
+
+Original immutable files also remain in `three_candle/data/ibkr_bridge/<job-id>/`. Importing reuses the original Git object SHA; no duplicate downloads or re-encoding.
+
+## Traceability
+
+| Ticker | Month | Job ID | Requested range | CSV rows | Job status |
+|---|---|---|---|---:|---|
+| NVDA | 2026-09 | `research-1795685200001` | 2026-09-01 to 2026-09-30 | 4,032 | SUCCESS; imported |
+| NVDA | 2026-10 | `research-1795685200002` | 2026-10-01 to 2026-10-31 | 4,224 | SUCCESS; imported |
+| NVDA | 2026-11 | `research-1795685200003` | 2026-11-01 to 2026-11-25 | 3,456 | SUCCESS; imported |
+| INTC | 2026-09 | `research-1795685200004` | 2026-09-01 to 2026-09-30 | 4,032 | SUCCESS; imported |
+| INTC | 2026-10 | `research-1795685200005` | 2026-10-01 to 2026-10-31 | 4,224 | SUCCESS; imported |
+| INTC | 2026-11 | `research-1795685200006` | 2026-11-01 to 2026-11-25 | 3,456 | SUCCESS; imported |
+| TSLA | 2026-09 | `research-1795685200007` | 2026-09-01 to 2026-09-30 | 4,032 | SUCCESS; imported |
+| TSLA | 2026-10 | `research-1795685200008` | 2026-10-01 to 2026-10-31 | 4,224 | SUCCESS; imported |
+| TSLA | 2026-11 | `research-1795685200009` | 2026-11-01 to 2026-11-25 | 3,456 | SUCCESS; imported |
+| PLTR | 2026-09 | `research-1795685200010` | 2026-09-01 to 2026-09-30 | 4,032 | SUCCESS; imported |
+| PLTR | 2026-10 | `research-1795685200011` | 2026-10-01 to 2026-10-31 | 4,224 | SUCCESS; imported |
+| PLTR | 2026-11 | `research-1795685200012` | 2026-11-01 to 2026-11-25 | 3,456 | SUCCESS; imported |
+| AMD | 2026-09 | `research-1795685200013` | 2026-09-01 to 2026-09-30 | 4,032 | SUCCESS; imported |
+| AMD | 2026-10 | `research-1795685200014` | 2026-10-01 to 2026-10-31 | 4,224 | SUCCESS; imported |
+| AMD | 2026-11 | `research-1795685200015` | 2026-11-01 to 2026-11-25 | 3,456 | SUCCESS; imported |
+| AAPL | 2026-09 | `research-1795685200016` | 2026-09-01 to 2026-09-30 | 4,032 | SUCCESS; imported |
+| AAPL | 2026-10 | `research-1795685200017` | 2026-10-01 to 2026-10-31 | 4,224 | SUCCESS; imported |
+| AAPL | 2026-11 | `research-1795685200018` | 2026-11-01 to 2026-11-25 | 3,456 | SUCCESS; imported |
+
+Bridge request: `RudraScanner/ResearchBridge/requests/<id>.json`. Job result: `RudraScanner/ResearchBridge/results/<id>.json`. Source CSV and manifest: `three_candle/data/ibkr_bridge/<id>/`.
+
+**Backtest compatibility:** existing `original_three_candle.py` expects a legacy CSV column `Datetime` or `datetime_source` and filenames ending `_5m.csv`; these new IBKR exports instead have `Datetime_UTC` and are named `_5min_UTC.csv`. Update the loader/adapter explicitly (without changing frozen strategy logic) before applying its CLI to these datasets. Download completion is not a strategy backtest and no trades were placed.
