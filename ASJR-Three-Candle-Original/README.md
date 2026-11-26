@@ -47,6 +47,30 @@ Nominal gain % is the archived illustrative sum of target-hit credits: 83 × 0.1
 
 INTC selected examples on 2, 6 and 9 October later touched 2R, 9R and 4R respectively. Same-5m initial stop ambiguity and C3 look-ahead prevent a verified profit claim. Full October ten-instrument test was data-ready as of 25 October but not run in that original study.
 
+## Python strategy and tests
+
+- [original_three_candle.py](original_three_candle.py) — standalone original equity C1/C2/C3 research scanner with 1R/2R/3R per-ticker counts.
+- [test_original_three_candle.py](test_original_three_candle.py) — small synthetic tests for detection and incomplete 5-minute bars.
+- [September_2026_Results.csv](September_2026_Results.csv) — archived benchmark; not a new run.
+
+Requires Python 3 and pandas. From repository root, point to the archived IBKR 5-minute CSV directory from branch `rudra-data-results`:
+
+```bash
+python -m pip install pandas
+python ASJR-Three-Candle-Original/original_three_candle.py \
+  --data-dir /path/to/Backtesting/BacktestData/IBKR/MarketData/5m \
+  --start 2026-09-01 --end 2026-09-30 \
+  --check-archived-september \
+  --save-dir /tmp/asjr-original-three-candle
+
+python -m unittest discover \
+  -s ASJR-Three-Candle-Original -p 'test_original_three_candle.py'
+```
+
+Full replay requires actual archived OHLCV files. The September regression option checks all ten ticker counts against 83/83/75/64 and exits with an error if different. Tests use synthetic data only. **The newly created standalone file has not yet completed an independently verified September historical replay.**
+
+Nominal target-gain percentage is a sum of individual target-price movements at each setup's actual R distance, not executed net P&L or account returns. The previously reported +8.30%, +15.00%, +19.20% are minimum-step illustrations rather than booked results. C3 look-ahead, stop ordering, trading costs and overlapping positions still require a causal replay.
+
 ## Materials
 
 - [Frozen original strategy specification](STRATEGY.md)
