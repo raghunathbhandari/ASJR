@@ -66,3 +66,16 @@ When we define a new strategy, add its name, description and a `run(bars, params
 - MES Renko price overlay and independent strategy comparison.
 - Optional Gann and P&F visual layers.
 - Additional month selector and research outcome exports.
+
+## HotSector Research dashboard
+
+**New reusable stock-research dashboard (26 Nov 2026):** [hotsector.html](hotsector.html) — deployed under `/ASJR/hotsector.html` when the repository's GitHub Pages site is enabled. Direct intended URL: `https://raghunathbhandari.github.io/ASJR/hotsector.html`. **Do not claim that URL is live until the owner enables GitHub Pages and the deployment workflow succeeds.**
+
+The dashboard loads CSVs **directly at runtime** from public ASJR `main`: `Rudra-HotSectorHotStock/november_2026_sector_leaders.csv`, `Rudra-HotSectorHotStock/november_2026_daily_top10_stocks.csv`, each selected stock's `ibkr_stock_5min_csv`, and `three_candle/data/ibkr_bridge/research-1795712318577/SPY_2026-11-01_2026-11-25_15min_UTC.csv` for the November SPY first-15-minute filter.
+
+Controls: **sector filter**, **SPY index filter** (all / positive / negative / sector outperforms SPY), **date**, **stock**, and **6 / 9 / 12 / 24 / 78 five-minute candles**. Shows actual OHLC candlesticks, traded shares per bar, first three bars shaded as 09:30–09:45 ET selection window, next-bar-open entry reference, initial −1% stop reference, hover/tap OHLCV and source GitHub CSV. The daily shortlist table is clickable. After the master CSV points to newly published stock files, the dashboard updates on refresh; **no per-stock code changes required**.
+
+Execution note: the dashboard's sequential OHLC approximation flags same-bar stop/milestone order ambiguity and is not a fill-accurate live backtest. It intentionally preserves the distinction between web **full-day closing gainers** and a genuine 09:45 ET opening sector-wide stock ranking. The viewer is read-only and never sends orders.
+
+**GitHub Pages setup:** `Settings → Pages → Build and deployment → Source: GitHub Actions`. The existing `.github/workflows/asjr_trading_chart_lab_pages.yml` publishes the entire `TradingChartLab` folder. Workflow now includes `actions/configure-pages@v5` before artifact upload and `actions/deploy-pages@v4` for deployment. Check the workflow under `Actions → ASJR Trading Chart Lab — GitHub Pages` after enabling Pages.
+
