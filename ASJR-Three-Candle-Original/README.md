@@ -31,6 +31,18 @@ Frozen historical research baseline, 25 October 2026 (UK). Archived separately o
 
 21 regular sessions. Historical screen was reproduced on 30 October 2026. LRCX, META and MU had all observed setups later touch 3R. Price touches do not establish target-before-stop ordering, win rates, P&L or drawdown.
 
+## R-wise aggregate performance — September 2026
+
+The same 83 historical candidate setups are evaluated at each target; rows are alternative target levels, not 249 separate trades.
+
+| Target | Total candidate trades | Target reached | Not reached | Historical target-touch rate (win-rate proxy only) | Nominal gain % (target credits only) | Verified executed win rate | Verified net gain % |
+|---|---:|---:|---:|---:|---:|---|---|
+| 1R | 83 | 83 | 0 | 100.0% | +8.30% | Not established | Not established |
+| 2R | 83 | 75 | 8 | 90.4% | +15.00% | Not established | Not established |
+| 3R | 83 | 64 | 19 | 77.1% | +19.20% | Not established | Not established |
+
+Nominal gain % is the archived illustrative sum of target-hit credits: 83 × 0.10%, 75 × 0.20%, and 64 × 0.30%. This assumes the minimum R step for illustration, ignores losses, earlier stops, C3 look-ahead, larger actual R steps, fees, slippage, overlap and capital allocation. It is NOT a net return, realized trailing-stop gain or account return. Target misses are not verified losses; target touches are not verified wins. The three rows must not be added together. Actual executable trade count, win rate and gain % require a chronological causal replay.
+
 ## October reference
 
 INTC selected examples on 2, 6 and 9 October later touched 2R, 9R and 4R respectively. Same-5m initial stop ambiguity and C3 look-ahead prevent a verified profit claim. Full October ten-instrument test was data-ready as of 25 October but not run in that original study.
