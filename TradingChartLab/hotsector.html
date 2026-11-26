@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#10151c">
+<meta name="description" content="ASJR HotSector historical research dashboard; stock date, winning sector, SPY index filters and 5-minute candles.">
+<title>ASJR HotSector Research Dashboard</title>
+<style>
+:root{color-scheme:dark;--bg:#0c121a;--panel:#151e29;--panel2:#1b2734;--border:#2a3949;--text:#e7eef7;--muted:#9eafc1;--cyan:#79abd9;--green:#36ba94;--red:#f07a86;--gold:#e9bb77}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;margin:0}
+a{color:var(--cyan)}
+.shell{max-width:1500px;padding:25px clamp(12px,3vw,35px);margin:auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:19px}
+.logo{display:flex;gap:13px;align-items:center}
+.logo .mark{width:39px;height:39px;background:#243c4f;color:#bde5ed;display:grid;place-items:center;border-radius:11px;font-weight:800;font-size:21px}
+h1{font-size:23px;letter-spacing:-.5px;margin:0}h2{margin:0 0 12px;font-size:16px}p{margin:6px 0}
+small,.small{font-size:12px}.muted{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:15px;margin-bottom:15px;padding:16px 18px}
+.controls{display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:12px}
+.field{min-width:0}.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}
+.field select{width:100%;background:var(--panel2);color:var(--text);border:1px solid #374b60;border-radius:9px;padding:10px 9px;font:inherit;min-height:41px}
+.controls .wide{grid-column:span 1}
+.summary{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));gap:10px;margin-bottom:15px}
+.metric{border:1px solid var(--border);background:var(--panel);padding:12px;border-radius:12px;min-height:77px}
+.metric small{display:block;color:var(--muted);margin-bottom:6px}.metric strong{font-size:19px;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+.pos{color:var(--green)}.neg{color:var(--red)}
+.topline{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.swatch{display:inline-block;width:9px;height:9px;margin-right:5px;border-radius:2px}
+#plot{width:100%;min-height:280px}#plot svg{display:block;width:100%;height:auto;max-height:570px}
+#plot .empty{display:grid;place-items:center;min-height:310px;color:var(--muted);text-align:center;padding:20px}
+#candle-detail{font-size:12px;color:var(--muted);min-height:22px;margin-top:6px}
+#status{margin:0 0 10px;color:var(--muted);font-size:12px}
+.flex{display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap;align-items:center}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+thead th{text-align:left;color:var(--muted);font-weight:600;font-size:12px}
+td,th{padding:9px 9px;border-bottom:1px solid #2b3747}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:#223246}
+tbody tr.selected{background:#203f4f}
+.table-scroll{max-width:100%;overflow-x:auto}
+button,.button{border:1px solid #3d566a;border-radius:9px;padding:9px 13px;background:#203548;color:#dceefa;text-decoration:none;font:inherit;cursor:pointer}
+button:hover{background:#2a475e}button:disabled{opacity:.4;cursor:not-allowed}
+footer{font-size:12px;color:var(--muted);padding:12px 0 18px}
+@media(max-width:950px){.controls{grid-template-columns:repeat(3,minmax(100px,1fr))}.summary{grid-template-columns:repeat(3,minmax(100px,1fr))}}
+@media(max-width:560px){.controls{grid-template-columns:repeat(2,minmax(110px,1fr))}.summary{grid-template-columns:repeat(2,minmax(100px,1fr))}h1{font-size:18px}.panel{padding:13px}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header>
+<div class="logo"><div class="mark">A</div><div><h1>ASJR HotSector Research <span class="small muted">v1.0</span></h1><div class="muted small">Historical 5-minute candles · Sector → Stock → Volume → Exit</div></div></div>
+<div class="flex"><a href="./index.html">Trading Chart Lab</a><a href="https://github.com/raghunathbhandari/ASJR/tree/main/Rudra-HotSectorHotStock" target="_blank" rel="noopener">Research files ↗</a><button id="refresh" type="button">Refresh GitHub data</button></div>
+</header>
+<section class="panel">
+<h2>Research filters</h2>
+<div class="controls">
+<div class="field"><label for="sector">Winning sector</label><select id="sector"><option value="ALL">All 7 sectors</option></select></div>
+<div class="field"><label for="indexFilter">SPY index filter · 09:30–09:45</label><select id="indexFilter"><option value="ALL">All SPY conditions</option><option value="UP">SPY positive</option><option value="DOWN">SPY negative</option><option value="LEADER">Sector stronger than SPY</option></select></div>
+<div class="field"><label for="session">Trading date · UK</label><select id="session"></select></div>
+<div class="field"><label for="stock">Stock · available shortlist</label><select id="stock"></select></div>
+<div class="field"><label for="window">5-minute candles</label><select id="window"><option value="6">First 6 (30m)</option><option value="9">First 9 (45m)</option><option value="12" selected>First 12 (1h)</option><option value="24">First 24 (2h)</option><option value="78">Entire regular session</option></select></div>
+</div>
+</section>
+<div id="status" role="status" aria-live="polite">Loading November research index…</div>
+<div class="summary">
+<div class="metric"><small>Winning sector · 15m</small><strong id="sectorMetric">—</strong></div>
+<div class="metric"><small>SPY index · 15m</small><strong id="spyMetric">—</strong></div>
+<div class="metric"><small>Stock · 15m gain</small><strong id="gainMetric">—</strong></div>
+<div class="metric"><small>Stock · first 15m volume</small><strong id="volumeMetric">—</strong></div>
+<div class="metric"><small>Entry / initial −1% stop</small><strong id="entryMetric">—</strong></div>
+</div>
+<section class="panel">
+<div class="topline"><div><h2 id="chartTitle">Opening price action</h2><p class="muted small" id="chartSub">14:30 UK first candle · 14:45 UK signal</p></div><div class="legend"><span><i class="swatch" style="background:var(--green)"></i>Up candle</span><span><i class="swatch" style="background:var(--red)"></i>Down candle</span><span><i class="swatch" style="background:var(--cyan)"></i>Entry reference</span><span><i class="swatch" style="background:var(--red)"></i>−1% SL</span></div></div>
+<div id="plot"><div class="empty">Waiting for stock candles…</div></div>
+<div id="candle-detail">Hover or tap a candle for OHLCV detail.</div>
+<div class="flex"><div class="muted small" id="sourceCaption">IBKR historical CSV · UTC timestamps converted to UK.</div><a id="stockSource" target="_blank" rel="noopener" href="#" style="display:none">View stock CSV ↗</a></div>
+</section>
+<section class="panel">
+<div class="topline"><div><h2>Daily stock shortlist</h2><p class="muted small" id="listNote">Sort is original research rank. Click a row to inspect its candles.</p></div><div class="muted small">A full-day web ranking is <b>hindsight data</b>, not a live 14:45 signal.</div></div>
+<div class="table-scroll"><table><thead><tr><th>Web/sample rank</th><th>Ticker</th><th>15m gain</th><th>15m shares</th><th>Max upside after 14:45</th><th>Data coverage</th></tr></thead><tbody id="stocksBody"><tr><td colspan="6">Loading…</td></tr></tbody></table></div>
+</section>
+<section class="panel">
+<h2>Strategy test notes</h2>
+<p id="tradeNote">Entry after the completed 09:30–09:45 ET candle. Initial stop −1%; at each +1% favourable milestone, lift the stop by +1%-of-entry. Close remaining positions at 16:00 ET.</p>
+<p class="muted small">This is a reusable research viewer. Only stocks with available IBKR 5-minute datasets have price charts. Simulated levels are not live orders. All sector-shortlist results are limited to the researched universe, which may have been selected using future closing information. The chart does not assert that the full historic sector universe has been screened.</p>
+</section>
+<footer>ASJR · Rudra-HotSectorHotStock · Research only · UK timestamps · Latest public ASJR GitHub data loaded when this page opens</footer>
+</div>
+<script src="./hotsector.js" defer></script>
+</body></html>
