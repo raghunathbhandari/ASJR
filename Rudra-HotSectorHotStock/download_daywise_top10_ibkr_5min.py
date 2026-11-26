@@ -216,6 +216,9 @@ def publish_status(statuses, leader):
             ]
             for day, sector in sorted(leader.items()):
                 group = groups.get(day, [])
+                if not group:
+                    lines.append(f"| {day} | {sector} | — | NO_SHORTLIST | — | — |")
+                    continue
                 good = [r for r in group if r.get("ibkr_data_status") == "COMPLETE_78_RTH_5MIN"]
                 opening = [r for r in good if r.get("ibkr_first_15min_gain_pct")]
                 opening.sort(key=lambda r: -float(r["ibkr_first_15min_gain_pct"]))
@@ -326,7 +329,7 @@ def main():
     # Re-audit published exports and synchronise links to the existing
     # consolidated master CSV, without altering source ranking methods.
     refresh()
-    final = audit(selected, index_files())
+    final = audit(all_days, index_files())
     publish_status(final, leader)
     total_good = sum(s["status"]=="COMPLETE_78_RTH_5MIN"
                      for s in final.values())
