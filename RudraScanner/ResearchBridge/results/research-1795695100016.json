@@ -1,0 +1,10 @@
+{
+  "completed_utc": "2026-11-26T12:24:32.354529+00:00",
+  "exit_code": 1,
+  "id": "research-1795695100016",
+  "operation": "ibkr_range_download",
+  "started_utc": "2026-11-26T12:23:59.357179+00:00",
+  "status": "FAILED",
+  "stderr_tail": "Traceback (most recent call last):\n  File \"/root/trading/ASJR/three_candle/ibkr_bridge_range_download.py\", line 142, in <module>\n    main()\n  File \"/root/trading/ASJR/three_candle/ibkr_bridge_range_download.py\", line 136, in main\n    path = publish(args.job_id, frame, metadata, csv_name)\n  File \"/root/trading/ASJR/three_candle/ibkr_bridge_range_download.py\", line 63, in publish\n    raise RuntimeError(\"IBKR publish failed after 3 attempts\")\nRuntimeError: IBKR publish failed after 3 attempts\n",
+  "stdout_tail": ""
+}
