@@ -161,3 +161,9 @@ git show origin/main:Rudra-HotSectorHotStock/download_daywise_top10_ibkr_5min.py
 Repeat `--limit 10` to process remaining missing stock-days; `--limit 0` downloads all missing at once. Existing partial data is reported rather than overwritten; `--retry-incomplete` can explicitly request a new export for incomplete stock-days.
 
 **Research integrity:** Full-day web lists were unknowable at 09:45 ET, so IBKR opening re-ranking **within that preselected list** is not an unbiased historical live screen. The download script preserves the `rank_method`, original rank, and `research_status` columns. It does not trade, change production processes, or claim every date is already complete.
+
+## Reusable HotSector candlestick research dashboard
+
+**GitHub source:** [TradingChartLab/hotsector.html](../TradingChartLab/hotsector.html) with [hotsector.js](../TradingChartLab/hotsector.js). This is a permanent GitHub CSV-driven read-only dashboard; select date, winning sector, stock, SPY first-15-minute index filter and opening candle count. It shows five-minute OHLC, opening 15-minute gain and volume, simulated next-bar entry and original −1% stop. When subsequent IBKR stock files are committed to the master CSV, click **Refresh GitHub data** rather than creating a new chart.
+
+**Intended GitHub Pages address (not yet verified live):** `https://raghunathbhandari.github.io/ASJR/hotsector.html`. The repository owner needs to enable **Settings → Pages → Source: GitHub Actions** and run the existing ASJR Trading Chart Lab Pages workflow first. The web dashboard does not trade, and web full-day stock shortlist rankings remain hindsight-selected until a full opening-sector universe has been studied.
