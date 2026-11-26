@@ -82,6 +82,7 @@ October MES: ex-post target touches 1R=7/8, 2R=5/8, 3R=2/8. After waiting for C3
 ## Six-stock September 2026 test (IBKR data)
 
 - [September 2026 six-stock results and methodology](results/SEPTEMBER_2026_SIX_STOCK_BACKTEST.md)
+- [54 individual signal and after-C3 exit audit rows](results/SEPTEMBER_2026_SIX_STOCK_SIGNALS_AND_EXITS.csv)
 - [Per-ticker 1R/2R/3R and after-C3 summary](results/SEPTEMBER_2026_SIX_STOCK_SUMMARY.csv)
 - [Fixed-target vs step-trailing comparison](results/SEPTEMBER_2026_SIX_STOCK_VARIANTS.csv)
 - [Reproduction Python](backtest_september_six_stocks.py)
