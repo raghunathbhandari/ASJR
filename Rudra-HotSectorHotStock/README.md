@@ -129,3 +129,12 @@ Script: [phase2_top10_nov2026.py](phase2_top10_nov2026.py). Run from the existin
 ## Day-wise top-10 stock research CSV
 
 See [**november_2026_daily_top10_stocks.csv**](november_2026_daily_top10_stocks.csv) for the consolidated per-date stock research table. It currently contains the **2 Nov XLY web-researched 10 full-day gainers** and **25 Nov XLE 10 sampled stock first-15-minute results**, with separate rank-method and research-status fields. Other 16 dates remain pending. The 2 Nov ranking uses **end-of-day returns**, so it cannot be used to claim a genuine 09:45 ET stock selection or an unbiased live-strategy backtest. [Daily sector-leader index](november_2026_sector_leaders.csv) links each day's stock-candidate CSV when available. [Detailed source notes](NOVEMBER_2026_DAILY_SECTOR_AND_STOCKS.md).
+
+
+## Historical web shortlists: 3–24 November
+
+**Current master status:** [november_2026_daily_top10_stocks.csv](november_2026_daily_top10_stocks.csv) has **50 sampled/researched stock rows for five dates**: 2 Nov XLY (web daily close), 5 Nov XLE (web daily close), 13 Nov XLC (web daily close), 17 Nov XLB (web daily close), and 25 Nov XLE (previously selected 10-name sample with IBKR first-15-minute measurements). The other **13 dates remain pending until the script executes successfully**.
+
+Use [build_november_web_shortlists.py](build_november_web_shortlists.py) to fetch the [Market Wrap dated S&P sector tables](https://www.market-wrap.com/daily-wrap/) for the 16 dates 3–24 Nov, audit constituent-table coverage against published sector counts, and automatically write a per-day web shortlist CSV, update the master CSV and sector-leader index, and create NOVEMBER_2026_WEB_CANDIDATES.md. It uses an **isolated temporary Git clone** and does not modify the live ASJR worktree or place trades. The script needs Python `beautifulsoup4` and VPS internet access. Try `--dry-run --only-date 2026-11-03` before running without flags; unresolved/invalid dates remain pending instead of claiming ten winners.
+
+**Critical:** Website lists **full-day S&P 500 sector gainers** (day-end hindsight). They are NOT the leading stocks at 09:45 ET and may not match sector ETF membership exactly. These are research shortlists only; IBKR historical 09:30–09:45 candles are required before comparing our opening-momentum strategy.
