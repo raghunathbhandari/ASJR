@@ -167,3 +167,28 @@ Repeat `--limit 10` to process remaining missing stock-days; `--limit 0` downloa
 **GitHub source:** [TradingChartLab/hotsector.html](../TradingChartLab/hotsector.html) with [hotsector.js](../TradingChartLab/hotsector.js). This is a permanent GitHub CSV-driven read-only dashboard; select date, winning sector, stock, SPY first-15-minute index filter and opening candle count. It shows five-minute OHLC, opening 15-minute gain and volume, simulated next-bar entry and original −1% stop. When subsequent IBKR stock files are committed to the master CSV, click **Refresh GitHub data** rather than creating a new chart.
 
 **Intended GitHub Pages address (not yet verified live):** `https://raghunathbhandari.github.io/ASJR/hotsector.html`. The repository owner needs to enable **Settings → Pages → Source: GitHub Actions** and run the existing ASJR Trading Chart Lab Pages workflow first. The web dashboard does not trade, and web full-day stock shortlist rankings remain hindsight-selected until a full opening-sector universe has been studied.
+
+## One-command November backfill (tmux, resumable)
+
+**Status at 26 Nov 2026 21:00 UK:** The consolidated master has **50/50 verified 5-minute IBKR stock-day files** for 2, 5, 13, 17, 25 November. Thirteen other dates are missing their stock candidate lists; they cannot be downloaded by the stock-only script until researched.
+
+**Start all missing November candidate research and IBKR downloads:** Use [run_all_missing_nov2026_tmux.sh](run_all_missing_nov2026_tmux.sh) on VPS:
+
+```bash
+cd /root/trading/ASJR
+git fetch origin main
+git show origin/main:Rudra-HotSectorHotStock/run_all_missing_nov2026_tmux.sh > /tmp/asjr_nov_all.sh
+bash /tmp/asjr_nov_all.sh
+```
+
+**Follow progress:**
+
+```bash
+tail -f /root/trading/ASJR_research_logs/hot_sector/nov2026_all_stock_days.log
+```
+
+The launch script uses dedicated tmux session `asjr_nov2026_all`, an exclusive research lock, UK timestamps, and an isolated pip target if BeautifulSoup is absent (not an install into the trading bot environment). Inside tmux it runs the verified date-aware [web shortlist builder](build_november_web_shortlists.py), now modified to **skip ALL existing researched dates** so it never destroys existing IBKR CSV pointers, then runs [IBKR stock-day downloader](download_daywise_top10_ibkr_5min.py) using `--limit 0` to download all missing candidate datasets from IBKR Gateway on VPS. The downloader automatically checks GitHub and reuses previously complete exports. No live ASJR git reset/pull, trading orders, or bot restarts.
+
+**Expected maximum:** 13 × 10 = 130 **additional** ticker-day 5-minute datasets, if the daily sector website pages for all 13 missing dates parse correctly and the IBKR Gateway stays available. This does **not** download all ~500 S&P stocks per day; the candidate method is an explicitly hindsight-ranked web shortlist. Investigate `PENDING` in the log for dates that could not be validated, and `DOWNLOAD FAILED` for stock requests that need re-run. The launcher does not claim completion until actual job output verifies it.
+
+**For progress dashboards:** [TradingChartLab/hotsector.html](../TradingChartLab/hotsector.html) loads updated research CSVs on refresh and shows historical stock candles, SPY, sector and dates.
