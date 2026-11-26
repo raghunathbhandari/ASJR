@@ -79,6 +79,15 @@ Nominal target-gain percentage is a sum of individual target-price movements at 
 Run from the repository root: `python ASJR-Three-Candle-Original/backtest_mes_october.py --verify-october`
 
 October MES: ex-post target touches 1R=7/8, 2R=5/8, 3R=2/8. After waiting for C3 confirmation, hypothetical step-trailing produced 3 positive and 5 negative exits, gross -1.00 MES point (-USD 5 for one MES), **before costs**. Price touches are not executed trade wins. Newly added replay Python has not had a separate verified execution run; see methodology and limitations in the report.
+## Six-stock September 2026 test (IBKR data)
+
+- [September 2026 six-stock results and methodology](results/SEPTEMBER_2026_SIX_STOCK_BACKTEST.md)
+- [Per-ticker 1R/2R/3R and after-C3 summary](results/SEPTEMBER_2026_SIX_STOCK_SUMMARY.csv)
+- [Fixed-target vs step-trailing comparison](results/SEPTEMBER_2026_SIX_STOCK_VARIANTS.csv)
+- [Reproduction Python](backtest_september_six_stocks.py)
+- [Newly imported September–November IBKR stock data](data/README.md)
+
+Six September tickers NVDA, INTC, TSLA, PLTR, AMD, AAPL: 54 original retrospective setups; 1R/2R/3R historical touches 53/46/40. A **separate**, after-C3-open simulated entry model had 49 valid RTH entries and 27 positive step-trailing exits (55.1%), +5.342% **sum of hypothetical trade price returns**, not portfolio return, no costs. Five last-15m-bar setups had no next regular-session bar. These results are not from the archived 83-setup ten-ticker universe and should not be mixed.
 ## Materials
 
 - [Frozen original strategy specification](STRATEGY.md)
