@@ -72,6 +72,11 @@ def main(argv=None):
                         help="Preserve DataLake and reconcile Git only when Chakra is stopped")
     parser.add_argument("--maintenance", action="store_true",
                         help="Guarded ASJR Git repair and diagnostics; no live rebase/reset")
+    hotsector_modes = parser.add_mutually_exclusive_group()
+    hotsector_modes.add_argument("--hotsector-nov-download", action="store_true",
+                                 help="Launch fixed November research download in dedicated tmux")
+    hotsector_modes.add_argument("--hotsector-nov-status", action="store_true",
+                                 help="Report November download tmux status and bounded progress")
     parser.add_argument("--bridge-start", action="store_true",
                         help="One-time install/start of fixed ASJR research bridge service; no Chakra restart")
     parser.add_argument("--bridge-refresh", action="store_true",
@@ -193,6 +198,44 @@ def main(argv=None):
     if args.gann_nq_import:
         from RudraScanner.gann_nq_import import main as gann_import_main
         return gann_import_main()
+    if args.hotsector_nov_download or args.hotsector_nov_status:
+        # Fixed research operations only: no user-supplied shell or paths.
+        import subprocess
+        if args.hotsector_nov_download:
+            launcher = Path(__file__).resolve().parents[1] / "Rudra-HotSectorHotStock" / "run_all_missing_nov2026_tmux.sh"
+            if not launcher.is_file():
+                print("HOTSECTOR | Launcher missing; sync GitHub main first")
+                return 2
+            try:
+                return subprocess.run(["bash", str(launcher)], timeout=25,
+                                      check=False).returncode
+            except (OSError, subprocess.TimeoutExpired):
+                print("HOTSECTOR | Launcher could not be confirmed")
+                return 2
+        from collections import deque
+        log = Path("/root/trading/ASJR_research_logs/hot_sector/nov2026_all_stock_days.log")
+        try:
+            active = subprocess.run(["tmux", "has-session", "-t", "asjr_nov2026_all"],
+                                    capture_output=True, timeout=5, check=False).returncode == 0
+        except (OSError, subprocess.TimeoutExpired):
+            print("HOTSECTOR | tmux status unavailable")
+            return 2
+        print("HOTSECTOR |", "RUNNING" if active else "NOT RUNNING",
+              "| tmux asjr_nov2026_all")
+        if log.is_file():
+            # Only show fixed progress categories; omit arbitrary exception or Git output.
+            prefixes = ("START |", "STAGE ", "SEARCH ", "VALID ", "DOWNLOAD |",
+                        "PLAN |", "FINAL |", "WEB STAGE EXIT |", "IBKR STAGE EXIT |",
+                        "FINISH |", "PIPELINE COMPLETED", "PIPELINE NEEDS REVIEW")
+            progress = deque(maxlen=7)
+            with log.open(encoding="utf-8", errors="replace") as reader:
+                for line in reader:
+                    if line.startswith(prefixes):
+                        progress.append(line.strip()[:160])
+            print("\n".join(progress) if progress else "No progress records yet.")
+        else:
+            print("No download log yet.")
+        return 0
     if args.bridge_refresh:
         from RudraScanner.ResearchBridge.refresh_bridge import main as bridge_refresh
         return bridge_refresh()
