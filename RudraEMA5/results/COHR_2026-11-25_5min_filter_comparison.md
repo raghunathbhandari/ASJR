@@ -35,3 +35,28 @@ Different filters can produce a different number of candidate C1 bars because si
 There are also two examples where C2 meets top-5% criterion but fails swing >=2%: 11:40 C1 (1.4247% decline) and 23:05 C1 (1.3733% decline).
 
 **Conclusion:** Filter 2 is so restrictive that none of the 24 candidates passing Filter 1 remain. Do **not** label this rule profitable or verified. Establish the intended intrabar sequencing and/or reassess C2 range threshold before applying to other dates.
+
+
+## New Filter 3: RSI(14) <30 at C1 (added 27 Nov, 19:41 UK)
+
+RSI uses Wilder smoothing on 5-minute closes and is computed at the **completed C1**, not using future C2 data. It is added with AND, not substituted for either prior filter.
+
+| Sequential screening of the 29 base C1 opportunities | Remaining |
+|---|---:|
+| EMA5 slope and entire C1 below EMA5 | 29 |
+| + 2% swing from 24-prior-bar high | 24 |
+| + RSI(14) strictly below 30 | 7 |
+| + C2 breakout threshold (ignoring C2 full-low rule) | 1 |
+| + completed-C2-low top-5% guard | **0** |
+
+**RSI-qualified C1s (UK/GMT):**
+- 00:10 — RSI 27.68, swing 2.98%, C2 did not reach breakout.
+- 09:15 — RSI 29.26, swing 3.30%, no breakout.
+- 09:20 — RSI 23.59, swing 3.71%, no breakout.
+- 09:30 — RSI 28.34, swing 4.14%, no breakout.
+- 09:40 — RSI 26.68, swing 3.80%, no breakout.
+- 09:45 — RSI 25.09, swing 4.17%, no breakout.
+- **09:50 — RSI 29.31, swing 4.17%, breakout reached, but completed-C2-low check failed**.
+
+The **0-trade** strict-filter result is unchanged. However, it still relies on future C2 information and is an *ex-post screening count*, not a causally executable backtest. Use the repeatable read-only [filter audit script](../filter_audit.py). Do not silently reinterpret +0.2% above C1 close as the only entry trigger; the confirmed version also requires $0.02 above C1 high.
+
