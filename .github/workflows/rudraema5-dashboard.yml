@@ -31,6 +31,9 @@ jobs:
           cp RudraEMA5/dashboard/index.html _site/RudraEMA5/dashboard/
           cp RudraEMA5/dashboard/app.js _site/RudraEMA5/dashboard/
           cp RudraEMA5/dashboard/data.js _site/RudraEMA5/dashboard/
+          cp RudraEMA5/dashboard/engine.js _site/RudraEMA5/dashboard/
+          cp RudraEMA5/dashboard/overview.js _site/RudraEMA5/dashboard/
+          cp -R RudraEMA5/dashboard/data _site/RudraEMA5/dashboard/
           cat > _site/index.html <<'EOF'
           <!doctype html><html lang="en"><head><meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
