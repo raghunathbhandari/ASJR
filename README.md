@@ -12,6 +12,8 @@ The project is designed around a practical research loop:
 
 ## Contents
 
+- [RudraEMA5 — COHR 5m/15m/30m/1h dashboard, November day-by-day backtests](RudraEMA5/dashboard/README.md) · [Offline dashboard HTML](RudraEMA5/dashboard-offline.html)
+
 - [Rudra-HotSectorHotStock — 9:35 ET sector ETF + IBKR stock scanner momentum strategy](Rudra-HotSectorHotStock/README.md)
 
 - [ASJR Three-Candle — original equity strategy, September 2026 results and refinement](ASJR-Three-Candle-Original/README.md)
