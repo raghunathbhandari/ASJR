@@ -1,82 +1,47 @@
-# RudraEMA5 — COHR 5-minute bullish reversal study
+# RudraEMA5 V2 — COHR 5-minute reversal after oversold decline
 
-**Status (2026-11-27 UK):** COHR IBKR 5-minute history successfully exported. Initial one-day replay completed; swing, C2-range and RSI(14)<30 filters under study. Exact causal C2-range execution still unresolved. Research only; no live orders.
+**Current rules as of 2026-11-27 19:44 UK:** **C2 5%-of-C1 range filter REMOVED.** RSI threshold raised from `<30` to **Wilder RSI(14) <36 at completed C1**. Keep swing-down >=2%. Read-only strategy research; no live order placement.
 
-## Historical data
+## Data
+- Ticker: **COHR**, IBKR Gateway historical `TRADES`, `useRTH=False` (available extended hours).
+- Raw [5-minute OHLCV CSV](../three_candle/data/ibkr_bridge/research-1795805412345/COHR_2026-11-01_2026-11-27_5min_UTC.csv); IBKR bridge job `research-1795805412345` succeeded with **3,572 bars** and no reported broker errors.
+- Analyse data from 2026-11-01 inclusive to **2026-11-27 18:00 UK**, excluding any later bars. Actual first available bar is 2026-11-02 09:00 UTC; 3,564 bars precede cutoff. In November, UK time is GMT/UTC.
+- Warm up indicators using all *prior available* bars rather than resetting on each test day. Market closures create real timestamp gaps.
 
-- Stock: COHR (US stock, SMART/USD).
-- Source: existing ASJR IBKR Research Bridge, `ibkr_range_download`, `TRADES`, `useRTH=False`.
-- Requested: 2026-11-01 through 2026-11-27 inclusive, 5-minute bars.
-- Backtest cutoff: **2026-11-27 18:00 Europe/London = 18:00 UTC**. The export includes later bars; filter by exact bar timestamp and do not use any price information after the cutoff.
-- Job: `research-1795805412345`.
-- [Raw file](../three_candle/data/ibkr_bridge/research-1795805412345/COHR_2026-11-01_2026-11-27_5min_UTC.csv).
-- [Bridge result](../RudraScanner/ResearchBridge/results/research-1795805412345.json): `status=SUCCESS`, `exit_code=0`, `rows=3572`, `errors=[]`.
-- First observed CSV row: `2026-11-02T09:00:00+00:00`. The CSV also contains 27 Nov 18:35 UTC, which is later than the requested backtest cutoff.
-- Preserve raw CSV unchanged, and validate clipped dataset OHLCV/timezone/duplicates/session coverage before any performance claims.
+## Current executable-intent LONG rules
 
-## Intended LONG setup (pending parameter confirmation)
+1. Use **EMA5 of 5-minute closes**. By the end of C1, `100*(EMA5(C1)/EMA5(3 bars earlier) - 1) <= -0.15` (0.15% decline over 15 minutes). Require those four bars to have contiguous 5-minute timestamps.
+2. **Filter 1 (still active):** price declined at least **2%** from the highest high of the **24 completed bars preceding C1** to **C1 low**. This is an operational two-hour rolling-high proxy, not yet a formal pivot/swing definition.
+3. **C1:** complete 5-minute candle; entire high-to-low range below its completed EMA5, with `C1_high < EMA5(C1)`. **RSI filter:** Wilder RSI(14) on 5-minute closes is strictly **below 36 at C1 close**; RSI equal to 36 fails.
+4. **C2:** must be the immediately following 5-minute candle. Buy intrabar if price trades at or above `max(ceil_to_cent(C1_close*1.002), ceil_to_cent(C1_high+$0.02))`. The two price conditions are retained from user instructions; if the candle gaps above the threshold, simulate entry at C2 open. Do NOT wait for C2 close or use final C2 RSI/low to decide whether entry occurred.
+5. **Initial stop:** 1% below fill price (1R). If price reaches entry +1%, do NOT take full profit; retain full position, activate trailing stop at **0.2% below highest price attained**. Move trail only upwards.
+6. **Positions:** at most one at a time. A 25-Nov day-only replay closes any remaining position at the last 5-minute close to make day comparisons; all simulated fills are before commissions, spread/slippage and borrow costs.
 
-1. Work on completed 5-minute candles and a **5-period exponential moving average of closes**.
-2. EMA5 must previously be sloping down significantly. Define a measurable slope over a lookback and a threshold before testing.
-3. **C1**: a completed 5-minute candle with its full high-low range below EMA5, not touching it; thus its HIGH must be below the correctly time-aligned EMA5.
-4. **C2 / entry update (user-confirmed 2026-11-27 19:10 UK)**: User sets the entry threshold at **0.2% above C1 CLOSE**: `entry_threshold = C1_close * 1.002`. C2 is the immediately following 5-minute candle and entry may trigger intrabar without awaiting its close. **Still unresolved:** must C2 ALSO break C1 HIGH before entry, as originally specified? If yes, effective trigger is `max(C1_high + tick, C1_close * 1.002)`. If no, use solely `C1_close * 1.002`. Do not silently assume either variant; avoid use of C2 final close/high to make earlier decisions.
-5. Initial risk: user requests `-1R`, with mention of `1%`; confirm whether 1R is exactly 1% of entry price or anchored to C1 LOW.
-6. Profit target: user requests `1R` / `1:1`; confirm whether this means complete exit, partial exit, or trigger for the trail.
-7. Trailing stop: user requests `0.2%` beneath upside price; confirm that it trails peak price after first +1R, and whether it replaces the initial stop.
-8. Apply stop-first conservative ordering to unresolvable intra-candle target/stop conflicts in a 5-minute OHLC backtest, and model fees/slippage independently. No simultaneous overlapping trades unless approved.
+**Removed filter:** The previous `C2_low >= C1_high - 0.05*(C1_high-C1_low)` constraint is **not checked anywhere in V2**. Its full-candle definition was too restrictive and risked look-ahead. Historical V1 screening remains in [the archived 25 November report](results/COHR_2026-11-25_5min_filter_comparison.md), not the active strategy.
 
-## Pending confirmations
+## V2 preliminary backtest comparisons (25 Nov 2026)
 
-- **Slope:** suggested first test: EMA5 at C1 close at least 0.15% below its value 3 completed 5-minute bars earlier; compare thresholds rather than optimizing one in hindsight. Should slope be checked precisely at C1 or only in the preceding decline?
-- **Entry threshold:** confirmed **C1 CLOSE + 0.2%**, not a cent-based C1-HIGH buffer. Clarify whether C1-HIGH breakout remains an additional mandatory condition (it may be higher than the +0.2% threshold).
-- **1R stop:** fixed -1% of filled entry, or C1 low as depicted in sketch?
-- **Target and trail:** +1% profit = milestone that activates trailing 0.2% from highest price, or exit part/all at +1R? If trailing, clarify intrabar activation and conflict convention.
-- **Session eligibility:** all available extended-hours or regular US session only? Existing export covers extended trading.
-- **Re-entry:** first C1 only in each EMA down-slope episode vs repeated eligible C1s; max one open trade.
+| RSI at C1 (with >=2% swing) | Trades | Winning | Losing | Gross summed R |
+|---|---:|---:|---:|---:|
+| Below 30 | 1 | 0 | 1 | -1.00R |
+| **Below 36 (active V2)** | **4** | **3** | **1** | **+2.66078R** |
+| Below 40 (comparison only) | 7 | 4 | 3 | +1.55517R |
 
-## Notes
+For 27 Nov up to **18:00 UK**, RSI below 36 produces **1 trade, 0 wins, -1.00R**. A favorable single day does **not** validate an RSI threshold; avoid hindsight optimization, test across more dates and tick/1m sequencing.
 
-The sketch portrays a falling EMA5, separated candles below it, then a bullish candle crossing the preceding candle's high. The stop is sketched below the reversal low; the written risk says 1R / 1%, so no stop anchor is assumed until clarified.
+Detailed [V2 Nov 25/27 trade log and assumptions](results/COHR_2026-11-25_RSI36_V2.md).
 
+## Reproducible Python
 
-## 27 November 2026 — user filter refinements (19:29 UK)
+```bash
+python RudraEMA5/filter_audit.py --date 2026-11-25 --rsi-threshold 36
+python RudraEMA5/backtest.py --date 2026-11-25 --rsi-threshold 36
+python RudraEMA5/backtest.py --date 2026-11-25 --rsi-threshold 30
+python RudraEMA5/backtest.py --date 2026-11-27 --rsi-threshold 36
+```
 
-**Filter 1 — swing must fall at least 2% before reversal setup.**
-- Minimum observed swing-down from a *prior* swing high to C1 low is 2%.
-- A swing-high/pivot algorithm has not yet been specified. First diagnostic uses the maximum high over the 24 most recent completed 5m bars up to C1 (approximately two hours); **this rolling-high proxy is provisional, not an approved swing-detection rule**.
-- Formula: `100 * (recent_24bar_high - C1_low) / recent_24bar_high >= 2`.
+[Filter audit source](filter_audit.py) and [backtest source](backtest.py). Both read the GitHub-exported CSV in its original path; they do not download new data or place orders.
 
-**Filter 2 — user clarification: 5% is of candle high-to-low range, not 5% of the stock price.**
-- Provisional interpretation: C2 low must be no more than 5% of C1's full high-to-low range beneath C1 high. `C2_low >= C1_high - 0.05 * (C1_high-C1_low)`.
-- Example C1 high $210, low $208: C2 low must be at least $209.90.
-- **Causal execution caveat:** final C2 low is not known at the instant C2 breaks the entry level. A backtest that rejects an earlier fill using the eventual low of C2 is LOOK-AHEAD and must not be used as an executable performance result. Tick/1m path reconstruction or a real-time running-low rule is needed to enforce this before the breakout.
+### Backtest limitations
 
-**Other rules explicitly confirmed by user 19:11 UK**
-- EMA5 decline >= 0.15% over 3 completed 5m bars, at completed C1.
-- C1 high < completed C1 EMA5 (entire candle below EMA).
-- Entry in the immediately following C2 when price exceeds both `C1_close * 1.002` AND `C1_high + $0.02`: use the maximum of cent-rounded triggers.
-- Initial stop: 1% below entry; +1% is the milestone to retain the full position and arm 0.2% trailing stop below highest achieved price.
-- Include available extended-hours sessions, no concurrent positions.
-
-**27 November exploratory filter audit:** Existing 6 EMA/C1 candidates occurred at UK 09:45, 09:50, 10:05, 11:05, 11:45, 17:05. Under the provisional 24-bar swing proxy:
-- 10:05: 2.196% decline, C2 low passes top-5% check, but C2 high $213.49 < $213.52 entry threshold.
-- 11:05: 1.808% decline (fails filter1); C2 low $213.29 < $213.296 threshold (fails filter2).
-- 11:45: 2.674% decline (passes filter1); C2 low $209.82 < $211.34 threshold (fails filter2).
-- 17:05: 1.545% decline (fails filter1); C2 low $217.50 < $218.092 threshold (fails filter2).
-- Both earlier C1 cases (09:45,09:50) failed the swing and range tests.
-- **Zero qualifying fills under this ex-post interpretation. This is NOT a valid causal live-trading backtest due to the C2 low filter and not a measured expectancy improvement.**
-
-Keep earlier unfiltered 27 Nov 3-entry replay separate; do not replace its measured baseline with the screened count.
-
-
-## Filter 3 — RSI below 30 (added 27 November 2026 at 19:41 UK)
-
-- Indicator: **Wilder RSI(14)** on the existing 5-minute COHR *closing prices*, using the preceding available bars to warm up the indicator.
-- Required condition: `RSI14_at_completed_C1 < 30` (strictly below, not equal to 30).
-- Evaluate this **when C1 closes**, never using C2's RSI or later prices to qualify an earlier intrabar C2 entry.
-- It is an **additional AND filter**, not a replacement for the 2% swing decline, 5%-of-C1-range C2 check, EMA5 slope, full-C1-below-EMA, entry rule, or 1% stop / +1% trail activation.
-- Repeatable Python audit (read-only): `python RudraEMA5/filter_audit.py --date 2026-11-25`. Review [audit source](filter_audit.py). A `--date 2026-11-27` audit clips the feed at the requested 18:00 UK cutoff.
-- **25 Nov audit**: 29 basic EMA/C1 candidates; 24 pass 2%-swing proxy; 7 pass both 2%-swing and RSI<30; only one of those 7 (C1 09:50 UK, RSI 29.31) crosses the C2 entry threshold. It fails the provisional full-C2-low guard. **Zero ex-post candidates pass all filters.**
-- C1 at 00:10 UK also had RSI 27.68; the remainder of the RSI-qualified set was 09:15 (29.26), 09:20 (23.59), 09:30 (28.34), 09:40 (26.68), 09:45 (25.09), 09:50 (29.31).
-- **Causality warning remains**: using the completed C2 low to reject an intrabar C2 breakout would introduce look-ahead. A true causal run must assess running-low-before-entry or a finer-resolution price path. Do not interpret zero ex-post entries as execution-verified zero trades.
-
+Historical 5-minute OHLC does not reveal the exact order of highs and lows. An initial stop reached within an entry bar is assumed hit conservatively. A currently active stop is checked before any same-bar trail update. A new trail from that candle's high may execute in that same candle only if its *close* crosses that trail. Other ambiguous intrabar movement remains unverified. Stops can slip across gaps. No trading fees, spread, commissions or market impact are modeled. Results are research hypotheses, not verified live performance.
