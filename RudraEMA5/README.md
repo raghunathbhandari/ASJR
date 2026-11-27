@@ -1,6 +1,6 @@
 # RudraEMA5 — COHR 5-minute bullish reversal study
 
-**Status (2026-11-27 UK):** COHR IBKR 5-minute history successfully exported. Initial one-day replay completed; new swing/range filters under study. Exact causal filter-2 execution still unresolved. Research only; no live orders.
+**Status (2026-11-27 UK):** COHR IBKR 5-minute history successfully exported. Initial one-day replay completed; swing, C2-range and RSI(14)<30 filters under study. Exact causal C2-range execution still unresolved. Research only; no live orders.
 
 ## Historical data
 
@@ -67,3 +67,16 @@ The sketch portrays a falling EMA5, separated candles below it, then a bullish c
 - **Zero qualifying fills under this ex-post interpretation. This is NOT a valid causal live-trading backtest due to the C2 low filter and not a measured expectancy improvement.**
 
 Keep earlier unfiltered 27 Nov 3-entry replay separate; do not replace its measured baseline with the screened count.
+
+
+## Filter 3 — RSI below 30 (added 27 November 2026 at 19:41 UK)
+
+- Indicator: **Wilder RSI(14)** on the existing 5-minute COHR *closing prices*, using the preceding available bars to warm up the indicator.
+- Required condition: `RSI14_at_completed_C1 < 30` (strictly below, not equal to 30).
+- Evaluate this **when C1 closes**, never using C2's RSI or later prices to qualify an earlier intrabar C2 entry.
+- It is an **additional AND filter**, not a replacement for the 2% swing decline, 5%-of-C1-range C2 check, EMA5 slope, full-C1-below-EMA, entry rule, or 1% stop / +1% trail activation.
+- Repeatable Python audit (read-only): `python RudraEMA5/filter_audit.py --date 2026-11-25`. Review [audit source](filter_audit.py). A `--date 2026-11-27` audit clips the feed at the requested 18:00 UK cutoff.
+- **25 Nov audit**: 29 basic EMA/C1 candidates; 24 pass 2%-swing proxy; 7 pass both 2%-swing and RSI<30; only one of those 7 (C1 09:50 UK, RSI 29.31) crosses the C2 entry threshold. It fails the provisional full-C2-low guard. **Zero ex-post candidates pass all filters.**
+- C1 at 00:10 UK also had RSI 27.68; the remainder of the RSI-qualified set was 09:15 (29.26), 09:20 (23.59), 09:30 (28.34), 09:40 (26.68), 09:45 (25.09), 09:50 (29.31).
+- **Causality warning remains**: using the completed C2 low to reject an intrabar C2 breakout would introduce look-ahead. A true causal run must assess running-low-before-entry or a finer-resolution price path. Do not interpret zero ex-post entries as execution-verified zero trades.
+
