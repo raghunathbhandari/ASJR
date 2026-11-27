@@ -262,7 +262,7 @@ function totals(){
 }
 async function refreshSelector(changed){
  const selected=getSettings();
- if(changed==="symbol"&&selected.symbol==="COHR")$("month").value="2026-11";
+ if(selected.symbol==="COHR"&&selected.month!=="2026-11")$("month").value="2026-11";
  state={...selected,month:$("month").value};
  if(changed==="month"||changed==="symbol")populateDates(state.month+"-"+(selected.date||"2026-11-25").slice(-2));
  await ensureSymbol(state.symbol);
@@ -294,6 +294,8 @@ function renderAll(resetZoom=false){
  $("kDayWins").textContent=noData?"—":day.wins+" / "+day.trades.length;
  $("kBars").textContent=day.candles+" candles · "+state.tf+"m bars";
  $("chartTitle").textContent=state.symbol+" · "+state.version+" · "+state.tf+"m · "+state.date+" UK";
+ $("monthTitle").textContent=state.symbol+" · "+state.month+" · "+state.version+" day-by-day";
+ $("graphTitle").textContent="Daily gross R · "+state.symbol+" "+state.month;
  $("dayInfo").textContent=day.candles?day.candles+" candles · "+day.c1Count+" base C1":"No data";
  renderTradeLog(day);renderTable();renderBars();renderMatrix();
  if(resetZoom||lastDate!==state.date){
@@ -324,7 +326,7 @@ function renderTable(){
  const text=d.candles?ret(d.sumR):"—";
  const barWidth=Math.min(100,Math.abs(d.sumR)/5*100);
  const name=DAYS_LONG.format(new Date(d.date+"T12:00:00Z"));
- const status=d.candles&&d.candles<=Math.max(3,30/state.tf)?" · Partial":!d.candles?" · No data":"";
+ const status=d.candles&&d.candles<=Math.max(3,60/state.tf)?" · Partial":!d.candles?" · No data":"";
  return '<tr class="rowbtn'+(d.date===selected?' selected':'')+'" data-date="'+d.date+'" tabindex="0" title="Inspect '+d.date+'"><td>'+name+status+'</td><td>'+d.candles+'</td><td>'+d.trades.length+'</td><td>'+d.wins+'</td><td>'+w+'</td><td class="'+klass(d.sumR)+'">'+text+'</td><td class="barcell"><div class="bar '+(d.sumR<0?'down':'')+'" style="width:'+fmt(barWidth,2)+'%"></div></td></tr>';
  }).join("");
 }
