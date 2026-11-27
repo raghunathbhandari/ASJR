@@ -1,5 +1,8 @@
 # Rudra-HotSectorHotStock
 
+> **November 2026 replay is now published:** [Backtest report](NOVEMBER_2026_OPENING_15M_BACKTEST.md), [18-trade CSV](november_2026_opening_15m_backtest_results.csv), [reproducible backtest script](backtest_nov2026_opening_15m.py). 2–25 Nov, 18 trading sessions, 15m signal / 5m replay, 1% initial stop and +1% stepped trailing: **+1.362% gross** (low-first candle path) versus **−1.638% gross** (high-first). **Severe hindsight-selection bias** from web full-day gainer shortlists; do not interpret as live expectancy. GitHub Actions automated validation: [ASJR HotSector November Backtest Validation](../../actions/workflows/asjr_hotsector_nov_backtest.yml).
+
+
 **Status:** Idea capture / research specification (V1, 26 November 2026). **No executable strategy, backtest, live alert, or trading bot is claimed here.**
 
 ## Objective
