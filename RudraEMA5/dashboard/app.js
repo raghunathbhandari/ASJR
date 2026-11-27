@@ -1,150 +1,95 @@
-/* RudraEMA5 V2 · November 2026 interactive replay
- * Data is a frozen COHR IBKR 5m snapshot in data.js. No order routing.
- * For higher timeframes, only fully populated bars are aggregated from 5m.
- * The range restriction on C2 has been REMOVED per user request.
- */
+/* RudraEMA5 V2/V3 multi-stock research dashboard; IBKR historical only. */
 (()=>{"use strict";
-const DATA=window.RUDRAEMA5_RAW;
+const E=window.RudraEMA5Engine;
+const OVERVIEW=window.RUDRAEMA5_OVERVIEW;
 const $=id=>document.getElementById(id);
-const FIRST=Date.UTC(2026,10,1), CUTOFF=Date.UTC(2026,10,27,18,0);
-const DAYS=Array.from({length:27},(_,i)=>"2026-11-"+String(i+1).padStart(2,"0"));
-const DAYS_LONG=new Intl.DateTimeFormat("en-GB",{weekday:"short",day:"2-digit",month:"short",timeZone:"UTC"});
+let DAYS=[],source=[],all=[],dayResults=[],barsByDay=new Map();
+let state={symbol:"COHR",month:"2026-11",date:"2026-11-25",version:"V3",tf:5,rsi:36,swing:2,slope:.15};
+const DAYS_LONG=new Intl.DateTimeFormat("en-GB",{weekday:"short",day:"2-digit",month:"short",timeZone:"Europe/London"});
 const COLORS={bg:"#0c1420",grid:"#253449",tick:"#90a5bf",green:"#38c99a",red:"#f27889",amber:"#e9b95c",cyan:"#66d4e9",purple:"#aa9efa"};
-let all=[],dayResults=[],barsByDay=new Map(),state={date:"2026-11-25",tf:5,rsi:36,swing:2,slope:.15};
 let chartView={a:0,b:0,down:false,downX:0,origA:0,origB:0,hover:-1};
 let chartGeom=null, lastDate="";
 const fmt=(n,d=2)=>Number.isFinite(n)?Number(n).toFixed(d):"—";
 const money=n=>Number.isFinite(n)?"$"+n.toFixed(2):"—";
 const ret=n=>(n>0?"+":"")+fmt(n,2)+"R";
 const klass=n=>n>0.000001?"pos":n<-.000001?"neg":"muted";
-const when=t=>new Date(t).toISOString().slice(11,16);
-const dateOf=t=>new Date(t).toISOString().slice(0,10);
+const when=t=>E.ukLabels(t).clock;
+const dateOf=t=>E.ukLabels(t).day;
 const ceilCent=n=>Math.ceil((n-1e-9)*100)/100;
 const number=(id,min,max,otherwise)=>{const v=+$(id).value;return Number.isFinite(v)?Math.min(max,Math.max(min,v)):otherwise};
-function decode(){
- if(!Array.isArray(DATA)||!DATA.length)throw new Error("data.js is missing the November COHR candle dataset.");
- const out=DATA.map(a=>({ts:FIRST+a[0]*60000,o:a[1]/100,h:a[2]/100,l:a[3]/100,c:a[4]/100,v:a[5]}));
- if(out.some((r,i)=>r.ts>=CUTOFF||r.h<Math.max(r.o,r.c)||r.l>Math.min(r.o,r.c)||i&&r.ts<=out[i-1].ts))
- throw new Error("Source timestamp / OHLC validation failed.");
- return out;
-}
-function aggregate(raw,tf){
- if(tf===5)return raw.map(b=>({...b}));
- let groups=[], last=null;
- for(const b of raw){
-  const bucket=Math.floor(b.ts/(tf*60000))*tf*60000;
-  if(!last||last.start!==bucket){last={start:bucket,items:[]};groups.push(last)}
-  last.items.push(b);
- }
- const expected=tf/5;
- return groups.filter(g=>g.items.length===expected&&g.items[0].ts===g.start&&g.items.every((x,i)=>i===0||x.ts-g.items[i-1].ts===300000)).map(g=>({
- ts:g.start,o:g.items[0].o,h:Math.max(...g.items.map(x=>x.h)),
- l:Math.min(...g.items.map(x=>x.l)),c:g.items.at(-1).c,
- v:g.items.reduce((z,x)=>z+x.v,0)
- }));
-}
-function indicators(arr){
- let ema=null,g=0,l=0;
- for(let i=0;i<arr.length;i++){
-  const b=arr[i];ema=ema===null?b.c:(b.c+2*ema)/3;b.ema=ema;b.rsi=null;
-  if(!i)continue;
-  const change=b.c-arr[i-1].c,up=Math.max(0,change),down=Math.max(0,-change);
-  if(i<=14){g+=up;l+=down;if(i!==14)continue;g/=14;l/=14}
-  else{g=(g*13+up)/14;l=(l*13+down)/14}
-  b.rsi=l===0?(g>0?100:50):100-100/(1+g/l);
- }
- return arr;
-}
-function evaluateDay(date,arr,settings){
- const thisDay=arr.filter(x=>dateOf(x.ts)===date);
- const trades=[], setups=[];let pos=null,c1Count=0,swingCount=0,rsiCount=0;
- function close(b,i,price,reason){
-  const R=100*(price/pos.entry-1);
-  trades.push({
-   c1Index:pos.c1Index,entryIndex:pos.entryIndex,exitIndex:i,
-   c1Time:pos.c1Time,entryTime:pos.entryTime,exitTime:b.ts,
-   entry:pos.entry,exit:price,initialStop:pos.initialStop,reason,
-   rsi:pos.rsi,swing:pos.swing,R,armed:pos.armed,stops:pos.stops
-  });pos=null;
- }
- for(let i=25;i<arr.length;i++){
-  const b=arr[i],day=dateOf(b.ts);
-  if(day>date)break;if(day<date)continue;
-  if(pos){
-   if(b.o<=pos.activeStop){pos.stops.push({i,v:pos.activeStop});close(b,i,b.o,"Gap through stop");continue}
-   if(b.l<=pos.activeStop){pos.stops.push({i,v:pos.activeStop});close(b,i,pos.activeStop,pos.armed?"Trailing stop":"Initial stop");continue}
-   if(!pos.armed&&b.h>=pos.entry*1.01){pos.armed=true;pos.peak=b.h}
-   if(pos.armed){
-    pos.peak=Math.max(pos.peak,b.h);
-    const newStop=Math.max(pos.activeStop,pos.peak*.998);
-    pos.stops.push({i,v:newStop});
-    if(b.c<=newStop){close(b,i,newStop,"Same-candle trailing exit");continue}
-    pos.activeStop=newStop;
-   }else pos.stops.push({i,v:pos.activeStop});
-   continue;
-  }
-  const c1=arr[i-1],prev=arr[i-4],delta=settings.tf*60000;
-  if(b.ts-c1.ts!==delta||c1.ts-prev.ts!==3*delta)continue;
-  const slopePct=(c1.ema/prev.ema-1)*100;
-  if(c1.h>=c1.ema||slopePct > -settings.slope)continue;
-  c1Count++;
-  const high=Math.max(...arr.slice(i-25,i-1).map(x=>x.h));
-  const swing=100*(high-c1.l)/high;
-  if(swing<settings.swing)continue;
-  swingCount++;
-  if(c1.rsi===null||c1.rsi>=settings.rsi)continue;
-  rsiCount++;
-  const trigger=Math.max(ceilCent(c1.h+.02),ceilCent(c1.c*1.002));
-  setups.push({i:i-1,time:c1.ts,rsi:c1.rsi,swing,trigger,breakout:b.h>=trigger});
-  if(b.h<trigger)continue;
-  const entry=Math.max(b.o,trigger);
-  pos={
-   c1Index:i-1,entryIndex:i,c1Time:c1.ts,entryTime:b.ts,
-   entry,initialStop:entry*.99,activeStop:entry*.99,
-   armed:false,peak:entry,rsi:c1.rsi,swing,stops:[{i,v:entry*.99}]
-  };
-  if(b.l<=pos.activeStop){close(b,i,pos.activeStop,"Entry-bar stop (ambiguous)");continue}
-  if(b.h>=entry*1.01){
-   pos.armed=true;pos.peak=b.h;
-   const newStop=Math.max(pos.activeStop,b.h*.998);
-   pos.stops.push({i,v:newStop});
-   if(b.c<=newStop){close(b,i,newStop,"Entry-bar trailing exit");continue}
-   pos.activeStop=newStop;
-  }
- }
- if(pos&&thisDay.length){
-  const last=thisDay.at(-1),idx=arr.indexOf(last);
-  pos.stops.push({i:idx,v:pos.activeStop});
-  close(last,idx,last.c,"Day-end mark-to-market");
- }
- const wins=trades.filter(t=>t.R>0).length, losses=trades.filter(t=>t.R<0).length;
- return {date,candles:thisDay.length,c1Count,swingCount,rsiCount,setups,trades,wins,losses,
- sumR:trades.reduce((z,t)=>z+t.R,0),
- compPct:100*(trades.reduce((z,t)=>z*(1+t.R/100),1)-1),
- first:thisDay[0]?.ts||null,last:thisDay.at(-1)?.ts||null};
+function makeDays(month){const [year,mon]=month.split("-").map(Number);const length=new Date(Date.UTC(year,mon,0)).getUTCDate();return Array.from({length},(_,i)=>month+"-"+String(i+1).padStart(2,"0"));}
+function populateDates(requested){
+ DAYS=makeDays(state.month);
+ $("date").innerHTML=DAYS.map(d=>'<option value="'+d+'">'+DAYS_LONG.format(new Date(d+"T12:00:00Z"))+'</option>').join("");
+ const fallback=state.month+"-"+(state.month==="2026-11"?"25":"15");
+ let next=DAYS.includes(requested)?requested:fallback;
+ $("date").value=next;state.date=next;
 }
 function getSettings(){
  const rsi=Number($("rsiLimit").value),swing=Number($("swing").value),slope=Number($("slope").value);
- return {date:$("date").value,tf:+$("tf").value,
+ return {symbol:$("symbol").value,month:$("month").value,version:$("version").value,
+ date:$("date").value,tf:+$("tf").value,
  rsi:Number.isFinite(rsi)&&rsi>=5&&rsi<=95?rsi:36,
  swing:Number.isFinite(swing)&&swing>=0&&swing<=20?swing:2,
  slope:Number.isFinite(slope)&&slope>=0&&slope<=5?slope:.15};
 }
+async function ensureSymbol(symbol){
+ if(window.RUDRAEMA5_ARCHIVE&&window.RUDRAEMA5_ARCHIVE[symbol])return;
+ await new Promise((resolve,reject)=>{
+  const s=document.createElement("script");s.src="./data/"+symbol+".js";s.async=true;
+  s.onload=()=>window.RUDRAEMA5_ARCHIVE?.[symbol]?resolve():reject(new Error("Asset loaded but "+symbol+" candles missing"));
+  s.onerror=()=>reject(new Error("Could not load historic candles for "+symbol));
+  document.head.appendChild(s);
+ });
+}
 function compute(){
  state=getSettings();
- all=indicators(aggregate(source,state.tf));
- barsByDay=new Map(DAYS.map(d=>[d,all.filter(x=>dateOf(x.ts)===d)]));
- dayResults=DAYS.map(d=>evaluateDay(d,all,state));
+ if(!window.RUDRAEMA5_ARCHIVE?.[state.symbol])throw new Error("No archived 5-minute data for "+state.symbol);
+ source=E.decode(window.RUDRAEMA5_ARCHIVE[state.symbol]);
+ all=E.indicators(E.aggregate(source,state.tf));
+ const result=E.replay(all,{timeframe:state.tf,version:state.version,rsi:state.rsi,swing:state.swing,slope:state.slope});
+ const mapped=new Map(result.byDay.map(x=>[x.date,x]));
+ const grouped=new Map();
+ for(const b of all){if(!grouped.has(b.day))grouped.set(b.day,[]);grouped.get(b.day).push(b)}
+ barsByDay=new Map(DAYS.map(day=>[day,grouped.get(day)||[]]));
+ dayResults=DAYS.map(day=>mapped.get(day)||{date:day,candles:0,trades:[],setups:[],wins:0,losses:0,sumR:0,c1Count:0,swingCount:0,rsiCount:0});
  $("rsiRule").textContent="<"+state.rsi;$("swingRule").textContent=fmt(state.swing)+"%";$("slopeRule").textContent=fmt(state.slope)+"%";
+ $("versionRule").textContent=state.version==="V3"?"RSI(C1) > RSI(previous completed candle)":"RSI rising requirement OFF (V2)";
  if(state.tf===5&&state.rsi===36&&state.swing===2&&state.slope===.15){
-  const count=dayResults.reduce((z,x)=>z+x.trades.length,0),sum=dayResults.reduce((z,x)=>z+x.sumR,0);
-  if(count!==70||Math.abs(sum-(-4.5918471217))>.001)throw new Error("Baseline cross-check failed: the dashboard's 5m result does not match the committed November ledger.");
+  const base=OVERVIEW?.stockMonths.find(x=>x.symbol===state.symbol&&x.month===state.month&&x.version===state.version);
+  if(base){const n=dayResults.reduce((s,d)=>s+d.trades.length,0),sum=dayResults.reduce((s,d)=>s+d.sumR,0);
+   if(n!==base.trades||Math.abs(sum-base.sumR)>.002)throw new Error("Replayed strategy does not match frozen 5m "+state.symbol+" "+state.month+" "+state.version+" research ledger");
+  }
  }
  renderAll(true);
 }
 function totals(){
  const tr=dayResults.flatMap(x=>x.trades),wins=tr.filter(t=>t.R>0).length;
- return {trades:tr.length,wins,sumR:tr.reduce((z,t)=>z+t.R,0),profitDays:dayResults.filter(x=>x.sumR>0).length};
+ return{trades:tr.length,wins,sumR:tr.reduce((s,t)=>s+t.R,0),profitDays:dayResults.filter(x=>x.sumR>0).length};
+}
+async function refreshSelector(changed){
+ const selected=getSettings();
+ if(changed==="symbol"&&selected.symbol==="COHR")$("month").value="2026-11";
+ state={...selected,month:$("month").value};
+ if(changed==="month"||changed==="symbol")populateDates(state.month+"-"+(selected.date||"2026-11-25").slice(-2));
+ await ensureSymbol(state.symbol);
+ compute();
+}
+function renderMatrix(){
+ const el=$("matrixRows");if(!el||!OVERVIEW)return;
+ const symbols=["AAPL","AMD","INTC","NVDA","PLTR","TSLA","COHR"];
+ const rows=[];
+ for(const s of symbols){for(const m of ["2026-09","2026-10","2026-11"]){
+  if(s==="COHR"&&m!=="2026-11")continue;
+  const a=OVERVIEW.stockMonths.find(x=>x.symbol===s&&x.month===m&&x.version==="V2");
+  const b=OVERVIEW.stockMonths.find(x=>x.symbol===s&&x.month===m&&x.version==="V3");
+  if(!a||!b)continue;
+  const active=s===state.symbol&&m===state.month;
+  rows.push('<tr tabindex="0" class="rowbtn'+(active?' selected':'')+'" data-sym="'+s+'" data-month="'+m+'" title="Open '+s+' '+m+'"><td>'+s+(s==="COHR"?' *':'')+'</td><td>'+m.slice(5)+'</td><td>'+a.trades+'</td><td class="'+klass(a.sumR)+'">'+ret(a.sumR)+'</td><td>'+b.trades+'</td><td>'+b.wins+'/'+b.trades+'</td><td class="'+klass(b.sumR)+'">'+ret(b.sumR)+'</td><td class="'+klass(b.sumR-a.sumR)+'">'+ret(b.sumR-a.sumR)+'</td></tr>');
+ }}
+ el.innerHTML=rows.join("");
+ const v2=OVERVIEW.summary.V2,v3=OVERVIEW.summary.V3;
+ $("matrixSub").textContent="Six-stock frozen 5m baseline (excludes COHR): V2 "+v2.trades+" trades / "+ret(v2.sumR)+" · V3 "+v3.trades+" trades / "+ret(v3.sumR);
 }
 function renderAll(resetZoom=false){
  const t=totals(),day=dayResults.find(x=>x.date===state.date),noData=!day.candles;
@@ -155,9 +100,9 @@ function renderAll(resetZoom=false){
  $("kDaySub").textContent=state.date+" · "+(day.candles?day.trades.length+" trades":"No available candles");
  $("kDayWins").textContent=noData?"—":day.wins+" / "+day.trades.length;
  $("kBars").textContent=day.candles+" candles · "+state.tf+"m bars";
- $("chartTitle").textContent="COHR · "+state.tf+"m · "+state.date+" UK";
+ $("chartTitle").textContent=state.symbol+" · "+state.version+" · "+state.tf+"m · "+state.date+" UK";
  $("dayInfo").textContent=day.candles?day.candles+" candles · "+day.c1Count+" base C1":"No data";
- renderTradeLog(day);renderTable();renderBars();
+ renderTradeLog(day);renderTable();renderBars();renderMatrix();
  if(resetZoom||lastDate!==state.date){
   const n=(barsByDay.get(state.date)||[]).length;
   chartView.a=0;chartView.b=Math.max(0,n-1);chartView.hover=-1;
@@ -174,7 +119,7 @@ function renderTradeLog(day){
  if(!day.trades.length){el.innerHTML='<div class="empty">No triggered trades under the selected rules.<br><br>'+day.c1Count+' initial EMA/C1 candidates<br>'+day.swingCount+' meet swing rule<br>'+day.rsiCount+' meet RSI rule</div>';return}
  el.innerHTML='<h3>Price-based R · 1R = 1% of entry price</h3>'+
  day.trades.map((t,i)=>'<div class="trade"><div class="tradehead"><span>Trade '+(i+1)+'</span><span class="'+klass(t.R)+'">'+ret(t.R)+'</span></div><dl>'+
- '<div><dt>C1 setup</dt><dd>'+when(t.c1Time)+'</dd></div><div><dt>RSI at C1</dt><dd>'+fmt(t.rsi,2)+'</dd></div>'+
+ '<div><dt>C1 setup</dt><dd>'+when(t.c1)+'</dd></div><div><dt>RSI at C1 / prior</dt><dd>'+fmt(t.rsi,2)+' / '+fmt(t.priorRsi,2)+'</dd></div>'+
  '<div><dt>BUY / entry</dt><dd>'+when(t.entryTime)+' · '+money(t.entry)+'</dd></div><div><dt>Initial stop</dt><dd>'+money(t.initialStop)+'</dd></div>'+
  '<div><dt>SELL / exit</dt><dd>'+when(t.exitTime)+' · '+money(t.exit)+'</dd></div><div><dt>Swing decline</dt><dd>'+fmt(t.swing,2)+'%</dd></div>'+
  '</dl><div class="sub" style="margin-top:11px">'+t.reason+'</div></div>').join("");
@@ -186,7 +131,7 @@ function renderTable(){
  const text=d.candles?ret(d.sumR):"—";
  const barWidth=Math.min(100,Math.abs(d.sumR)/5*100);
  const name=DAYS_LONG.format(new Date(d.date+"T12:00:00Z"));
- const status=d.candles?d.candles<=12?" · Partial":"":" · No data";
+ const status=d.candles&&d.candles<=Math.max(3,30/state.tf)?" · Partial":!d.candles?" · No data":"";
  return '<tr class="rowbtn'+(d.date===selected?' selected':'')+'" data-date="'+d.date+'" tabindex="0" title="Inspect '+d.date+'"><td>'+name+status+'</td><td>'+d.candles+'</td><td>'+d.trades.length+'</td><td>'+d.wins+'</td><td>'+w+'</td><td class="'+klass(d.sumR)+'">'+text+'</td><td class="barcell"><div class="bar '+(d.sumR<0?'down':'')+'" style="width:'+fmt(barWidth,2)+'%"></div></td></tr>';
  }).join("");
 }
@@ -248,7 +193,7 @@ function draw(){
  if(started)ctx.stroke();
  ctx.font="bold 10px system-ui";ctx.fillStyle="#9eacc2";ctx.fillText("RSI 14",left+7,rsiTop+13);
  // Entry/exit overlays use index in global array, translated to local day index.
- const dayStartIndex=all.findIndex(z=>dateOf(z.ts)===state.date);
+ const dayStartIndex=all.findIndex(z=>z.day===state.date);
  const rel=i=>i-dayStartIndex;
  for(const s of selected.setups){
   const ix=rel(s.i);if(ix<a||ix>b)continue;
@@ -323,24 +268,31 @@ $("dayRows").addEventListener("click",e=>{const target=e.target.closest("[data-d
 $("dayRows").addEventListener("keydown",e=>{if(e.key!=="Enter"&&e.key!==" ")return;const t=e.target.closest("[data-date]");if(t){e.preventDefault();selectDate(t.dataset.date)}});
 $("barsChart").addEventListener("click",e=>{const t=e.target.closest("[data-date]");if(t)selectDate(t.dataset.date)});
 $("date").addEventListener("change",e=>selectDate(e.target.value));
+$("symbol").addEventListener("change",()=>refreshSelector("symbol").catch(showError));
+$("month").addEventListener("change",()=>refreshSelector("month").catch(showError));
+$("version").addEventListener("change",()=>refreshSelector("version").catch(showError));
 for(const id of ["tf","rsiLimit","swing","slope"])$(id).addEventListener("change",()=>{try{compute()}catch(e){showError(e)}});
-$("reset").addEventListener("click",()=>{$("tf").value="5";$("rsiLimit").value="36";$("swing").value="2";$("slope").value=".15";try{compute()}catch(e){showError(e)}});
+$("matrixRows").addEventListener("click",e=>{const el=e.target.closest("[data-sym]");if(!el)return;$("symbol").value=el.dataset.sym;$("month").value=el.dataset.month;$("version").value="V3";refreshSelector("symbol").catch(showError)});
+$("matrixRows").addEventListener("keydown",e=>{if(e.key!=="Enter"&&e.key!==" ")return;const el=e.target.closest("[data-sym]");if(!el)return;e.preventDefault();$("symbol").value=el.dataset.sym;$("month").value=el.dataset.month;$("version").value="V3";refreshSelector("symbol").catch(showError)});
+$("reset").addEventListener("click",()=>{$("version").value="V3";$("tf").value="5";$("rsiLimit").value="36";$("swing").value="2";$("slope").value=".15";try{compute()}catch(e){showError(e)}});
 $("export").addEventListener("click",()=>{
- const header=["date_uk","timeframe_min","candles","trades","wins","losses","win_rate_pct","gross_R","compounded_price_pct"];
- const values=dayResults.map(d=>[d.date,state.tf,d.candles,d.trades.length,d.wins,d.losses,d.trades.length?fmt(100*d.wins/d.trades,2):"",fmt(d.sumR,5),fmt(d.compPct,5)]);
+ const header=["symbol","uk_date","version","timeframe_min","candles","trades","wins","losses","win_rate_pct","gross_R","compounded_price_pct"];
+ const values=dayResults.map(d=>{const compound=100*(d.trades.reduce((acc,t)=>acc*(1+t.R/100),1)-1);
+ return[state.symbol,d.date,state.version,state.tf,d.candles,d.trades.length,d.wins,d.losses,d.trades.length?fmt(100*d.wins/d.trades,2):"",fmt(d.sumR,5),fmt(compound,5)]});
  const csv=[header.join(","),...values.map(a=>a.join(","))].join("\n");
- const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),u=URL.createObjectURL(blob),a=document.createElement("a");
- a.href=u;a.download="RudraEMA5_COHR_Nov2026_"+state.tf+"min_daily.csv";a.click();URL.revokeObjectURL(u);
+ const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download="RudraEMA5_"+state.symbol+"_"+state.month+"_"+state.version+"_"+state.tf+"m.csv";a.click();URL.revokeObjectURL(url);
 });
 function showError(err){$("error").style.display="block";$("error").textContent="Dashboard error: "+String(err?.message||err)}
-function init(){
+async function init(){
  try{
-  source=decode();
-  $("date").innerHTML=DAYS.map(d=>'<option value="'+d+'">'+DAYS_LONG.format(new Date(d+"T12:00:00Z"))+" "+d.slice(0,4)+'</option>').join("");
-  $("date").value=state.date;
-  compute();new ResizeObserver(()=>draw()).observe(canvas);
+  $("symbol").value=state.symbol;$("month").value=state.month;$("version").value=state.version;
+  populateDates(state.date);
+  await ensureSymbol(state.symbol);
+  compute();
+  if(typeof ResizeObserver!=="undefined")new ResizeObserver(()=>draw()).observe(canvas);
+  else window.addEventListener("resize",()=>draw());
  }catch(err){showError(err)}
 }
-let source=[];
 init();
 })();
