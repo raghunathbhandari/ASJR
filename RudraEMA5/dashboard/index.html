@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="dark">
-<title>RudraEMA5 · November 2026 Research Dashboard</title>
+<title>RudraEMA5 · Multi-Stock V2/V3 Strategy Dashboard</title>
 <style>
 :root{--bg:#0a1019;--panel:#111b29;--panel2:#162232;--border:#253246;--txt:#e8effa;--muted:#8fa1b8;--green:#39c89b;--red:#f47588;--amber:#e9b95c;--cyan:#64cce4;--purple:#aa9efa}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;font-size:14px}body:before{content:"";position:fixed;inset:0 0 auto;height:300px;background:radial-gradient(ellipse at 50% -20%,#29435a55,transparent 67%);pointer-events:none}
@@ -14,56 +14,63 @@
 .grid{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(310px,.8fr);gap:14px}.panel{background:var(--panel);border:1px solid var(--border);border-radius:15px;overflow:hidden}.panelhead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 17px;border-bottom:1px solid var(--border);flex-wrap:wrap}.panelhead h2{font-size:14px;letter-spacing:.1px;margin:0}.meta{font-size:11px;color:var(--muted)}.chartarea{padding:8px 12px 10px;position:relative}.chartarea canvas{width:100%;height:515px;display:block;cursor:crosshair;touch-action:pan-y}.charttip{position:absolute;display:none;pointer-events:none;top:20px;left:20px;z-index:5;padding:9px 12px;background:#18273aF5;border:1px solid #40556d;border-radius:8px;box-shadow:0 8px 24px #0007;font-size:11px;line-height:1.7}.legend{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted)}.dot{display:inline-block;width:9px;height:9px;border-radius:100%;margin-right:5px;vertical-align:middle}.chartfoot{color:var(--muted);font-size:11px;padding:4px 16px 14px;line-height:1.6}.asidebody{padding:14px 16px;max-height:566px;overflow-y:auto}.asidebody h3{font-size:12px;margin:0 0 12px;color:#cfddeb}.trade{border:1px solid #304157;border-radius:10px;background:#0d1825;padding:12px 13px;margin-bottom:10px}.tradehead{display:flex;justify-content:space-between;gap:10px;font-weight:700}.trade dl{display:grid;grid-template-columns:1fr 1fr;gap:7px 12px;margin:11px 0 0}.trade dt{color:var(--muted);font-size:10px}.trade dd{margin:2px 0 0;font-variant-numeric:tabular-nums;font-size:12px}.empty{color:var(--muted);text-align:center;padding:25px 12px;line-height:1.7}
 .lower{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:14px;margin-top:14px}.tablewrap{max-height:540px;overflow:auto}table{width:100%;border-collapse:collapse}th{position:sticky;top:0;background:#182536;color:#9bafc5;font-size:11px;text-align:right;font-weight:650;padding:10px 13px;border-bottom:1px solid #334359}th:first-child{text-align:left}td{padding:9px 13px;border-bottom:1px solid #203145;font-size:12px;text-align:right;font-variant-numeric:tabular-nums}td:first-child{text-align:left}tr:hover td{background:#1b2b3c}tr.selected td{background:#263d51}tr.rowbtn{cursor:pointer}.barcell{width:110px}.bar{height:5px;max-width:100%;border-radius:7px;background:var(--green);margin-left:auto}.bar.down{background:var(--red)}.dailygraph{height:174px;padding:20px 20px 15px;display:flex;align-items:stretch;gap:4px}.graphcol{flex:1;min-width:5px;display:flex;flex-direction:column;align-items:stretch;justify-content:center;position:relative;cursor:pointer}.graphcol .upslot,.graphcol .downslot{height:50%;display:flex;flex-direction:column}.graphcol .upslot{justify-content:flex-end;border-bottom:1px solid #415266}.graphcol .downslot{justify-content:flex-start}.graphcol .upbar,.graphcol .downbar{background:var(--green);border-radius:3px 3px 0 0;min-height:0}.graphcol .downbar{background:var(--red);border-radius:0 0 3px 3px}.graphcol.sel:before{content:"";position:absolute;inset:-7px -1px;border:1px solid #789fbd88;border-radius:4px}.graphcol:hover .upbar{background:#7becbe}.graphcol:hover .downbar{background:#ffb3b3}.graphlegend{padding:0 18px 16px;color:var(--muted);font-size:11px}.notes{color:#a7b7ca;font-size:12px;line-height:1.75;padding:18px 20px}.notes b{color:#dae5f2}.notes code{color:#e9c782;background:#223044;padding:1px 4px;border-radius:4px}.footer{color:#879bb1;font-size:11px;line-height:1.8;margin-top:20px;padding:12px 4px}.footer a,.notes a{color:#90d5ed}.error{background:#5b2c34;border:1px solid #b35d6b;padding:12px;border-radius:8px;color:#fff}
 @media(max-width:950px){.grid,.lower{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.asidebody{max-height:none}}@media(max-width:570px){.wrapper{padding:15px 10px 50px}.metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.metric{padding:11px}.metric .value{font-size:22px}.controls{gap:8px;padding:11px}.control{min-width:125px}.control select{max-width:135px}.push{margin-left:0}.chartarea{padding:4px}.chartarea canvas{height:480px}.brand strong{font-size:19px}.pill{font-size:10px}}
+tr[data-sym]{cursor:pointer}.data-status{font-size:11px;color:var(--muted)}.controls .control{min-width:110px}.controls .control select{max-width:165px}
 </style>
 </head>
 <body>
 <main class="wrapper">
   <header>
-    <div class="brand"><div class="brandmark">R</div><div><strong>RudraEMA5</strong><div class="sub">COHR · Strategy Research Dashboard · November 2026</div></div></div>
-    <span class="pill">V2 · Historical simulation · UK time</span>
+    <div class="brand"><div class="brandmark">R</div><div><strong>RudraEMA5</strong><div class="sub">Seven stocks · September–November 2026 · Historical backtests</div></div></div>
+    <span class="pill">V2 / V3 · Research · UK time</span>
   </header>
   <section class="controls" aria-label="Backtest settings">
-    <div class="control"><label for="date">Selected UK date</label><select id="date"></select></div>
-    <div class="control"><label for="tf">Chart / strategy timeframe</label><select id="tf"><option value="5">5 minutes · Native</option><option value="15">15 minutes · Resampled</option><option value="30">30 minutes · Resampled</option><option value="60">1 hour · Resampled</option></select></div>
-    <div class="control"><label for="rsiLimit">RSI(14) must be below</label><input id="rsiLimit" type="number" min="5" max="95" step="1" value="36"></div>
-    <div class="control"><label for="swing">Minimum swing down %</label><input id="swing" type="number" min="0" max="20" step=".25" value="2"></div>
-    <div class="control"><label for="slope">EMA5 drop in 3 bars %</label><input id="slope" type="number" min="0" max="5" step=".05" value=".15"></div>
-    <div class="push"><button class="btn" id="reset" title="Restore RudraEMA5 V2 defaults">Reset V2</button><button class="btn primary" id="export">Export November CSV</button></div>
-  </section>
-  <section class="metrics">
-    <div class="metric"><div class="lab">NOVEMBER TRADES</div><div id="kTrades" class="value">—</div><div class="foot">Across available UK dates</div></div>
+ <div class="control"><label for="symbol">Stock</label><select id="symbol"><option>COHR</option><option>AAPL</option><option>AMD</option><option>INTC</option><option>NVDA</option><option>PLTR</option><option>TSLA</option></select></div>
+ <div class="control"><label for="month">Month</label><select id="month"><option value="2026-09">September 2026</option><option value="2026-10">October 2026</option><option value="2026-11" selected>November 2026</option></select></div>
+ <div class="control"><label for="version">Strategy</label><select id="version"><option value="V3" selected>V3 · RSI rising</option><option value="V2">V2 · RSI only</option></select></div>
+ <div class="control"><label for="date">UK calendar day</label><select id="date"></select></div>
+ <div class="control"><label for="tf">Timeframe (retest)</label><select id="tf"><option value="5">5m · original</option><option value="15">15m · resampled</option><option value="30">30m · resampled</option><option value="60">1H · resampled</option></select></div>
+ <div class="control"><label for="rsiLimit">C1 RSI below</label><input id="rsiLimit" type="number" min="5" max="95" step="1" value="36"></div>
+ <div class="control"><label for="swing">Min swing down %</label><input id="swing" type="number" min="0" max="20" step=".25" value="2"></div>
+ <div class="control"><label for="slope">EMA5 drop / 3 bars %</label><input id="slope" type="number" min="0" max="5" step=".05" value=".15"></div>
+ <div class="push"><button class="btn" id="reset" title="Restore baseline V3 parameters">Reset V3</button><button class="btn primary" id="export">Export month CSV</button></div>
+</section>
+<section class="metrics">
+    <div class="metric"><div class="lab">MONTH TRADES</div><div id="kTrades" class="value">—</div><div class="foot">For selected ticker / month</div></div>
     <div class="metric"><div class="lab">WIN RATE</div><div id="kWins" class="value">—</div><div class="foot">Gross, before costs</div></div>
-    <div class="metric"><div class="lab">NOVEMBER TOTAL</div><div id="kMonth" class="value">—</div><div class="foot">Summed trade R · 1R = 1% price</div></div>
+    <div class="metric"><div class="lab">MONTH GROSS R</div><div id="kMonth" class="value">—</div><div class="foot">Summed trade R · 1R = 1% price</div></div>
     <div class="metric"><div class="lab">SELECTED DAY</div><div id="kDay" class="value">—</div><div class="foot" id="kDaySub">Choose a date</div></div>
     <div class="metric"><div class="lab">DAY WINNERS / TRADES</div><div id="kDayWins" class="value">—</div><div class="foot" id="kBars">Available 5m history</div></div>
   </section>
   <section class="grid">
-    <div class="panel"><div class="panelhead"><h2 id="chartTitle">COHR · 5-minute candles</h2><div class="legend"><span><i class="dot" style="background:#e9b95c"></i>EMA5</span><span><i class="dot" style="background:#aa9efa"></i>RSI14</span><span><i class="dot" style="background:#58d7e3"></i>C1</span><span><i class="dot" style="background:#39c89b"></i>BUY</span><span><i class="dot" style="background:#f47588"></i>EXIT</span></div></div>
+    <div class="panel"><div class="panelhead"><h2 id="chartTitle">Stock · 5-minute candles</h2><div class="legend"><span><i class="dot" style="background:#e9b95c"></i>EMA5</span><span><i class="dot" style="background:#aa9efa"></i>RSI14</span><span><i class="dot" style="background:#58d7e3"></i>C1</span><span><i class="dot" style="background:#39c89b"></i>BUY</span><span><i class="dot" style="background:#f47588"></i>EXIT</span></div></div>
       <div class="chartarea"><canvas id="chart" aria-label="Interactive candlestick chart showing historical COHR prices, EMA5, RSI and simulated entries/exits"></canvas><div class="charttip" id="tooltip"></div></div>
       <div class="chartfoot">Scroll to zoom, drag to pan and hover for OHLC / RSI. 5m candles are from IBKR; other timeframes are aggregated from complete 5m bars. Each timeframe recalculates the strategy.</div>
     </div>
     <div class="panel"><div class="panelhead"><h2>Selected-day trade log</h2><span class="meta" id="dayInfo">No date selected</span></div><div class="asidebody" id="tradelog"></div></div>
   </section>
   <section class="lower">
-    <div class="panel"><div class="panelhead"><h2>November · Day-by-day performance</h2><span class="meta">Click a row to inspect its chart</span></div><div class="tablewrap"><table><thead><tr><th>UK date</th><th>Bars</th><th>Trades</th><th>Wins</th><th>Win %</th><th>R total</th><th class="barcell">Performance</th></tr></thead><tbody id="dayRows"></tbody></table></div></div>
+    <div class="panel"><div class="panelhead"><h2><span id="monthTitle">Day-by-day performance</span></h2><span class="meta">Click a row to inspect its chart</span></div><div class="tablewrap"><table><thead><tr><th>UK date</th><th>Bars</th><th>Trades</th><th>Wins</th><th>Win %</th><th>R total</th><th class="barcell">Performance</th></tr></thead><tbody id="dayRows"></tbody></table></div></div>
     <div>
-      <div class="panel"><div class="panelhead"><h2>Daily R · November 2026</h2><span class="meta">Green gains / red losses</span></div><div id="barsChart" class="dailygraph"></div><div class="graphlegend">UK calendar dates 1–27 · missing data days are blank · click a bar to inspect</div></div>
-      <div class="panel" style="margin-top:14px"><div class="panelhead"><h2>Active V2 entry / exit logic</h2></div><div class="notes">
+      <div class="panel"><div class="panelhead"><h2><span id="graphTitle">Daily gross R</span></h2><span class="meta">Green gains / red losses</span></div><div id="barsChart" class="dailygraph"></div><div class="graphlegend">UK calendar days · missing data days are blank · click a bar to inspect</div></div>
+      <div class="panel" style="margin-top:14px"><div class="panelhead"><h2>V2 / V3 · Entry / exit logic</h2></div><div class="notes">
         <b>Trend:</b> EMA5 falls at least <span id="slopeRule">0.15%</span> over three bars.<br>
         <b>F1:</b> Swing down at least <span id="swingRule">2%</span> from the high of the preceding 24 bars to C1 low.<br>
-        <b>C1:</b> Full high-to-low range below EMA5; RSI(14) <span id="rsiRule">&lt;36</span> at the completed C1.<br>
+        <b>C1:</b> Full high-to-low range below EMA5; RSI(14) <span id="rsiRule">&lt;36</span> at C1 close.<br><b>V3 only:</b> <span id="versionRule">RSI(C1) &gt; RSI(previous)</span>.<br>
         <b>C2:</b> Immediate next candle breaks BOTH C1 close +0.2% and C1 high +$0.02.<br>
         <b>Risk:</b> Initial stop −1%; after price reaches +1%, keep the full position and trail 0.2% below the best high.<br>
         <b>Removed:</b> C2 5%-of-C1-range pullback filter is <b>OFF</b>.<br>
         <b>Day end:</b> Any open position is marked out at the final observed close.<br><br>
-        <a href="../README.md" target="_blank" rel="noopener">Strategy documentation</a> · <a href="../backtest.py" target="_blank" rel="noopener">Python backtest</a>
+        <a href="https://github.com/raghunathbhandari/ASJR/blob/main/RudraEMA5/README.md" target="_blank" rel="noopener">Strategy documentation</a> · <a href="https://github.com/raghunathbhandari/ASJR/blob/main/RudraEMA5/backtest_rsi_rising.py" target="_blank" rel="noopener">Python backtest</a>
       </div></div>
     </div>
   </section>
+  <section class="panel" style="margin-top:14px"><div class="panelhead"><h2>Six-stock cross-market comparison · 5-minute frozen baseline</h2><span class="meta" id="matrixSub">Data loading</span></div>
+<div class="tablewrap"><table><thead><tr><th>Stock</th><th>Month</th><th>V2 trades</th><th>V2 gross R</th><th>V3 trades</th><th>V3 wins</th><th>V3 gross R</th><th>V3 vs V2</th></tr></thead><tbody id="matrixRows"></tbody></table></div><div class="chartfoot">Click a stock-month to inspect its full chart and daily trades. * COHR November is a separate in-sample reference; it is excluded from the six-stock combined totals. Stock-month comparison remains frozen at 5m, RSI &lt;36, swing ≥2%, EMA slope 0.15%; the controls above affect the selected replay only.</div></section>
   <div id="error" style="display:none" class="error"></div>
-  <footer class="footer">IBKR historical COHR trades, UK GMT. Period: 1–27 Nov 2026; last permitted candle 27 Nov at 17:55 UK. Native 5m sample is 3,564 bars. November results are exploratory and in-sample. OHLC bars cannot verify intrabar stop/trigger order; the replay uses conservative stop-first assumptions and excludes commissions, spread, slippage, market impact and extended-hours fill constraints. Results in R use a 1% share-price move per R, not an account return or a guaranteed outcome. Changing timeframe changes each indicator's bar basis and may materially increase intrabar ambiguity.</footer>
+  <footer class="footer">Frozen IBKR 5-minute stock data, September–November 2026. COHR coverage is November only, cut off at 27 Nov 18:00 GMT; six additional stocks through 25 Nov US session. Europe/London date and daylight-saving conversion. Five-minute OHLC cannot verify the order of same-candle price touches; no spreads, fees, slippage or liquidity constraints. R denotes a 1% share-price move, not an account return. Month results are research simulations, not independent proof of trading edge. Higher timeframes recompute the indicators and logic from complete 5m bars.</footer>
 </main>
-<script src="./data.js"></script>
+<script src="./engine.js"></script>
+<script src="./overview.js"></script>
 <script src="./app.js"></script>
 </body>
 </html>
