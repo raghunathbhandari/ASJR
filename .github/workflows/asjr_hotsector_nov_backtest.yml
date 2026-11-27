@@ -1,0 +1,50 @@
+name: ASJR HotSector November Backtest Validation
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/asjr_hotsector_nov_backtest.yml
+      - Rudra-HotSectorHotStock/backtest_nov2026_opening_15m.py
+      - Rudra-HotSectorHotStock/november_2026_opening_15m_backtest_results.csv
+
+permissions:
+  contents: read
+
+jobs:
+  validate-historical-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout ASJR historical repository
+        uses: actions/checkout@v4
+
+      - name: Replay actual 5m IBKR historical files
+        run: |
+          python3 Rudra-HotSectorHotStock/backtest_nov2026_opening_15m.py \
+            --output /tmp/asjr_recomputed_nov2026.csv
+
+      - name: Compare independently recomputed results with published 18-day CSV
+        run: |
+          python3 - <<'PY'
+          import csv
+          from pathlib import Path
+          original = Path("Rudra-HotSectorHotStock/november_2026_opening_15m_backtest_results.csv")
+          recomputed = Path("/tmp/asjr_recomputed_nov2026.csv")
+          with original.open(newline="") as file:
+              published = list(csv.DictReader(file))
+          with recomputed.open(newline="") as file:
+              got = list(csv.DictReader(file))
+          assert len(published) == len(got) == 18, (len(published), len(got))
+          numeric = {"entry", "opening_gain_pct", "opening_volume",
+                     "low_first_pct", "high_first_pct"}
+          for i, (a, b) in enumerate(zip(published, got)):
+              assert set(a) == set(b), (i, "column mismatch")
+              for key in a:
+                  if key in numeric:
+                      assert abs(float(a[key]) - float(b[key])) < 1e-5, (i, key, a[key], b[key])
+                  else:
+                      assert a[key] == b[key], (i, key, a[key], b[key])
+          print("PASS | Recomputed all 18 trade days from IBKR raw 5m CSV files")
+          print("PASS | Published daily results exactly match Python strategy replay")
+          PY
