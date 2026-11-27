@@ -4,8 +4,8 @@
 Example:
     python RudraEMA5/filter_audit.py --date 2026-11-25
 
-The C2-low filter is a post-hoc SCREEN, not a causally executable intrabar
-order rule: do not use its full-bar low to decide an earlier fill.
+Active V2 rules retain the >=2% swing-down filter, remove the former C2-low
+range filter entirely, and check Wilder RSI(14) <36 at completed C1.
 """
 from __future__ import annotations
 
@@ -77,7 +77,7 @@ def entry_trigger(c1: dict) -> float:
     )
 
 
-def audit(bars: list[dict], day: date) -> dict:
+def audit(bars: list[dict], day: date, rsi_threshold: float = 36.0) -> dict:
     candidates = []
     for i in range(25, len(bars)):
         c2, c1, prior = bars[i], bars[i - 1], bars[i - 4]
@@ -92,7 +92,6 @@ def audit(bars: list[dict], day: date) -> dict:
             continue
         swing_high = max(b["high"] for b in bars[i - 25:i - 1])
         decline = (swing_high - c1["low"]) / swing_high * 100
-        min_c2_low = c1["high"] - 0.05 * (c1["high"] - c1["low"])
         rsi = c1["rsi14"]
         candidates.append({
             "c1_time_uk": c1["time"].isoformat(),
@@ -101,22 +100,21 @@ def audit(bars: list[dict], day: date) -> dict:
             "swing_down_pct": round(decline, 4),
             "rsi14_at_c1": round(rsi, 4) if rsi is not None else None,
             "swing_pass": decline >= 2,
-            "rsi_pass": rsi is not None and rsi < 30,
-            "c2_range_pass_ex_post": c2["low"] >= min_c2_low,
+            "rsi_pass": rsi is not None and rsi < rsi_threshold,
             "breakout_reached": c2["high"] >= entry_trigger(c1),
             "entry_trigger": entry_trigger(c1),
-            "minimum_c2_low": round(min_c2_low, 4),
         })
     has = lambda p: sum(bool(p(x)) for x in candidates)
     return {
         "date_uk": day.isoformat(),
         "candidate_count": len(candidates),
         "swing_pass": has(lambda x: x["swing_pass"]),
-        "rsi_below_30": has(lambda x: x["rsi_pass"]),
+        "rsi_threshold": rsi_threshold,
+        "rsi_below_threshold": has(lambda x: x["rsi_pass"]),
         "swing_and_rsi": has(lambda x: x["swing_pass"] and x["rsi_pass"]),
         "swing_rsi_breakout": has(lambda x: x["swing_pass"] and x["rsi_pass"] and x["breakout_reached"]),
-        "all_filters_ex_post": has(lambda x: x["swing_pass"] and x["rsi_pass"] and x["breakout_reached"] and x["c2_range_pass_ex_post"]),
-        "CAUTION": "Full C2 low is future information for an intrabar C2 entry; ex-post filter, not executable evidence.",
+        "all_filters_with_breakout": has(lambda x: x["swing_pass"] and x["rsi_pass"] and x["breakout_reached"]),
+        "CAUTION": "C2 intrabar fill/stop/trail sequencing cannot be verified from 5m OHLC; use finer resolution for validation.",
         "candidates": candidates,
     }
 
@@ -124,6 +122,7 @@ def audit(bars: list[dict], day: date) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--date", default="2026-11-25", type=date.fromisoformat)
+    parser.add_argument("--rsi-threshold", type=float, default=36.0)
     parser.add_argument("--csv", default=DEFAULT_CSV, type=Path)
     parser.add_argument("--cutoff", default="2026-11-27T18:00:00+00:00",
                         type=datetime.fromisoformat)
@@ -132,7 +131,7 @@ def main() -> None:
         parser.error("--cutoff must include a timezone offset")
     bars = load(args.csv, args.cutoff.astimezone(timezone.utc))
     add_indicators(bars)
-    print(json.dumps(audit(bars, args.date), indent=2))
+    print(json.dumps(audit(bars, args.date, args.rsi_threshold), indent=2))
 
 
 if __name__ == "__main__":
