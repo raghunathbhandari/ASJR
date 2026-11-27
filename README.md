@@ -12,7 +12,7 @@ The project is designed around a practical research loop:
 
 ## Contents
 
-- [RudraEMA5 — COHR 5m/15m/30m/1h dashboard, November day-by-day backtests](RudraEMA5/dashboard/README.md) · [Offline dashboard HTML](RudraEMA5/dashboard-offline.html)
+- [RudraEMA5 V2/V3 — seven-stock interactive dashboard, Sep–Nov UK date-wise backtests](RudraEMA5/dashboard/README.md) · [Six-stock research report](RudraEMA5/results/RudraEMA5_6stocks_3months_RESEARCH_REPORT.md) · [Offline dashboard](RudraEMA5/dashboard-offline.html)
 
 - [Rudra-HotSectorHotStock — 9:35 ET sector ETF + IBKR stock scanner momentum strategy](Rudra-HotSectorHotStock/README.md)
 
