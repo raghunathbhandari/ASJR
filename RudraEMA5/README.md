@@ -19,7 +19,7 @@
 1. Work on completed 5-minute candles and a **5-period exponential moving average of closes**.
 2. EMA5 must previously be sloping down significantly. Define a measurable slope over a lookback and a threshold before testing.
 3. **C1**: a completed 5-minute candle with its full high-low range below EMA5, not touching it; thus its HIGH must be below the correctly time-aligned EMA5.
-4. **C2**: the immediately next 5-minute candle must trade above C1 HIGH; buy intrabar when C1 high + configurable small buffer is hit, without waiting for C2 close. Do not use C2's close, final high or any future information to decide the entry.
+4. **C2 / entry update (user-confirmed 2026-11-27 19:10 UK)**: User sets the entry threshold at **0.2% above C1 CLOSE**: `entry_threshold = C1_close * 1.002`. C2 is the immediately following 5-minute candle and entry may trigger intrabar without awaiting its close. **Still unresolved:** must C2 ALSO break C1 HIGH before entry, as originally specified? If yes, effective trigger is `max(C1_high + tick, C1_close * 1.002)`. If no, use solely `C1_close * 1.002`. Do not silently assume either variant; avoid use of C2 final close/high to make earlier decisions.
 5. Initial risk: user requests `-1R`, with mention of `1%`; confirm whether 1R is exactly 1% of entry price or anchored to C1 LOW.
 6. Profit target: user requests `1R` / `1:1`; confirm whether this means complete exit, partial exit, or trigger for the trail.
 7. Trailing stop: user requests `0.2%` beneath upside price; confirm that it trails peak price after first +1R, and whether it replaces the initial stop.
@@ -28,7 +28,7 @@
 ## Pending confirmations
 
 - **Slope:** suggested first test: EMA5 at C1 close at least 0.15% below its value 3 completed 5-minute bars earlier; compare thresholds rather than optimizing one in hindsight. Should slope be checked precisely at C1 or only in the preceding decline?
-- **Entry buffer:** exact number of cents / ticks above C1 HIGH, or small percentage?
+- **Entry threshold:** confirmed **C1 CLOSE + 0.2%**, not a cent-based C1-HIGH buffer. Clarify whether C1-HIGH breakout remains an additional mandatory condition (it may be higher than the +0.2% threshold).
 - **1R stop:** fixed -1% of filled entry, or C1 low as depicted in sketch?
 - **Target and trail:** +1% profit = milestone that activates trailing 0.2% from highest price, or exit part/all at +1R? If trailing, clarify intrabar activation and conflict convention.
 - **Session eligibility:** all available extended-hours or regular US session only? Existing export covers extended trading.
