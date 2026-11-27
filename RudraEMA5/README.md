@@ -1,6 +1,6 @@
 # RudraEMA5 — COHR 5-minute bullish reversal study
 
-**Status (2026-11-27 UK):** COHR IBKR 5-minute history successfully exported. Preliminary user strategy transcribed; **do not backtest until the pending rule choices below are confirmed.** Research only; no live orders.
+**Status (2026-11-27 UK):** COHR IBKR 5-minute history successfully exported. Initial one-day replay completed; new swing/range filters under study. Exact causal filter-2 execution still unresolved. Research only; no live orders.
 
 ## Historical data
 
@@ -37,3 +37,33 @@
 ## Notes
 
 The sketch portrays a falling EMA5, separated candles below it, then a bullish candle crossing the preceding candle's high. The stop is sketched below the reversal low; the written risk says 1R / 1%, so no stop anchor is assumed until clarified.
+
+
+## 27 November 2026 — user filter refinements (19:29 UK)
+
+**Filter 1 — swing must fall at least 2% before reversal setup.**
+- Minimum observed swing-down from a *prior* swing high to C1 low is 2%.
+- A swing-high/pivot algorithm has not yet been specified. First diagnostic uses the maximum high over the 24 most recent completed 5m bars up to C1 (approximately two hours); **this rolling-high proxy is provisional, not an approved swing-detection rule**.
+- Formula: `100 * (recent_24bar_high - C1_low) / recent_24bar_high >= 2`.
+
+**Filter 2 — user clarification: 5% is of candle high-to-low range, not 5% of the stock price.**
+- Provisional interpretation: C2 low must be no more than 5% of C1's full high-to-low range beneath C1 high. `C2_low >= C1_high - 0.05 * (C1_high-C1_low)`.
+- Example C1 high $210, low $208: C2 low must be at least $209.90.
+- **Causal execution caveat:** final C2 low is not known at the instant C2 breaks the entry level. A backtest that rejects an earlier fill using the eventual low of C2 is LOOK-AHEAD and must not be used as an executable performance result. Tick/1m path reconstruction or a real-time running-low rule is needed to enforce this before the breakout.
+
+**Other rules explicitly confirmed by user 19:11 UK**
+- EMA5 decline >= 0.15% over 3 completed 5m bars, at completed C1.
+- C1 high < completed C1 EMA5 (entire candle below EMA).
+- Entry in the immediately following C2 when price exceeds both `C1_close * 1.002` AND `C1_high + $0.02`: use the maximum of cent-rounded triggers.
+- Initial stop: 1% below entry; +1% is the milestone to retain the full position and arm 0.2% trailing stop below highest achieved price.
+- Include available extended-hours sessions, no concurrent positions.
+
+**27 November exploratory filter audit:** Existing 6 EMA/C1 candidates occurred at UK 09:45, 09:50, 10:05, 11:05, 11:45, 17:05. Under the provisional 24-bar swing proxy:
+- 10:05: 2.196% decline, C2 low passes top-5% check, but C2 high $213.49 < $213.52 entry threshold.
+- 11:05: 1.808% decline (fails filter1); C2 low $213.29 < $213.296 threshold (fails filter2).
+- 11:45: 2.674% decline (passes filter1); C2 low $209.82 < $211.34 threshold (fails filter2).
+- 17:05: 1.545% decline (fails filter1); C2 low $217.50 < $218.092 threshold (fails filter2).
+- Both earlier C1 cases (09:45,09:50) failed the swing and range tests.
+- **Zero qualifying fills under this ex-post interpretation. This is NOT a valid causal live-trading backtest due to the C2 low filter and not a measured expectancy improvement.**
+
+Keep earlier unfiltered 27 Nov 3-entry replay separate; do not replace its measured baseline with the screened count.
