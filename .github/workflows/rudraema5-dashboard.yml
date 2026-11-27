@@ -1,0 +1,51 @@
+name: RudraEMA5 Dashboard Pages
+on:
+  push:
+    branches: [main]
+    paths:
+      - "RudraEMA5/dashboard/**"
+      - ".github/workflows/rudraema5-dashboard.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: rudraema5-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout ASJR
+        uses: actions/checkout@v4
+      - name: Prepare minimal static site
+        run: |
+          mkdir -p _site/RudraEMA5/dashboard
+          cp RudraEMA5/dashboard/index.html _site/RudraEMA5/dashboard/
+          cp RudraEMA5/dashboard/app.js _site/RudraEMA5/dashboard/
+          cp RudraEMA5/dashboard/data.js _site/RudraEMA5/dashboard/
+          cat > _site/index.html <<'EOF'
+          <!doctype html><html lang="en"><head><meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <meta http-equiv="refresh" content="0; url=./RudraEMA5/dashboard/">
+          <title>ASJR Trading Research</title></head><body>
+          <p><a href="./RudraEMA5/dashboard/">Open RudraEMA5 dashboard</a></p>
+          </body></html>
+          EOF
+          touch _site/.nojekyll
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload static Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
