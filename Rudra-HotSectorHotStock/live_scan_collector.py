@@ -306,8 +306,8 @@ def collect(app, slot, close, *, budget=48):
                 values = req["rows"].get(target)
                 valid = (values is not None and all(math.isfinite(v) and abs(v) < 1e20 for v in values)
                          and min(values[:4]) > 0 and values[4] >= 0 and
-                         values[2] >= max(values[0], values[3], values[1]) and
-                         values[1] <= min(values[0], values[3], values[2]))
+                         values[1] >= max(values[0], values[3], values[2]) and
+                         values[2] <= min(values[0], values[3], values[1]))
                 if valid:
                     bars.append({"session_date": day, "ticker": label, "bar_start_utc": stamp(target),
                                  "bar_end_utc": stamp(slot), "bar_end_uk": uk(slot),
@@ -404,7 +404,7 @@ def publish(repo, spool, *, budget=30):
                         raise RuntimeError("Immutable archive conflict: " + dest)
                     continue
                 g("update-index", "--add", "--cacheinfo", "100644," + sha + "," + dest, env=env)
-        tree = g("write-tree", env=env)
+        tree = g("write-tree", "--missing-ok", env=env)
         if tree != g("rev-parse", parent + "^{tree}"):
             commit = g("-c", "user.name=ASJR Research Publisher", "-c",
                        "user.email=asjr-research@localhost", "commit-tree", tree, "-p", parent,
