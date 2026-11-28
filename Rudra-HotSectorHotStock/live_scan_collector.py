@@ -231,7 +231,7 @@ def state(req):
     return "ERROR" if req["errors"] else "TIMEOUT"
 
 
-def collect(app, slot, close, *, budget=48):
+def collect(app, slot, close, *, budget=48, diagnostic=False):
     from ASJR_Analyst.Utils import asjr_ibkr as ibkr
     from ibapi.scanner import ScannerSubscription
     capture = getattr(app, "_hotsector_archive_capture", None)
@@ -259,7 +259,7 @@ def collect(app, slot, close, *, budget=48):
             if kind == "SCAN" and codes is not None and label not in codes:
                 event(kind, code=label, status="NOT_ADVERTISED", row_count=0)
                 continue
-            if time.monotonic() >= deadline or (kind == "SCAN" and now() >= slot.astimezone(UTC) + timedelta(minutes=5)):
+            if time.monotonic() >= deadline or (kind == "SCAN" and not diagnostic and now() >= slot.astimezone(UTC) + timedelta(minutes=5)):
                 event(kind, **({"code": label} if kind == "SCAN" else {"ticker": label}),
                       status="SKIPPED_BUDGET_OR_LATE", row_count=0)
                 continue
@@ -274,7 +274,8 @@ def collect(app, slot, close, *, budget=48):
                     # No hidden fundamental or price constraints; archive raw native ranks.
                     app.reqScannerSubscription(rid, sub, [], [])
                 else:
-                    app.reqHistoricalData(rid, ibkr.stock_contract(label), "", "1 D", "5 mins",
+                    app.reqHistoricalData(rid, ibkr.stock_contract(label),
+                                          slot.astimezone(UTC).strftime("%Y%m%d-%H:%M:%S") if diagnostic else "", "1 D", "5 mins",
                                           "TRADES", 1, 2, False, [])
             except Exception as exc:
                 req["errors"].append({"code": "REQUEST", "message": clean(exc), "at_utc": stamp(now())})
@@ -465,3 +466,54 @@ def run(app, cycle_started, repo_root):
                {"errors.log":json.dumps(err)+"\n"})
         print("HOTSECTOR ARCHIVE | PUBLISH_PENDING | " + msg, flush=True)
         return "PUBLISH_PENDING"
+
+
+def diagnostic_probe(app, repo_root):
+    """One real collector pass; out-of-session snapshots are NEVER research rounds."""
+    repo = Path(repo_root).resolve()
+    spool = repo.parent / "ASJR_research_logs" / "hot_sector" / "live_scan_history"
+    t = now()
+    planned = session_slot(t)
+    if planned is None:
+        et = t.astimezone(NY)
+        for offset in range(8):
+            day = et - timedelta(days=offset)
+            date = day.date().isoformat()
+            if day.year not in (2026, 2027) or day.weekday() >= 5 or date in HOLIDAYS:
+                continue
+            close = day.replace(hour=13 if date in EARLY else 16, minute=0, second=0, microsecond=0)
+            if close <= et:
+                planned = (close, close)
+                break
+    if planned is None:
+        raise RuntimeError("No completed session in supported calendar")
+    slot, close = planned
+    rel = Path("diagnostics") / (t.strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:8])
+    meta = {"kind": "MANUAL_DIAGNOSTIC_NOT_RESEARCH", "scan_time_utc": stamp(t),
+            "scan_time_uk": uk(t), "sector_historical_target_end_utc": stamp(slot),
+            "warning": "Live scanner response at actual request time; may be empty/stale outside RTH. Sector bars may be historical. Never use this bundle in point-in-time backtests."}
+    try:
+        files, n, b, e = collect(app, slot, close, diagnostic=True)
+    except Exception as exc:
+        err = {**meta, "status": "COLLECTOR_ERROR", "error": clean(f"{type(exc).__name__}: {exc}")}
+        files = {"errors.log": json.dumps(err)+"\n", "scan_rounds.jsonl": json.dumps(err)+"\n",
+                 "ibkr_scan_results.csv": csv_text(SCAN_FIELDS, []), "sector_5m.csv": csv_text(BAR_FIELDS, [])}
+        n, b, e = 0, 0, 1
+    files["diagnostic.json"] = json.dumps(meta, indent=2)+"\n"
+    bundle(spool, rel, files)
+    for line in files["scan_rounds.jsonl"].splitlines():
+        record = json.loads(line)
+        if record.get("type") == "SCAN":
+            print("HOTSECTOR PROBE |", record.get("code"), record.get("status"), "rows=", record.get("row_count"), flush=True)
+    print(f"HOTSECTOR PROBE | DIAGNOSTIC ONLY | scan_rows={n} | sector_bars={b}/12 | issues={e}", flush=True)
+    print("HOTSECTOR PROBE | ARCHIVE |", ARCHIVE / rel, flush=True)
+    try:
+        status = publish(repo, spool, priority=rel)
+    except Exception as exc:
+        msg = clean(f"{type(exc).__name__}: {exc}")
+        bundle(spool, Path("diagnostics") / ("publish_error_" + uuid.uuid4().hex),
+               {"errors.log": json.dumps({**meta, "status":"PUBLISH_PENDING","error":msg})+"\n"})
+        print("HOTSECTOR PROBE | PUBLISH_PENDING |", msg, flush=True)
+        return 2
+    print("HOTSECTOR PROBE |", status, flush=True)
+    return 0 if b == 12 and n > 0 and not e else 2

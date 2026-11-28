@@ -79,6 +79,8 @@ def main(argv=None):
                                  help="Report November download tmux status and bounded progress")
     hotsector_modes.add_argument("--hotsector-live-test", action="store_true",
                                  help="Run fixed HotSector archive offline tests; no live IBKR calls or GitHub writes")
+    hotsector_modes.add_argument("--hotsector-live-probe", action="store_true",
+                                 help="One real HotSector collector diagnostic; stopped Chakra only; separate diagnostic archive")
     parser.add_argument("--bridge-start", action="store_true",
                         help="One-time install/start of fixed ASJR research bridge service; no Chakra restart")
     parser.add_argument("--bridge-refresh", action="store_true",
@@ -107,6 +109,9 @@ def main(argv=None):
                         help="Maximum waiting seconds; does NOT control broker API")
     args = parser.parse_args(argv)
     root = Path(args.repo).resolve()
+    if args.hotsector_live_probe:
+        from RudraScanner.run_now import run_hotsector_probe
+        return run_hotsector_probe()
     if args.hotsector_live_test:
         import importlib
         import unittest

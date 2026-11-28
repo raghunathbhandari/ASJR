@@ -101,6 +101,43 @@ def run_standalone(*, dry_run=False):
                     print("RUDRA RUN_NOW | disconnect warning:", exc)
 
 
+def run_hotsector_probe():
+    """Use the existing Chakra connector only when the scheduler is stopped."""
+    if bot_running() or not CHAKRA_FILE.is_file():
+        print("HOTSECTOR PROBE | REFUSED | stop trading_bot first; existing Chakra launcher required")
+        return 2
+    RUN_LOCK.parent.mkdir(parents=True, exist_ok=True)
+    with RUN_LOCK.open("a+") as handle:
+        try:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            print("HOTSECTOR PROBE | BUSY | existing pipeline lock")
+            return 2
+        if bot_running():
+            print("HOTSECTOR PROBE | REFUSED | scheduler restarted")
+            return 2
+        for directory in (str(CHAKRA_FILE.parent.parent), str(CHAKRA_FILE.parent), str(ROOT)):
+            if directory not in sys.path:
+                sys.path.insert(0, directory)
+        spec = importlib.util.spec_from_file_location("chakra_probe_launcher", CHAKRA_FILE)
+        if spec is None or spec.loader is None:
+            print("HOTSECTOR PROBE | launcher import unavailable")
+            return 2
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        app = None
+        try:
+            app = module.connect_ib_gateway(None)
+            if app is None or not app.isConnected():
+                print("HOTSECTOR PROBE | ERROR | IBKR app not connected")
+                return 2
+            collector = importlib.import_module("Rudra-HotSectorHotStock.live_scan_collector")
+            return collector.diagnostic_probe(app, ROOT)
+        finally:
+            if app is not None:
+                app.disconnect()
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Run/request one full Chakra pipeline cycle")
     parser.add_argument("--mode", choices=("auto", "queue", "standalone"),
