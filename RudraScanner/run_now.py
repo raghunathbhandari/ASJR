@@ -102,40 +102,73 @@ def run_standalone(*, dry_run=False):
 
 
 def run_hotsector_probe():
-    """Use the existing Chakra connector only when the scheduler is stopped."""
-    if bot_running() or not CHAKRA_FILE.is_file():
-        print("HOTSECTOR PROBE | REFUSED | stop trading_bot first; existing Chakra launcher required")
+    """One diagnostic on the running Gateway; never stop or launch TWS.
+
+    The production app is in another process, so use the established direct
+    research client ID 684 for this one-shot only. Share the production round
+    lock; refuse during RTH to avoid competing with scheduled collection.
+    """
+    import threading
+    from datetime import datetime, timezone
+    from ibapi.client import EClient
+    from ibapi.wrapper import EWrapper
+
+    if not bot_running():
+        print("HOTSECTOR PROBE | REFUSED | start trading_bot and existing Gateway first")
         return 2
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    collector = importlib.import_module("Rudra-HotSectorHotStock.live_scan_collector")
+    t = datetime.now(timezone.utc)
+    et = t.astimezone(collector.NY)
+    if (collector.session_slot(t) is not None or
+            (et.weekday() < 5 and et.hour == 9 and et.minute >= 30)):
+        print("HOTSECTOR PROBE | REFUSED | regular-session collector has priority")
+        return 2
+
+    class Probe(EWrapper, EClient):
+        def __init__(self):
+            EClient.__init__(self, self)
+            self.ready = threading.Event()
+            self.id_lock = threading.Lock()
+            self.nextReqId = 970000
+            self.connection_errors = []
+
+        def nextValidId(self, orderId):
+            self.ready.set()
+
+        def error(self, *args):
+            if len(args) >= 3:
+                offset = 2 if len(args) >= 4 and isinstance(args[2], int) else 1
+                code = args[offset]
+                if code not in (2104, 2106, 2107, 2108, 2158):
+                    self.connection_errors.append(collector.clean(str(code) + " " + str(args[offset+1])))
+
     RUN_LOCK.parent.mkdir(parents=True, exist_ok=True)
     with RUN_LOCK.open("a+") as handle:
         try:
             fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
-            print("HOTSECTOR PROBE | BUSY | existing pipeline lock")
+            print("HOTSECTOR PROBE | BUSY | existing pipeline lock; retry after current cycle")
             return 2
-        if bot_running():
-            print("HOTSECTOR PROBE | REFUSED | scheduler restarted")
-            return 2
-        for directory in (str(CHAKRA_FILE.parent.parent), str(CHAKRA_FILE.parent), str(ROOT)):
-            if directory not in sys.path:
-                sys.path.insert(0, directory)
-        spec = importlib.util.spec_from_file_location("chakra_probe_launcher", CHAKRA_FILE)
-        if spec is None or spec.loader is None:
-            print("HOTSECTOR PROBE | launcher import unavailable")
-            return 2
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        app = None
+        app = Probe()
+        worker = None
         try:
-            app = module.connect_ib_gateway(None)
-            if app is None or not app.isConnected():
-                print("HOTSECTOR PROBE | ERROR | IBKR app not connected")
+            print("HOTSECTOR PROBE | existing Gateway 4002 | temporary API client 684 | BOT unchanged", flush=True)
+            app.connect("127.0.0.1", 4002, clientId=684)
+            worker = threading.Thread(target=app.run, daemon=True)
+            worker.start()
+            if not app.ready.wait(8) or not app.isConnected():
+                print("HOTSECTOR PROBE | GATEWAY NOT READY |", "; ".join(app.connection_errors[-3:]), flush=True)
                 return 2
-            collector = importlib.import_module("Rudra-HotSectorHotStock.live_scan_collector")
             return collector.diagnostic_probe(app, ROOT)
+        except Exception as exc:
+            print("HOTSECTOR PROBE | ERROR |", collector.clean(f"{type(exc).__name__}: {exc}"), flush=True)
+            return 2
         finally:
-            if app is not None:
-                app.disconnect()
+            app.disconnect()
+            if worker is not None:
+                worker.join(timeout=2)
 
 
 def main(argv=None):
