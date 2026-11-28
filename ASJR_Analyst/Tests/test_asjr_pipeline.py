@@ -698,6 +698,22 @@ def _ddb_mode_enabled():
         return False
 
 
+def _run_ddb_with_research(app):
+    """Preserve DDB result/formatter; archive research on the same locked cycle."""
+    from datetime import datetime, timezone
+    from RudraScanner.ddb_ema_gann_5m import run_cycle
+    started = datetime.now(timezone.utc)
+    try:
+        return run_cycle(app)
+    finally:
+        try:
+            collector = importlib.import_module("Rudra-HotSectorHotStock.live_scan_collector")
+            collector.run(app, started, REPO_ROOT)
+        except Exception as exc:
+            # Research failures must not replace the DDB result or exception.
+            print("HOTSECTOR ARCHIVE | INTEGRATION_ERROR |", type(exc).__name__, flush=True)
+
+
 def run_asjr_manual_pipeline(*args, **kwargs):
     """Shared process-level lock around the canonical Chakra pipeline.
 
@@ -716,8 +732,7 @@ def run_asjr_manual_pipeline(*args, **kwargs):
     lock_path = REPO_ROOT / ".chakra_run_now.lock"
     if os.environ.get("ASJR_MANUAL_RUN_LOCK_HELD") == "1":
         if _ddb_mode_enabled():
-            from RudraScanner.ddb_ema_gann_5m import run_cycle
-            return run_cycle(app)
+            return _run_ddb_with_research(app)
         return _run_asjr_manual_pipeline_unlocked(*args, **kwargs)
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     with lock_path.open("a+") as guard:
@@ -732,8 +747,7 @@ def run_asjr_manual_pipeline(*args, **kwargs):
                 "alerts_dispatched": False,
             }
         if _ddb_mode_enabled():
-            from RudraScanner.ddb_ema_gann_5m import run_cycle
-            return run_cycle(app)
+            return _run_ddb_with_research(app)
         return _run_asjr_manual_pipeline_unlocked(*args, **kwargs)
 
 

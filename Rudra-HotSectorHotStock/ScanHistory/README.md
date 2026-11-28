@@ -1,6 +1,6 @@
 # Rudra-HotSectorHotStock — permanent scan history
 
-Research collection plan, 2026-11-28 UK. No collector implementation or VPS deployment yet.
+Research collection plan, 2026-11-28 UK. Collector implementation added; deployment and live validation pending. Current archive: [data/live_scan_history](../data/live_scan_history/README.md). This file is retained as the original plan.
 
 ## Retention
 Preserve this entire tree indefinitely, until explicitly authorised manual deletion. It is outside ASJR_Analyst/DataLake and excluded from automatic cleanup. Use stable filenames, never replace past scanner snapshots with later results.
@@ -18,7 +18,7 @@ Each ET trading date has a directory with stable names:
 - ibkr_scan_results.csv: session date, scheduled interval, actual scan timestamp UTC and UK, scan code, native rank, ticker, optional conId/exchange.
 - scan_rounds.jsonl: scan code, scheduled interval, request/response timestamps, filters, row count, completion/error/timeout status; log empty rounds too.
 
-Append durably; prevent duplicate reprocessing of the same round without discarding actual scans. Never fabricate missing scanner snapshots or treat later results as point-in-time evidence. Publish using safe isolated Git commits (proposed end-of-session batch with retries and local durable retention), not a force push. No orders, no stock OHLCV, no strategy changes, no new Discord trading alerts. Validate one real market session before claiming successful collection.
+Append durably; prevent duplicate reprocessing of the same round without discarding actual scans. Never fabricate missing scanner snapshots or treat later results as point-in-time evidence. Publish using safe isolated Git commits (immediate per-cycle push, retry pending next cycle, local durable retention), not a force push. No orders, no stock OHLCV, no strategy changes, no new Discord trading alerts. Validate one real market session before claiming successful collection.
 
 ## Selected scan-code catalogue (2026-11-28)
 
@@ -32,4 +32,4 @@ Append durably; prevent duplicate reprocessing of the same round without discard
 
 Eight distinct codes only; maximum 400 ranked rows per interval. The day-change scan measures movement relative to previous close, the opening-gap scan measures open relative to previous close, and the since-open scan measures movement relative to today's open; the last is not a rolling five-minute return. Most active and hot volume do not indicate direction. No EMA, multi-week technical, other price/activity, fundamentals or options scans. Existing four-code legacy scanner had successful historical runs; the four additional opening codes require live acceptance. Preserve exact supported codes, parameter XML snapshot/version, request universe, filters, timestamps, native ranks and response state. Do not silently drop raw rows or deduplicate across codes or intervals. No post-scan fundamental or sector filtering; research can apply these later. Do not add unsupported scans to recurring collection.
 
-Target each regular-session completed 5-minute interval, beginning 09:35 ET through the final session interval (early close adjusted). If the final live scan would be after the close, label its actual timing rather than treating it as a pre-close snapshot. Collect all validated codes per interval in bounded batches (maximum 10 active API scans across clients; start with batches of 3); if the collection exceeds the time budget, record missing/late codes and protect the existing DDB alert path. Never relabel a later scan as an earlier snapshot. Initial research horizon: several months, no automatic deletion or stop date imposed. No collector code or VPS activation in this plan update.
+Target each regular-session completed 5-minute interval, beginning 09:35 ET through the final session interval (early close adjusted). If the final live scan would be after the close, label its actual timing rather than treating it as a pre-close snapshot. Collect all validated codes per interval in bounded batches (maximum 10 active API scans across clients; start with batches of 3); if the collection exceeds the time budget, record missing/late codes and protect the existing DDB alert path. Never relabel a later scan as an earlier snapshot. Initial research horizon: several months, no automatic deletion or stop date imposed. Collector code added; VPS activation and actual broker validation pending.
