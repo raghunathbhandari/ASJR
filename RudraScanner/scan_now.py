@@ -77,6 +77,8 @@ def main(argv=None):
                                  help="Launch fixed November research download in dedicated tmux")
     hotsector_modes.add_argument("--hotsector-nov-status", action="store_true",
                                  help="Report November download tmux status and bounded progress")
+    hotsector_modes.add_argument("--hotsector-live-test", action="store_true",
+                                 help="Run fixed HotSector archive offline tests; no live IBKR calls or GitHub writes")
     parser.add_argument("--bridge-start", action="store_true",
                         help="One-time install/start of fixed ASJR research bridge service; no Chakra restart")
     parser.add_argument("--bridge-refresh", action="store_true",
@@ -105,6 +107,17 @@ def main(argv=None):
                         help="Maximum waiting seconds; does NOT control broker API")
     args = parser.parse_args(argv)
     root = Path(args.repo).resolve()
+    if args.hotsector_live_test:
+        import importlib
+        import unittest
+        module = importlib.import_module("Rudra-HotSectorHotStock.test_live_scan_collector")
+        suite = unittest.defaultTestLoader.loadTestsFromModule(module)
+        print("HOTSECTOR ARCHIVE | OFFLINE TEST | NO LIVE DATA OR GITHUB WRITES", flush=True)
+        outcome = unittest.TextTestRunner(stream=sys.stdout, verbosity=1).run(suite)
+        print("HOTSECTOR ARCHIVE | TEST %s | tests=%d | failures=%d | errors=%d" %
+              ("PASS" if outcome.wasSuccessful() else "FAIL", outcome.testsRun,
+               len(outcome.failures), len(outcome.errors)), flush=True)
+        return 0 if outcome.wasSuccessful() else 2
     if args.self_test or args.final_check:
         # This reads only two fixed repository test suites. Never run a
         # user-provided script or make a new IBKR connection.
