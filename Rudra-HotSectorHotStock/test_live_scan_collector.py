@@ -3,7 +3,12 @@ import tempfile
 import unittest
 from datetime import datetime
 from pathlib import Path
-from types import SimpleNamespace
+from types import SimpleNamespace, ModuleType
+from unittest.mock import patch
+import sys
+import json
+import csv
+import io
 
 m = importlib.import_module("Rudra-HotSectorHotStock.live_scan_collector")
 
@@ -38,6 +43,50 @@ class Tests(unittest.TestCase):
         self.assertEqual(calls, [])
         app.error(99, 321, "other")
         self.assertEqual(len(calls), 1)
+
+    def test_collect_exact_sector_bar_and_all_native_scans(self):
+        fixed = datetime.fromisoformat("2026-11-30T14:36:00+00:00")
+        slot, close = m.session_slot(fixed)
+        app = SimpleNamespace(next_id=0)
+        def alloc(a):
+            a.next_id += 1
+            return a.next_id
+        def params():
+            app.scannerParameters("<Root>" + "".join("<scanCode>"+c+"</scanCode>" for c in m.CODES) + "</Root>")
+        def scan(rid, sub, options, filters):
+            self.assertEqual(sub.numberOfRows, 50)
+            self.assertEqual(filters, [])
+            contract = SimpleNamespace(symbol="TEST", conId=123, exchange="SMART")
+            app.scannerData(rid, 2, SimpleNamespace(contract=contract), "", "", "", "")
+            app.scannerDataEnd(rid)
+        def historical(rid, contract, end, duration, size, what, rth, fmt, update, opts):
+            self.assertEqual((size, rth, fmt), ("5 mins", 1, 2))
+            t = int(slot.timestamp()) - 300
+            app.historicalData(rid, SimpleNamespace(date=str(t), open=100, high=103, low=99, close=102, volume=25))
+            # A still-forming bar must not enter the archive.
+            app.historicalData(rid, SimpleNamespace(date=str(t+300), open=102, high=105, low=100, close=104, volume=30))
+            app.historicalDataEnd(rid, "", "")
+        app.reqScannerParameters = params
+        app.reqScannerSubscription = scan
+        app.reqHistoricalData = historical
+        app.cancelScannerSubscription = lambda rid: None
+        app.cancelHistoricalData = lambda rid: None
+        analyst = ModuleType("ASJR_Analyst")
+        utils = ModuleType("ASJR_Analyst.Utils")
+        utils.asjr_ibkr = SimpleNamespace(_next_req_id=alloc, stock_contract=lambda s:s)
+        api = ModuleType("ibapi")
+        scanner = ModuleType("ibapi.scanner")
+        scanner.ScannerSubscription = SimpleNamespace
+        with patch.dict(sys.modules, {"ASJR_Analyst":analyst, "ASJR_Analyst.Utils":utils,
+                                      "ibapi":api, "ibapi.scanner":scanner}), patch.object(m, "now", return_value=fixed):
+            files, n, b, e = m.collect(app, slot, close)
+        self.assertEqual((n,b,e), (8,12,0))
+        self.assertEqual({r["scan_code"] for r in csv.DictReader(io.StringIO(files["ibkr_scan_results.csv"]))}, set(m.CODES))
+        rows = list(csv.DictReader(io.StringIO(files["sector_5m.csv"])))
+        self.assertTrue(all(r["close"] == "102.0" for r in rows))
+        self.assertEqual(len({r["ticker"] for r in rows}), 12)
+        self.assertIn("scanner_parameters.xml", files)
+        self.assertEqual(files["errors.log"], "")
 
     def test_bundle_immutable(self):
         with tempfile.TemporaryDirectory() as td:

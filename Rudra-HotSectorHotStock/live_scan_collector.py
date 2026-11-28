@@ -190,6 +190,7 @@ class Capture:
         req = {"label": label, "rows": {}, "done": False, "errors": [],
                "event": threading.Event(), "started": now()}
         with self.lock:
+            self.retired.discard(rid)
             self.active[rid] = req
         return req
 
@@ -205,7 +206,7 @@ class Capture:
     def catalogue(self, day, seconds):
         if self.param_day != day:
             self.param_day, self.params, self.param_try = day, None, 0.0
-        if self.params is None and seconds > 0 and time.monotonic() - self.param_try > 60:
+        if self.params is None and seconds > 0 and (not self.param_try or time.monotonic() - self.param_try > 60):
             self.param_try = time.monotonic()
             self.param_event.clear()
             self.param_wait = True
@@ -259,7 +260,8 @@ def collect(app, slot, close, *, budget=48):
                 event(kind, code=label, status="NOT_ADVERTISED", row_count=0)
                 continue
             if time.monotonic() >= deadline or (kind == "SCAN" and now() >= slot.astimezone(UTC) + timedelta(minutes=5)):
-                event(kind, code=label, status="SKIPPED_BUDGET_OR_LATE", row_count=0)
+                event(kind, **({"code": label} if kind == "SCAN" else {"ticker": label}),
+                      status="SKIPPED_BUDGET_OR_LATE", row_count=0)
                 continue
             rid = ibkr._next_req_id(app)
             req = capture.request(rid, label)
@@ -352,10 +354,14 @@ def git(cwd, *args, env=None, timeout=12):
     return r.stdout.strip()
 
 
-def publish(repo, spool, *, budget=30):
+def publish(repo, spool, *, budget=30, priority=None):
     """Fast-forward only, isolated bare Git index, immutable paths, retry pending."""
     queue = spool / "rounds"
-    pending = sorted(p.parent for p in queue.rglob(".ready") if not (p.parent / ".published").exists())[:12]
+    pending = sorted(p.parent for p in queue.rglob(".ready") if not (p.parent / ".published").exists())
+    if priority is not None and queue / priority in pending:
+        pending.remove(queue / priority)
+        pending.insert(0, queue / priority)
+    pending = pending[:12]
     if not pending:
         return "NO_PENDING"
     end = time.monotonic() + budget
@@ -424,6 +430,7 @@ def run(app, cycle_started, repo_root):
     spool = repo.parent / "ASJR_research_logs" / "hot_sector" / "live_scan_history"
     spool.mkdir(parents=True, exist_ok=True)
     planned = session_slot(cycle_started)
+    rel = None
     if planned:
         slot, close = planned
         rel = Path(slot.date().isoformat()) / slot.strftime("%H%M_ET")
@@ -446,7 +453,7 @@ def run(app, cycle_started, repo_root):
     # Attempt publication in this cycle even if collection was partial or failed.
     # Outside RTH, retry any existing backlog; no new broker calls.
     try:
-        status = publish(repo, spool)
+        status = publish(repo, spool, priority=rel)
         if status != "NO_PENDING":
             print("HOTSECTOR ARCHIVE | " + uk(now()) + " | " + status, flush=True)
         return status

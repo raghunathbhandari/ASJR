@@ -711,7 +711,11 @@ def _run_ddb_with_research(app):
             collector.run(app, started, REPO_ROOT)
         except Exception as exc:
             # Research failures must not replace the DDB result or exception.
-            print("HOTSECTOR ARCHIVE | INTEGRATION_ERROR |", type(exc).__name__, flush=True)
+            try:
+                detail = collector.clean(f"{type(exc).__name__}: {exc}")
+            except Exception:
+                detail = type(exc).__name__
+            print("HOTSECTOR ARCHIVE | INTEGRATION_ERROR |", detail, flush=True)
 
 
 def run_asjr_manual_pipeline(*args, **kwargs):
